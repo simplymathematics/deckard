@@ -66,13 +66,13 @@ class TestMode2AuxiliaryModelData:
             target="adv_failure_rate",
             classifier=False,
         )
-        survival_data_config = LifelinesDataConfig.from_auxiliary_model(
+        survival_data_config = LifelinesDataConfig.from_auxiliary_metric(
             base_config,
-            benign_metric="accuracy",
+            reference_metric="accuracy",
         )
-        assert survival_data_config.mode == LifelinesDataMode.AUXILIARY_MODEL
-        assert survival_data_config.has_auxiliary_model()
-        assert survival_data_config.benign_metric == "accuracy"
+        assert survival_data_config.mode == LifelinesDataMode.AUXILIARY_METRIC
+        assert survival_data_config.has_auxiliary_metric()
+        assert survival_data_config.reference_metric == "accuracy"
 
     def test_mode2_experiment_config_with_auxiliary_model(self):
         """Create SurvivalExperimentConfig that uses auxiliary model mode."""
@@ -120,13 +120,13 @@ class TestMode3AuxiliaryAttackData:
             classifier=False,
         )
         attack_config = {"attack_kind": "evasion", "attack_size": 100}
-        survival_data_config = LifelinesDataConfig.from_auxiliary_attack(
+        survival_data_config = LifelinesDataConfig.from_auxiliary_failure(
             base_config,
-            attack_config=attack_config,
+            failure_profile=attack_config,
         )
-        assert survival_data_config.mode == LifelinesDataMode.AUXILIARY_ATTACK
-        assert survival_data_config.has_auxiliary_attack()
-        assert survival_data_config.attack_config == attack_config
+        assert survival_data_config.mode == LifelinesDataMode.AUXILIARY_FAILURE
+        assert survival_data_config.has_auxiliary_failure()
+        assert survival_data_config.failure_profile == attack_config
 
     def test_mode3_experiment_config(self):
         """Create SurvivalExperimentConfig that uses attack config."""
@@ -205,16 +205,16 @@ class TestModeInteroperability:
                 event_col="E",
             ),
             LifelinesDataConfig(
-                mode=LifelinesDataMode.AUXILIARY_MODEL,
+                mode=LifelinesDataMode.AUXILIARY_METRIC,
                 dataset_name="test",
                 target="T",
-                benign_metric="accuracy",
+                reference_metric="accuracy",
             ),
             LifelinesDataConfig(
-                mode=LifelinesDataMode.AUXILIARY_ATTACK,
+                mode=LifelinesDataMode.AUXILIARY_FAILURE,
                 dataset_name="test",
                 target="T",
-                attack_config={"attack_kind": "evasion"},
+                failure_profile={"attack_kind": "evasion"},
             ),
         ]
 
@@ -222,8 +222,8 @@ class TestModeInteroperability:
             # Count how many mode checkers return True
             checks = [
                 config.is_native_survival_data(),
-                config.has_auxiliary_model(),
-                config.has_auxiliary_attack(),
+                config.has_auxiliary_metric(),
+                config.has_auxiliary_failure(),
                 config.is_optuna_db(),
             ]
             # Exactly one should be True
@@ -239,15 +239,30 @@ class TestModeInteroperability:
 
         # Create different mode configs from same base
         mode1 = LifelinesDataConfig.from_data_and_model(base_config)
-        mode2 = LifelinesDataConfig.from_auxiliary_model(base_config)
-        mode3 = LifelinesDataConfig.from_auxiliary_attack(
+        mode2 = LifelinesDataConfig.from_auxiliary_metric(base_config)
+        mode3 = LifelinesDataConfig.from_auxiliary_failure(
             base_config,
             {"attack_kind": "evasion"},
         )
 
         assert mode1.mode == LifelinesDataMode.NATIVE
-        assert mode2.mode == LifelinesDataMode.AUXILIARY_MODEL
-        assert mode3.mode == LifelinesDataMode.AUXILIARY_ATTACK
+        assert mode2.mode == LifelinesDataMode.AUXILIARY_METRIC
+        assert mode3.mode == LifelinesDataMode.AUXILIARY_FAILURE
+
+    def test_non_attack_auxiliary_failure_profile(self):
+        """Mode 3 supports non-attack failure profiles."""
+        base_config = DataConfig(
+            dataset_name="incident_dataset",
+            target="adv_failure_rate",
+            classifier=False,
+        )
+        profile = {"source": "runtime", "metric": "failure_rate", "scale": 1.0}
+        cfg = LifelinesDataConfig.from_auxiliary_failure(
+            base_config,
+            failure_profile=profile,
+        )
+        assert cfg.mode == LifelinesDataMode.AUXILIARY_FAILURE
+        assert cfg.failure_profile == profile
 
 
 if __name__ == "__main__":

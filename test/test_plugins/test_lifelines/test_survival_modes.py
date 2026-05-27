@@ -12,16 +12,18 @@ class TestLifelinesDataModeEnum:
     def test_all_modes_defined(self):
         """Verify all four modes are defined."""
         assert LifelinesDataMode.NATIVE
-        assert LifelinesDataMode.AUXILIARY_MODEL
-        assert LifelinesDataMode.AUXILIARY_ATTACK
+        assert LifelinesDataMode.AUXILIARY_METRIC
+        assert LifelinesDataMode.AUXILIARY_FAILURE
         assert LifelinesDataMode.OPTUNA_DB
 
     def test_mode_string_values(self):
         """Verify mode string values."""
         assert LifelinesDataMode.NATIVE.value == "native"
-        assert LifelinesDataMode.AUXILIARY_MODEL.value == "auxiliary_model"
-        assert LifelinesDataMode.AUXILIARY_ATTACK.value == "auxiliary_attack"
+        assert LifelinesDataMode.AUXILIARY_METRIC.value == "auxiliary_metric"
+        assert LifelinesDataMode.AUXILIARY_FAILURE.value == "auxiliary_failure"
         assert LifelinesDataMode.OPTUNA_DB.value == "optuna_db"
+        assert LifelinesDataMode.AUXILIARY_MODEL.value == "auxiliary_metric"
+        assert LifelinesDataMode.AUXILIARY_ATTACK.value == "auxiliary_failure"
 
 
 class TestLifelinesDataConfigNativeMode:
@@ -87,116 +89,116 @@ class TestLifelinesDataConfigNativeMode:
             event_col="E",
         )
         assert config.is_native_survival_data()
-        assert not config.has_auxiliary_model()
-        assert not config.has_auxiliary_attack()
+        assert not config.has_auxiliary_metric()
+        assert not config.has_auxiliary_failure()
         assert not config.is_optuna_db()
 
 
-class TestLifelinesDataConfigAuxiliaryModelMode:
-    """Test LifelinesDataConfig in AUXILIARY_MODEL mode."""
+class TestLifelinesDataConfigAuxiliaryMetricMode:
+    """Test LifelinesDataConfig in AUXILIARY_METRIC mode."""
 
-    def test_auxiliary_model_mode_creation(self):
-        """Create an AUXILIARY_MODEL mode config."""
+    def test_auxiliary_metric_mode_creation(self):
+        """Create an AUXILIARY_METRIC mode config."""
         config = LifelinesDataConfig(
-            mode=LifelinesDataMode.AUXILIARY_MODEL,
+            mode=LifelinesDataMode.AUXILIARY_METRIC,
             dataset_name="toy_dataset",
             target="adv_failure_rate",
             classifier=False,
-            benign_metric="accuracy",
+            reference_metric="accuracy",
         )
-        assert config.mode == LifelinesDataMode.AUXILIARY_MODEL
-        assert config.benign_metric == "accuracy"
+        assert config.mode == LifelinesDataMode.AUXILIARY_METRIC
+        assert config.reference_metric == "accuracy"
 
-    def test_auxiliary_model_mode_from_classmethod(self):
-        """Create AUXILIARY_MODEL mode config using classmethod."""
+    def test_auxiliary_metric_mode_from_classmethod(self):
+        """Create AUXILIARY_METRIC mode config using classmethod."""
         base_config = DataConfig(
             dataset_name="toy_dataset",
             target="adv_failure_rate",
             classifier=False,
         )
-        config = LifelinesDataConfig.from_auxiliary_model(
+        config = LifelinesDataConfig.from_auxiliary_metric(
             base_config,
-            benign_metric="accuracy",
+            reference_metric="accuracy",
         )
-        assert config.mode == LifelinesDataMode.AUXILIARY_MODEL
-        assert config.has_auxiliary_model()
+        assert config.mode == LifelinesDataMode.AUXILIARY_METRIC
+        assert config.has_auxiliary_metric()
 
-    def test_auxiliary_model_requires_benign_metric(self):
-        """AUXILIARY_MODEL mode requires benign_metric."""
-        with pytest.raises(ValueError, match="benign_metric required"):
+    def test_auxiliary_metric_requires_reference_metric(self):
+        """AUXILIARY_METRIC mode requires reference_metric."""
+        with pytest.raises(ValueError, match="reference_metric required"):
             LifelinesDataConfig(
-                mode=LifelinesDataMode.AUXILIARY_MODEL,
+                mode=LifelinesDataMode.AUXILIARY_METRIC,
                 dataset_name="test",
                 target="T",
-                benign_metric="",
+                reference_metric="",
             )
 
-    def test_auxiliary_model_mode_checker(self):
-        """Test has_auxiliary_model checker."""
+    def test_auxiliary_metric_mode_checker(self):
+        """Test has_auxiliary_metric checker."""
         config = LifelinesDataConfig(
-            mode=LifelinesDataMode.AUXILIARY_MODEL,
+            mode=LifelinesDataMode.AUXILIARY_METRIC,
             dataset_name="test",
             target="T",
-            benign_metric="accuracy",
+            reference_metric="accuracy",
         )
-        assert config.has_auxiliary_model()
+        assert config.has_auxiliary_metric()
         assert not config.is_native_survival_data()
-        assert not config.has_auxiliary_attack()
+        assert not config.has_auxiliary_failure()
         assert not config.is_optuna_db()
 
 
-class TestLifelinesDataConfigAuxiliaryAttackMode:
-    """Test LifelinesDataConfig in AUXILIARY_ATTACK mode."""
+class TestLifelinesDataConfigAuxiliaryFailureMode:
+    """Test LifelinesDataConfig in AUXILIARY_FAILURE mode."""
 
-    def test_auxiliary_attack_mode_creation(self):
-        """Create an AUXILIARY_ATTACK mode config."""
-        attack_config = {"attack_kind": "evasion", "attack_size": 100}
+    def test_auxiliary_failure_mode_creation(self):
+        """Create an AUXILIARY_FAILURE mode config."""
+        failure_profile = {"attack_kind": "evasion", "attack_size": 100}
         config = LifelinesDataConfig(
-            mode=LifelinesDataMode.AUXILIARY_ATTACK,
+            mode=LifelinesDataMode.AUXILIARY_FAILURE,
             dataset_name="toy_dataset",
             target="adv_failure_rate",
             classifier=False,
-            attack_config=attack_config,
+            failure_profile=failure_profile,
         )
-        assert config.mode == LifelinesDataMode.AUXILIARY_ATTACK
-        assert config.attack_config == attack_config
+        assert config.mode == LifelinesDataMode.AUXILIARY_FAILURE
+        assert config.failure_profile == failure_profile
 
-    def test_auxiliary_attack_mode_from_classmethod(self):
-        """Create AUXILIARY_ATTACK mode config using classmethod."""
+    def test_auxiliary_failure_mode_from_classmethod(self):
+        """Create AUXILIARY_FAILURE mode config using classmethod."""
         base_config = DataConfig(
             dataset_name="toy_dataset",
             target="adv_failure_rate",
             classifier=False,
         )
-        attack_config = {"attack_kind": "membership"}
-        config = LifelinesDataConfig.from_auxiliary_attack(
+        failure_profile = {"attack_kind": "membership"}
+        config = LifelinesDataConfig.from_auxiliary_failure(
             base_config,
-            attack_config=attack_config,
+            failure_profile=failure_profile,
         )
-        assert config.mode == LifelinesDataMode.AUXILIARY_ATTACK
-        assert config.has_auxiliary_attack()
+        assert config.mode == LifelinesDataMode.AUXILIARY_FAILURE
+        assert config.has_auxiliary_failure()
 
-    def test_auxiliary_attack_requires_attack_config(self):
-        """AUXILIARY_ATTACK mode requires attack_config."""
-        with pytest.raises(ValueError, match="attack_config required"):
+    def test_auxiliary_failure_requires_failure_profile(self):
+        """AUXILIARY_FAILURE mode requires failure_profile."""
+        with pytest.raises(ValueError, match="failure_profile required"):
             LifelinesDataConfig(
-                mode=LifelinesDataMode.AUXILIARY_ATTACK,
+                mode=LifelinesDataMode.AUXILIARY_FAILURE,
                 dataset_name="test",
                 target="T",
-                attack_config=None,
+                failure_profile=None,
             )
 
-    def test_auxiliary_attack_mode_checker(self):
-        """Test has_auxiliary_attack checker."""
+    def test_auxiliary_failure_mode_checker(self):
+        """Test has_auxiliary_failure checker."""
         config = LifelinesDataConfig(
-            mode=LifelinesDataMode.AUXILIARY_ATTACK,
+            mode=LifelinesDataMode.AUXILIARY_FAILURE,
             dataset_name="test",
             target="T",
-            attack_config={"attack_kind": "evasion"},
+            failure_profile={"attack_kind": "evasion"},
         )
-        assert config.has_auxiliary_attack()
+        assert config.has_auxiliary_failure()
         assert not config.is_native_survival_data()
-        assert not config.has_auxiliary_model()
+        assert not config.has_auxiliary_metric()
         assert not config.is_optuna_db()
 
 
@@ -258,8 +260,38 @@ class TestLifelinesDataConfigOptunaMode:
         )
         assert config.is_optuna_db()
         assert not config.is_native_survival_data()
-        assert not config.has_auxiliary_model()
-        assert not config.has_auxiliary_attack()
+        assert not config.has_auxiliary_metric()
+        assert not config.has_auxiliary_failure()
+
+
+class TestLifelinesBackwardsCompatibility:
+    """Test backwards-compatible aliases remain functional."""
+
+    def test_legacy_field_aliases(self):
+        config = LifelinesDataConfig(
+            mode=LifelinesDataMode.AUXILIARY_FAILURE,
+            dataset_name="test",
+            target="T",
+            failure_profile={"attack_kind": "evasion"},
+        )
+        config.benign_metric = "balanced_accuracy"
+        assert config.reference_metric == "balanced_accuracy"
+        config.attack_config = {"attack_kind": "membership"}
+        assert config.failure_profile == {"attack_kind": "membership"}
+
+    def test_legacy_constructor_aliases(self):
+        base_config = DataConfig(
+            dataset_name="toy_dataset",
+            target="adv_failure_rate",
+            classifier=False,
+        )
+        model_mode = LifelinesDataConfig.from_auxiliary_model(base_config)
+        attack_mode = LifelinesDataConfig.from_auxiliary_attack(
+            base_config,
+            attack_config={"attack_kind": "evasion"},
+        )
+        assert model_mode.mode == LifelinesDataMode.AUXILIARY_METRIC
+        assert attack_mode.mode == LifelinesDataMode.AUXILIARY_FAILURE
 
 
 if __name__ == "__main__":

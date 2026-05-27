@@ -761,9 +761,9 @@ class TestConfigStoreRegistration:
 
         register_sampler_configs()
         cs = ConfigStore.instance()
-        # Verify that our entries are present under the 'sample' group.
+        # Verify that our entries are present under the 'sampler' group.
         # cs.list() returns a list of config names in the given group.
-        listed_names = set(cs.list("sample"))
+        listed_names = set(cs.list("sampler"))
         for expected in (
             "split.yaml",
             "kfold.yaml",

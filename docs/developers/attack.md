@@ -47,5 +47,5 @@ adapter extensions.
 
 - API: {doc}`../api/attack`
 - Workflow: {doc}`experiment`
-- Scoring contract: {doc}`score`
+- Scoring contract: {doc}[score](../developers/score)
 - Plugin and hook execution: {doc}`hooks`

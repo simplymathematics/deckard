@@ -25,6 +25,7 @@ from torch.utils.data import (
 from tqdm.auto import tqdm
 
 from ...data.base import DataConfig
+from ...data.base import AUTO_SCORER
 from ...data.canon import DataFiles, merge_data_files
 from ...artifacts import ScoreDict
 from ...frameworks.types import StringifiedClass
@@ -318,6 +319,26 @@ class PytorchDataConfig(TorchDatasetMixin, DataConfig):
     sampler_params: dict[str, Any] = field(default_factory=dict)
     dataset_type: Union[str, None] = None
     n_splits: int = 5
+
+    def __post_init__(self):
+        """Initialize runtime config and coerce PyTorch-specific scorer defaults."""
+        requested_scorer = self.scorer
+        super().__post_init__()
+
+        requested_token = (
+            str(requested_scorer).strip().lower()
+            if isinstance(requested_scorer, str)
+            else None
+        )
+        use_pytorch_default = requested_token in {
+            AUTO_SCORER,
+            "default",
+        }
+        if use_pytorch_default:
+            scorer_cls = load_class(
+                "deckard.score.data.DefaultPytorchDataScorerDictConfig",
+            )
+            self.scorer = scorer_cls(classifier=bool(self.classifier))
 
     def _sampler_name(self) -> str:
         spec = getattr(self, "sampler", None)

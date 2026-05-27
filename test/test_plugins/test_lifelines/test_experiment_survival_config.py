@@ -10,24 +10,24 @@ from deckard.model import ModelConfig
 from deckard.plugins.lifelines.experiment import SurvivalExperimentConfig
 
 
-def test_requires_attack_when_aux_model_present():
-    with pytest.raises(ValueError):
-        SurvivalExperimentConfig(
-            data=DataConfig(
-                dataset_name="make_regression",
-                classifier=False,
-            ),
-            model="cox",
-            target="E",
+def test_allows_aux_model_without_attack_config():
+    cfg = SurvivalExperimentConfig(
+        data=DataConfig(
+            dataset_name="make_regression",
             classifier=False,
-            aux_model=ModelConfig(
-                model_type="sklearn.linear_model.LogisticRegression",
-                classifier=True,
-                model_params={"max_iter": 10},
-            ),
-            duration_col="T",
-            event_col="E",
-        )
+        ),
+        model="cox",
+        target="E",
+        classifier=False,
+        aux_model=ModelConfig(
+            model_type="sklearn.linear_model.LogisticRegression",
+            classifier=True,
+            model_params={"max_iter": 10},
+        ),
+        duration_col="T",
+        event_col="E",
+    )
+    assert cfg.aux_model is not None
 
 
 def test_requires_data_config():
@@ -147,7 +147,7 @@ def test_resolve_attack_size_from_uniform_column_without_row_index():
     assert size == 5.0
 
 
-def test_calculate_failures_under_attack_fallback_uses_attack_size_column():
+def test_calculate_failures_from_signals_fallback_uses_attack_size_column():
     cfg = _bare_instance()
     df = pd.DataFrame(
         {
@@ -157,9 +157,9 @@ def test_calculate_failures_under_attack_fallback_uses_attack_size_column():
         },
     )
 
-    out = cfg.calculate_failures_under_attack(
+    out = cfg.calculate_failures_from_signals(
         df,
-        attack_config=SimpleNamespace(attack_size=8, attack_kind="evasion"),
+        failure_profile=SimpleNamespace(attack_size=8, attack_kind="evasion"),
     )
 
     assert "ben_failures" in out.columns
@@ -262,8 +262,65 @@ def test_call_requires_attack_when_auxiliary_mode(tmp_path):
     cfg.dummies = None
     cfg.calculate_attack_failures = False
 
-    with pytest.raises(ValueError, match="attack is required"):
-        cfg()
+    # Auxiliary mode can now run without attack config for non-attack failures.
+    cfg.attack = None
+    cfg.aux_model = None
+    cfg.dataset = None
+    cfg.test_size = 0.2
+    cfg.model_config = {"cox": {"t0": 0.5}}
+
+    monkeypatch = pytest.MonkeyPatch()
+    monkeypatch.setattr(
+        SurvivalExperimentConfig,
+        "run_auxiliary_mode",
+        classmethod(
+            lambda cls, *, data_cfg, survival_config: (
+                pd.DataFrame({"T": [1], "E": [1], "failure_rate": [0.2]}),
+                None,
+                None,
+            ),
+        ),
+    )
+    monkeypatch.setattr(
+        SurvivalExperimentConfig,
+        "_prepare_loaded_data",
+        lambda self, loaded_data: loaded_data,
+    )
+
+    class FakePlotList:
+        def __call__(self, **kwargs):
+            return {
+                "table": pd.DataFrame(),
+                "models": {},
+                "runtime_data": SimpleNamespace(),
+            }
+
+    from deckard.plugins.lifelines import plot as plot_survival_mod
+
+    monkeypatch.setattr(
+        plot_survival_mod,
+        "SurvivalSeabornPlotConfigList",
+        FakePlotList,
+    )
+
+    out = cfg()
+    assert "aft_table" in out
+    monkeypatch.undo()
+
+
+def test_calculate_failures_from_non_attack_metrics():
+    cfg = _bare_instance()
+    cfg.target = "failure_rate"
+    frame = pd.DataFrame(
+        {
+            "failure_rate": [0.1, 0.3, 0.2],
+            "T": [1, 2, 3],
+            "E": [1, 1, 0],
+        },
+    )
+    out = cfg.calculate_failures_from_signals(frame)
+    assert "adv_failures" in out.columns
+    assert np.allclose(out["adv_failures"], frame["failure_rate"])
 
 
 def test_normalize_data_spec_string_and_mapping_for_lifelines():

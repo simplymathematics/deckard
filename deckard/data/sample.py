@@ -616,44 +616,44 @@ def register_sampler_configs() -> None:
     """Register sampler structured configs with the Hydra ConfigStore.
 
     Call this function once at application startup (e.g. in your ``@hydra.main``
-    script) to make the ``sample`` config group available.
+    script) to make the ``sampler`` config group available.
 
     Example:
 
     ```text
-    sample=split
-    sample=kfold
-    sample=shuffle
-    sample=none    # disables the sampler (legacy 2-way split)
+    sampler=split
+    sampler=kfold
+    sampler=shuffle
+    sampler=none    # disables the sampler (legacy 2-way split)
     ```
 
-    When a sampler is selected, the config is placed under ``data.sample``
-    via the ``@data.sample`` package override.
+    When a sampler is selected, the config is placed under ``data.sampler``
+    via the ``@data.sampler`` package override.
     """
 
     cs = ConfigStore.instance()
     cs.store(
-        group="sample",
+        group="sampler",
         name="split",
         node=SplitSamplerConf,
-        package="data.sample",
+        package="data.sampler",
     )
     cs.store(
-        group="sample",
+        group="sampler",
         name="kfold",
         node=KFoldSamplerConf,
-        package="data.sample",
+        package="data.sampler",
     )
     cs.store(
-        group="sample",
+        group="sampler",
         name="shuffle",
         node=ShuffleSamplerConf,
-        package="data.sample",
+        package="data.sampler",
     )
-    # 'none' leaves data.sample as None (no sampler, legacy behavior)
+    # 'none' leaves data.sampler as None (no sampler, legacy behavior)
     cs.store(
-        group="sample",
+        group="sampler",
         name="none",
         node={},
-        package="data.sample",
+        package="data.sampler",
     )

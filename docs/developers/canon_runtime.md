@@ -50,7 +50,7 @@ Key runtime capabilities:
 
 - Canonical trainer alias normalization.
 - Canonical model runtime/timing fields.
-- Canonical score-mode normalization (`train`, `test`, `val`).
+- Canonical score-mode normalization ([train](../api/modules), `test`, `val`).
 
 See also: {doc}`../api/model`, {doc}`../api/train`, {doc}`../api/defend`.
 
@@ -66,7 +66,7 @@ Execution order:
 Key runtime capabilities:
 
 - Canonical attack stage aliases (`pre-attack`, `post-attack`).
-- Canonical split mode validation (`auto`, `train`, `test`, `val`).
+- Canonical split mode validation (`auto`, [train](../api/modules), `test`, `val`).
 - Canonical attack timing keys.
 
 See also: {doc}`../api/attack`.
@@ -91,12 +91,12 @@ See also: {doc}`../api/detector`.
 
 Execution order (high-level):
 
-1. `load`
-2. `sample`
-3. `train`
+1. [load](../api/modules)
+2. [sample](../api/modules)
+3. [train](../api/modules)
 4. `defense`
-5. `attack`
-6. `score`
+5. [attack](../api/modules)
+6. [score](../api/modules)
 7. `persist`
 
 Expanded component-level stages are canonized in experiment runtime helpers for
@@ -125,7 +125,7 @@ Key runtime capabilities:
 - Canonical stage token normalization.
 - Typed scorer runtime contract payload.
 
-See also: {doc}`../api/score`, {doc}`score`.
+See also: {doc}`../api/score`, {doc}[score](../api/modules).
 
 ## Plot
 
@@ -137,7 +137,7 @@ Execution order:
 
 Key runtime capabilities:
 
-- Canonical backend normalization (`seaborn`, `yellowbrick`).
+- Canonical backend normalization ([seaborn](../overview/extensions/index), [yellowbrick](../overview/extensions/index)).
 - Typed plot runtime contract for files/times/state.
 
 See also: {doc}`../api/plot`.

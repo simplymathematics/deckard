@@ -581,24 +581,29 @@ class AttackScorerConfig(BaseConfig):
 
 
 safe_store(
-    group="attack_scorers",
+    group="scorers",
     name="evasion",
     node=DefaultEvasionAttackScorerDictConfig,
 )
 safe_store(
-    group="attack_scorers",
+    group="scorers",
     name="evasion-regression",
     node=DefaultEvasionRegressionAttackScorerDictConfig,
 )
 safe_store(
-    group="attack_scorers",
+    group="scorers",
     name="membership-inference",
     node=DefaultMembershipInferenceAttackScorerDictConfig,
 )
 safe_store(
-    group="attack_scorers",
+    group="scorers",
     name="attribute-inference",
     node=DefaultAttributeInferenceAttackScorerDictConfig,
+)
+safe_store(
+    group="scorers",
+    name="attribute-inference-regression",
+    node=DefaultAttributeInferenceRegressionAttackScorerDictConfig,
 )
 
 # Score-chain aliases for attack profile routing in ExperimentConfig.
@@ -835,7 +840,7 @@ class FairlearnAttackScorerConfig(AttackScorerConfig):
 
 
 safe_store(
-    group="attack_scorers",
+    group="scorers",
     name="fairlearn-attack",
     node=FairlearnAttackScorerConfig,
 )

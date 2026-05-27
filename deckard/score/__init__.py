@@ -26,6 +26,7 @@ from .base import (
     build_scorer_dict,
 )
 from .canon import CANON_SCORER_MODES, ScorerRuntimeContract, normalize_scorer_mode
+from .cluster import DefaultClusterScorerDictConfig
 from .data import (
     DefaultDataClassificationScorerDictConfig,
     DefaultDataRegressionScorerDictConfig,
@@ -240,6 +241,7 @@ __all__ = [
     "DefaultPytorchClassifierScorerDictConfig",
     "DefaultPytorchRegressorScorerDictConfig",
     "DefaultRegressorScorerDictConfig",
+    "DefaultClusterScorerDictConfig",
     "AttackScorerConfig",
     "FairlearnAttackScorerConfig",
     "DefaultEvasionAttackScorerDictConfig",

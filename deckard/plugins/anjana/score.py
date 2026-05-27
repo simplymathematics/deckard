@@ -434,10 +434,11 @@ class DefaultAnjanaModelScorerDictConfig(DefaultAnjanaScorerDictConfig):
     pass
 
 
-safe_store(group="score", name="anjana", node=DefaultAnjanaScorerDictConfig)
-safe_store(group="score", name="anjana_data", node=DefaultAnjanaDataScorerDictConfig)
+safe_store(group="scorers", name="privacy", node=DefaultAnjanaScorerDictConfig)
+safe_store(group="scorers", name="anjana", node=DefaultAnjanaScorerDictConfig)
+safe_store(group="scorers", name="anjana_data", node=DefaultAnjanaDataScorerDictConfig)
 safe_store(
-    group="score",
+    group="scorers",
     name="anjana_model",
     node=DefaultAnjanaModelScorerDictConfig,
 )

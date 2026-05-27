@@ -32,7 +32,8 @@ Use this map to choose where to read first:
 ## Documentation Standards
 
 - {doc}`Developer Page Template <template>`
-- {doc}`Docs Refactor Checklist <new_docs>`
+
+- {doc}`Matplotlibrc Behavior and Extension Examples <matplotlibrc>`
 
 ## Framework Integration Docs
 
@@ -82,17 +83,17 @@ pip install ".[torch]"
 ```
 
 Other available extras include
-[`lifelines`](../api/lifelines),
-[`anjana`](../api/anjana),
-[`yellowbrick`](../api/yellowbrick),
-[`seaborn`](../api/seaborn),
-`datasets`, and `lint`.
+[lifelines](../overview/extensions/index),
+[anjana](../overview/extensions/index),
+[yellowbrick](../overview/extensions/index),
+[seaborn](../overview/extensions/index),
+as well as HuggingFace `datasets`, and `lint` for code-quality checks.
 
 ### Contributor Workflow
 
 Typical contributor loop:
 
-1. Identify the pipeline stage affected (`data`, `model`, `attack`, `score`,
+1. Identify the pipeline stage affected ([data](../api/data), [model](../api/model), [attack](../api/attack), [score](../api/score),
      or `experiment`).
 2. Update implementation and associated declarations/config wiring.
 3. Add or update tests for behavior changes.
@@ -207,6 +208,7 @@ see [DVC Cache Setup Summary](actionscache).
 ## Contents
 
 - {doc}`Design Principles <design>`
+- {doc}`Security Report <security-report>`
 - {doc}`GitHub Actions Workflows <workflows>`
 - {doc}`Refactor Plan <refactor_plan>`
 - {doc}`Config Declaration Architecture <declarations>`
@@ -225,6 +227,8 @@ see [DVC Cache Setup Summary](actionscache).
 - {doc}`DVC Pipeline Autogeneration Spec <dvc>`
 - {doc}`Plugin Runtime Migration Guardrails <migration>`
 - {doc}`Docstring Standard <docstrings>`
+
+- {doc}`Matplotlibrc Behavior and Extension Examples <matplotlibrc>`
 - {doc}`Config Class Contract <configs>`
 - {doc}`Mixin Class Contract <mixins>`
 - {doc}`Plugin Rules and Capabilities <plugins>`
@@ -238,7 +242,6 @@ see [DVC Cache Setup Summary](actionscache).
 - {doc}`Detector Design and Contract <detector>`
 - {doc}`Plot Design and Contract <plot>`
 - {doc}`Developer Page Template <template>`
-- {doc}`Docs Refactor Checklist <new_docs>`
 - {doc}`GH Actions Cache Setup <actionscache>`
 
 ```{toctree}
@@ -246,6 +249,7 @@ see [DVC Cache Setup Summary](actionscache).
 :hidden:
 
 design
+security-report
 workflows
 refactor_plan
 declarations
@@ -280,7 +284,6 @@ orchestration
 canon_runtime
 prediction-history-implementation-checklist
 template
-new_docs
 actionscache
 ```
 
@@ -292,6 +295,7 @@ ______________________________________________________________________
 
 - {doc}`API Reference <../api/modules>`
 - {doc}`Notebook Index <../notebooks/index>`
+- {doc}`Security Report <security-report>`
 - {doc}`Data Design and Contract <data>`
 - {doc}`Model Design and Contract <model>`
 - {doc}`Attack Design and Contract <attack>`
@@ -308,4 +312,3 @@ ______________________________________________________________________
 - {doc}`Detector Design and Contract <detector>`
 - {doc}`Plot Design and Contract <plot>`
 - {doc}`Developer Page Template <template>`
-- {doc}`Docs Refactor Checklist <new_docs>`

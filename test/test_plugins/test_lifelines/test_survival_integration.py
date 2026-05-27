@@ -36,15 +36,10 @@ DURATION_COL_BY_DATASET = {
 def test_survival_cli_in_examples_sklearn(
     dataset_name,
     survival_model,
-    tmp_path,
 ):
     examples_dir = EXAMPLES_SKLEARN_DIR
     env = make_runtime_env(DECKARD_RC_PATH)
     duration_col = DURATION_COL_BY_DATASET[dataset_name]
-
-    runtime_config_name = f"runtime_blank_{dataset_name}_{survival_model}.yaml"
-    runtime_config_path = examples_dir / "config" / runtime_config_name
-    runtime_config_path.write_text("{}\n", encoding="utf-8")
 
     cmd = [
         sys.executable,
@@ -52,14 +47,14 @@ def test_survival_cli_in_examples_sklearn(
         "deckard",
         "survival",
         "--config-name",
-        runtime_config_name,
-        f"+data={dataset_name}",
-        f"+duration_col={duration_col}",
-        "+target=E",
-        "+event_col=E",
+        "lifelines-default",
+        f"data={dataset_name}",
+        f"duration_col={duration_col}",
+        "target=E",
+        "event_col=E",
         "+classifier=False",
-        f"+model={survival_model}",
-        "+score=survival",
+        f"model={survival_model}",
+        "score=survival",
     ]
 
     completed = subprocess.run(
@@ -70,8 +65,6 @@ def test_survival_cli_in_examples_sklearn(
         text=True,
         check=False,
     )
-
-    runtime_config_path.unlink(missing_ok=True)
 
     assert completed.returncode == 0, (
         f"Command failed: {' '.join(cmd)}\n"
@@ -120,10 +113,10 @@ def test_lifelines_data_config_hash_stable_after_execution():
             "random_state": 42,
             "stratify": True,
         },
-        mode=LifelinesDataMode.AUXILIARY_MODEL,
+        mode=LifelinesDataMode.AUXILIARY_METRIC,
         duration_col="T",
         event_col="E",
-        benign_metric="accuracy",
+        reference_metric="accuracy",
     )
     original_hash = hash(cfg)
     cfg.score_dict["runtime_metric"] = 1.0
@@ -154,10 +147,10 @@ def test_lifelines_data_config_scores_persist_and_reload():
             "random_state": 42,
             "stratify": True,
         },
-        mode=LifelinesDataMode.AUXILIARY_MODEL,
+        mode=LifelinesDataMode.AUXILIARY_METRIC,
         duration_col="T",
         event_col="E",
-        benign_metric="accuracy",
+        reference_metric="accuracy",
     )
     scores = {"concordance": 0.71, "aic": 120.5}
     with tempfile.TemporaryDirectory() as td:
@@ -192,10 +185,10 @@ def test_lifelines_data_config_object_pickle_roundtrip():
             "random_state": 42,
             "stratify": True,
         },
-        mode=LifelinesDataMode.AUXILIARY_MODEL,
+        mode=LifelinesDataMode.AUXILIARY_METRIC,
         duration_col="T",
         event_col="E",
-        benign_metric="accuracy",
+        reference_metric="accuracy",
     )
     with tempfile.TemporaryDirectory() as td:
         path = Path(td) / "survival_data.pkl"

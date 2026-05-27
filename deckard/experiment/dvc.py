@@ -2004,13 +2004,7 @@ def build_dvc_stage_plan(
                 )
             outs.append(score_file)
             metrics.append(score_file)
-            if base_stage in {
-                "data-score",
-                "model-score",
-                "attack-score",
-                "detector-score",
-            }:
-                stage_entry["runtime_overrides"].append(f"score.scope={component}")
+
 
         if runtime_stage == "persist":
             if base_stage in {
@@ -2019,11 +2013,6 @@ def build_dvc_stage_plan(
                 "attack-persist",
                 "detector-persist",
             }:
-                for key in _STAGE_OUTPUT_KEYS.get(base_stage, ()):
-                    value = aliases.get(key)
-                    if value:
-                        outs.append(value)
-                stage_entry["runtime_overrides"].append(f"persist.scope={component}")
                 if aliases.get("params_file") and stage_entry["param_key_paths"]:
                     stage_entry["params"] = [
                         {aliases["params_file"]: stage_entry["param_key_paths"]},
@@ -2064,24 +2053,24 @@ def build_dvc_stage_plan(
                 stage=stage,
                 params_manifest=params_manifest,
             )
-            root = Path("outputs") / "logs" / run_identity
             score_file = aliases["score_file"]
             stage_entry["identity"] = run_identity
             if aliases.get("params_file") and stage_entry["param_key_paths"]:
                 stage_entry["params"] = [
                     {aliases["params_file"]: stage_entry["param_key_paths"]},
                 ]
-            outs.append(root.as_posix())
-            if include_cache_aliases and aliases.get("runtime_cache_file"):
-                outs.append(aliases["runtime_cache_file"])
+            stage_entry["runtime_overrides"].append(
+                f"++files.score_file={score_file}",
+            )
 
             metrics.extend(
                 [
                     score_file,
                 ],
             )
-            # When tracking the run root directory as an out, DVC forbids nested
-            # tracked outputs (metrics/plots) under the same directory.
+            # Persist stage contracts are file-grounded. The runtime may use
+            # identity-based log directories internally, but DVC should track
+            # concrete persisted files declared via aliases (metrics/plots).
 
         stage_entry["cmd"] = build_dvc_cmd(
             experiment,

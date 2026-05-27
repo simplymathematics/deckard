@@ -12,9 +12,12 @@ class LifelinesDataMode(str, Enum):
     """Enumeration of survival analysis data modes."""
 
     NATIVE = "native"
-    AUXILIARY_MODEL = "auxiliary_model"
-    AUXILIARY_ATTACK = "auxiliary_attack"
+    AUXILIARY_METRIC = "auxiliary_metric"
+    AUXILIARY_FAILURE = "auxiliary_failure"
     OPTUNA_DB = "optuna_db"
+    # Backwards-compatible aliases.
+    AUXILIARY_MODEL = AUXILIARY_METRIC
+    AUXILIARY_ATTACK = AUXILIARY_FAILURE
 
 
 LifelinesScalar = str | int | float | bool | None
@@ -31,8 +34,8 @@ class LifelinesValidationMixin:
     mode: "LifelinesDataMode"
     duration_col: str
     event_col: str
-    benign_metric: str
-    attack_config: Optional[dict[str, Any]]
+    reference_metric: str
+    failure_profile: Optional[dict[str, Any]]
     optuna_db: Optional[str]
 
     def _validate_native_mode(self) -> None:
@@ -41,16 +44,16 @@ class LifelinesValidationMixin:
         if self.event_col in [None, ""]:
             raise ValueError("event_col required for NATIVE mode")
 
-    def _validate_auxiliary_model_mode(self) -> None:
-        if self.benign_metric in [None, ""]:
+    def _validate_auxiliary_metric_mode(self) -> None:
+        if self.reference_metric in [None, ""]:
             raise ValueError(
-                "benign_metric required for AUXILIARY_MODEL mode",
+                "reference_metric required for AUXILIARY_METRIC mode",
             )
 
-    def _validate_auxiliary_attack_mode(self) -> None:
-        if self.attack_config is None:
+    def _validate_auxiliary_failure_mode(self) -> None:
+        if self.failure_profile is None:
             raise ValueError(
-                "attack_config required for AUXILIARY_ATTACK mode",
+                "failure_profile required for AUXILIARY_FAILURE mode",
             )
 
     def _validate_optuna_db_mode(self) -> None:
@@ -60,10 +63,10 @@ class LifelinesValidationMixin:
     def _validate_mode_requirements(self) -> None:
         if self.mode == LifelinesDataMode.NATIVE:
             self._validate_native_mode()
-        elif self.mode == LifelinesDataMode.AUXILIARY_MODEL:
-            self._validate_auxiliary_model_mode()
-        elif self.mode == LifelinesDataMode.AUXILIARY_ATTACK:
-            self._validate_auxiliary_attack_mode()
+        elif self.mode == LifelinesDataMode.AUXILIARY_METRIC:
+            self._validate_auxiliary_metric_mode()
+        elif self.mode == LifelinesDataMode.AUXILIARY_FAILURE:
+            self._validate_auxiliary_failure_mode()
         elif self.mode == LifelinesDataMode.OPTUNA_DB:
             self._validate_optuna_db_mode()
 
@@ -79,8 +82,8 @@ class LifelinesDataConfig(LifelinesValidationMixin, DataConfig):
     mode: LifelinesDataMode = field(default=LifelinesDataMode.NATIVE)
     duration_col: str = "T"
     event_col: str = "E"
-    benign_metric: str = "accuracy"
-    attack_config: Optional[dict[str, Any]] = None
+    reference_metric: str = "accuracy"
+    failure_profile: Optional[dict[str, Any]] = None
     optuna_db: Optional[str] = None
     optuna_schema: Optional[Union[str, dict[str, Any]]] = None
     optuna_query: Optional[str] = None
@@ -122,21 +125,33 @@ class LifelinesDataConfig(LifelinesValidationMixin, DataConfig):
         data_config: DataConfig,
         benign_metric: str = "accuracy",
     ) -> "LifelinesDataConfig":
+        """Backwards-compatible wrapper for from_auxiliary_metric."""
+        return cls.from_auxiliary_metric(
+            data_config,
+            reference_metric=benign_metric,
+        )
+
+    @classmethod
+    def from_auxiliary_metric(
+        cls,
+        data_config: DataConfig,
+        reference_metric: str = "accuracy",
+    ) -> "LifelinesDataConfig":
         """Build auxiliary-model mode config from an existing data config.
 
         Args:
                 data_config: Source data configuration to adapt.
-                benign_metric: Metric name used for benign model reference quality.
+                reference_metric: Metric name used for reference failure derivation.
 
         Returns:
-                Lifelines data config in auxiliary-model mode.
+                Lifelines data config in auxiliary-metric mode.
         """
         return cls(
-            mode=LifelinesDataMode.AUXILIARY_MODEL,
+            mode=LifelinesDataMode.AUXILIARY_METRIC,
             dataset_name=data_config.dataset_name,
             target=data_config.target,
             classifier=data_config.classifier,
-            benign_metric=benign_metric,
+            reference_metric=reference_metric,
         )
 
     @classmethod
@@ -145,21 +160,35 @@ class LifelinesDataConfig(LifelinesValidationMixin, DataConfig):
         data_config: DataConfig,
         attack_config: dict[str, LifelinesValue],
     ) -> "LifelinesDataConfig":
+        """Backwards-compatible wrapper for from_auxiliary_failure."""
+        return cls.from_auxiliary_failure(
+            data_config,
+            failure_profile=attack_config,
+        )
+
+    @classmethod
+    def from_auxiliary_failure(
+        cls,
+        data_config: DataConfig,
+        failure_profile: dict[str, LifelinesValue],
+    ) -> "LifelinesDataConfig":
         """Build auxiliary-attack mode config from an existing data config.
 
         Args:
                 data_config: Source data configuration to adapt.
-                attack_config: Attack configuration payload used for auxiliary mode.
+                failure_profile: Failure-signal configuration payload used for
+                    auxiliary failure mode. Can describe attack and non-attack
+                    failure sources.
 
         Returns:
-                Lifelines data config in auxiliary-attack mode.
+                Lifelines data config in auxiliary-failure mode.
         """
         return cls(
-            mode=LifelinesDataMode.AUXILIARY_ATTACK,
+            mode=LifelinesDataMode.AUXILIARY_FAILURE,
             dataset_name=data_config.dataset_name,
             target=data_config.target,
             classifier=data_config.classifier,
-            attack_config=attack_config,
+            failure_profile=failure_profile,
         )
 
     @classmethod
@@ -200,20 +229,46 @@ class LifelinesDataConfig(LifelinesValidationMixin, DataConfig):
         return self.mode == LifelinesDataMode.NATIVE
 
     def has_auxiliary_model(self) -> bool:
+        """Backwards-compatible wrapper for has_auxiliary_metric."""
+        return self.has_auxiliary_metric()
+
+    def has_auxiliary_metric(self) -> bool:
         """Return whether this config is in auxiliary-model mode.
 
         Returns:
-            ``True`` when mode is auxiliary model.
+            ``True`` when mode is auxiliary metric.
         """
-        return self.mode == LifelinesDataMode.AUXILIARY_MODEL
+        return self.mode == LifelinesDataMode.AUXILIARY_METRIC
 
     def has_auxiliary_attack(self) -> bool:
+        """Backwards-compatible wrapper for has_auxiliary_failure."""
+        return self.has_auxiliary_failure()
+
+    def has_auxiliary_failure(self) -> bool:
         """Return whether this config is in auxiliary-attack mode.
 
         Returns:
-            ``True`` when mode is auxiliary attack.
+            ``True`` when mode is auxiliary failure.
         """
-        return self.mode == LifelinesDataMode.AUXILIARY_ATTACK
+        return self.mode == LifelinesDataMode.AUXILIARY_FAILURE
+
+    @property
+    def benign_metric(self) -> str:
+        """Backwards-compatible alias for reference_metric."""
+        return self.reference_metric
+
+    @benign_metric.setter
+    def benign_metric(self, value: str) -> None:
+        self.reference_metric = value
+
+    @property
+    def attack_config(self) -> Optional[dict[str, Any]]:
+        """Backwards-compatible alias for failure_profile."""
+        return self.failure_profile
+
+    @attack_config.setter
+    def attack_config(self, value: Optional[dict[str, Any]]) -> None:
+        self.failure_profile = value
 
     def is_optuna_db(self) -> bool:
         """Return whether this config is in Optuna database mode.

@@ -19,6 +19,22 @@ from .utils import normalize_hydra_list_overrides
 logger = logging.getLogger(__name__)
 
 
+def _layer_help_summary(layer_name: str) -> str:
+    """Return a concise layer help summary from the registered layer parser."""
+    parser = layer_dict[layer_name][0]
+    description = getattr(parser, "description", None)
+    if isinstance(description, str):
+        summary = description.strip()
+        if summary:
+            return summary
+    usage = getattr(parser, "usage", None)
+    if isinstance(usage, str):
+        usage = usage.strip()
+        if usage:
+            return f"Run layer ({usage})"
+    return f"Run the {layer_name} layer"
+
+
 def _forward_hydra_control_args(parsed_args) -> list[str]:
     """
     Rebuild Hydra control CLI flags parsed by Hydra's own parser.
@@ -128,17 +144,27 @@ def _build_router() -> argparse.ArgumentParser:
     """
     parser = argparse.ArgumentParser(
         prog="deckard",
-        description="deckard command-line interface",
+        description=(
+            "deckard command-line interface. "
+            "Select a layer module and pass remaining arguments through to that layer parser and Hydra."
+        ),
     )
     subs = parser.add_subparsers(dest="module", metavar="MODULE", required=True)
     for name in layer_dict:
         sub = subs.add_parser(
             name,
-            help=f"Run the {name} layer",
+            help=_layer_help_summary(name),
+            description=_layer_help_summary(name),
             add_help=False,
-            # TODO: add comprehensive CLI help strings.
         )
-        sub.add_argument("remainder", nargs=argparse.REMAINDER)
+        sub.add_argument(
+            "remainder",
+            nargs=argparse.REMAINDER,
+            help=(
+                "Arguments forwarded to the selected layer parser/Hydra "
+                "(for example: --config-dir, --config-name, overrides)."
+            ),
+        )
     return parser
 
 

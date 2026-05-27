@@ -29,7 +29,11 @@ constructors, fit/predict loops, and model-state persistence adapters.
 - Core runtime keys (files/times/scores) must remain compatible.
 - Framework-specific state serialization must be explicit.
 - Wrapper logic must not bypass canonical experiment stage ordering.
-- `save`/`load` config behavior and `save_model`/`load_model` runtime behavior
+- {meth}`~deckard.frameworks.pytorch.model.PytorchModelConfig.save`/
+	{meth}`~deckard.frameworks.pytorch.model.PytorchModelConfig.load` config
+	behavior and
+	{meth}`~deckard.frameworks.pytorch.model.PytorchModelConfig.save_model`/
+	{meth}`~deckard.frameworks.pytorch.model.PytorchModelConfig.load_model` runtime behavior
 	must remain separate and explicit.
 
 ## Extension Points

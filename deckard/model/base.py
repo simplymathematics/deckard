@@ -231,13 +231,24 @@ class ModelConfig(BaseConfig):
 
     def _initialize_default_scorer(self) -> None:
         """Resolve model scorer defaults based on classifier mode."""
+        model_type_token = str(self.model_type or "").strip().lower()
+        use_cluster_defaults = (
+            self.classifier is False
+            and model_type_token != ""
+            and ".cluster." in model_type_token
+        )
+
         self.scorer = _coerce_scorer_config(
             self.scorer,
             default_factory=lambda: load_class(
                 (
                     "deckard.score.base.DefaultClassifierScorerDictConfig"
                     if self.classifier
-                    else "deckard.score.base.DefaultRegressorScorerDictConfig"
+                    else (
+                        "deckard.score.cluster.DefaultClusterScorerDictConfig"
+                        if use_cluster_defaults
+                        else "deckard.score.base.DefaultRegressorScorerDictConfig"
+                    )
                 ),
             ),
         )

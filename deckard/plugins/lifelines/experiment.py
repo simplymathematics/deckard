@@ -90,6 +90,7 @@ class SurvivalExperimentConfig(ExperimentConfig):
     dataset: Optional[str] = None
     model_config: Optional[dict[str, Any]] = None
     calculate_attack_failures: bool = False
+    calculate_failure_events: bool = False
     attack_optuna_db: Optional[str] = None
     attack_schema: Optional[Union[str, dict[str, Any]]] = None
     attack_query: Optional[str] = None
@@ -112,6 +113,7 @@ class SurvivalExperimentConfig(ExperimentConfig):
         execution_mode: str = "auto",
         attack_optuna_db: Optional[str] = None,
         attack: Optional[Union[Mapping[str, str], AttackConfig]] = None,
+        aux_model: Optional[Union[Mapping[str, Any], ModelConfig]] = None,
     ) -> str:
         """Resolve which execution mode to use.
 
@@ -135,7 +137,7 @@ class SurvivalExperimentConfig(ExperimentConfig):
             return execution_mode
         if attack_optuna_db is not None:
             return "optuna"
-        if attack is not None:
+        if attack is not None or aux_model is not None:
             return "auxiliary"
         return "native"
 
@@ -276,6 +278,27 @@ class SurvivalExperimentConfig(ExperimentConfig):
             benign_metric,
         )
 
+    @classmethod
+    def compute_failures_from_signals(
+        cls,
+        data: pd.DataFrame,
+        failure_profile: Optional[Any] = None,
+        reference_metric: str = "accuracy",
+    ) -> pd.DataFrame:
+        """Derive failure-count columns from attack and non-attack signals."""
+        config = cls(
+            data=DataConfig(dataset_name="toy"),
+            model="weibull",
+            target="E",
+            duration_col="T",
+            event_col="E",
+        )
+        return config.calculate_failures_from_signals(
+            data,
+            failure_profile,
+            reference_metric,
+        )
+
     @staticmethod
     def _require_non_empty_str(name: str, value: Any) -> str:
         if not isinstance(value, str) or value.strip() == "":
@@ -298,10 +321,6 @@ class SurvivalExperimentConfig(ExperimentConfig):
     def _validate_survival_data_model(self) -> None:
         if self.data is None:
             raise ValueError("SurvivalExperimentConfig requires a data config")
-        if self.aux_model is not None and self.attack is None:
-            raise ValueError(
-                "SurvivalExperimentConfig requires an attack config when aux_model is specified",
-            )
         if not isinstance(self.data, DataConfig):
             raise TypeError(
                 f"Expected data to resolve to DataConfig, got {type(self.data)}",
@@ -375,6 +394,7 @@ class SurvivalExperimentConfig(ExperimentConfig):
             execution_mode=self.execution_mode,
             attack_optuna_db=self.attack_optuna_db,
             attack=self.attack,
+            aux_model=self.aux_model,
         )
 
     def _resolve_covariates(self) -> list[str]:
@@ -433,6 +453,17 @@ class SurvivalExperimentConfig(ExperimentConfig):
         ]
 
     @staticmethod
+    def _candidate_failure_metrics() -> list[str]:
+        """Return generic non-attack failure signal columns."""
+        return [
+            "failure_rate",
+            "error_rate",
+            "failure_probability",
+            "incident_rate",
+            "risk_score",
+        ]
+
+    @staticmethod
     def _resolve_attack_size(
         output: pd.DataFrame,
         row_index: Optional[Any] = None,
@@ -470,39 +501,54 @@ class SurvivalExperimentConfig(ExperimentConfig):
         attack_config: Optional["AttackConfig"] = None,
         benign_metric: str = "accuracy",
     ) -> pd.DataFrame:
-        """Compute benign and adversarial failures from attack metrics.
+        """Backwards-compatible wrapper for calculate_failures_from_signals."""
+        return self.calculate_failures_from_signals(
+            data=data,
+            failure_profile=attack_config,
+            reference_metric=benign_metric,
+        )
+
+    def calculate_failures_from_signals(
+        self,
+        data: pd.DataFrame,
+        failure_profile: Optional[Any] = None,
+        reference_metric: str = "accuracy",
+    ) -> pd.DataFrame:
+        """Compute benign and adversarial failures from attack and non-attack signals.
 
         Args:
             data: Input dataframe containing score columns.
-            attack_config: Optional attack configuration for fallback metadata.
-            benign_metric: Metric column used for benign failures.
+            failure_profile: Optional failure profile for fallback metadata.
+            reference_metric: Metric column used for benign failures.
 
         Returns:
             Dataframe with derived ``ben_failures`` and/or ``adv_failures`` when
             sufficient data exists.
         """
         output = data.copy()
-        if benign_metric in output.columns and "ben_failures" not in output.columns:
+        if reference_metric in output.columns and "ben_failures" not in output.columns:
             if "attack_size" in output.columns:
                 attack_sizes = output["attack_size"].fillna(
                     self._resolve_attack_size(
                         output,
-                        attack_config=attack_config,
+                        attack_config=cast(Any, failure_profile),
                     ),
                 )
             else:
                 attack_sizes = pd.Series(
                     self._resolve_attack_size(
                         output,
-                        attack_config=attack_config,
+                        attack_config=cast(Any, failure_profile),
                     ),
                     index=output.index,
                     dtype=float,
                 )
-            output["ben_failures"] = attack_sizes * (1 - output[benign_metric])
+            output["ben_failures"] = attack_sizes * (1 - output[reference_metric])
 
         attack_label_col = self._get_attack_label_column(output)
-        attack_kind = attack_config.attack_kind if attack_config is not None else None
+        attack_kind = None
+        if failure_profile is not None and hasattr(failure_profile, "attack_kind"):
+            attack_kind = cast(str, failure_profile.attack_kind)
 
         if attack_label_col is not None:
             adv_failures = pd.Series(np.nan, index=output.index, dtype=float)
@@ -522,7 +568,7 @@ class SurvivalExperimentConfig(ExperimentConfig):
                         attack_size=self._resolve_attack_size(
                             output,
                             row_index=row_index,
-                            attack_config=attack_config,
+                            attack_config=cast(Any, failure_profile),
                         ),
                     )
                     break
@@ -536,14 +582,14 @@ class SurvivalExperimentConfig(ExperimentConfig):
                     attack_sizes = output["attack_size"].fillna(
                         self._resolve_attack_size(
                             output,
-                            attack_config=attack_config,
+                            attack_config=cast(Any, failure_profile),
                         ),
                     )
                 else:
                     attack_sizes = pd.Series(
                         self._resolve_attack_size(
                             output,
-                            attack_config=attack_config,
+                            attack_config=cast(Any, failure_profile),
                         ),
                         index=output.index,
                         dtype=float,
@@ -554,6 +600,32 @@ class SurvivalExperimentConfig(ExperimentConfig):
                     else 1 - output[metric]
                 )
                 break
+
+        if "adv_failures" not in output.columns:
+            for metric in self._candidate_failure_metrics():
+                if metric not in output.columns:
+                    continue
+                if "attack_size" in output.columns:
+                    sizes = output["attack_size"].fillna(1.0)
+                else:
+                    sizes = pd.Series(1.0, index=output.index, dtype=float)
+                values = pd.to_numeric(output[metric], errors="coerce")
+                if values.notna().any():
+                    output["adv_failures"] = sizes * values
+                    break
+
+        if (
+            "adv_failures" not in output.columns
+            and self.target in output.columns
+            and self.target not in {self.duration_col, self.event_col}
+        ):
+            candidate = pd.to_numeric(output[self.target], errors="coerce")
+            if candidate.notna().any() and candidate.between(0, 1).all():
+                if "attack_size" in output.columns:
+                    sizes = output["attack_size"].fillna(1.0)
+                else:
+                    sizes = pd.Series(1.0, index=output.index, dtype=float)
+                output["adv_failures"] = sizes * candidate
         return output
 
     def make_survival_model_table(
@@ -909,8 +981,6 @@ class SurvivalExperimentConfig(ExperimentConfig):
             )
             data_name = Path(self.attack_optuna_db).stem
         elif resolved_mode == "auxiliary":
-            if self.attack is None:
-                raise ValueError("attack is required for execution_mode='auxiliary'")
             loaded_data, attack_cfg, aux_model = self.run_auxiliary_mode(
                 data_cfg=self.data,
                 survival_config=self,
@@ -923,14 +993,18 @@ class SurvivalExperimentConfig(ExperimentConfig):
             )
             data_name = getattr(self.data, "dataset_name", None) or "data"
 
-        if self.calculate_attack_failures or self.target in {
+        if (
+            self.calculate_attack_failures
+            or self.calculate_failure_events
+            or self.target in {
             "ben_failures",
             "adv_failures",
-        }:
-            loaded_data = self.compute_failures_under_attack(
+        }
+        ):
+            loaded_data = self.calculate_failures_from_signals(
                 loaded_data,
-                attack_config=attack_cfg,
-                benign_metric="accuracy",
+                failure_profile=attack_cfg,
+                reference_metric="accuracy",
             )
 
         cleaned = self._prepare_loaded_data(loaded_data)

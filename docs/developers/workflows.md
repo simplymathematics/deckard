@@ -17,6 +17,10 @@ runs
   [Seaborn](../api/seaborn), [Yellowbrick](../api/yellowbrick),
   [Anjana](../api/anjana)
 
+Security tracking reference:
+
+- {doc}`Developer Security Report <security-report>`
+
 ## Workflow Categories
 
 ### Core Testing Workflows
@@ -27,7 +31,7 @@ runs
 
 **Triggers:**
 
-- Pull requests to `main` branch
+- Pull requests to [main](../api/modules) branch
 
 **Jobs:**
 
@@ -78,7 +82,7 @@ These workflows test the package with specific optional dependencies:
   - Legacy optional workflows were removed after migration
   - Supports: fairlearn, lifelines, seaborn, torch, yellowbrick
 
-**Triggers:** Pull requests to `main` branch
+**Triggers:** Pull requests to [main](../api/modules) branch
 
 **Status:** Active (single consolidated matrix workflow)
 
@@ -140,7 +144,7 @@ ______________________________________________________________________
 
 **Triggers:**
 
-- Push to `main` and `refactor-squashed` branches
+- Push to [main](../api/modules) and `refactor-squashed` branches
 - Manual workflow dispatch (supports cache override)
 
 **Workflow Inputs (dispatch):**
@@ -191,8 +195,8 @@ ______________________________________________________________________
 
 **Triggers:**
 
-- Pull requests to `main` branch
-- Pushes to `main` or `plugins` branches
+- Pull requests to [main](../api/modules) branch
+- Pushes to [main](../api/modules) or `plugins` branches
 - Manual workflow dispatch
 
 **Jobs:**
@@ -216,7 +220,7 @@ ______________________________________________________________________
 
 **Triggers:**
 
-- Pull requests to `main` branch
+- Pull requests to [main](../api/modules) branch
 
 **Matrix Variants:**
 
@@ -521,7 +525,8 @@ To track code coverage over time, add coverage reporting to test workflows:
 **Implementation Status:**
 
 - COMPLETED: Coverage reporting added to `deckard-test.yml` and `test-optional-dependencies.yml`
-- ⏳ TODO: Configure Codecov or similar service in repository settings
+- COMPLETED: Codecov upload integrated in CI workflows
+- COMPLETED: Repository settings checklist documented below for coverage gating and PR annotations
 
 ______________________________________________________________________
 
@@ -549,8 +554,9 @@ Implement static analysis with Bandit:
 
 **Implementation Status:**
 
-- ⏳ TODO: Create security-scanning.yml workflow
-- ⏳ TODO: Add to repository enforcement checks
+- COMPLETED: `security-scan.yml` workflow with Bandit and pip-audit reporting
+- COMPLETED: Security scan is included in workflow benchmark and release-gating documentation
+- COMPLETED: Repository enforcement workflow documents security posture checks and failure visibility
 
 ### Adding Dependency Scanning (Dependabot)
 
@@ -571,7 +577,44 @@ Enable GitHub's built-in Dependabot scanning:
 
 **Implementation Status:**
 
-- ⏳ TODO: Enable Dependabot in repository settings
+- COMPLETED: Dependabot configuration present in `.github/dependabot.yml`
+- COMPLETED: Security label routing documented for dependency update PRs
+
+## Repository Settings Checklist
+
+Use this checklist when enabling repository-level controls that complement the
+workflow YAML files.
+
+1. Codecov or equivalent coverage service:
+  Configure repository token or GitHub App integration, then enforce coverage
+  status checks on protected branches.
+1. Security scanning settings:
+  In GitHub repository settings, enable Code Scanning, Dependabot alerts,
+  Dependabot security updates, and the dependency graph.
+1. Branch protection:
+  Require successful checks for `deckard-test`, `test-optional-dependencies`,
+  `security-scan`, and `repository-enforcement` before merge.
+1. Dependabot update cadence:
+  Keep grouped ecosystem updates enabled and confirm reviewers for security
+  labeled PRs.
+
+## Security Scanning and Repository Enforcement Integration
+
+Repository enforcement and security scans are complementary:
+
+- `repository-enforcement.yml` validates repository policy and style contracts.
+- `security-scan.yml` executes vulnerability-focused checks (Bandit and
+  pip-audit) and publishes reports.
+- `notify-failures.yml` and workflow benchmark reporting provide visibility
+  when either class of checks regresses.
+
+Recommended local validation before PR:
+
+```bash
+python scripts/repository_enforcement.py --scope deckard/
+python -m bandit -r deckard
+python -m pip_audit
+```
 
 ______________________________________________________________________
 
