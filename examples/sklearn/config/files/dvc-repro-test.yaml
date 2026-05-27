@@ -1,0 +1,10 @@
+# Minimal file contract for DVC repro integration tests.
+# Keep component artifact aliases unset so DVC only enforces outputs
+# that the persist stage guarantees for this test fixture.
+params_file: params.yaml
+score_file: artifacts/scores.json
+log_file: artifacts/run.log
+error_file: artifacts/error.log
+data_file: null
+model_file: null
+attack_file: null
