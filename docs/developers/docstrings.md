@@ -10,6 +10,7 @@ No reStructuredText markup is allowed in public docstrings.
 
 | Section | When to include |
 |------------|-------------------------------|
+| `Attributes:` | Public classes that define runtime/config fields (required for `*Config`, `*Mixin`, `*Plugin`, and runtime sub-objects like samplers, pipelines, trainers, defenses, scorers) |
 | `Args:` | Any parameter |
 | `Returns:` | Non-`None` return value |
 | `Raises:` | Documented exceptions |
@@ -32,8 +33,17 @@ No reStructuredText markup is allowed in public docstrings.
 ## Example
 
 ````python
+class DemoConfig:
+    """Demonstration config for the docstring contract.
+
+    Attributes:
+        threshold: Score threshold used by runtime filtering.
+        alias: Optional display alias for outputs.
+    """
+
+
 def _sensitive_labels_from_frame(self, frame: pd.DataFrame) -> pd.Series:
-    """Resolve sensitive labels from *frame* using `sensitive_columns`.
+    """Resolve sensitive labels from `frame` using `sensitive_columns`.
 
     Args:
         frame (pd.DataFrame): Input data frame.

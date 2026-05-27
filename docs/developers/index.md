@@ -9,6 +9,46 @@ integrating with Deckard.
 Use this page as the main contributor entry point for setup, testing,
 documentation, and architecture references.
 
+## Docs Map
+
+Use this map to choose where to read first:
+
+- User-facing behavior and usage: {doc}`../overview/index` and {doc}`../api/modules`.
+- Developer architecture and runtime contracts: {doc}`design`, {doc}`orchestration`, {doc}`canon_runtime`.
+- Extension authoring and execution surfaces: {doc}`plugins`, {doc}`hooks`, {doc}`mixins`.
+
+## Core Runtime Docs
+
+- {doc}`Data Design and Contract <data>`
+- {doc}`Model Design and Contract <model>`
+- {doc}`Attack Design and Contract <attack>`
+- {doc}`Detector Design and Contract <detector>`
+- {doc}`Experiment Design and Contract <experiment>`
+- {doc}`Score Serialization Contract <score>`
+- {doc}`Plot Design and Contract <plot>`
+- {doc}`Orchestration Guide <orchestration>`
+- {doc}`Canon Runtime Execution Guide <canon_runtime>`
+
+## Documentation Standards
+
+- {doc}`Developer Page Template <template>`
+- {doc}`Developer to API Parity Map <parity>`
+
+## Framework Integration Docs
+
+- {doc}`../api/pytorch`
+- {doc}`Hydra and Optuna Orchestration Contract <hydra>`
+
+## Plugin Integration Docs
+
+- {doc}`Mixin and Plugin Rules <plugins>`
+- {doc}`Plugin and Hook Execution Reference <hooks>`
+- {doc}`../api/fairlearn`
+- {doc}`../api/lifelines`
+- {doc}`../api/anjana`
+- {doc}`../api/seaborn`
+- {doc}`../api/yellowbrick`
+
 ## Development Workflow
 
 Deckard is a Python package for declarative AI experimentation, evaluation,
@@ -181,6 +221,21 @@ see [DVC Cache Setup Summary](actionscache).
 - {doc}`DVC Pipeline Autogeneration Spec <dvc>`
 - {doc}`Plugin Runtime Migration Guardrails <migration>`
 - {doc}`Docstring Standard <docstrings>`
+- {doc}`Config Class Contract <configs>`
+- {doc}`Mixin Class Contract <mixins>`
+- {doc}`Plugin Rules and Capabilities <plugins>`
+- {doc}`Sampler Class Contract <samplers>`
+- {doc}`Pipeline Class Contract <pipelines>`
+- {doc}`Trainer Class Contract <trainers>`
+- {doc}`Defense Class Contract <defenses>`
+- {doc}`Scorer Class Contract <scorers>`
+- {doc}`Orchestration Guide <orchestration>`
+- {doc}`Canon Runtime Execution Guide <canon_runtime>`
+- {doc}`Detector Design and Contract <detector>`
+- {doc}`Plot Design and Contract <plot>`
+- {doc}`Developer Page Template <template>`
+- {doc}`Developer to API Parity Map <parity>`
+- {doc}`Docs Refactor Checklist <new_docs>`
 - {doc}`GH Actions Cache Setup <actionscache>`
 
 ```{toctree}
@@ -196,10 +251,12 @@ plugins
 data
 model
 attack
+detector
 experiment
 hooks
 persistence
 score
+plot
 optimization
 optimize
 hydra
@@ -207,6 +264,18 @@ pruning
 dvc
 migration
 docstrings
+configs
+mixins
+samplers
+pipelines
+trainers
+defenses
+scorers
+orchestration
+canon_runtime
+template
+parity
+new_docs
 actionscache
 ```
 
@@ -231,3 +300,9 @@ ______________________________________________________________________
 - {doc}`Pruning Runtime Contract <pruning>`
 - {doc}`DVC Pipeline Autogeneration Spec <dvc>`
 - {doc}`Plugin Runtime Migration Guardrails <migration>`
+- {doc}`Canon Runtime Execution Guide <canon_runtime>`
+- {doc}`Detector Design and Contract <detector>`
+- {doc}`Plot Design and Contract <plot>`
+- {doc}`Developer Page Template <template>`
+- {doc}`Developer to API Parity Map <parity>`
+- {doc}`Docs Refactor Checklist <new_docs>`

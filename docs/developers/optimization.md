@@ -98,7 +98,7 @@ Required behavior:
 ## Integration With Pruning
 
 Pruning behavior is owned by trainer/runtime flow and documented in
-[Pruning Runtime Contract](pruning.md).
+[Pruning Runtime Contract](pruning).
 
 Optimization runtime must provide trial context that supports:
 
@@ -109,7 +109,7 @@ Optimization runtime must provide trial context that supports:
 ## Integration With Hydra
 
 Hydra orchestration details (sweeper, callback lifecycle, custom search space)
-are documented in [Hydra and Optuna Orchestration Contract](hydra.md).
+are documented in [Hydra and Optuna Orchestration Contract](hydra).
 
 Hydra integration model for this contract:
 
@@ -120,13 +120,75 @@ Hydra integration model for this contract:
 ## Integration With DVC and DVCLive
 
 DVC stage generation and DVCLive reporting contract are documented in
-[DVC Pipeline Autogeneration Spec](dvc.md).
+[DVC Pipeline Autogeneration Spec](dvc).
 
 Optimization runtime is the source of truth for:
 
 - metrics payload shape
 - objective key semantics
 - trial identity and study metadata
+
+
+
+
+# Optimize Developer Guide
+
+This page is the implementation-oriented companion to the optimization runtime contract.
+
+Related specs:
+
+- [Optimization Runtime Contract](optimization)
+- [Hydra and Optuna Orchestration Contract](hydra)
+- [Pruning Runtime Contract](pruning)
+- [DVC Pipeline Autogeneration Spec](dvc)
+
+## Purpose
+
+Use this guide when implementing or reviewing optimize flows in code, notebooks, and tests.
+
+Core expectations:
+
+- one Hydra default profile should support run and multirun
+- stage and trial fan-out control must come from runtime overrides
+- callback lifecycle stays adapter-thin and delegates policy to {class}`deckard.layers.optimize.OptimizerConfig`
+- persisted params and scores stay deterministic and reproducible
+
+## Canonical Surfaces
+
+Primary code paths:
+
+- `deckard/layers/optimize.py`
+- `deckard/layers/optuna_callback.py`
+- `deckard/experiment/base.py`
+- `deckard/experiment/canon.py`
+
+Primary config source:
+
+- `examples/sklearn/config/default.yaml`
+
+Primary demonstration notebooks:
+
+- `docs/notebooks/hydra.ipynb`
+- `docs/notebooks/optimize.ipynb`
+
+## Runtime Contract Checks
+
+When validating optimize behavior, confirm:
+
+1. callback target resolves to `deckard.layers.optimize.DefaultOptimizerCallback`
+2. callback directions and optimizers align with {class}`deckard.layers.optimize.OptimizerConfig`
+3. single-run stage selection works via runtime override (`stage=...`)
+4. multirun fan-out works via sweeper overrides (`hydra.sweeper.*`)
+5. files-only persistence aliases are used for params, scores, logs, and errors
+6. Optuna storage and study metadata produce stable trial identity mapping
+7. pruning-enabled runs can record or surface `TrialPruned` states without corrupting artifacts
+8. run and multirun params materialize deterministically for equivalent settings
+
+## Recommended Notebook Validation Sequence
+
+1. run `docs/notebooks/hydra.ipynb` to verify compose and command templates
+2. run `docs/notebooks/optimize.ipynb` sections for single-run, multirun, and pruning
+3. verify generated params snapshots under `docs/build/`
 
 ## Test Requirements
 

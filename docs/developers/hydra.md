@@ -108,9 +108,9 @@ Persistence should include:
 
 ## Cross-Document Dependencies
 
-- Runtime optimization contract: [Optimization Runtime Contract](optimization.md)
-- Pruning contract: [Pruning Runtime Contract](pruning.md)
-- DVC/DVCLive contract: [DVC Pipeline Autogeneration Spec](dvc.md)
+- Runtime optimization contract: [Optimization Runtime Contract](optimization)
+- Pruning contract: [Pruning Runtime Contract](pruning)
+- DVC/DVCLive contract: [DVC Pipeline Autogeneration Spec](dvc)
 
 ## Test Requirements
 
@@ -121,3 +121,13 @@ At minimum, tests must validate:
 - metric name setup and objective filtering consistency
 - trial id normalization across launcher formats
 - stable params and score persistence
+
+
+
+## See also
+
+- {doc}`optmization`
+- {doc}`dvc`
+- {doc}`orchestration`
+
+

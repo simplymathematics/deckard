@@ -43,7 +43,7 @@ Pipeline and scoring hooks must remain separately named and composable.
 Expected pattern:
 
 - pipeline hook bundle: stage hooks such as `before_sample`, `after_pipeline`
-- scoring hook bundle: score-tail hooks such as `after_score*`
+- scoring hook bundle: score-tail hooks such as `after_score`
 - composed runtime plugin list from named bundles
 
 ## Files-Only Persistence Guard

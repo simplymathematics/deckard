@@ -73,9 +73,9 @@ Failure behavior must be explicit and avoid corrupting trial metadata.
 
 ## Cross-Document Dependencies
 
-- Execution boundaries and score contract: [Optimization Runtime Contract](optimization.md)
-- Orchestration and callback lifecycle: [Hydra and Optuna Orchestration Contract](hydra.md)
-- Reporting and artifact mapping: [DVC Pipeline Autogeneration Spec](dvc.md)
+- Execution boundaries and score contract: [Optimization Runtime Contract](optimization)
+- Orchestration and callback lifecycle: [Hydra and Optuna Orchestration Contract](hydra)
+- Reporting and artifact mapping: [DVC Pipeline Autogeneration Spec](dvc)
 
 ## Test Requirements
 
@@ -86,3 +86,4 @@ At minimum, tests must cover:
 - behavior with absent trial context
 - metric/step configuration edge cases
 - post-prune artifact and logging behavior
+

@@ -669,4 +669,3 @@ Design specs: [Optimization Runtime Contract](optimization) | [Hydra and Optuna 
 
   `docs/developers/refactor_plan` progress.
 
-______________________________________________________________________

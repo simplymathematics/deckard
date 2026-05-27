@@ -276,4 +276,36 @@ Persist in state metadata:
 
 - Replacing artifact payload formats already supported by {class}`deckard.artifacts.ArtifactLoaderConfig`.
 - Forcing all payloads into one file format.
-- Introducing framework-specific persistence branches into core runtime contracts.
+- Introducing framework-specific persistence branches into core runtime modules.
+
+## Purpose and Rationale
+
+Define ownership boundaries, design intent, and tradeoffs for this domain.
+
+## Internal Architecture
+
+Describe runtime components, data flow, and orchestration boundaries.
+
+## Execution Model
+
+Describe canonical stage ordering and lifecycle semantics.
+
+## Contracts and Invariants
+
+Define non-negotiable behavior guarantees and invariant runtime contracts.
+
+## Extension Points
+
+Describe framework/plugin extension surfaces and constraints.
+
+## Validation and Guardrails
+
+List failure modes, guardrails, and validating tests.
+
+## Migration and Compatibility
+
+Document migrations, aliases, and compatibility expectations.
+
+## See also
+
+- {doc}`../api/modules`

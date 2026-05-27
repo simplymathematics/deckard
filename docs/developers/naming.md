@@ -28,6 +28,3 @@ objects to ensure clarity and composability.
 - YAML: snake_case with dashes for aliases (e.g., `model/fairlearn-classifier.yaml`)
 - Python: PascalCase for all public classes
 
-______________________________________________________________________
-
-**Related:** [Refactor Plan](refactor_plan) | [Mixin and Plugin Rules](plugins)

@@ -4,10 +4,10 @@ This guide consolidates Phase 7 validation and documentation contracts for exper
 
 Related docs:
 
-- [Experiment Runtime Contract](optimization.md)
-- [Hydra and Optuna Orchestration Contract](hydra.md)
-- [Pruning Runtime Contract](pruning.md)
-- [DVC Pipeline Autogeneration Spec](dvc.md)
+- [Experiment Runtime Contract](optimization)
+- [Hydra and Optuna Orchestration Contract](hydra)
+- [Pruning Runtime Contract](pruning)
+- [DVC Pipeline Autogeneration Spec](dvc)
 - [Refactor Plan](refactor_plan)
 
 ## Experiment Canon
@@ -117,3 +117,7 @@ These tests cover:
 4. callback/policy delegation between {class}`deckard.layers.optimize.DefaultOptimizerCallback` and {class}`deckard.layers.optimize.OptimizerConfig`
 5. pruning propagation via `TrialPruned`
 6. DVC contract behavior for plots, identities, metrics policy, and reports
+
+## See also
+
+- {doc}`../api/experiment`

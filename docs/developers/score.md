@@ -126,3 +126,88 @@ Maintain this contract when extending DVC score hooks:
 
 Data-scoring paths should use X/y runtime semantics.
 Legacy y_true/y_pred usage may still appear in non-data scoring domains (for example attack/model scorers), where it remains valid.
+
+# Scorer Contract
+
+Detailed contract for scorer sub-objects and scorer dictionaries.
+
+## Purpose
+
+Scorer objects convert runtime outputs into comparable metrics across data,
+model, attack, and extension stages.
+
+## Capabilities
+
+- Stage-aware metric dispatch.
+- Support for label, probability, and logits-based metrics.
+- Structured score payload emission for persistence and reporting.
+
+## Standards Followed
+
+- Docstring standard: {doc}`docstrings`
+- Score design: {doc}`score`
+
+## Required Documentation
+
+- Metric intent and stage/split applicability
+- `Attributes:` for scorer configuration fields
+- `Args:` and `Returns:` for callable scorer interfaces
+
+## Purpose and Rationale
+
+Define ownership boundaries, design intent, and tradeoffs for this domain.
+
+## Internal Architecture
+
+Scorer implementation is centered in {mod}`deckard.score.base` and composed
+through these primary runtime objects:
+
+- {class}`deckard.score.base.ScorerConfig`
+- {class}`deckard.score.base.ScorerDictConfig`
+- stage enums in {mod}`deckard.score.base` (model/data/attack/defense/pipeline/detector)
+- canonical score persistence through {class}`deckard.artifacts.ScoreDict`
+
+## Execution Model
+
+Canonical scorer execution is:
+
+1. Normalize stage/mode tokens via score canon helpers.
+2. Resolve scorer callables from import strings/callables/config dicts.
+3. Select runtime payload (labels/proba/logits) by scorer flags.
+4. Emit normalized metric keys and merge into ScoreDict payloads.
+
+## Contracts and Invariants
+
+- Stage filtering must be deterministic for equivalent scorer configs.
+- `needs_proba` and `needs_logits` flags must drive payload selection
+	explicitly.
+- Score payload merges must remain collision-safe and deterministic.
+- Public scorer configs must preserve stable field names used in YAML/Hydra
+	profiles.
+
+## Extension Points
+
+Extensions should be implemented as additional scorer profiles/config groups
+that compose {class}`deckard.score.base.ScorerDictConfig` rather than replacing
+core scorer lifecycle behavior.
+
+## Validation and Guardrails
+
+Primary guardrails:
+
+- reject unresolved scorer callables early,
+- validate stage/mode compatibility before scorer execution,
+- enforce JSON/YAML-serializable metric payloads before persistence.
+
+Validation should include scorer tests in `test/test_score/` and integration
+checks in `test/test_experiment/` for stage-ordered metric emission.
+
+## Migration and Compatibility
+
+Legacy stage aliases and metric naming compatibility should be normalized at
+score-canon boundaries so existing report/optimization consumers continue to
+resolve score keys.
+
+## See also
+
+- {doc}`../api/score`

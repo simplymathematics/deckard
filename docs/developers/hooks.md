@@ -230,3 +230,10 @@ plot:
 - Emit stage-aware hooks, but keep score mode split-scoped.
 - Persist through canonical file aliases and artifacts utilities.
 - Add contract tests when introducing new hook stages or plugin branches.
+
+## See also
+
+- {doc}`plugins`
+- {doc}`mixins`
+- {doc}`orchestration`
+
