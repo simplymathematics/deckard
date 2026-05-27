@@ -29,20 +29,30 @@ jobs:
       HF_DATASETS_CACHE: ~/.cache/huggingface/datasets
     steps:
     - uses: actions/checkout@v4
+    - name: Disk usage before cleanup
+      run: |
+        echo "Disk usage before cleanup:"
+        df -h
+    - name: Free disk space on runner
+      run: |
+        # Remove large preinstalled SDKs we do not use in docs builds.
+        sudo rm -rf /usr/share/dotnet || true
+        sudo rm -rf /usr/local/lib/android || true
+        sudo rm -rf /opt/ghc || true
+        sudo rm -rf /opt/hostedtoolcache/CodeQL || true
+    - name: Disk usage after cleanup
+      run: |
+        echo "Disk usage after cleanup:"
+        df -h
     - uses: actions/setup-python@v5
       with:
         python-version: '3.10'
         cache: 'pip'
-    - name: Cache DVC artifacts and notebooks
+    - name: Cache DVC artifacts
       uses: actions/cache@v4
       with:
         path: |
-          docs/notebooks/build/
           docs/notebooks/.dvc/cache/
-          ~/.cache/huggingface/
-          ~/.cache/huggingface/hub/
-          ~/.cache/huggingface/transformers/
-          ~/.cache/huggingface/datasets/
         key: dvc-cache-${{ runner.os }}-${{ hashFiles('.github/workflows/compile-docs.yml', 'docs/Makefile', 'docs/notebooks/dvc.lock', 'docs/notebooks/dvc.yaml', 'pyproject.toml') }}
         restore-keys: |
           dvc-cache-${{ runner.os }}-

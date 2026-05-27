@@ -102,6 +102,7 @@ test = [
     "isort",
     "mypy",
     "pre-commit",
+    "pymarkdownlnt",
     "pandas",
     "numpy",
 
@@ -170,6 +171,7 @@ all = [
     "isort",
     "mypy",
     "pre-commit",
+    "pymarkdownlnt",
 
     "torch>=2.0.0",
     "torchvision>=0.15.0",
@@ -194,6 +196,11 @@ exclude = [
   "build",
   "docs"
 ]
+
+[tool.pymarkdown]
+
+[tool.pymarkdown.plugins.md013]
+enabled = false
 
 [tool.pytest.ini_options]
 markers = [

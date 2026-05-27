@@ -148,7 +148,9 @@ def _class_requires_attributes_section(class_name: str) -> bool:
         return False
     suffixes = ("Config", "Mixin", "Plugin")
     tokens = ("Sampler", "Pipeline", "Trainer", "Defense", "Scorer")
-    return class_name.endswith(suffixes) or any(token in class_name for token in tokens)
+    return class_name.endswith(suffixes) or any(
+        token in class_name for token in tokens
+    )
 
 
 def _class_field_annotations(node: ast.ClassDef) -> list[ast.AnnAssign]:
