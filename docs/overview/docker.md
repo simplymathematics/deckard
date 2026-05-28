@@ -49,11 +49,11 @@ docker build \
 
 ## CI workflows
 
-- [docker-push.yml](../../.github/workflows/docker-push.yml) publishes `cpu`,
-  `mps`, and `cuda` tags on pushes to `main`.
-- [docker-test.yml](../../.github/workflows/docker-test.yml) builds `cpu`,
-  `mps`, and `cuda` variants on pull requests (no publish).
+- [docker-push.yml](../../.github/workflows/docker-push.yml) publishes cpu,
+  mps, and cuda tags on pushes to main.
+- [docker-test.yml](../../.github/workflows/docker-test.yml) builds cpu,
+  mps, and cuda variants on pull requests (no publish).
 
-For local workflow runner usage (`test_workflow.sh`), see the [scripts
+For local workflow runner usage ([test_workflow.sh](../../scripts/test_workflow.sh)), see the [scripts
 directory](https://github.com/simplymathematics/deckard/tree/main/scripts) for
 helper scripts and usage instructions.

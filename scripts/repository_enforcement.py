@@ -26,7 +26,7 @@ from typing import Iterable
 
 ROOT = Path(__file__).resolve().parents[1]
 DECKARD_DIR = ROOT / "deckard"
-DEFAULT_DOCS_SCOPES = ("docs/overview", "docs/developers")
+DEFAULT_DOCS_SCOPES = ("docs",)
 
 RST_TOKENS = (":param", ":type", ":rtype:", ".. code-block::", ".. note::")
 PROTECTED_MIXIN_HOOK_METHODS = {
