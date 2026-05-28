@@ -269,8 +269,8 @@ stages:
     - ../../deckard/file.py
     - ../../deckard/utils.py
     outs:
-    - ./build/notebook_artifacts/lifelines/mode2_aux_model.csv
-    - ./build/notebook_artifacts/lifelines/mode3_aux_attack.csv
+    - ./build/notebook_artifacts/lifelines/mode2_aux_metric.csv
+    - ./build/notebook_artifacts/lifelines/mode3_aux_failure.csv
     metrics:
     - ./build/notebook_artifacts/lifelines/summary.json
 
