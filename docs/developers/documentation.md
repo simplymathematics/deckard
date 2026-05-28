@@ -77,8 +77,7 @@ Syntax requirements:
 
 Docs enforcement scope defaults to:
 
-- `docs/overview`
-- `docs/developers`
+- `docs` (all markdown pages and notebook markdown cells)
 
 Override behavior:
 
