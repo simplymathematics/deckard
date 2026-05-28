@@ -4,7 +4,6 @@ This page is the single source of truth for Deckard documentation standards.
 
 It consolidates and supersedes distributed standards from:
 
-- {doc}`new_docs`
 - `scripts/repository_enforcement.py`
 - `scripts/fix_docs_crosslinks.py`
 - legacy docstring/build-docs notes previously split across developer pages

@@ -77,6 +77,7 @@ Supported inference subtypes:
 - [`model_inversion`](#model-inversion-attacks)
 - [`reconstruction`](#reconstruction-attacks)
 
+(evasion-attacks)=
 ### Evasion attacks
 
 Evasion attacks measure post-attack model robustness by perturbing evaluation
@@ -88,6 +89,7 @@ Common implementations include gradient- and decision-based methods such as
 `FastGradientMethod`, `ProjectedGradientDescent`, `HopSkipJump`, and
 `BoundaryAttack`.
 
+(poisoning-attacks)=
 ### Poisoning attacks
 
 Poisoning attacks measure training-time robustness by injecting crafted samples
@@ -96,6 +98,7 @@ example, accuracy drop or calibration drift) after retraining.
 
 In notebook and config workflows this commonly includes `PoisoningAttackSVM`.
 
+(extraction-attacks)=
 ### Extraction attacks
 
 Extraction attacks measure model theft risk by querying a target model and
@@ -105,11 +108,13 @@ on held-out data.
 
 In notebook and config workflows this commonly includes `CopycatCNN`.
 
+(inference-attacks)=
 ### Inference attacks
 
 Inference attacks measure privacy leakage from model behavior or outputs rather
 than only predictive robustness.
 
+(membership-inference-attacks)=
 #### Membership inference attacks
 
 Membership inference measures whether an attacker can determine if a sample was
@@ -118,6 +123,7 @@ metrics under the `membership_inference_*` namespace.
 
 Common implementation: `MembershipInferenceBlackBox`.
 
+(attribute-inference-attacks)=
 #### Attribute inference attacks
 
 Attribute inference measures whether sensitive or hidden attributes can be
@@ -126,6 +132,7 @@ recovered from model predictions and observed features. Deckard emits these as
 
 Common implementation: `AttributeInferenceBlackBox`.
 
+(model-inversion-attacks)=
 #### Model inversion attacks
 
 Model inversion measures how much feature-level information can be reconstructed
@@ -133,6 +140,7 @@ about target classes or individuals from model outputs or gradients.
 
 Common implementation: `MIFace`.
 
+(reconstruction-attacks)=
 #### Reconstruction attacks
 
 Reconstruction attacks measure the ability to recover representative training

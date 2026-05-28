@@ -172,7 +172,7 @@ plot:
 ### See also
 
 - {doc}`experiment` — experiment orchestration and result generation
-- {doc}[score](score) — scoring framework that produces plotting data
+- {doc}`../api/score` — scoring framework that produces plotting data
 - {doc}[seaborn](../overview/extensions/seaborn) — statistical visualization with Seaborn
 - {doc}[yellowbrick](../overview/extensions/yellowbrick) — model interpretability visualizations
 - {doc}[lifelines](../overview/extensions/lifelines) — survival model and plotting integration

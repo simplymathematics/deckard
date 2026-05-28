@@ -60,7 +60,7 @@ Anjana adds anonymization-aware preprocessing and privacy-oriented scoring.
 - [Anjana API](../../api/anjana)
 - [Anjana notebook](../../notebooks/anjana)
 
-See also {doc}`ANJANA plugin overview <anjana>`.
+See also {doc}`ANJANA plugin overview <../../api/anjana>`.
 
 ### Fairlearn
 
@@ -108,7 +108,7 @@ examples rather than a standalone plugin page.
 ## Plugin License References
 
 - Fairlearn plugin: [Fairlearn extension](fairlearn), upstream [MIT License](https://github.com/fairlearn/fairlearn/blob/main/LICENSE)
-- Anjana plugin: [Anjana extension](anjana), upstream licensing by package metadata/distribution
+- Anjana plugin: [Anjana extension](../../api/anjana), upstream licensing by package metadata/distribution
 - Lifelines plugin: [Lifelines extension](lifelines), upstream [MIT License](https://github.com/CamDavidsonPilon/lifelines/blob/master/LICENSE)
 - Seaborn plugin: [Seaborn extension](seaborn), upstream [BSD-3-Clause License](https://github.com/mwaskom/seaborn/blob/master/LICENSE.md)
 - Yellowbrick plugin: [Yellowbrick extension](yellowbrick), upstream [BSD-3-Clause License](https://github.com/DistrictDataLabs/yellowbrick/blob/develop/LICENSE.txt)

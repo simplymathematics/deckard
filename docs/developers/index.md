@@ -281,6 +281,7 @@ samplers
 pipelines
 trainers
 defenses
+matplotlibrc
 orchestration
 canon_runtime
 prediction-history-implementation-checklist

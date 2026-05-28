@@ -64,6 +64,7 @@ The default score profiles registered in Hydra config store are:
 
 - {class}`~deckard.score.DefaultModelScorerDictConfig`
 
+(scorersclassification-and-scorersregression-yaml-example)=
 #### `scorers/classification` and `scorers/regression` YAML example
 
 ```yaml
@@ -233,6 +234,7 @@ inference, and attribute inference workflows.
 
 - {class}`~deckard.score.DefaultEvasionAttackScorerDictConfig`
 
+(scorersevasion-and-scorersevasion-regression-yaml-example)=
 #### `scorers/evasion` and `scorers/evasion-regression` YAML example
 
 ```yaml
@@ -254,6 +256,7 @@ metrics:
 - {class}`~deckard.score.DefaultEvasionRegressionAttackScorerDictConfig`
 - {class}`~deckard.score.DefaultMembershipInferenceAttackScorerDictConfig`
 
+(scorersmembership-inference-yaml-example)=
 #### `scorers/membership-inference` YAML example
 
 ```yaml
@@ -284,8 +287,10 @@ metrics:
 
 - {class}`~deckard.score.DefaultAttributeInferenceRegressionAttackScorerDictConfig`
 
+(scorersattribute-inference-and-scorersattribute-inference-regression-yaml-example)=
 #### `scorers/attribute-inference` and `scorers/attribute-inference-regression` YAML example
 
+(scorersfairlearn-attack-yaml-example)=
 #### `scorers/fairlearn-attack` YAML example
 
 ```yaml
@@ -320,6 +325,7 @@ Lifelines adds survival-analysis scoring on top of the default scorer families.
 - Lifelines scorer reference:
   [concordance_index](https://lifelines.readthedocs.io/en/latest/lifelines.utils.html#lifelines.utils.concordance_index)
 
+(scorerssurvival-yaml-example)=
 ### `scorers/survival` YAML example
 
 ```yaml
@@ -337,6 +343,7 @@ Anjana adds privacy/utility-oriented anonymization scoring profiles.
   {class}`~deckard.score.DefaultAnjanaDataScorerDictConfig`,
   {class}`~deckard.score.DefaultAnjanaModelScorerDictConfig`
 
+(scorersprivacy-yaml-example)=
 ### `scorers/privacy` YAML example
 
 ```yaml
@@ -366,6 +373,7 @@ deckard score output as scalar keys.
 
 Typical fairness-profile override:
 
+(scorersfairness-yaml-example)=
 ### `scorers/fairness` YAML example
 
 ```yaml

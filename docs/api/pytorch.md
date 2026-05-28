@@ -12,9 +12,9 @@ canonical timing and score fields.
 
 Parent core pages:
 
-- {doc}`data`
-- {doc}[model](model)
-- {doc}`experiment`
+- {doc}`../api/data`
+- {doc}`../api/model`
+- {doc}`../api/experiment`
 
 Behavior deltas in this integration:
 
@@ -97,7 +97,7 @@ Common ART attack and defense components used with torch workflows:
 - [`FeatureSqueezing`](https://adversarial-robustness-toolbox.readthedocs.io/en/latest/modules/defences/preprocessor.html#feature-squeezing)
 - [`AdversarialTrainer`](https://adversarial-robustness-toolbox.readthedocs.io/en/latest/modules/defences/trainer.html#adversarial-training)
 
-See also {doc}[attack](attack), {doc}[model](model), and {doc}[score](score) for cross-component
+See also {doc}`../api/attack`, {doc}`../api/model`, and {doc}`../api/score` for cross-component
 composition.
 
 ### Persistence Contract
@@ -119,7 +119,7 @@ core and plugin families:
 - canonical timing keys in `times`
 - split-scoped score mode (`train|test|val|all`)
 - stage lifecycle hook orchestration owned by the core data runtime
-- model defenses follow the same stage-aware contract documented in {doc}[model](model)
+- model defenses follow the same stage-aware contract documented in {doc}`../api/model`
 
 See {doc}`data` and {doc}`pipeline` for canonical stage/scope semantics.
 
@@ -161,10 +161,10 @@ The {class}`~deckard.frameworks.pytorch.experiment.TorchExperimentConfig` enforc
 ### See also
 
 - {doc}`data` — general data configuration including {mod}`deckard.frameworks.pytorch.data`
-- {doc}[model](model) — general model configuration including {mod}`deckard.frameworks.pytorch.model`
+- {doc}`../api/model` — general model configuration including {mod}`deckard.frameworks.pytorch.model`
 - {doc}`experiment` — experiment orchestration including {class}`deckard.frameworks.pytorch.experiment.TorchExperimentConfig`
-- {doc}[attack](attack) — attack configuration and execution
-- {doc}[plot](lifelines) — visualization support including training history plots
+- {doc}`../api/attack` — attack configuration and execution
+- {doc}`../api/plot` — visualization support including training history plots
 - {doc}[lifelines](../overview/extensions/lifelines) — optional survival analysis integration with PyTorch
 - {doc}`../developers/data` — cross-family runtime contract
 - {doc}`../developers/migration` — migration guardrails
