@@ -26,7 +26,7 @@ Public config classes must use MyST-native Google-style docstrings with:
 - `Raises:` when errors are part of the contract
 - `Note:` when execution/persistence semantics are relevant
 
-Use the canonical project rule in {doc}`../developers/docstrings`.
+Use the canonical project rule in {doc}`../developers/documentation`.
 
 ## Attribute Documentation Rules
 

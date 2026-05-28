@@ -17,7 +17,7 @@ It is based on the current implementation surfaces in:
 
 - Support a YAML and/or PKL state machine for resumable runs.
 - Keep writes/reads declarative (what to persist, not how to serialize in every caller).
-- Use OmegaConf resolution for config restoration (`from_yaml`).
+- Use OmegaConf resolution for config restoration ([from_yaml](../api/utils)).
 - Resume an experiment at any stage in the data/model/defense/attack/detector pipeline.
 - Support pretrained models, pre-split data, pre-transformed data, and pre-defended pipelines.
 - Provide one unified file parsing interface for key validation/placeholders/status.
@@ -31,8 +31,8 @@ It is based on the current implementation surfaces in:
 {class}`deckard.utils.BaseConfig` already provides the core control-plane behavior:
 
 - initialization-time frozen hash payload (`_hash_payload`) and hash value (`_hash_value`)
-- YAML round-trip (`to_yaml`, `from_yaml`) with OmegaConf `resolve=True`
-- dictionary serialization (`to_dict`) for nested configs
+- YAML round-trip ([to_yaml](../api/utils), [from_yaml](../api/utils)) with OmegaConf `resolve=True`
+- dictionary serialization ([to_dict](../api/utils)) for nested configs
 
 This means the configuration identity contract is already mostly in place.
 
@@ -166,7 +166,7 @@ available with valid checksum, skip execution and hydrate runtime fields.
 
 ## Declarative Read/Write Contract
 
-Every runtime `__call__` path should follow this shape:
+Every runtime [__call__](../api/modules) path should follow this shape:
 
 1. Resolve runtime `files` via {class}`deckard.file.FileConfig` aliases.
 2. Resolve stage token via canon helper.
@@ -189,10 +189,10 @@ Required write invariants:
 
 Required operations:
 
-- `validate_keys`
-- `disk_status`
-- `parse_placeholders`
-- `replace_placeholders`
+- {meth}`deckard.file.AbstractFileHandler.validate_keys`
+- {meth}`deckard.file.AbstractFileHandler.disk_status`
+- {meth}`deckard.file.AbstractFileHandler.parse_placeholders`
+- {meth}`deckard.file.AbstractFileHandler.replace_placeholders`
 
 {class}`deckard.file.FileConfig` remains the public typed registry and should delegate parsing/
 validation to handler implementations.
@@ -237,75 +237,8 @@ Persist in state metadata:
 
 ## OmegaConf and from_yaml Rules
 
-- All control-plane config restoration must use {meth}`deckard.utils.BaseConfig.from_yaml`.
+- All control-plane config restoration must use {meth}[deckard.utils.BaseConfig.from_yaml](../api/utils).
 - Always load with `OmegaConf.load(..., resolve=True)`.
 - Persist a fully-resolved config snapshot before first execution stage.
 
-## Migration Plan
 
-### Phase A: Contract wiring
-
-- Add `state_file` alias to canonical file mappings.
-- Add shared state helpers (`load_state`, `save_state_atomic`, `update_stage_state`).
-- Route all major runtime `__call__` paths through state read/write helper.
-
-### Phase B: Resume coverage
-
-- Implement stage-skip hydration for data/model/attack/detector.
-- Add explicit checkpoints around defense chain boundaries.
-- Add checksum verification hooks.
-
-### Phase C: Hardening and docs
-
-- Add failure-recovery semantics (`failed_stage`, `last_error`).
-- Add end-to-end tests for resume at each stage boundary.
-- Add user-facing examples for pretrained/pre-split/pre-transformed resumes.
-
-## Test Matrix (Minimum)
-
-- Fresh run, no prior artifacts.
-- Resume from each canonical data stage.
-- Resume from post-fit model state with added defenses.
-- Resume with pretrained model + apply-fit defense.
-- Resume attack-only and detector-only stages.
-- Resume with pre-split and pre-transformed data.
-- Hash immutability check across runtime mutations.
-- YAML round-trip (`to_yaml` -> `from_yaml`) preserving identity.
-
-## Non-Goals
-
-- Replacing artifact payload formats already supported by {class}`deckard.artifacts.ArtifactLoaderConfig`.
-- Forcing all payloads into one file format.
-- Introducing framework-specific persistence branches into core runtime modules.
-
-## Purpose and Rationale
-
-Define ownership boundaries, design intent, and tradeoffs for this domain.
-
-## Internal Architecture
-
-Describe runtime components, data flow, and orchestration boundaries.
-
-## Execution Model
-
-Describe canonical stage ordering and lifecycle semantics.
-
-## Contracts and Invariants
-
-Define non-negotiable behavior guarantees and invariant runtime contracts.
-
-## Extension Points
-
-Describe framework/plugin extension surfaces and constraints.
-
-## Validation and Guardrails
-
-List failure modes, guardrails, and validating tests.
-
-## Migration and Compatibility
-
-Document migrations, aliases, and compatibility expectations.
-
-## See also
-
-- {doc}`../api/modules`

@@ -28,8 +28,8 @@ questions (fit orchestration vs robustness defense behavior).
 
 ## Standards Followed
 
-- Docstring standard: {doc}`docstrings`
-- Model design: {doc}`model`
+- Documentation standards: {doc}`documentation`
+- Model design: {doc}[model](../api/model)
 
 ## Required Documentation
 
@@ -96,7 +96,7 @@ retraining behavior.
 
 Legacy trainer-adjacent aliases should be normalized to canonical trainer
 runtime objects. Public trainer behavior must stay documented through
-`train` and `defend` API pages without merging the two contracts.
+[train](../api/train) and [defend](../api/defend) API pages without merging the two contracts.
 
 ## See also
 

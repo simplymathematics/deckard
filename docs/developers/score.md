@@ -157,7 +157,7 @@ model, attack, and extension stages.
 
 ## Standards Followed
 
-- Docstring standard: {doc}`docstrings`
+- Documentation standards: {doc}`documentation`
 - Score design: {doc}[score](../api/modules)
 
 ## Required Documentation

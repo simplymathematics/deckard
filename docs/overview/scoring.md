@@ -24,9 +24,9 @@ Core components:
 
 - Runtime score scope is normalized through
   {func}`~deckard.score.normalize_scorer_mode` with canonical modes:
-  train, test, val, all, attack, attack-val, and pre-sample.
-  Data-profile scorers use pre-sample for dataset-level checks before sampling,
-  while train/test/val/all apply to split-aware payloads.
+  `train`, `test`, `val`, `all`, `attack`, `attack-val`, and `pre-sample`.
+  Data-profile scorers use `pre-sample` for dataset-level checks before sampling,
+  while `train`/`test`/`val`/`all` apply to split-aware payloads.
 - Runtime payload shape is represented by
   {class}`~deckard.score.ScorerRuntimeContract`.
 - Stage filtering remains stage-token driven and independent from score scope.

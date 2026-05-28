@@ -26,7 +26,7 @@ different ownership boundaries and runtime semantics.
 
 ## Standards Followed
 
-- Docstring standard: {doc}`docstrings`
+- Documentation standards: {doc}`documentation`
 - Model and defense design: {doc}`model`
 
 ## Required Documentation

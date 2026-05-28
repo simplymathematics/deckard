@@ -31,6 +31,7 @@ Use this map to choose where to read first:
 
 ## Documentation Standards
 
+- {doc}`Documentation Standards and Build Guide <documentation>`
 - {doc}`Developer Page Template <template>`
 
 - {doc}`Matplotlibrc Behavior and Extension Examples <matplotlibrc>`
@@ -226,7 +227,7 @@ see [DVC Cache Setup Summary](actionscache).
 - {doc}`Pruning Runtime Contract <pruning>`
 - {doc}`DVC Pipeline Autogeneration Spec <dvc>`
 - {doc}`Plugin Runtime Migration Guardrails <migration>`
-- {doc}`Docstring Standard <docstrings>`
+- {doc}`Documentation Standards and Build Guide <documentation>`
 
 - {doc}`Matplotlibrc Behavior and Extension Examples <matplotlibrc>`
 - {doc}`Config Class Contract <configs>`
@@ -273,7 +274,7 @@ hydra
 pruning
 dvc
 migration
-docstrings
+documentation
 configs
 mixins
 samplers

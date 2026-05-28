@@ -16,7 +16,7 @@ keeping execution deterministic.
 
 ## Standards Followed
 
-- Docstring standard: {doc}`docstrings`
+- Documentation standards: {doc}`documentation`
 - Naming rules: {doc}`naming`
 - Design boundaries: {doc}`design`
 

@@ -13,7 +13,7 @@ canonical timing and score fields.
 Parent core pages:
 
 - {doc}`data`
-- {doc}`model`
+- {doc}[model](model)
 - {doc}`experiment`
 
 Behavior deltas in this integration:
@@ -97,14 +97,14 @@ Common ART attack and defense components used with torch workflows:
 - [`FeatureSqueezing`](https://adversarial-robustness-toolbox.readthedocs.io/en/latest/modules/defences/preprocessor.html#feature-squeezing)
 - [`AdversarialTrainer`](https://adversarial-robustness-toolbox.readthedocs.io/en/latest/modules/defences/trainer.html#adversarial-training)
 
-See also {doc}`attack`, {doc}`model`, and {doc}`score` for cross-component
+See also {doc}[attack](attack), {doc}[model](model), and {doc}[score](score) for cross-component
 composition.
 
 ### Persistence Contract
 
-- `save`/`load` on {class}`~deckard.frameworks.pytorch.model.PytorchModelConfig`
+- {meth}`deckard.frameworks.pytorch.model.PytorchModelConfig.save`/{meth}`deckard.frameworks.pytorch.model.PytorchModelConfig.load` on {class}`~deckard.frameworks.pytorch.model.PytorchModelConfig`
   persist config state as YAML.
-- `save_model`/`load_model` persist runtime torch model state artifacts.
+- {meth}`deckard.frameworks.pytorch.model.PytorchModelConfig.save_model`/{meth}`deckard.frameworks.pytorch.model.PytorchModelConfig.load_model` persist runtime torch model state artifacts.
 - Runtime torch artifacts use `.pt` (and optionally pickle-compatible payloads
   where supported by the runtime loader).
 - During checkpointing, YAML config records include references to runtime
@@ -119,7 +119,7 @@ core and plugin families:
 - canonical timing keys in `times`
 - split-scoped score mode (`train|test|val|all`)
 - stage lifecycle hook orchestration owned by the core data runtime
-- model defenses follow the same stage-aware contract documented in {doc}`model`
+- model defenses follow the same stage-aware contract documented in {doc}[model](model)
 
 See {doc}`data` and {doc}`pipeline` for canonical stage/scope semantics.
 
@@ -161,10 +161,10 @@ The {class}`~deckard.frameworks.pytorch.experiment.TorchExperimentConfig` enforc
 ### See also
 
 - {doc}`data` — general data configuration including {mod}`deckard.frameworks.pytorch.data`
-- {doc}`model` — general model configuration including {mod}`deckard.frameworks.pytorch.model`
+- {doc}[model](model) — general model configuration including {mod}`deckard.frameworks.pytorch.model`
 - {doc}`experiment` — experiment orchestration including {class}`deckard.frameworks.pytorch.experiment.TorchExperimentConfig`
-- {doc}`attack` — attack configuration and execution
-- {doc}`plot` — visualization support including training history plots
-- {doc}`lifelines` — optional survival analysis integration with PyTorch
+- {doc}[attack](attack) — attack configuration and execution
+- {doc}[plot](lifelines) — visualization support including training history plots
+- {doc}[lifelines](../overview/extensions/lifelines) — optional survival analysis integration with PyTorch
 - {doc}`../developers/data` — cross-family runtime contract
 - {doc}`../developers/migration` — migration guardrails

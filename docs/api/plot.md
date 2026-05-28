@@ -59,7 +59,7 @@ Backend references:
 ## Survival Plot Extension
 
 Survival plotting configs are provided in a dedicated optional module.
-See also: {doc}`lifelines`.
+See also: {doc}[lifelines](../overview/extensions/lifelines).
 
 ```{eval-rst}
 .. automodule:: deckard.plugins.lifelines.plot
@@ -75,8 +75,8 @@ See also: {doc}`lifelines`.
 
 ## Integrations
 
-- Framework integration: {doc}`pytorch`
-- Plugin integrations: {doc}`seaborn`, {doc}`yellowbrick`, {doc}`lifelines`
+- Framework integration: {doc}[pytorch](../overview/extensions/pytorch)
+- Plugin integrations: {doc}[seaborn](../overview/extensions/seaborn), {doc}[yellowbrick](../overview/extensions/yellowbrick), {doc}[lifelines](../overview/extensions/lifelines)
 
 ## Overview
 
@@ -172,8 +172,8 @@ plot:
 ### See also
 
 - {doc}`experiment` — experiment orchestration and result generation
-- {doc}`score` — scoring framework that produces plotting data
-- {doc}`seaborn` — statistical visualization with Seaborn
-- {doc}`yellowbrick` — model interpretability visualizations
-- {doc}`lifelines` — survival model and plotting integration
+- {doc}[score](score) — scoring framework that produces plotting data
+- {doc}[seaborn](../overview/extensions/seaborn) — statistical visualization with Seaborn
+- {doc}[yellowbrick](../overview/extensions/yellowbrick) — model interpretability visualizations
+- {doc}[lifelines](../overview/extensions/lifelines) — survival model and plotting integration
 - {doc}`layers` — plot, survival, and pareto post-processing workflows

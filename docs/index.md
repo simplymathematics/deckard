@@ -16,8 +16,8 @@ This documentation is organized so you can move from concepts to execution:
 API documentation is generated directly from these docstrings.
 See [Core API](api/modules) for module-level documentation,
 [Notebooks](notebooks/index) for executable examples, and
-[Developer Docs -> Docstrings](developers/docstrings) for the canonical
-docstring standard.
+[Developer Docs -> Documentation Standards](developers/documentation) for the
+canonical documentation and docstring standard.
 Security status and workflow hardening notes are documented in
 [Developer Docs -> Security Report](developers/security-report).
 

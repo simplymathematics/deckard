@@ -15,7 +15,7 @@ and labels before model training and evaluation.
 
 ## Standards Followed
 
-- Docstring standard: {doc}`docstrings`
+- Documentation standards: {doc}`documentation`
 - Data design: {doc}`data`
 
 ## Required Documentation

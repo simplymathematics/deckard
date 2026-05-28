@@ -15,7 +15,7 @@ logic without inheritance-heavy duplication.
 
 ## Standards Followed
 
-- Docstring standard: {doc}`docstrings`
+- Documentation standards: {doc}`documentation`
 - Mixin rules: {doc}`plugins`
 - Naming rules: {doc}`naming`
 

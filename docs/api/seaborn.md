@@ -10,8 +10,8 @@ Parquet, etc.).
 
 Parent core pages:
 
-- {doc}`plot`
-- {doc}`score`
+- {doc}[plot](plot)
+- {doc}[score](score)
 
 Behavior deltas in this integration:
 
@@ -43,7 +43,7 @@ External references:
 
 Related Deckard docs:
 
-- {doc}`score` for how plotted fields are produced by scorer configs
+- {doc}[score](score) for how plotted fields are produced by scorer configs
 - {doc}`layers` for compiled-results and plotting layer orchestration
 
 ### Supported plot types
@@ -70,7 +70,7 @@ The `plot_type` field accepts:
 
 ### Troubleshooting
 
-- **AssertionError on column names**: verify that `x`, `y`, `hue`, and
+- **AssertionError on column names**: verify that `x`, [y](data), `hue`, and
   `style` match column names in the data file exactly.
 - **File not found**: ensure `data_file` path exists before constructing
   {class}`~deckard.plugins.seaborn.plot.SeabornPlotConfig`; directories for
@@ -80,7 +80,7 @@ The `plot_type` field accepts:
 
 ### See also
 
-- {doc}`plot` — general plotting documentation
-- {doc}`yellowbrick` — single-run diagnostics (ROC, confusion matrix, etc.)
+- {doc}[plot](plot) — general plotting documentation
+- {doc}[yellowbrick](../overview/extensions/yellowbrick) — single-run diagnostics (ROC, confusion matrix, etc.)
 - {doc}`layers` — CLI layer registry (compile_results, plot)
 - {doc}`experiment` — experiment orchestration that produces scored outputs
