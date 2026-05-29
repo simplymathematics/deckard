@@ -11,8 +11,7 @@ from sklearn.base import BaseEstimator
 
 from ..artifacts import ScoreDict
 from ..data import DataConfig
-from ..frameworks.types import ArrayLike, AttackLike, EstimatorLike, StringifiedClass
-from ..model import ModelConfig
+from ..frameworks.types import ArrayLike, AttackLike, EstimatorLike
 from ..frameworks.pytorch.torch_utils import (
     is_tensor,
     tensor_to_numpy,

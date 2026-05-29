@@ -7,7 +7,6 @@ from pathlib import Path
 from typing import Any, Mapping, Protocol, cast
 
 import optuna
-import yaml
 from hydra._internal.utils import get_args_parser
 from hydra.core.hydra_config import HydraConfig
 from hydra.experimental.callback import Callback as HydraCallback

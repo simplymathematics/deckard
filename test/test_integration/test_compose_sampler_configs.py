@@ -10,7 +10,6 @@ from pathlib import Path
 
 import yaml
 
-import pytest
 from hydra import compose, initialize_config_dir
 from hydra.core.config_store import ConfigStore
 from hydra.core.global_hydra import GlobalHydra

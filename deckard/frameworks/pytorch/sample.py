@@ -7,17 +7,10 @@ from typing import Any
 
 # Third-party
 import numpy as np
-import torch
 from sklearn.model_selection import KFold, StratifiedKFold, train_test_split
 from sklearn.model_selection import ShuffleSplit, StratifiedShuffleSplit
 from torch import Tensor
-from torch.utils.data import (
-    DataLoader,
-    Dataset,
-    Subset,
-    TensorDataset,
-    random_split,
-)
+from torch.utils.data import TensorDataset
 
 # Local / project
 from ...data.sample import BaseSampler
