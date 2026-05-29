@@ -1139,7 +1139,9 @@ def test_dvc_repro_and_force_repro_preserve_non_timing_outputs(tmp_path: Path):
         hashes: dict[str, str] = {}
         for stage_payload in stages.values():
             outs = (
-                stage_payload.get("outs", []) if isinstance(stage_payload, dict) else []
+                stage_payload.get("outs", [])
+                if isinstance(stage_payload, dict)
+                else []
             )
             for out in outs:
                 if not isinstance(out, dict):

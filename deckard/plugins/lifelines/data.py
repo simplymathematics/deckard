@@ -97,7 +97,9 @@ class LifelinesDataConfig(DataConfig):
             raise ValueError(
                 "data_config.name must be set for LifelinesDataConfig construction",
             )
-        resolved_classifier = data_config.classifier if classifier is None else classifier
+        resolved_classifier = (
+            data_config.classifier if classifier is None else classifier
+        )
         return cls(
             mode=mode,
             name=resolved_name,

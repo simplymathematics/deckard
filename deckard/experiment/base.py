@@ -1275,7 +1275,9 @@ class ExperimentConfig(BaseConfig):
             if not isinstance(self.model, fairness_types):
                 model_name = self.model.resolve_name(default=None)
                 if model_name is None:
-                    raise ValueError("ModelConfig.name must be set for fairness specialization")
+                    raise ValueError(
+                        "ModelConfig.name must be set for fairness specialization"
+                    )
                 self.model = target_model_cls(
                     name=model_name,
                     classifier=self.model.classifier,

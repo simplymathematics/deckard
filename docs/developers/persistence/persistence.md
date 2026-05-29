@@ -242,5 +242,3 @@ Persist in state metadata:
 - All control-plane config restoration must use {meth}[deckard.utils.BaseConfig.from_yaml](/api/utils/index).
 - Always load with `OmegaConf.load(..., resolve=True)`.
 - Persist a fully-resolved config snapshot before first execution stage.
-
-

@@ -131,14 +131,16 @@ def _is_public_name(name: str) -> bool:
 CANON_LITERAL_NAME_TOKENS = ("MODE", "STAGE", "ALIAS", "VALID")
 
 # Inline docs tokens that are runtime field/column literals, not symbol refs.
-DOCS_INLINE_LITERAL_EXCEPTIONS = frozenset({
-    "x",
-    "y",
-    "hue",
-    "component",
-    "event",
-    "run",
-})
+DOCS_INLINE_LITERAL_EXCEPTIONS = frozenset(
+    {
+        "x",
+        "y",
+        "hue",
+        "component",
+        "event",
+        "run",
+    }
+)
 
 
 def _is_canon_literal_name(name: str) -> bool:
@@ -194,7 +196,9 @@ def _expand_literal_variants(token: str) -> set[str]:
     return {variant.strip() for variant in variants if variant.strip()}
 
 
-def build_docs_reference_catalog(source_scope: Path = DECKARD_DIR) -> DocsReferenceCatalog:
+def build_docs_reference_catalog(
+    source_scope: Path = DECKARD_DIR,
+) -> DocsReferenceCatalog:
     """Build source-derived symbol and framework/plugin token sets for docs checks."""
     symbol_tokens: set[str] = set()
     canonical_literal_tokens: set[str] = set()
@@ -228,7 +232,9 @@ def build_docs_reference_catalog(source_scope: Path = DECKARD_DIR) -> DocsRefere
                     canonical_literal_tokens.update(_expand_literal_variants(literal))
 
         for node in tree.body:
-            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and _is_public_name(node.name):
+            if isinstance(
+                node, (ast.FunctionDef, ast.AsyncFunctionDef)
+            ) and _is_public_name(node.name):
                 symbol_tokens.add(node.name)
 
             if not isinstance(node, ast.ClassDef):
@@ -246,7 +252,9 @@ def build_docs_reference_catalog(source_scope: Path = DECKARD_DIR) -> DocsRefere
                 symbol_tokens.add(class_name)
 
             for child in node.body:
-                if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)) and _is_public_name(child.name):
+                if isinstance(
+                    child, (ast.FunctionDef, ast.AsyncFunctionDef)
+                ) and _is_public_name(child.name):
                     symbol_tokens.add(child.name)
                     symbol_tokens.add(f"{class_name}.{child.name}")
                     symbol_tokens.add(f"{module_name}.{class_name}.{child.name}")
@@ -278,7 +286,12 @@ def build_docs_reference_catalog(source_scope: Path = DECKARD_DIR) -> DocsRefere
 def _iter_docs_lines(path: Path) -> list[tuple[int, str]]:
     """Return line-like tuples for markdown docs and notebook markdown cells."""
     if path.suffix == ".md":
-        return [(i, line) for i, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1)]
+        return [
+            (i, line)
+            for i, line in enumerate(
+                path.read_text(encoding="utf-8").splitlines(), start=1
+            )
+        ]
 
     if path.suffix == ".ipynb":
         content = json.loads(path.read_text(encoding="utf-8"))
@@ -303,7 +316,9 @@ def _iter_docs_lines(path: Path) -> list[tuple[int, str]]:
 
 def _has_docs_crosslink(line: str, token: str) -> bool:
     escaped = re.escape(token)
-    role_pattern = re.compile(rf"\{{(?:class|func|meth|mod|doc)\}}`[^`]*\b{escaped}\b[^`]*`")
+    role_pattern = re.compile(
+        rf"\{{(?:class|func|meth|mod|doc)\}}`[^`]*\b{escaped}\b[^`]*`"
+    )
     markdown_link_pattern = re.compile(rf"\[[^\]]*\b{escaped}\b[^\]]*\]\([^\)]+\)")
     return bool(role_pattern.search(line) or markdown_link_pattern.search(line))
 
@@ -341,11 +356,16 @@ def validate_docs_file(path: Path, catalog: DocsReferenceCatalog) -> list[Violat
         if skip_plain_ref_checks or in_code_fence:
             continue
 
-        inline_tokens = [m.group(1).strip() for m in INLINE_CODE_PATTERN.finditer(line)]
+        inline_tokens = [
+            m.group(1).strip() for m in INLINE_CODE_PATTERN.finditer(line)
+        ]
         docx004_emitted = False
         docx005_emitted = False
         for token in inline_tokens:
-            if token in catalog.canonical_literal_tokens or token.lower() in catalog.canonical_literal_tokens:
+            if (
+                token in catalog.canonical_literal_tokens
+                or token.lower() in catalog.canonical_literal_tokens
+            ):
                 continue
 
             if (
@@ -368,8 +388,8 @@ def validate_docs_file(path: Path, catalog: DocsReferenceCatalog) -> list[Violat
             if (
                 not docx005_emitted
                 and (
-                lower_token in catalog.framework_tokens
-                or lower_token in catalog.plugin_tokens
+                    lower_token in catalog.framework_tokens
+                    or lower_token in catalog.plugin_tokens
                 )
             ) and not _has_docs_crosslink(line, token):
                 violations.append(
@@ -902,7 +922,9 @@ def _write_docs_audit_report(
         "summary": {
             "files_checked": len(entries),
             "files_with_violations": files_with_violations,
-            "total_violations": sum(int(entry.get("violation_count", 0)) for entry in entries),
+            "total_violations": sum(
+                int(entry.get("violation_count", 0)) for entry in entries
+            ),
         },
         "files": entries,
     }
@@ -974,7 +996,9 @@ def main() -> int:
         audit_entries: list[dict[str, object]] = []
         for docs_scope in docs_scopes:
             audit_entries.extend(collect_docs_audit(docs_scope))
-        audit_entries = sorted(audit_entries, key=lambda item: str(item.get("path", "")))
+        audit_entries = sorted(
+            audit_entries, key=lambda item: str(item.get("path", ""))
+        )
         report_path = _write_docs_audit_report(
             args.docs_audit_report,
             docs_scopes,
@@ -998,7 +1022,9 @@ def main() -> int:
 
     if docs_scopes:
         docs_scope_label = ", ".join(docs_scopes)
-        print(f"No enforcement violations found in {args.scope} and {docs_scope_label}")
+        print(
+            f"No enforcement violations found in {args.scope} and {docs_scope_label}"
+        )
     else:
         print(f"No enforcement violations found in {args.scope}")
     return 0

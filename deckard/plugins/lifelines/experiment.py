@@ -994,10 +994,11 @@ class SurvivalExperimentConfig(ExperimentConfig):
         if (
             self.calculate_attack_failures
             or self.calculate_failure_events
-            or self.target in {
-            "ben_failures",
-            "adv_failures",
-        }
+            or self.target
+            in {
+                "ben_failures",
+                "adv_failures",
+            }
         ):
             loaded_data = self.calculate_failures_from_signals(
                 loaded_data,

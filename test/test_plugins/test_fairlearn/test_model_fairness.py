@@ -45,7 +45,7 @@ class TestFairlearnModelConfig:
             index=self.y_test.index,
         )
 
-        self.name= "sklearn.ensemble.RandomForestClassifier"
+        self.name = "sklearn.ensemble.RandomForestClassifier"
         self.tmpdir = tempfile.mkdtemp()
 
     def teardown_method(self):
@@ -263,7 +263,7 @@ class TestFairlearnDefenseConfigApplyDefense:
     def setup_method(self):
 
         self.FairlearnDefenseConfig = FairlearnDefenseConfig
-        self.name= "sklearn.linear_model.LogisticRegression"
+        self.name = "sklearn.linear_model.LogisticRegression"
 
         self.X_train = pd.DataFrame(
             {"f1": [0, 1, 2, 3, 4, 5], "f2": [1, 2, 3, 4, 5, 6]},

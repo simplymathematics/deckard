@@ -235,7 +235,7 @@ def test_mixed_fairlearn_and_art_defenses_apply_with_type_checks(
         defense_params={},
     )
     # Force generic ART wrapper so a fairlearn wrapped estimator can be nested.
-    art_defense.name= "sklearn-classifier"
+    art_defense.name = "sklearn-classifier"
 
     model.defense = DefensePipelineConfig(
         defenses=[fair_defense, art_defense],

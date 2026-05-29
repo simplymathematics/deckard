@@ -94,7 +94,9 @@ def _build_symbol_link_targets(catalog) -> dict[str, Path]:
         page = _api_target_for_source(path)
 
         for node in tree.body:
-            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and _is_public_name(node.name):
+            if isinstance(
+                node, (ast.FunctionDef, ast.AsyncFunctionDef)
+            ) and _is_public_name(node.name):
                 token_pages[node.name].add(page)
 
             if not isinstance(node, ast.ClassDef):
@@ -112,7 +114,9 @@ def _build_symbol_link_targets(catalog) -> dict[str, Path]:
                 token_pages[class_name].add(page)
 
             for child in node.body:
-                if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)) and _is_public_name(child.name):
+                if isinstance(
+                    child, (ast.FunctionDef, ast.AsyncFunctionDef)
+                ) and _is_public_name(child.name):
                     token_pages[child.name].add(page)
                     token_pages[f"{class_name}.{child.name}"].add(page)
                     token_pages[f"{module_name}.{class_name}.{child.name}"].add(page)
@@ -140,7 +144,11 @@ def _build_extension_link_targets(catalog) -> dict[str, Path]:
             EXT_INDEX,
         ]
         for candidate in candidates:
-            if (candidate.with_suffix(".md")).exists() or (candidate / "index.md").exists() or candidate == EXT_INDEX:
+            if (
+                (candidate.with_suffix(".md")).exists()
+                or (candidate / "index.md").exists()
+                or candidate == EXT_INDEX
+            ):
                 mapping[token] = candidate
                 break
 
@@ -152,7 +160,11 @@ def _build_extension_link_targets(catalog) -> dict[str, Path]:
             EXT_INDEX,
         ]
         for candidate in candidates:
-            if (candidate.with_suffix(".md")).exists() or (candidate / "index.md").exists() or candidate == EXT_INDEX:
+            if (
+                (candidate.with_suffix(".md")).exists()
+                or (candidate / "index.md").exists()
+                or candidate == EXT_INDEX
+            ):
                 mapping[token] = candidate
                 break
 
@@ -215,15 +227,27 @@ def _rewrite_lines(
     return out, changed
 
 
-def _fix_markdown(path: Path, catalog, symbol_targets: dict[str, Path], extension_targets: dict[str, Path]) -> bool:
+def _fix_markdown(
+    path: Path,
+    catalog,
+    symbol_targets: dict[str, Path],
+    extension_targets: dict[str, Path],
+) -> bool:
     lines = path.read_text(encoding="utf-8").splitlines(keepends=True)
-    new_lines, changed = _rewrite_lines(lines, path, catalog, symbol_targets, extension_targets)
+    new_lines, changed = _rewrite_lines(
+        lines, path, catalog, symbol_targets, extension_targets
+    )
     if changed:
         path.write_text("".join(new_lines), encoding="utf-8")
     return changed
 
 
-def _fix_notebook(path: Path, catalog, symbol_targets: dict[str, Path], extension_targets: dict[str, Path]) -> bool:
+def _fix_notebook(
+    path: Path,
+    catalog,
+    symbol_targets: dict[str, Path],
+    extension_targets: dict[str, Path],
+) -> bool:
     data = json.loads(path.read_text(encoding="utf-8"))
     changed = False
     for cell in data.get("cells", []):
@@ -234,13 +258,17 @@ def _fix_notebook(path: Path, catalog, symbol_targets: dict[str, Path], extensio
             lines = src.splitlines(keepends=True)
         else:
             lines = list(src)
-        new_lines, cell_changed = _rewrite_lines(lines, path, catalog, symbol_targets, extension_targets)
+        new_lines, cell_changed = _rewrite_lines(
+            lines, path, catalog, symbol_targets, extension_targets
+        )
         if cell_changed:
             cell["source"] = new_lines
             changed = True
 
     if changed:
-        path.write_text(json.dumps(data, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
+        path.write_text(
+            json.dumps(data, indent=1, ensure_ascii=False) + "\n", encoding="utf-8"
+        )
 
     return changed
 

@@ -74,4 +74,3 @@ Scan scope:
 #### Backlog classification notes
 
 - [ ] `docs/developers/future/refactor_plan.md`: maintain as forward backlog only; do not duplicate backlog items in changelog.
-

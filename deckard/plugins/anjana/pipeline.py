@@ -142,4 +142,5 @@ class AnjanaPipelineHooksMixin:
 
         return defense_name, {**defense_params, **normalized}
 
+
 __all__ = ["ANJANA_PIPELINE_HOOKS", "AnjanaPipelineHooksMixin"]

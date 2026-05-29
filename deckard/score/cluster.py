@@ -1,7 +1,6 @@
 """Cluster-scoring defaults for unsupervised model profiles."""
 
 from dataclasses import dataclass, field
-from typing import Union
 
 from .base import ScorerConfig, ScorerDictConfig, safe_store
 

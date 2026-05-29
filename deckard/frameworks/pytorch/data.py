@@ -7,7 +7,7 @@ import tempfile
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable, List, Literal, Optional, Union, cast
+from typing import Any, Callable, List, Optional, Union, cast
 
 import numpy as np
 from sklearn.model_selection import KFold, StratifiedKFold, train_test_split

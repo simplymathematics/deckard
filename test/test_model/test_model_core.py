@@ -23,7 +23,7 @@ class TestModelConfig:
         self.X_test = pd.DataFrame({"a": [4, 5], "b": [5, 6]})
         self.y_test = pd.Series([1, 0])
         self.model_params = {"probability": True}
-        self.name= "sklearn.ensemble.RandomForestClassifier"
+        self.name = "sklearn.ensemble.RandomForestClassifier"
         self.model = ModelConfig(
             name=self.name,
             classifier=True,
@@ -47,7 +47,7 @@ class TestModelConfig:
             model_params={},
         )
         assert cfg.name == "sklearn.linear_model.LogisticRegression"
-        assert cfg.name== "sklearn.linear_model.LogisticRegression"
+        assert cfg.name == "sklearn.linear_model.LogisticRegression"
 
     def test_train_and_predict(self):
         self.model.train(self.X_train, self.y_train)
@@ -824,7 +824,7 @@ class TestLoadOrTrainModel:
             model2._load_or_train_model(data, model_path, times)
 
             assert model2._model is loaded_estimator
-            assert model2.name== "sklearn.tree._classes.DecisionTreeClassifier"
+            assert model2.name == "sklearn.tree._classes.DecisionTreeClassifier"
             assert model2.model_params.get("max_depth") == 3
 
     def test_no_model_no_file_raises_value_error(self):

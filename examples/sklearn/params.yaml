@@ -132,7 +132,7 @@ experiment:
     hierarchies: null
     hierarchy_interval_sizes: null
     hierarchy_fill_value: '*'
-  experiment_name: anjana_chain_fair_1397bdb1
+  experiment_name: anjana_chain_fair_da00260d
   model:
     id: ''
     path: ''
@@ -686,8 +686,8 @@ experiment:
   detector: null
   files:
     replace: {}
-    handler: <deckard.file.CanonFileHandler object at 0x32501b220>
-    score_file: outputs/logs/anjana_chain_fair_1397bdb1/scores.json
+    handler: <deckard.file.CanonFileHandler object at 0x322cdf1f0>
+    score_file: outputs/logs/anjana_chain_fair_da00260d/scores.json
   score: null
   random_state: 42
   library: sklearn
@@ -766,7 +766,7 @@ experiment:
       position: first
       executed: true
   params:
-    experiment_name: anjana_chain_fair_1397bdb1
+    experiment_name: anjana_chain_fair_da00260d
     library: sklearn
     classifier: true
     evaluation_mode: standard
@@ -821,7 +821,7 @@ _dvc:
   stage_selection: load
   run_mode: single
   params_manifest:
-    experiment_name: anjana_chain_fair_1397bdb1
+    experiment_name: anjana_chain_fair_da00260d
     library: sklearn
     classifier: true
     evaluation_mode: standard

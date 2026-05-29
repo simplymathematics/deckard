@@ -200,7 +200,9 @@ def _assert_anjana_privacy_scores(scores: dict) -> None:
     }
 
     # Persisted score artifacts are envelope-based; runtime scores are plain mappings.
-    metric_source = scores.get("payload") if isinstance(scores.get("payload"), dict) else scores
+    metric_source = (
+        scores.get("payload") if isinstance(scores.get("payload"), dict) else scores
+    )
 
     # Check for metrics under "post-pipeline" key (expected default location)
     post_pipeline = metric_source.get("post-pipeline")

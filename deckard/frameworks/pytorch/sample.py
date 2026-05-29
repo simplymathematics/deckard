@@ -3,8 +3,7 @@ from __future__ import annotations
 # Standard library
 import logging
 from dataclasses import dataclass
-from types import SimpleNamespace
-from typing import Any, Literal
+from typing import Any
 
 # Third-party
 import numpy as np
@@ -251,7 +250,7 @@ class PytorchBaseSampler(BaseSampler):
             if isinstance(value, float):
                 if value < 0.0 or value > 1.0:
                     raise ValueError(
-                        f"{name} float value must be in [0, 1], got {value}."
+                        f"{name} float value must be in [0, 1], got {value}.",
                     )
                 continue
             raise TypeError(f"{name} must be int, float, or None, got {type(value)}.")

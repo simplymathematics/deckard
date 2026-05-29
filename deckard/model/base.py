@@ -277,7 +277,9 @@ class ModelConfig(BaseConfig):
         # Initialize model through the shared loader used by config objects.
         model_name = self.resolve_name(default=None)
         if model_name is None or str(model_name).strip() == "":
-            raise ValueError("ModelConfig.name must be set before model initialization")
+            raise ValueError(
+                "ModelConfig.name must be set before model initialization"
+            )
         self.name = str(model_name)
         if self.model_params is not None:
             self._model = load_class(self.name, **self.model_params)

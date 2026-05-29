@@ -67,7 +67,10 @@ def test_pytorch_sampler_group_composes_fold_to_data_sampler():
     data_cfg = OmegaConf.to_container(cfg.data, resolve=True)
     assert isinstance(data_cfg, dict)
     assert isinstance(data_cfg.get("sampler"), dict)
-    assert data_cfg["sampler"]["name"] == "deckard.frameworks.pytorch.sample.PytorchFoldSampler"
+    assert (
+        data_cfg["sampler"]["name"]
+        == "deckard.frameworks.pytorch.sample.PytorchFoldSampler"
+    )
 
 
 def test_sklearn_backend_prefixed_sampler_alias_parity():
@@ -79,7 +82,9 @@ def test_sklearn_backend_prefixed_sampler_alias_parity():
         "default",
         overrides=SKLEARN_SYNTHETIC_OVERRIDES + ["sampler@data.sampler=sklearn-fold"],
     )
-    canonical_sampler = OmegaConf.to_container(canonical_cfg.data.sampler, resolve=True)
+    canonical_sampler = OmegaConf.to_container(
+        canonical_cfg.data.sampler, resolve=True
+    )
     alias_sampler = OmegaConf.to_container(alias_cfg.data.sampler, resolve=True)
     assert canonical_sampler == alias_sampler
 
@@ -93,7 +98,9 @@ def test_pytorch_backend_prefixed_sampler_alias_parity():
         "torch_default",
         overrides=["sampler@data.sampler=pytorch-fold"],
     )
-    canonical_sampler = OmegaConf.to_container(canonical_cfg.data.sampler, resolve=True)
+    canonical_sampler = OmegaConf.to_container(
+        canonical_cfg.data.sampler, resolve=True
+    )
     alias_sampler = OmegaConf.to_container(alias_cfg.data.sampler, resolve=True)
     assert canonical_sampler == alias_sampler
 
@@ -102,7 +109,9 @@ def test_sklearn_search_sampler_entry_matches_backend_alias():
     canonical_path = SKLEARN_CONFIG_DIR / "search" / "samplers" / "fold.yaml"
     alias_path = SKLEARN_CONFIG_DIR / "search" / "samplers" / "sklearn-fold.yaml"
 
-    assert yaml.safe_load(canonical_path.read_text(encoding="utf-8")) == yaml.safe_load(
+    assert yaml.safe_load(
+        canonical_path.read_text(encoding="utf-8")
+    ) == yaml.safe_load(
         alias_path.read_text(encoding="utf-8"),
     )
 
@@ -111,6 +120,8 @@ def test_pytorch_search_sampler_entry_matches_backend_alias():
     canonical_path = PYTORCH_CONFIG_DIR / "search" / "samplers" / "fold.yaml"
     alias_path = PYTORCH_CONFIG_DIR / "search" / "samplers" / "pytorch-fold.yaml"
 
-    assert yaml.safe_load(canonical_path.read_text(encoding="utf-8")) == yaml.safe_load(
+    assert yaml.safe_load(
+        canonical_path.read_text(encoding="utf-8")
+    ) == yaml.safe_load(
         alias_path.read_text(encoding="utf-8"),
     )

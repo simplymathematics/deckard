@@ -582,7 +582,11 @@ def build_experiment_params_manifest(
         base_payload: dict[str, Any] = {
             "type": component_type
             or f"{component.__class__.__module__}.{component.__class__.__name__}",
-            "alias": component_alias if component_alias is not None else getattr(component, "alias", None),
+            "alias": (
+                component_alias
+                if component_alias is not None
+                else getattr(component, "alias", None)
+            ),
         }
         if isinstance(component_fingerprint, str):
             token = component_fingerprint.strip()

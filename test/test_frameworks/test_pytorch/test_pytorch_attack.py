@@ -26,7 +26,7 @@ pytest.importorskip("torch")
 class TestAttackConfig:
     def setup_method(self):
         self.attack_params = {}
-        self.name= "art.attacks.evasion.FastGradientMethod"
+        self.name = "art.attacks.evasion.FastGradientMethod"
         self.attack = AttackConfig(
             name=self.name,
             attack_params=self.attack_params,
@@ -1697,7 +1697,8 @@ class TestInferAttributeBranches:
                 X = np.asarray(X)
                 return np.column_stack([np.zeros(len(X)), np.ones(len(X))])
 
-        runtime = attack._with_attack_context(attack_family="inference",
+        runtime = attack._with_attack_context(
+            attack_family="inference",
             attack_sub_family="attribute_inference",
         )
         with pytest.raises((AssertionError, ValueError, KeyError)):
@@ -1731,7 +1732,8 @@ class TestInferAttributeBranches:
                 X = np.asarray(X)
                 return np.column_stack([np.zeros(len(X)), np.ones(len(X))])
 
-        runtime = attack._with_attack_context(attack_family="inference",
+        runtime = attack._with_attack_context(
+            attack_family="inference",
             attack_sub_family="attribute_inference",
         )
         with pytest.raises((ValueError, AssertionError)):
@@ -1769,7 +1771,8 @@ class TestInferMembershipBranches:
             def infer(self, x, y=None):
                 return np.zeros(len(x), dtype=int)
 
-        runtime = attack._with_attack_context(attack_family="inference",
+        runtime = attack._with_attack_context(
+            attack_family="inference",
             attack_sub_family="membership_inference",
         )
         result = runtime.infer_membership(data=data, attack=_FakeMIAttack())
@@ -1792,7 +1795,8 @@ class TestInferMembershipBranches:
             def infer(self, x, y=None):
                 return np.zeros(len(x), dtype=int)
 
-        runtime = attack._with_attack_context(attack_family="inference",
+        runtime = attack._with_attack_context(
+            attack_family="inference",
             attack_sub_family="membership_inference",
         )
         result = runtime.infer_membership(data=data, attack=_FakeMIAttack())
@@ -1830,7 +1834,8 @@ class TestInferModelInversionModes:
 
     def test_zeros_init(self):
         cfg = self._make_mi_attack_config("zeros")
-        runtime = cfg._with_attack_context(attack_family="inference",
+        runtime = cfg._with_attack_context(
+            attack_family="inference",
             attack_sub_family="model_inversion",
         )
         result = runtime.infer_model_inversion(
@@ -1841,7 +1846,8 @@ class TestInferModelInversionModes:
 
     def test_ones_init(self):
         cfg = self._make_mi_attack_config("ones")
-        runtime = cfg._with_attack_context(attack_family="inference",
+        runtime = cfg._with_attack_context(
+            attack_family="inference",
             attack_sub_family="model_inversion",
         )
         result = runtime.infer_model_inversion(
@@ -1852,7 +1858,8 @@ class TestInferModelInversionModes:
 
     def test_random_init(self):
         cfg = self._make_mi_attack_config("random")
-        runtime = cfg._with_attack_context(attack_family="inference",
+        runtime = cfg._with_attack_context(
+            attack_family="inference",
             attack_sub_family="model_inversion",
         )
         result = runtime.infer_model_inversion(
@@ -1863,7 +1870,8 @@ class TestInferModelInversionModes:
 
     def test_average_init(self):
         cfg = self._make_mi_attack_config("average")
-        runtime = cfg._with_attack_context(attack_family="inference",
+        runtime = cfg._with_attack_context(
+            attack_family="inference",
             attack_sub_family="model_inversion",
         )
         result = runtime.infer_model_inversion(
@@ -1874,7 +1882,8 @@ class TestInferModelInversionModes:
 
     def test_invalid_init_mode_raises(self):
         cfg = self._make_mi_attack_config("invalid_mode")
-        runtime = cfg._with_attack_context(attack_family="inference",
+        runtime = cfg._with_attack_context(
+            attack_family="inference",
             attack_sub_family="model_inversion",
         )
         with pytest.raises(ValueError):
@@ -1889,7 +1898,8 @@ class TestInferModelInversionModes:
             attack_params={"split": "train"},
             attack_size=2,
         )
-        runtime = cfg._with_attack_context(attack_family="inference",
+        runtime = cfg._with_attack_context(
+            attack_family="inference",
             attack_sub_family="model_inversion",
         )
         result = runtime.infer_model_inversion(
@@ -1904,7 +1914,8 @@ class TestInferModelInversionModes:
             attack_params={"split": "validate"},
             attack_size=2,
         )
-        runtime = cfg._with_attack_context(attack_family="inference",
+        runtime = cfg._with_attack_context(
+            attack_family="inference",
             attack_sub_family="model_inversion",
         )
         with pytest.raises(ValueError):
@@ -1920,7 +1931,8 @@ class TestInferModelInversionModes:
         d.y_test = np.array([], dtype=int)
         d.X_train = np.empty((0, 3), dtype=np.float32)
         d.y_train = np.array([], dtype=int)
-        runtime = cfg._with_attack_context(attack_family="inference",
+        runtime = cfg._with_attack_context(
+            attack_family="inference",
             attack_sub_family="model_inversion",
         )
         with pytest.raises(ValueError):
@@ -1932,7 +1944,8 @@ class TestInferModelInversionModes:
             attack_params={"split": "test", "targets": [0, 1]},
             attack_size=2,
         )
-        runtime = cfg._with_attack_context(attack_family="inference",
+        runtime = cfg._with_attack_context(
+            attack_family="inference",
             attack_sub_family="model_inversion",
         )
         result = runtime.infer_model_inversion(
@@ -1953,7 +1966,8 @@ class TestInferModelInversionModes:
             },
             attack_size=2,
         )
-        runtime = cfg._with_attack_context(attack_family="inference",
+        runtime = cfg._with_attack_context(
+            attack_family="inference",
             attack_sub_family="model_inversion",
         )
         result = runtime.infer_model_inversion(data=d, attack=self._fake_attack())
@@ -1971,7 +1985,8 @@ class TestInferModelInversionModes:
             },
             attack_size=2,
         )
-        runtime = cfg._with_attack_context(attack_family="inference",
+        runtime = cfg._with_attack_context(
+            attack_family="inference",
             attack_sub_family="model_inversion",
         )
         with pytest.raises(ValueError):
@@ -1989,7 +2004,8 @@ class TestInferModelInversionModes:
                     raise TypeError("unexpected keyword argument")
                 return np.zeros_like(x)
 
-        runtime = cfg._with_attack_context(attack_family="inference",
+        runtime = cfg._with_attack_context(
+            attack_family="inference",
             attack_sub_family="model_inversion",
         )
         result = runtime.infer_model_inversion(data=self._make_data(), attack=_A())
@@ -2002,7 +2018,8 @@ class TestInferModelInversionModes:
             attack_params={"split": "test", "targets": []},
             attack_size=2,
         )
-        runtime = cfg._with_attack_context(attack_family="inference",
+        runtime = cfg._with_attack_context(
+            attack_family="inference",
             attack_sub_family="model_inversion",
         )
         with pytest.raises(ValueError):
@@ -2044,7 +2061,8 @@ class TestInferDatabaseReconstructionBranches:
             def reconstruct(self, x, y=None):
                 return x[:1], np.array([0])
 
-        runtime = attack._with_attack_context(attack_family="inference",
+        runtime = attack._with_attack_context(
+            attack_family="inference",
             attack_sub_family="reconstruction",
         )
         result = runtime.infer_database_reconstruction(
@@ -2064,7 +2082,8 @@ class TestInferDatabaseReconstructionBranches:
             def reconstruct(self, x, y=None):
                 return x[:1], np.array([0])
 
-        runtime = attack._with_attack_context(attack_family="inference",
+        runtime = attack._with_attack_context(
+            attack_family="inference",
             attack_sub_family="reconstruction",
         )
         with pytest.raises(ValueError):
@@ -2084,7 +2103,8 @@ class TestInferDatabaseReconstructionBranches:
             def reconstruct(self, x, y=None):
                 return x[:1], np.array([0])
 
-        runtime = attack._with_attack_context(attack_family="inference",
+        runtime = attack._with_attack_context(
+            attack_family="inference",
             attack_sub_family="reconstruction",
         )
         with pytest.raises(ValueError):
@@ -2107,7 +2127,8 @@ class TestInferDatabaseReconstructionBranches:
         d = self._make_data()
         d.X_train = d.X_train[:1]  # only 1 row
         d.y_train = d.y_train[:1]
-        runtime = attack._with_attack_context(attack_family="inference",
+        runtime = attack._with_attack_context(
+            attack_family="inference",
             attack_sub_family="reconstruction",
         )
         with pytest.raises(ValueError):
@@ -2126,7 +2147,8 @@ class TestInferDatabaseReconstructionBranches:
                 # Return only features, no labels
                 return x[:1]
 
-        runtime = attack._with_attack_context(attack_family="inference",
+        runtime = attack._with_attack_context(
+            attack_family="inference",
             attack_sub_family="reconstruction",
         )
         result = runtime.infer_database_reconstruction(
@@ -2151,7 +2173,8 @@ class TestInferDatabaseReconstructionBranches:
         # Make task appear as regression
         d.classifier = False
 
-        runtime = attack._with_attack_context(attack_family="inference",
+        runtime = attack._with_attack_context(
+            attack_family="inference",
             attack_sub_family="reconstruction",
         )
         result = runtime.infer_database_reconstruction(data=d, attack=_FakeAttack())
@@ -2173,7 +2196,8 @@ class TestInferDatabaseReconstructionBranches:
                     raise TypeError("y not expected")
                 return x[:1], np.array([0])
 
-        runtime = attack._with_attack_context(attack_family="inference",
+        runtime = attack._with_attack_context(
+            attack_family="inference",
             attack_sub_family="reconstruction",
         )
         result = runtime.infer_database_reconstruction(
@@ -2194,7 +2218,8 @@ class TestInferDatabaseReconstructionBranches:
             def reconstruct(self, x, y=None):
                 return x[:1], np.array([])
 
-        runtime = attack._with_attack_context(attack_family="inference",
+        runtime = attack._with_attack_context(
+            attack_family="inference",
             attack_sub_family="reconstruction",
         )
         result = runtime.infer_database_reconstruction(
@@ -2223,7 +2248,8 @@ class TestResolveEvalSplit:
             X_test = np.zeros((4, 2))
             y_test = np.array([0, 1, 0, 1])
 
-        runtime = attack._with_attack_context(attack_family="poisoning",
+        runtime = attack._with_attack_context(
+            attack_family="poisoning",
             attack_sub_family="gradient_matching_attack",
         )
         mode, x, y = runtime._resolve_eval_split(_Data())
@@ -2240,7 +2266,8 @@ class TestResolveEvalSplit:
             X_test = np.zeros((4, 2))
             y_test = np.array([0, 1, 0, 1])
 
-        runtime = attack._with_attack_context(attack_family="poisoning",
+        runtime = attack._with_attack_context(
+            attack_family="poisoning",
             attack_sub_family="gradient_matching_attack",
         )
         mode, x, y = runtime._resolve_eval_split(_Data())
@@ -2257,7 +2284,8 @@ class TestResolveEvalSplit:
             X_test = np.zeros((4, 2))
             y_test = np.array([0, 1, 0, 1])
 
-        runtime = attack._with_attack_context(attack_family="poisoning",
+        runtime = attack._with_attack_context(
+            attack_family="poisoning",
             attack_sub_family="gradient_matching_attack",
         )
         with pytest.raises(ValueError):
@@ -2274,7 +2302,8 @@ class TestResolveEvalSplit:
             X_test = None
             y_test = None
 
-        runtime = attack._with_attack_context(attack_family="poisoning",
+        runtime = attack._with_attack_context(
+            attack_family="poisoning",
             attack_sub_family="gradient_matching_attack",
         )
         with pytest.raises(ValueError):
@@ -2328,7 +2357,8 @@ class TestPoisonBranches:
             def poison(self, x_trigger, y_trigger, x_train, y_train):
                 return np.asarray(x_train), np.asarray(y_train)
 
-        runtime = attack._with_attack_context(attack_family="poisoning",
+        runtime = attack._with_attack_context(
+            attack_family="poisoning",
             attack_sub_family="gradient_matching_attack",
         )
         result = runtime.poison(
@@ -2363,7 +2393,8 @@ class TestPoisonBranches:
             def poison(self, x_trigger, y_trigger, x_train, y_train):
                 return np.asarray(x_train), np.asarray(y_train)
 
-        runtime = attack._with_attack_context(attack_family="poisoning",
+        runtime = attack._with_attack_context(
+            attack_family="poisoning",
             attack_sub_family="gradient_matching_attack",
         )
         result = runtime.poison(
@@ -2404,7 +2435,8 @@ class TestPoisonBranches:
                 _ = kwargs
                 return np.asarray(x), np.asarray(y)
 
-        runtime = attack._with_attack_context(attack_family="poisoning",
+        runtime = attack._with_attack_context(
+            attack_family="poisoning",
             attack_sub_family="PoisoningAttackSVM",
         )
         result = runtime.poison(
@@ -2624,7 +2656,8 @@ class TestStaticHelpers:
 
     def test_is_nn_art_classifier_returns_false_for_plain_object(self):
         attack = AttackConfig(name="art.attacks.extraction.CopycatCNN")
-        runtime = attack._with_attack_context(attack_family="extraction",
+        runtime = attack._with_attack_context(
+            attack_family="extraction",
             attack_sub_family="CopycatCNN",
         )
         assert not runtime._is_nn_art_classifier(object())
@@ -2634,7 +2667,8 @@ class TestStaticHelpers:
             _model = None
 
         attack = AttackConfig(name="art.attacks.extraction.CopycatCNN")
-        runtime = attack._with_attack_context(attack_family="extraction",
+        runtime = attack._with_attack_context(
+            attack_family="extraction",
             attack_sub_family="CopycatCNN",
         )
         assert runtime._is_nn_art_classifier(PyTorchClassifier())

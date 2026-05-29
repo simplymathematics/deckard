@@ -310,7 +310,10 @@ class AttackTypePlugin:
         if (attack_family or "").lower() != (self.attack_family or "").lower():
             return False
         subtype = (attack_sub_family or "").lower()
-        if self.attack_sub_family is not None and subtype != self.attack_sub_family.lower():
+        if (
+            self.attack_sub_family is not None
+            and subtype != self.attack_sub_family.lower()
+        ):
             return False
         if subtype in {item.lower() for item in self.excluded_subtypes}:
             return False
@@ -687,14 +690,20 @@ class AttackConfig(BaseConfig):
 
     def _attack_target_token(self) -> str:
         """Resolve a stable target token used in emitted attack metric labels."""
-        attack_params = self.attack_params if isinstance(self.attack_params, dict) else {}
+        attack_params = (
+            self.attack_params if isinstance(self.attack_params, dict) else {}
+        )
         target_token: Any = attack_params.get("class_target")
 
         if target_token in {None, ""}:
             target_token = self.targeted_attribute
 
         if target_token in {None, ""}:
-            target_token = "targeted" if bool(attack_params.get("targeted", False)) else "untargeted"
+            target_token = (
+                "targeted"
+                if bool(attack_params.get("targeted", False))
+                else "untargeted"
+            )
 
         normalized = "".join(
             ch if ch.isalnum() else "_" for ch in str(target_token).strip().lower()
@@ -1000,7 +1009,9 @@ class AttackConfig(BaseConfig):
 
         attack_name = self.resolve_name(default=None)
         if attack_name is None or str(attack_name).strip() == "":
-            raise ValueError("AttackConfig.name must be set before attack initialization")
+            raise ValueError(
+                "AttackConfig.name must be set before attack initialization"
+            )
         attack_name = str(attack_name)
         self.name = attack_name
         attack_class = resolve_class(attack_name)

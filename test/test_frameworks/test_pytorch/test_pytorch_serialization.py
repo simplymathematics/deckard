@@ -41,7 +41,7 @@ def test_pytorch_model_config_save_and_load_roundtrip():
         loaded.load(str(config_path))
         loaded.load_model(str(model_path))
 
-        assert loaded.name== "torch.nn.Linear"
+        assert loaded.name == "torch.nn.Linear"
         assert loaded.model_params["in_features"] == 4
         assert loaded.model_params["out_features"] == 2
 

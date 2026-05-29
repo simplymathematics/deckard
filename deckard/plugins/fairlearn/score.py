@@ -465,7 +465,7 @@ def _flatten_metric_frame_by_group(by_group: pd.DataFrame) -> dict[str, float]:
 def _fallback_metric_scope(metric_name: str) -> str:
     """Best-effort scope resolution for legacy scorer configs."""
     if metric_name.startswith(
-        ("group_", "mean_", "max_", "min_")
+        ("group_", "mean_", "max_", "min_"),
     ) and metric_name.endswith(
         ("_difference", "_ratio"),
     ):

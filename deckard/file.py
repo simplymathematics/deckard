@@ -329,7 +329,9 @@ class FileConfig(PlaceholderResolverMixin):
 
         replace = payload.get("replace")
         handler = payload.get("handler")
-        file_values = {key: value for key, value in payload.items() if key in _ALLOWED_KEYS}
+        file_values = {
+            key: value for key, value in payload.items() if key in _ALLOWED_KEYS
+        }
         return cls(
             replace=dict(replace) if isinstance(replace, Mapping) else None,
             handler=handler if isinstance(handler, AbstractFileHandler) else None,
@@ -372,7 +374,9 @@ class FileConfig(PlaceholderResolverMixin):
 
     def apply_runtime_paths(self, **kwargs: Any) -> None:
         """Assign resolved runtime paths for configured file fields."""
-        runtime_updates = {key: value for key, value in kwargs.items() if value is not None}
+        runtime_updates = {
+            key: value for key, value in kwargs.items() if value is not None
+        }
         for key, value in runtime_updates.items():
             self._validate_key(key)
             self._files[key] = value

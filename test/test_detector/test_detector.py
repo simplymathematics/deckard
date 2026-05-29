@@ -473,7 +473,7 @@ class _ConfigLikeModel:
 
 
 class _ConfigLikeAttack:
-    name= "art.attacks.poisoning.BackdoorAttack"
+    name = "art.attacks.poisoning.BackdoorAttack"
 
     def __init__(self):
         self.attack_predictions = None
@@ -537,7 +537,7 @@ def test_detector_filter_mode_poison_updates_attack_and_retrains(monkeypatch):
 
 def test_detector_filter_mode_evasion_sets_filtered_labels(monkeypatch):
     data, attack = _make_data_and_attack(n=6, d=3)
-    attack.name= "art.attacks.evasion.FastGradientMethod"
+    attack.name = "art.attacks.evasion.FastGradientMethod"
     attack.attacked_labels = np.zeros(6, dtype=int)
     model = SimpleNamespace(_model=object())
 

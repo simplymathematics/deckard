@@ -245,13 +245,17 @@ class FairlearnDefenseConfig(SensitiveColumnsMixin, DefenseConfig):
             if isinstance(candidate, str) and candidate.startswith("fairlearn."):
                 return candidate, dict(getattr(self, "defense_params", {}) or {})
         normalized_name = getattr(self, "defense_name", None)
-        if isinstance(normalized_name, str) and normalized_name.startswith("fairlearn."):
+        if isinstance(normalized_name, str) and normalized_name.startswith(
+            "fairlearn."
+        ):
             return normalized_name, dict(getattr(self, "defense_params", {}) or {})
         defense_obj = getattr(self, "defense", None)
         if defense_obj is not None:
             nested_name = getattr(defense_obj, "name", None)
             if isinstance(nested_name, str) and nested_name.startswith("fairlearn."):
-                return nested_name, dict(getattr(defense_obj, "defense_params", {}) or {})
+                return nested_name, dict(
+                    getattr(defense_obj, "defense_params", {}) or {}
+                )
         return None, {}
 
     def _apply_fairlearn_defense(self, data):

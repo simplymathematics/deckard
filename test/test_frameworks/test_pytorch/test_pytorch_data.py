@@ -225,7 +225,9 @@ class TestPytorchDataConfig:
         assert self.config.resolve_dataset_type(IntImageDataset()) == "map"
 
     def test_resolve_dataset_type_iterable_dataset(self):
-        assert self.config.resolve_dataset_type(StreamingIterableDataset()) == "iterable"
+        assert (
+            self.config.resolve_dataset_type(StreamingIterableDataset()) == "iterable"
+        )
 
     def test_hash_method(self):
         h1 = hash(self.config)
@@ -658,8 +660,12 @@ class TestPytorchCustomDataConfig:
         )
         ds = self._make_simple_dataset(6)
 
-        with patch("deckard.frameworks.pytorch.data.load_class", return_value=ds) as loader:
-            resolved = cfg._as_dataset("dummy.dataset", split="holdout", transform=None)
+        with patch(
+            "deckard.frameworks.pytorch.data.load_class", return_value=ds
+        ) as loader:
+            resolved = cfg._as_dataset(
+                "dummy.dataset", split="holdout", transform=None
+            )
 
         assert resolved is ds
         assert loader.call_args.kwargs["split"] == "holdout"

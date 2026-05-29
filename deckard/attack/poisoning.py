@@ -3,7 +3,7 @@
 import logging
 import time
 from dataclasses import dataclass, field
-from typing import Protocol, cast
+from typing import Protocol
 
 import numpy as np
 from art.config import ART_NUMPY_DTYPE

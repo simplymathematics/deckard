@@ -33,7 +33,8 @@ def _sanitize_metric_key(key: Any) -> str:
 
 
 def _collect_component_power_stats(
-    experiment: Any, component: str
+    experiment: Any,
+    component: str,
 ) -> dict[str, float]:
     score_dict = getattr(experiment, "score_dict", None)
     if not isinstance(score_dict, dict):

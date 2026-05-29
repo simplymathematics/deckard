@@ -25,7 +25,7 @@ from deckard.score.attack import FairlearnAttackScorerConfig
 class TestAttackConfig:
     def setup_method(self):
         self.attack_params = {}
-        self.name= "art.attacks.evasion.FastGradientMethod"
+        self.name = "art.attacks.evasion.FastGradientMethod"
         self.attack = AttackConfig(
             name=self.name,
             attack_params=self.attack_params,
@@ -306,9 +306,7 @@ class TestAttackConfig:
         )
 
         reconstruction = AttackConfig(
-            name=(
-                "art.attacks.inference.reconstruction.DatabaseReconstruction"
-            ),
+            name=("art.attacks.inference.reconstruction.DatabaseReconstruction"),
         )
         assert (
             reconstruction.resolve_mode_for_attack_kind(
@@ -476,7 +474,9 @@ class TestAttackConfig:
                 x[:, 0] = 1.0 - x[:, 0]
                 return x
 
-        runtime = attack._with_attack_context(attack_family="evasion", attack_sub_family="")
+        runtime = attack._with_attack_context(
+            attack_family="evasion", attack_sub_family=""
+        )
         result = runtime.evade(
             data=_TinyData(),
             art_model=_FakeArtModel(),
@@ -1323,7 +1323,9 @@ class TestPytorchAttackConfig:
             attack_size=8,
         )
 
-        runtime = cfg._with_attack_context(attack_family="evasion", attack_sub_family="")
+        runtime = cfg._with_attack_context(
+            attack_family="evasion", attack_sub_family=""
+        )
         scores = runtime.evade(data, _DummyArtModel(), _DummyAttack())
         assert "evasion_accuracy" in scores
         assert isinstance(runtime.attack, np.ndarray)
@@ -2383,7 +2385,9 @@ class TestEvadeBranches:
                 return probs
 
         fake_attack_obj = AdversarialPatch()
-        runtime = attack._with_attack_context(attack_family="evasion", attack_sub_family="")
+        runtime = attack._with_attack_context(
+            attack_family="evasion", attack_sub_family=""
+        )
         result = runtime.evade(
             data=_TinyData(),
             art_model=_FakeModel(),
@@ -2412,7 +2416,9 @@ class TestEvadeBranches:
             def generate(self, x):
                 return np.asarray(x).copy() + 0.01
 
-        runtime = attack._with_attack_context(attack_family="evasion", attack_sub_family="")
+        runtime = attack._with_attack_context(
+            attack_family="evasion", attack_sub_family=""
+        )
         result = runtime.evade(
             data=_TinyData(),
             art_model=_RegressionArtModel(),

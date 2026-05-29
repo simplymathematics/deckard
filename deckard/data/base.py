@@ -351,6 +351,7 @@ class DataConfig(OrchestratorBase, BaseConfig):
             if Path(normalized).suffix in data_supported_filetypes:
                 return True
             return False
+
         canonical_name = str(self.name or "").strip()
         if canonical_name == "":
             raise ValueError(

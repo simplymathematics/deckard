@@ -356,7 +356,7 @@ def test_pytorch_fairness_model_serialization_with_defense():
         data=data,
     )
 
-    assert model.name== "torch.nn.Linear"
+    assert model.name == "torch.nn.Linear"
     assert model.classifier is True
 
 

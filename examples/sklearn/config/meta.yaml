@@ -1,7 +1,7 @@
 schema:
   optimization: 0
   dataset: 1
-  model type: 2
+  model_name: 2
   defense_name: 3
-  attack name: 4
+  attack_name: 4
   sep: _

@@ -937,6 +937,7 @@ class BaseConfig(ArtifactLoaderMixin):
         "_predictions",
         "_probabilities",
     )
+
     def __post_init__(self):
         pass
 

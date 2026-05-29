@@ -53,12 +53,10 @@ def _make_runtime_experiment() -> ExperimentConfig:
     exp._has_explicit_score_mode = lambda: True
     exp._resolve_score_modes = lambda: ["test"]
     exp._ensure_mode_predictions = lambda mode: None
-    exp._resolve_mode_model_outputs = (
-        lambda mode: (
-            np.array([0, 1]),
-            np.array([0, 1]),
-            np.array([0.1, 0.9]),
-        )
+    exp._resolve_mode_model_outputs = lambda mode: (
+        np.array([0, 1]),
+        np.array([0, 1]),
+        np.array([0.1, 0.9]),
     )
     return cast(ExperimentConfig, exp)
 
@@ -151,7 +149,9 @@ def test_experiment_reserved_runtime_kwargs_are_emitted_for_scorer_dict_paths():
     assert kwargs["__deckard__pipeline__test__"] is exp.data.pipeline
     assert kwargs["__deckard__sampler__"] is exp.data.sampler
     assert kwargs["__deckard__sampler__test__"] is exp.data.sampler
-    assert np.array_equal(kwargs["__deckard__sensitive__"], _sensitive_test_values(exp))
+    assert np.array_equal(
+        kwargs["__deckard__sensitive__"], _sensitive_test_values(exp)
+    )
     assert np.array_equal(
         kwargs["__deckard__sensitive__test__"],
         _sensitive_test_values(exp),

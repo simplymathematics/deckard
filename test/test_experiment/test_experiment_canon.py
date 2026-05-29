@@ -244,10 +244,14 @@ def test_stage_param_key_paths_component_alias_uses_canonical_mapping():
         build_experiment_stage_param_key_paths(stage="load", component="data_config"),
     )
     model_paths = set(
-        build_experiment_stage_param_key_paths(stage="model_score", component="model_config"),
+        build_experiment_stage_param_key_paths(
+            stage="model_score", component="model_config"
+        ),
     )
     attack_paths = set(
-        build_experiment_stage_param_key_paths(stage="attack_score", component="attack_config"),
+        build_experiment_stage_param_key_paths(
+            stage="attack_score", component="attack_config"
+        ),
     )
 
     assert "data" in data_paths

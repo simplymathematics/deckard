@@ -2005,7 +2005,6 @@ def build_dvc_stage_plan(
             outs.append(score_file)
             metrics.append(score_file)
 
-
         if runtime_stage == "persist":
             if base_stage in {
                 "data-persist",

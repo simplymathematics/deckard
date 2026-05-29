@@ -211,7 +211,7 @@ class TestUtilsAdditional:
 
     def test_BaseConfig_resolve_name_falls_back_to_legacy_alias(self):
         cfg = BaseConfig(score_dict={"alpha": 1})
-        cfg.name= "legacy-dataset"
+        cfg.name = "legacy-dataset"
         assert cfg.resolve_name() == "legacy-dataset"
 
     def test_coerce_component_coerces_alias_to_canonical_name(self):
@@ -221,7 +221,7 @@ class TestUtilsAdditional:
             ChildComponentConfig,
         )
         assert isinstance(child, ChildComponentConfig)
-        assert child.name== "torch.nn.Linear"
+        assert child.name == "torch.nn.Linear"
         assert child.name == "torch.nn.Linear"
 
     def test_coerce_component_rejects_blank_name_after_coercion(self):

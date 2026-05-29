@@ -119,7 +119,9 @@ def _run_registry_command(
 ) -> dict[str, Any]:
     if name is not None and name not in registry:
         choices = ", ".join(sorted(registry))
-        print(f"Unknown {kind[:-1]} '{name}'. Valid options: {choices}", file=sys.stderr)
+        print(
+            f"Unknown {kind[:-1]} '{name}'. Valid options: {choices}", file=sys.stderr
+        )
         raise SystemExit(2)
 
     target_names = [name] if name else sorted(registry)

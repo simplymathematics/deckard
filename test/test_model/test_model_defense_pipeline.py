@@ -40,9 +40,7 @@ class TestDefenseConfig:
 
     def test_defense_config_initialization(self):
         # Test default initialization
-        assert (
-            self.defense_config.name== "sklearn.ensemble.RandomForestClassifier"
-        )
+        assert self.defense_config.name == "sklearn.ensemble.RandomForestClassifier"
         assert self.defense_config.classifier
         assert not self.defense_config.probability
         assert self.defense_config.clip_values is None
@@ -160,12 +158,12 @@ class TestDefensePipelineConfigListCoerce:
 
 def test_defense_behavior_defaults_signature_and_apply_to_paths(monkeypatch):
     defense = DefenseConfig.__new__(DefenseConfig)
-    defense.name= None
+    defense.name = None
     defense.classifier = True
     defense.model_params = {}
     defense.probability = False
     defense.alias = ""
-    defense.name="art.defences.postprocessor.HighConfidence"
+    defense.name = "art.defences.postprocessor.HighConfidence"
     defense.defense_params = None
     defense.score_dict = None
     defense._target_ = None
@@ -241,7 +239,7 @@ def test_parse_defense_name_and_get_art_class_edge_paths(monkeypatch):
         "LogisticRegression",
         custom_art,
     )
-    defense.name= "sklearn.linear_model.LogisticRegression"
+    defense.name = "sklearn.linear_model.LogisticRegression"
     art_class, init_params = defense.get_art_class(
         SimpleNamespace(X_train=np.zeros((2, 3)), y_train=[0, 1]),
     )
@@ -333,7 +331,7 @@ def test_get_art_class_torch_requires_typed_base_estimator(monkeypatch):
         name="art.defences.postprocessor.HighConfidence",
         classifier=True,
     )
-    defense.name= "torch.nn.Linear"
+    defense.name = "torch.nn.Linear"
     defense._model = SimpleNamespace(model="not-a-torch-module")
 
     monkeypatch.setattr(
@@ -558,10 +556,10 @@ def test_pipeline_apply_validation_and_elapsed_fallback(monkeypatch):
     hook_calls = []
 
     class TimelessDefense:
-        name="custom.timeless"
+        name = "custom.timeless"
         defense_application_time = None
         data = None
-        name= None
+        name = None
         classifier = None
         model_params = None
         probability = False

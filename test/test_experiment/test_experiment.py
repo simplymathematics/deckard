@@ -1055,7 +1055,7 @@ class TestAggregateRepeatedScores:
         assert result["accuracy"] == pytest.approx(np.mean([0.8, 0.9, 1.0]))
         for i in range(3):
             assert result[f"fold-{i}"]["accuracy"] == pytest.approx(
-                runs[i]["accuracy"]
+                runs[i]["accuracy"],
             )
 
     def test_non_numeric_uses_last_value(self):
@@ -1923,7 +1923,7 @@ class TestExperimentRuntimeCompositionAndPersistence:
             },
         )
         assert isinstance(exp.model, ModelConfig)
-        assert exp.model.name== "sklearn.linear_model.LogisticRegression"
+        assert exp.model.name == "sklearn.linear_model.LogisticRegression"
 
     def test_compose_components_accepts_hook_bundle_dict_and_orders_after_canonical(
         self,

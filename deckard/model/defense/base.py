@@ -47,6 +47,7 @@ CANON_DEFENSE_PREFIXES: Final[tuple[str, ...]] = tuple(
     f"{lib}." for lib in CANON_DEFENSE_LIBRARIES
 )
 
+
 def _looks_like_defense_class_path(path: Any) -> bool:
     if not isinstance(path, str):
         return False
@@ -1120,7 +1121,9 @@ class ARTDefenseBehaviorMixin(DefenseHookRuntimeMixin):
         return self.model_config
 
     def __post_init__(self):
-        if not is_null_config_value(getattr(self, "defense_name", None), allow_empty=True):
+        if not is_null_config_value(
+            getattr(self, "defense_name", None), allow_empty=True
+        ):
             raise ValueError(
                 "defense_name is no longer supported. Use 'name' for defense class path.",
             )
@@ -1528,10 +1531,7 @@ class ARTDefenseBehaviorMixin(DefenseHookRuntimeMixin):
         """
         if (
             _is_torch_model_instance(getattr(self, "_model", None))
-            or (
-                isinstance(self.name, str)
-                and self.name.startswith("torch.")
-            )
+            or (isinstance(self.name, str) and self.name.startswith("torch."))
             or _is_art_torch_wrapper(getattr(self, "_model", None))
         ):
             try:
