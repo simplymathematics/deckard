@@ -661,10 +661,13 @@ class TestPytorchCustomDataConfig:
         ds = self._make_simple_dataset(6)
 
         with patch(
-            "deckard.frameworks.pytorch.data.load_class", return_value=ds
+            "deckard.frameworks.pytorch.data.load_class",
+            return_value=ds,
         ) as loader:
             resolved = cfg._as_dataset(
-                "dummy.dataset", split="holdout", transform=None
+                "dummy.dataset",
+                split="holdout",
+                transform=None,
             )
 
         assert resolved is ds

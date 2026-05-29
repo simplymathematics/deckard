@@ -475,7 +475,8 @@ class TestAttackConfig:
                 return x
 
         runtime = attack._with_attack_context(
-            attack_family="evasion", attack_sub_family=""
+            attack_family="evasion",
+            attack_sub_family="",
         )
         result = runtime.evade(
             data=_TinyData(),
@@ -1324,7 +1325,8 @@ class TestPytorchAttackConfig:
         )
 
         runtime = cfg._with_attack_context(
-            attack_family="evasion", attack_sub_family=""
+            attack_family="evasion",
+            attack_sub_family="",
         )
         scores = runtime.evade(data, _DummyArtModel(), _DummyAttack())
         assert "evasion_accuracy" in scores
@@ -2386,7 +2388,8 @@ class TestEvadeBranches:
 
         fake_attack_obj = AdversarialPatch()
         runtime = attack._with_attack_context(
-            attack_family="evasion", attack_sub_family=""
+            attack_family="evasion",
+            attack_sub_family="",
         )
         result = runtime.evade(
             data=_TinyData(),
@@ -2417,7 +2420,8 @@ class TestEvadeBranches:
                 return np.asarray(x).copy() + 0.01
 
         runtime = attack._with_attack_context(
-            attack_family="evasion", attack_sub_family=""
+            attack_family="evasion",
+            attack_sub_family="",
         )
         result = runtime.evade(
             data=_TinyData(),

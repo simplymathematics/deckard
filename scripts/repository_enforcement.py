@@ -139,7 +139,7 @@ DOCS_INLINE_LITERAL_EXCEPTIONS = frozenset(
         "component",
         "event",
         "run",
-    }
+    },
 )
 
 
@@ -233,7 +233,8 @@ def build_docs_reference_catalog(
 
         for node in tree.body:
             if isinstance(
-                node, (ast.FunctionDef, ast.AsyncFunctionDef)
+                node,
+                (ast.FunctionDef, ast.AsyncFunctionDef),
             ) and _is_public_name(node.name):
                 symbol_tokens.add(node.name)
 
@@ -253,7 +254,8 @@ def build_docs_reference_catalog(
 
             for child in node.body:
                 if isinstance(
-                    child, (ast.FunctionDef, ast.AsyncFunctionDef)
+                    child,
+                    (ast.FunctionDef, ast.AsyncFunctionDef),
                 ) and _is_public_name(child.name):
                     symbol_tokens.add(child.name)
                     symbol_tokens.add(f"{class_name}.{child.name}")
@@ -289,7 +291,8 @@ def _iter_docs_lines(path: Path) -> list[tuple[int, str]]:
         return [
             (i, line)
             for i, line in enumerate(
-                path.read_text(encoding="utf-8").splitlines(), start=1
+                path.read_text(encoding="utf-8").splitlines(),
+                start=1,
             )
         ]
 
@@ -317,7 +320,7 @@ def _iter_docs_lines(path: Path) -> list[tuple[int, str]]:
 def _has_docs_crosslink(line: str, token: str) -> bool:
     escaped = re.escape(token)
     role_pattern = re.compile(
-        rf"\{{(?:class|func|meth|mod|doc)\}}`[^`]*\b{escaped}\b[^`]*`"
+        rf"\{{(?:class|func|meth|mod|doc)\}}`[^`]*\b{escaped}\b[^`]*`",
     )
     markdown_link_pattern = re.compile(rf"\[[^\]]*\b{escaped}\b[^\]]*\]\([^\)]+\)")
     return bool(role_pattern.search(line) or markdown_link_pattern.search(line))
@@ -997,7 +1000,8 @@ def main() -> int:
         for docs_scope in docs_scopes:
             audit_entries.extend(collect_docs_audit(docs_scope))
         audit_entries = sorted(
-            audit_entries, key=lambda item: str(item.get("path", ""))
+            audit_entries,
+            key=lambda item: str(item.get("path", "")),
         )
         report_path = _write_docs_audit_report(
             args.docs_audit_report,
@@ -1023,7 +1027,7 @@ def main() -> int:
     if docs_scopes:
         docs_scope_label = ", ".join(docs_scopes)
         print(
-            f"No enforcement violations found in {args.scope} and {docs_scope_label}"
+            f"No enforcement violations found in {args.scope} and {docs_scope_label}",
         )
     else:
         print(f"No enforcement violations found in {args.scope}")

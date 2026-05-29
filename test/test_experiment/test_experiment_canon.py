@@ -245,12 +245,14 @@ def test_stage_param_key_paths_component_alias_uses_canonical_mapping():
     )
     model_paths = set(
         build_experiment_stage_param_key_paths(
-            stage="model_score", component="model_config"
+            stage="model_score",
+            component="model_config",
         ),
     )
     attack_paths = set(
         build_experiment_stage_param_key_paths(
-            stage="attack_score", component="attack_config"
+            stage="attack_score",
+            component="attack_config",
         ),
     )
 

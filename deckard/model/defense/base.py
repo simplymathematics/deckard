@@ -1122,7 +1122,8 @@ class ARTDefenseBehaviorMixin(DefenseHookRuntimeMixin):
 
     def __post_init__(self):
         if not is_null_config_value(
-            getattr(self, "defense_name", None), allow_empty=True
+            getattr(self, "defense_name", None),
+            allow_empty=True,
         ):
             raise ValueError(
                 "defense_name is no longer supported. Use 'name' for defense class path.",

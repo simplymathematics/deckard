@@ -135,7 +135,7 @@ def test_ensure_experiment_hash_hashes_non_hex_fingerprint_value():
     )
 
     assert optimize_module._ensure_experiment_hash(
-        conf_obj
+        conf_obj,
     ) == optimize_module.hash_conf_values(
         conf_obj,
     )

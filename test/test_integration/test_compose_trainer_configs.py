@@ -170,7 +170,8 @@ def test_sklearn_backend_prefixed_alias_parity(canonical, backend_prefixed):
         overrides=[f"trainer@model.trainer={backend_prefixed}"],
     )
     canonical_trainer = OmegaConf.to_container(
-        canonical_cfg.model.trainer, resolve=True
+        canonical_cfg.model.trainer,
+        resolve=True,
     )
     alias_trainer = OmegaConf.to_container(alias_cfg.model.trainer, resolve=True)
     assert canonical_trainer == alias_trainer
@@ -199,7 +200,8 @@ def test_pytorch_backend_prefixed_alias_parity(canonical, backend_prefixed):
         overrides=[f"trainer@model.trainer={backend_prefixed}"],
     )
     canonical_trainer = OmegaConf.to_container(
-        canonical_cfg.model.trainer, resolve=True
+        canonical_cfg.model.trainer,
+        resolve=True,
     )
     alias_trainer = OmegaConf.to_container(alias_cfg.model.trainer, resolve=True)
     assert canonical_trainer == alias_trainer

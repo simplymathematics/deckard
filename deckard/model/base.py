@@ -278,7 +278,7 @@ class ModelConfig(BaseConfig):
         model_name = self.resolve_name(default=None)
         if model_name is None or str(model_name).strip() == "":
             raise ValueError(
-                "ModelConfig.name must be set before model initialization"
+                "ModelConfig.name must be set before model initialization",
             )
         self.name = str(model_name)
         if self.model_params is not None:

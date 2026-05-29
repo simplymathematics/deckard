@@ -150,7 +150,8 @@ def test_experiment_reserved_runtime_kwargs_are_emitted_for_scorer_dict_paths():
     assert kwargs["__deckard__sampler__"] is exp.data.sampler
     assert kwargs["__deckard__sampler__test__"] is exp.data.sampler
     assert np.array_equal(
-        kwargs["__deckard__sensitive__"], _sensitive_test_values(exp)
+        kwargs["__deckard__sensitive__"],
+        _sensitive_test_values(exp),
     )
     assert np.array_equal(
         kwargs["__deckard__sensitive__test__"],

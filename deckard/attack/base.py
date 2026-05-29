@@ -1010,7 +1010,7 @@ class AttackConfig(BaseConfig):
         attack_name = self.resolve_name(default=None)
         if attack_name is None or str(attack_name).strip() == "":
             raise ValueError(
-                "AttackConfig.name must be set before attack initialization"
+                "AttackConfig.name must be set before attack initialization",
             )
         attack_name = str(attack_name)
         self.name = attack_name

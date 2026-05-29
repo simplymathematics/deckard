@@ -95,7 +95,8 @@ def _build_symbol_link_targets(catalog) -> dict[str, Path]:
 
         for node in tree.body:
             if isinstance(
-                node, (ast.FunctionDef, ast.AsyncFunctionDef)
+                node,
+                (ast.FunctionDef, ast.AsyncFunctionDef),
             ) and _is_public_name(node.name):
                 token_pages[node.name].add(page)
 
@@ -115,7 +116,8 @@ def _build_symbol_link_targets(catalog) -> dict[str, Path]:
 
             for child in node.body:
                 if isinstance(
-                    child, (ast.FunctionDef, ast.AsyncFunctionDef)
+                    child,
+                    (ast.FunctionDef, ast.AsyncFunctionDef),
                 ) and _is_public_name(child.name):
                     token_pages[child.name].add(page)
                     token_pages[f"{class_name}.{child.name}"].add(page)
@@ -235,7 +237,11 @@ def _fix_markdown(
 ) -> bool:
     lines = path.read_text(encoding="utf-8").splitlines(keepends=True)
     new_lines, changed = _rewrite_lines(
-        lines, path, catalog, symbol_targets, extension_targets
+        lines,
+        path,
+        catalog,
+        symbol_targets,
+        extension_targets,
     )
     if changed:
         path.write_text("".join(new_lines), encoding="utf-8")
@@ -259,7 +265,11 @@ def _fix_notebook(
         else:
             lines = list(src)
         new_lines, cell_changed = _rewrite_lines(
-            lines, path, catalog, symbol_targets, extension_targets
+            lines,
+            path,
+            catalog,
+            symbol_targets,
+            extension_targets,
         )
         if cell_changed:
             cell["source"] = new_lines
@@ -267,7 +277,8 @@ def _fix_notebook(
 
     if changed:
         path.write_text(
-            json.dumps(data, indent=1, ensure_ascii=False) + "\n", encoding="utf-8"
+            json.dumps(data, indent=1, ensure_ascii=False) + "\n",
+            encoding="utf-8",
         )
 
     return changed
