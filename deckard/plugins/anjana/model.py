@@ -8,15 +8,15 @@ from ...utils import is_default_config_value, load_class, safe_store
 from .data import AnjanaDataConfig
 
 
-class AnjanaModelInitMixin:
-    """Reusable initialization behavior for ANJANA model configs.
+@dataclass(eq=False, kw_only=True)
+class AnjanaModelConfig(ModelConfig):
+    """ANJANA-aware model config for data anonymization scoring.
 
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
 
-    # Declared for static analyzers; concrete dataclass provides these fields.
-    data: Union[AnjanaDataConfig, None]
+    data: Union[AnjanaDataConfig, None] = None
 
     def _before_post_init(self) -> None:
         if self.data is not None:
@@ -25,17 +25,6 @@ class AnjanaModelInitMixin:
                 AnjanaDataConfig,
                 default_target="deckard.plugins.anjana.AnjanaDataConfig",
             )
-
-
-@dataclass(eq=False, kw_only=True)
-class AnjanaModelConfig(AnjanaModelInitMixin, ModelConfig):
-    """ANJANA-aware model config for data anonymization scoring.
-
-    Attributes:
-        Runtime attributes are inherited or configured via class fields documented in this module.
-    """
-
-    data: Union[AnjanaDataConfig, None] = None
 
     def __post_init__(self):
         # Support test patterns that call __post_init__ directly on bare instances.

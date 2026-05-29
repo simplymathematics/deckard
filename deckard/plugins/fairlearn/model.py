@@ -330,8 +330,11 @@ class FairlearnDefenseConfig(SensitiveColumnsMixin, DefenseConfig):
 
     def train(self, X: pd.DataFrame, y: pd.Series) -> BaseEstimator:
         if self._model is None:
+            model_name = str(self.resolve_name(default="") or "").strip()
+            if model_name == "":
+                raise ValueError("FairlearnDefenseConfig.name must be set")
             self._model = load_class(
-                self.model_type,
+                model_name,
                 **(self.model_params if self.model_params is not None else {}),
             )
 

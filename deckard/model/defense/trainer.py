@@ -144,7 +144,7 @@ class TrainerDefenseConfig(TrainerDefenseMixin, DefensePipelineConfig):
     plugins: list = field(
         default_factory=lambda: [
             DefenseTypePlugin(
-                mixin_type=TrainerDefenseMixin,
+                mixin_type="deckard.model.defense.trainer.TrainerDefenseConfig",
                 defense_type="trainer",
             ),
         ],

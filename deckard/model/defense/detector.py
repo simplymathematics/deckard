@@ -199,7 +199,7 @@ class DetectorDefenseConfig(DetectorDefenseMixin, DefensePipelineConfig):
     plugins: list = field(
         default_factory=lambda: [
             DefenseTypePlugin(
-                mixin_type=DetectorDefenseMixin,
+                mixin_type="deckard.model.defense.detector.DetectorDefenseConfig",
                 defense_type="detector",
             ),
         ],

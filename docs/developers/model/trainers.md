@@ -43,14 +43,15 @@ Define ownership boundaries, design intent, and tradeoffs for this domain.
 
 ## Internal Architecture
 
-Trainer behavior is split across model runtime mixins and trainer-defense
+Trainer behavior is split across runtime trainer objects and trainer-defense
 objects:
 
-- {mod}`deckard.model._mixins` owns fit/predict orchestration helpers.
-- {class}`deckard.model._mixins.ModelTrainingMixin` owns core fit execution.
+- {mod}`deckard.model.base` owns fit/predict orchestration helpers.
 - {class}`deckard.model._mixins.PretrainedModelMixin` owns load-or-train
 	fallback behavior.
 - {class}`deckard.model._mixins.ModelPrunerMixin` owns trial-pruning checks.
+- {class}`deckard.model.base.ModelConfig` owns direct training and plugin-hook
+	runtime behavior.
 - {class}`deckard.model.defense.trainer.TrainerDefenseConfig` owns ART
 	adversarial training wrappers.
 
@@ -59,7 +60,7 @@ objects:
 Model-trainer execution follows canonical model stages:
 
 1. Resolve/load model or construct new model object.
-2. Execute training via trainer mixin methods.
+2. Execute training via resolved runtime trainer objects.
 3. Apply fit-time defense paths when configured.
 4. Recompute predictions/scores if retraining occurred.
 

@@ -99,7 +99,7 @@ class PostprocessorDefenseConfig(PostprocessorDefenseMixin, DefensePipelineConfi
     plugins: list = field(
         default_factory=lambda: [
             DefenseTypePlugin(
-                mixin_type=PostprocessorDefenseMixin,
+                mixin_type="deckard.model.defense.postprocessor.PostprocessorDefenseConfig",
                 defense_type="postprocessor",
             ),
         ],

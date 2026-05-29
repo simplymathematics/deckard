@@ -1,12 +1,10 @@
-"""Model runtime mixins for pretrained, pruning, training, and plugin-hook flows."""
+"""Model runtime mixins for pretrained loading and pruning helpers."""
 
 from __future__ import annotations
 
-from typing import Any, Iterable, Protocol
+from typing import Protocol
 
-from ..frameworks.types import ArrayLike, EstimatorLike, MatrixLike
-from ..plugins import HookPlugin
-from ..utils import instantiate_plugin_spec, load_class, normalize_plugin_specs
+from ..frameworks.types import EstimatorLike
 
 
 class PruneTrialProtocol(Protocol):
@@ -28,39 +26,6 @@ class PruneTrialProtocol(Protocol):
             ``True`` when backend requests pruning.
         """
         ...
-
-
-class ModelTrainingMixin:
-    """Reusable model training behavior for non-pretrained model flows.
-
-    Attributes:
-        Runtime attributes are inherited or configured via class fields documented in this module.
-    """
-
-    def train_model(self, X: MatrixLike, y: ArrayLike) -> None:
-        """Fit the underlying estimator.
-
-        Args:
-            X: Training features.
-            y: Training targets.
-
-        Raises:
-            ValueError: If runtime model is missing or non-trainable.
-        """
-        model = getattr(self, "_model", None)
-        if model is None or not hasattr(model, "fit"):
-            raise ValueError("Model is not initialized and cannot be trained.")
-        fit_params = getattr(self, "fit_params", {}) or {}
-        model.fit(X, y, **fit_params)
-
-    def train(self, X: MatrixLike, y: ArrayLike) -> None:
-        """Public training entrypoint that delegates to the model implementation.
-
-        Args:
-            X: Training features.
-            y: Training targets.
-        """
-        self.train_model(X, y)
 
 
 class PretrainedModelMixin:
@@ -126,74 +91,7 @@ class ModelPrunerMixin:
         return False
 
 
-class ModelHookRuntimeMixin:
-    """Reusable plugin orchestration and runtime-state copy behavior.
-
-    Attributes:
-        Runtime attributes are inherited or configured via class fields documented in this module.
-    """
-
-    def _instantiate_plugin(self, plugin_spec: Any):
-        """Create one plugin instance from a normalized plugin specification."""
-        return instantiate_plugin_spec(plugin_spec, loader=load_class)
-
-    def _get_plugins(self) -> list:
-        """Lazily instantiate and cache configured plugin objects."""
-        if self._plugin_objects is None:
-            plugin_specs = normalize_plugin_specs(self.plugins)
-            self._plugin_objects = [
-                self._instantiate_plugin(spec) for spec in plugin_specs
-            ]
-        return self._plugin_objects
-
-    def _run_plugin_hook(self, hook_name: str, **kwargs: Any):
-        """Execute one named hook across all configured plugins."""
-        hook_outputs = []
-        for plugin in self._get_plugins():
-            hook = getattr(plugin, hook_name, None)
-            if callable(hook):
-                hook_outputs.append(hook(self, **kwargs))
-        return hook_outputs
-
-    def _merge_plugin_scores(self, hook_outputs: Iterable[Any]) -> None:
-        """Merge dictionary hook outputs into ``score_dict`` in-order."""
-        if self.score_dict is None:
-            self.score_dict = {}
-        for output in hook_outputs:
-            if isinstance(output, dict):
-                self.score_dict.update(output)
-
-    def _copy_runtime_state_to(self, target: Any) -> None:
-        """Copy standard runtime attributes from this object to ``target``."""
-        runtime_fields = [
-            "_model",
-            "score_dict",
-            "training_predictions",
-            "predictions",
-            "val_predictions",
-            "training_probabilities",
-            "probabilities",
-            "val_probabilities",
-            "training_time",
-            "prediction_time",
-            "val_prediction_time",
-            "training_prediction_time",
-            "training_score_time",
-            "prediction_score_time",
-            "val_score_time",
-            "defense_application_time",
-            "training_n",
-            "prediction_n",
-            "val_n",
-        ]
-        for attr in runtime_fields:
-            setattr(target, attr, getattr(self, attr, None))
-
-
 __all__ = [
-    "HookPlugin",
-    "ModelHookRuntimeMixin",
-    "ModelTrainingMixin",
     "PretrainedModelMixin",
     "ModelPrunerMixin",
 ]

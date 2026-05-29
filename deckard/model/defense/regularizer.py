@@ -105,7 +105,7 @@ class RegularizerDefenseConfig(RegularizerDefenseMixin, DefensePipelineConfig):
     plugins: list = field(
         default_factory=lambda: [
             DefenseTypePlugin(
-                mixin_type=RegularizerDefenseMixin,
+                mixin_type="deckard.model.defense.regularizer.RegularizerDefenseConfig",
                 defense_type="regularizer",
             ),
         ],

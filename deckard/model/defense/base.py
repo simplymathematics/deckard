@@ -954,29 +954,29 @@ class ARTDefenseBehaviorMixin(DefenseHookRuntimeMixin):
         if dtype is None:
             mixins.append(PassthroughDefenseMixin)
         elif dtype == "detector":
-            from .detector import DetectorDefenseMixin
+            from .detector import DetectorDefenseConfig
 
-            mixins.append(DetectorDefenseMixin)
+            mixins.append(DetectorDefenseConfig)
         elif dtype == "preprocessor":
-            from .preprocessor import PreprocessorDefenseMixin
+            from .preprocessor import PreprocessorDefenseConfig
 
-            mixins.append(PreprocessorDefenseMixin)
+            mixins.append(PreprocessorDefenseConfig)
         elif dtype == "postprocessor":
-            from .postprocessor import PostprocessorDefenseMixin
+            from .postprocessor import PostprocessorDefenseConfig
 
-            mixins.append(PostprocessorDefenseMixin)
+            mixins.append(PostprocessorDefenseConfig)
         elif dtype == "trainer":
-            from .trainer import TrainerDefenseMixin
+            from .trainer import TrainerDefenseConfig
 
-            mixins.append(TrainerDefenseMixin)
+            mixins.append(TrainerDefenseConfig)
         elif dtype == "transformer":
-            from .transformer import TransformerDefenseMixin
+            from .transformer import TransformerDefenseConfig
 
-            mixins.append(TransformerDefenseMixin)
+            mixins.append(TransformerDefenseConfig)
         elif dtype == "regularizer":
-            from .regularizer import RegularizerDefenseMixin
+            from .regularizer import RegularizerDefenseConfig
 
-            mixins.append(RegularizerDefenseMixin)
+            mixins.append(RegularizerDefenseConfig)
 
         plugin_outputs = self._run_plugin_hook(
             "resolve_defense_mixins",
@@ -1006,6 +1006,9 @@ class ARTDefenseBehaviorMixin(DefenseHookRuntimeMixin):
         mixins = self._resolve_runtime_defense_mixins(defense_type, defense_subtype)
         default_handler = None
         for mixin in mixins:
+            if isinstance(mixin, type) and mixin in type(self).mro():
+                default_handler = self
+                break
             if isinstance(mixin, type) and issubclass(mixin, DefenseMixin):
                 default_handler = mixin(self)
                 break

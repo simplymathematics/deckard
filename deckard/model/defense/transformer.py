@@ -123,7 +123,7 @@ class TransformerDefenseConfig(TransformerDefenseMixin, DefensePipelineConfig):
     plugins: list = field(
         default_factory=lambda: [
             DefenseTypePlugin(
-                mixin_type=TransformerDefenseMixin,
+                mixin_type="deckard.model.defense.transformer.TransformerDefenseConfig",
                 defense_type="transformer",
             ),
         ],

@@ -1,1 +1,1 @@
-_target_: deckard.score.base.DefaultClassifierConfig
+_target_: deckard.score.base.DefaultClassifierScorerDictConfig

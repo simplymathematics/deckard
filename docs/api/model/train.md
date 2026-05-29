@@ -32,12 +32,11 @@ Important distinction:
 
 - {class}`deckard.model.base.ModelConfig` is the parent runtime config for
   fit/predict/score orchestration.
-- {class}`deckard.model._mixins.ModelTrainingMixin` provides reusable fit entrypoints.
 - {class}`deckard.model._mixins.PretrainedModelMixin` provides cached model load
   behavior.
 - {class}`deckard.model._mixins.ModelPrunerMixin` provides Optuna-style pruning checks.
-- {class}`deckard.model._mixins.ModelHookRuntimeMixin` provides plugin hook and
-  runtime-state propagation helpers.
+- {class}`deckard.model.base.ModelConfig` owns fit entrypoints, plugin hook
+  execution, and runtime-state propagation directly.
 - {class}`deckard.model.defense.trainer.TrainerDefenseConfig` composes
   {class}`deckard.model.defense.trainer.TrainerDefenseMixin` with
   {class}`deckard.model.defense.base.DefensePipelineConfig` for adversarial training

@@ -821,8 +821,7 @@ class ModelConfig(BaseConfig):
         force_retrain: bool = False,
     ):
         """Train model via configured runtime trainer object."""
-        trainer_obj = self._compose_trainer()
-        updated_times = trainer_obj(
+        updated_times = BaseTrainer.execute(
             self,
             data,
             model_file=model_file,

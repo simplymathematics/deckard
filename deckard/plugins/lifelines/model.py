@@ -48,45 +48,8 @@ AFT_MODEL_TYPES = {
 }
 
 
-class SurvivalModelInitMixin:
-    """Reusable initialization behavior for survival model configs.
-
-    Attributes:
-        Runtime attributes are inherited or configured via class fields documented in this module.
-    """
-
-    # Declared for static analyzers; concrete dataclass provides these fields.
-    score_dict: ScoreDict
-
-    def _initialize_runtime_fields(self) -> None:
-        if not hasattr(self, "score_dict") or self.score_dict is None:
-            self.score_dict = ScoreDict()
-        else:
-            self.score_dict = ScoreDict.from_payload(self.score_dict)
-        for attr in [
-            "training_time",
-            "prediction_time",
-            "training_prediction_time",
-            "training_score_time",
-            "prediction_score_time",
-            "defense_application_time",
-            "training_n",
-            "prediction_n",
-            "training_predictions",
-            "predictions",
-            "training_probabilities",
-            "probabilities",
-        ]:
-            if not hasattr(self, attr):
-                setattr(self, attr, None)
-
-    def _initialize_target(self) -> None:
-        if not hasattr(self, "_target_") or self._target_ is None:
-            self._target_ = "deckard.plugins.lifelines.model.SurvivalModelConfig"
-
-
 @dataclass(eq=False, kw_only=True)
-class SurvivalModelConfig(SurvivalModelInitMixin, ModelConfig):
+class SurvivalModelConfig(ModelConfig):
     """Configuration for survival analysis models using lifelines.
 
     Extends ModelConfig to support AFT (Accelerated Failure Time) survival
@@ -113,6 +76,32 @@ class SurvivalModelConfig(SurvivalModelInitMixin, ModelConfig):
     event_col: str = "E"
     survival_model: str = "weibull"
     t0: float = 0.35
+
+    def _initialize_runtime_fields(self) -> None:
+        if not hasattr(self, "score_dict") or self.score_dict is None:
+            self.score_dict = ScoreDict()
+        else:
+            self.score_dict = ScoreDict.from_payload(self.score_dict)
+        for attr in [
+            "training_time",
+            "prediction_time",
+            "training_prediction_time",
+            "training_score_time",
+            "prediction_score_time",
+            "defense_application_time",
+            "training_n",
+            "prediction_n",
+            "training_predictions",
+            "predictions",
+            "training_probabilities",
+            "probabilities",
+        ]:
+            if not hasattr(self, attr):
+                setattr(self, attr, None)
+
+    def _initialize_target(self) -> None:
+        if not hasattr(self, "_target_") or self._target_ is None:
+            self._target_ = "deckard.plugins.lifelines.model.SurvivalModelConfig"
 
     def __post_init__(self) -> None:
         """Initialize runtime state without hydra model loading.
