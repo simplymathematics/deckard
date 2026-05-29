@@ -5,9 +5,9 @@ from sklearn.base import BaseEstimator
 
 from ..artifacts import ScoreDict
 from ..data import DataConfig
-from ..frameworks.types import AttackLike, EstimatorLike, StringifiedClass
+from ..frameworks.types import AttackLike, EstimatorLike
 from ..model import ModelConfig
-from .base import AttackConfig, AttackTypePlugin
+from .base import AttackConfig, AttackFamily, AttackSubFamily, AttackTypePlugin
 from .inference import InferenceAttackMixin
 
 
@@ -57,8 +57,8 @@ class ReconstructionAttackMixin(InferenceAttackMixin):
         model: ModelConfig | BaseEstimator | EstimatorLike,
         art_model: EstimatorLike,
         attack: AttackLike,
-        attack_type: StringifiedClass,
-        attack_subtype: StringifiedClass,
+        attack_family: AttackFamily | str,
+        attack_sub_family: AttackSubFamily | str,
     ) -> ScoreDict:
         """Dispatch reconstruction inference attack execution for matching subtype.
 
@@ -67,8 +67,8 @@ class ReconstructionAttackMixin(InferenceAttackMixin):
             model: User model configuration or estimator.
             art_model: ART-wrapped model used by reconstruction attack.
             attack: Instantiated reconstruction attack implementation.
-            attack_type: Parsed attack family.
-            attack_subtype: Parsed attack subtype.
+            attack_family: Parsed attack family.
+            attack_sub_family: Parsed attack sub-family.
 
         Returns:
             Score payload for reconstruction attack execution.
@@ -76,8 +76,9 @@ class ReconstructionAttackMixin(InferenceAttackMixin):
         Raises:
             ValueError: If attack family/subtype is not inference.reconstruction.
         """
-        if (attack_type or "").lower() != "inference" or (
-            attack_subtype or ""
+        _ = (model, art_model)
+        if (attack_family or "").lower() != "inference" or (
+            attack_sub_family or ""
         ).lower() != "reconstruction":
             raise ValueError(
                 "_ReconstructionAttackMixin requires inference.reconstruction attack subtype",
@@ -102,8 +103,8 @@ class ReconstructionAttackConfig(ReconstructionAttackMixin, AttackConfig):
         default_factory=lambda: [
             AttackTypePlugin(
                 mixin_type=ReconstructionAttackMixin,
-                attack_type="inference",
-                attack_subtype="reconstruction",
+                attack_family="inference",
+                attack_sub_family="reconstruction",
             ),
         ],
     )

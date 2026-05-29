@@ -8,6 +8,8 @@ from __future__ import annotations
 
 import json
 import pickle
+import inspect
+import warnings
 from dataclasses import MISSING, dataclass, field
 from pathlib import Path
 from typing import Any, Optional, cast
@@ -374,7 +376,7 @@ def _deserialize_scores_payload(raw: Any) -> dict[str, Any]:
 
 
 @dataclass(eq=False, kw_only=True)
-class ArtifactLoaderConfig:
+class ArtifactLoaderMixin:
     """Base artifact loader for file-backed deckard configs.
 
     Attributes:
@@ -386,20 +388,50 @@ class ArtifactLoaderConfig:
     payload_kind: str = "data"
     metadata: dict[str, Any] = field(default_factory=dict)
 
+    @staticmethod
+    def _build_init_signature(dataclass_fields: dict[str, Any]) -> inspect.Signature:
+        """Create an inspect signature from init-enabled dataclass fields."""
+        parameters: list[inspect.Parameter] = []
+        for field_name, dataclass_field in dataclass_fields.items():
+            if not dataclass_field.init:
+                continue
+
+            kind = inspect.Parameter.POSITIONAL_OR_KEYWORD
+
+            default = inspect._empty
+            if dataclass_field.default is not MISSING:
+                default = dataclass_field.default
+            elif dataclass_field.default_factory is not MISSING:
+                # Any concrete default marks the parameter as optional for binding.
+                default = None
+
+            parameters.append(
+                inspect.Parameter(
+                    field_name,
+                    kind,
+                    default=default,
+                ),
+            )
+        return inspect.Signature(parameters=parameters)
+
     def __init__(self, *args, **kwds):
         self.args = args if args else ()
-
         dataclass_fields = self.__dataclass_fields__
-        init_fields = [
+        init_field_names = {
             field_name
             for field_name, dataclass_field in dataclass_fields.items()
             if dataclass_field.init
-        ]
+        }
+        known_kwargs = {k: v for k, v in kwds.items() if k in init_field_names}
+        unknown_kwargs = {k: v for k, v in kwds.items() if k not in init_field_names}
 
-        if len(args) > len(init_fields):
+        signature = self._build_init_signature(dataclass_fields)
+        try:
+            bound = signature.bind(*args, **known_kwargs)
+        except TypeError as exc:
             raise TypeError(
-                f"Expected at most {len(init_fields)} positional arguments, got {len(args)}",
-            )
+                f"{self.__class__.__name__} init argument error: {exc}",
+            ) from exc
 
         for field_name, dataclass_field in dataclass_fields.items():
             if dataclass_field.default is not MISSING:
@@ -407,14 +439,47 @@ class ArtifactLoaderConfig:
             elif dataclass_field.default_factory is not MISSING:
                 setattr(self, field_name, dataclass_field.default_factory())
 
-        for index, arg in enumerate(args):
-            setattr(self, init_fields[index], arg)
-        for key, value in kwds.items():
+        for key, value in bound.arguments.items():
             setattr(self, key, value)
+
+        if unknown_kwargs:
+            warnings.warn(
+                (
+                    f"{self.__class__.__name__} received unknown init kwargs "
+                    f"{sorted(unknown_kwargs.keys())}; preserving as passthrough attrs"
+                ),
+                UserWarning,
+                stacklevel=2,
+            )
+            for key, value in unknown_kwargs.items():
+                setattr(self, key, value)
 
         self._before_post_init()
         self.__post_init__()
+        self._validate_post_init_state()
         self._after_post_init()
+
+    def _validate_post_init_state(self) -> None:
+        """Fail fast when required dataclass init fields remain unresolved."""
+        missing_fields: list[str] = []
+        for field_name, dataclass_field in self.__dataclass_fields__.items():
+            if not dataclass_field.init:
+                continue
+            if dataclass_field.default is not MISSING:
+                continue
+            if dataclass_field.default_factory is not MISSING:
+                continue
+            if not hasattr(self, field_name):
+                missing_fields.append(field_name)
+                continue
+            if getattr(self, field_name) is MISSING:
+                missing_fields.append(field_name)
+
+        if missing_fields:
+            missing = ", ".join(sorted(missing_fields))
+            raise TypeError(
+                f"{self.__class__.__name__} missing required init fields after post-init: {missing}",
+            )
 
     def __post_init__(self):
         pass
@@ -908,7 +973,7 @@ class ArtifactLoaderConfig:
     def load(
         self,
         filepath: Optional[str] = None,
-    ) -> "ArtifactLoaderConfig | ScoreDict | MatrixLike | ArrayLike | EstimatorLike | SerializableValue | None":
+    ) -> "ArtifactLoaderMixin | ScoreDict | MatrixLike | ArrayLike | EstimatorLike | SerializableValue | None":
         """Load artifacts from disk and dispatch to the appropriate loader.
 
         Args:

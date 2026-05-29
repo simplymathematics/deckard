@@ -6,6 +6,7 @@ deckard configs and framework integrations.
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Protocol, TypeAlias
 
 import pandas as pd
@@ -76,6 +77,7 @@ class ArtEsimtator(Protocol):
 
 
 StringifiedClass: TypeAlias = str
+DatasetLike: TypeAlias = str | Path
 
 
 TabularLike: TypeAlias = pd.DataFrame | pd.Series
@@ -90,6 +92,7 @@ __all__ = [
     "AttackLike",
     "ArtEsimtator",
     "StringifiedClass",
+    "DatasetLike",
     "TabularLike",
     "IndexLike",
 ]

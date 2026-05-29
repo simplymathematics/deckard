@@ -124,7 +124,7 @@ def _is_art_model_instance(model_obj: Any) -> bool:
 class ModelConfig(BaseConfig):
     """Runtime model configuration with plugin-aware training/evaluation orchestration.
 
-    Model behavior is resolved from ``model_type`` and runtime context. This
+    Model behavior is resolved from canonical ``name`` and runtime context. This
     class owns model instantiation, training/load flow, prediction, scoring,
     persistence, and optional defense-pipeline integration.
 
@@ -140,7 +140,7 @@ class ModelConfig(BaseConfig):
         ``defense`` controls post-training defense wrapping/application.
 
     Attributes:
-        model_type: Model class path or alias resolved at runtime.
+        name: Model class path or alias resolved at runtime.
         model_params: Constructor kwargs for model instantiation.
         trainer: Trainer runtime token/config used for fit orchestration.
         defense: Optional defense pipeline applied after train/load.
@@ -150,7 +150,7 @@ class ModelConfig(BaseConfig):
     """
 
     # Configuration fields
-    model_type: StringifiedClass | None = None
+    name: StringifiedClass | None = None
     classifier: Union[bool, str] = True
     model_params: dict = None
     probability: bool = False
@@ -193,6 +193,13 @@ class ModelConfig(BaseConfig):
 
     def __post_init__(self):
         """Initialize runtime defaults and normalize model-config state."""
+        if isinstance(self.name, str):
+            model_name = self.name.strip()
+            if model_name == "":
+                raise ValueError("ModelConfig.name must be set")
+            self.name = model_name
+        elif self.name is None:
+            raise ValueError("ModelConfig.name must be set")
         self._initialize_runtime_defaults()
         self._initialize_target_reference()
         self._normalize_classifier_flag()
@@ -231,11 +238,11 @@ class ModelConfig(BaseConfig):
 
     def _initialize_default_scorer(self) -> None:
         """Resolve model scorer defaults based on classifier mode."""
-        model_type_token = str(self.model_type or "").strip().lower()
+        model_name_token = str(self.resolve_name(default="") or "").strip().lower()
         use_cluster_defaults = (
             self.classifier is False
-            and model_type_token != ""
-            and ".cluster." in model_type_token
+            and model_name_token != ""
+            and ".cluster." in model_name_token
         )
 
         self.scorer = _coerce_scorer_config(
@@ -271,10 +278,14 @@ class ModelConfig(BaseConfig):
 
     def _initialize_model(self):
         # Initialize model through the shared loader used by config objects.
+        model_name = self.resolve_name(default=None)
+        if model_name is None or str(model_name).strip() == "":
+            raise ValueError("ModelConfig.name must be set before model initialization")
+        self.name = str(model_name)
         if self.model_params is not None:
-            self._model = load_class(self.model_type, **self.model_params)
+            self._model = load_class(self.name, **self.model_params)
         else:
-            self._model = load_class(self.model_type)
+            self._model = load_class(self.name)
         if hasattr(self._model, "get_params"):
             self.model_params = self._model.get_params()
         else:
@@ -395,7 +406,8 @@ class ModelConfig(BaseConfig):
             return
 
         estimator_cls = estimator.__class__
-        self.model_type = f"{estimator_cls.__module__}.{estimator_cls.__name__}"
+        canonical_name = f"{estimator_cls.__module__}.{estimator_cls.__name__}"
+        self.name = canonical_name
         get_params = getattr(estimator, "get_params", None)
         if callable(get_params):
             try:
@@ -539,7 +551,7 @@ class ModelConfig(BaseConfig):
 
         Raises:
             ImportError: If ART dependency is unavailable.
-            ValueError: If model_type is unset.
+            ValueError: If name is unset.
         """
         try:
             art_symbols = _get_art_symbols()
@@ -548,15 +560,18 @@ class ModelConfig(BaseConfig):
                 "ART estimators are required for wrapped model access. Install optional dependencies that include ART.",
             ) from exc
 
-        if self.model_type is None:
+        model_name = self.resolve_name(default=None)
+        if model_name is None or str(model_name).strip() == "":
             raise ValueError(
-                "model_type must be set before creating an ART model wrapper",
+                "ModelConfig.name must be set before creating an ART model wrapper",
             )
+        model_name = str(model_name)
+        self.name = model_name
 
         art_class = (
-            art_symbols["classifier_dict"][self.model_type.split(".")[-1]]
+            art_symbols["classifier_dict"][model_name.split(".")[-1]]
             if self.classifier
-            else art_symbols["regressor_dict"][self.model_type.split(".")[-1]]
+            else art_symbols["regressor_dict"][model_name.split(".")[-1]]
         )
         if art_class in art_symbols["sklearn_dict"].values():
             init_params = {}

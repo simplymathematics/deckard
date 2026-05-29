@@ -28,7 +28,7 @@ from ...data.base import DataConfig
 from ...data.base import AUTO_SCORER
 from ...data.canon import DataFiles, merge_data_files
 from ...artifacts import ScoreDict
-from ...frameworks.types import StringifiedClass
+from ...frameworks.types import DatasetLike
 from .sample import PytorchBaseSampler
 
 # deckard
@@ -299,14 +299,14 @@ class PytorchDataConfig(TorchDatasetMixin, DataConfig):
     """Configuration for PyTorch datasets.
 
     Attributes:
-        dataset_name (str): Fully qualified class name of dataset
+        name (str): Fully qualified class name of dataset
             (e.g., "torchvision.datasets.MNIST" or "custom_module.CustomDataset").
         data_params (dict): Additional parameters for dataset loading.
         pipeline (Dict[str, deckard.data.base.DataConfig]): Data processing pipelines.
 
     """
 
-    dataset_name: StringifiedClass = "torchvision.datasets.MNIST"
+    name: DatasetLike = "torchvision.datasets.MNIST"
     device: Union[str, None] = None
     data_dir: str = "./raw_data"
     pipeline: dict[str, Any] = field(default_factory=dict)
@@ -335,10 +335,18 @@ class PytorchDataConfig(TorchDatasetMixin, DataConfig):
             "default",
         }
         if use_pytorch_default:
-            scorer_cls = load_class(
+            self.scorer = load_class(
                 "deckard.score.data.DefaultPytorchDataScorerDictConfig",
+                classifier=bool(self.classifier),
             )
-            self.scorer = scorer_cls(classifier=bool(self.classifier))
+
+        # Ensure self.dataset is set for downstream logic
+        if not hasattr(self, "dataset") or self.dataset is None:
+            self.dataset = str(self.resolve_name(default="") or "")
+        self._initialize_torch_device()
+        self._validate_pytorch_dataset_constraints()
+        self._initialize_data_params()
+        self._initialize_timing_fields()
 
     def _sampler_name(self) -> str:
         spec = getattr(self, "sampler", None)
@@ -399,16 +407,17 @@ class PytorchDataConfig(TorchDatasetMixin, DataConfig):
         ), f"Keep columns should not be set for PyTorch datasets. Got {self.keep}."
 
     def _initialize_data_params(self) -> None:
+        dataset_name = str(self.resolve_name(default="") or "")
         if self.data_dir is None:
             self.data_dir = tempfile.gettempdir()
         if self.data_params is None:
             self.data_params = {}
         if (
             "root" not in self.data_params
-            and isinstance(self.dataset_name, str)
+            and dataset_name != ""
             and (
-                self.dataset_name.startswith("torchvision.datasets.")
-                or self.dataset_name.lower()
+                dataset_name.startswith("torchvision.datasets.")
+                or dataset_name.lower()
                 in {"mnist", "torch_mnist", "cifar10", "torch_cifar10"}
             )
         ):
@@ -418,16 +427,6 @@ class PytorchDataConfig(TorchDatasetMixin, DataConfig):
         self.data_load_time = None
         self.data_sample_time = None
         self.data_score_time = None
-
-    def __post_init__(self):
-        super().__post_init__()
-        # Ensure self.dataset is set for downstream logic
-        if not hasattr(self, "dataset") or self.dataset is None:
-            self.dataset = self.dataset_name
-        self._initialize_torch_device()
-        self._validate_pytorch_dataset_constraints()
-        self._initialize_data_params()
-        self._initialize_timing_fields()
 
     def __hash__(self):
         return super().__hash__()
@@ -447,12 +446,12 @@ class PytorchDataConfig(TorchDatasetMixin, DataConfig):
         """Load a PyTorch dataset using load_class for generic instantiation.
 
         Args:
-            Uses self.dataset_name (fully qualified class name) and self.data_params.
+            Uses self.name (fully qualified class name) and self.data_params.
 
         Returns:
             Sets self._X and self._y as torch Tensors.
         """
-        dataset_name = self.dataset_name
+        dataset_name = str(self.resolve_name(default="") or "")
         start = time.perf_counter()
 
         try:
@@ -573,7 +572,7 @@ class PytorchDataConfig(TorchDatasetMixin, DataConfig):
             end = time.perf_counter()
             self._set_time("data_load_time", end - start)
             logger.info(
-                f"Loaded dataset {self.dataset_name} in {self.data_load_time:.2f} seconds. "
+                f"Loaded dataset {self.name} in {self.data_load_time:.2f} seconds. "
                 f"Shape: {self._X.shape}, Labels: {self._y.shape}",
             )
 
@@ -587,7 +586,7 @@ class PytorchDataConfig(TorchDatasetMixin, DataConfig):
             ), f"Expected _y to be Tensor, got {type(self._y)}"
 
         except Exception as e:
-            logger.error(f"Failed to load dataset {self.dataset_name}: {e}")
+            logger.error(f"Failed to load dataset {self.name}: {e}")
             raise
 
     def fit(self, run_hooks: bool = True) -> "PytorchDataConfig":

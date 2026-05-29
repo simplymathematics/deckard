@@ -297,7 +297,7 @@ class DefensePipelineConfigBehaviorMixin(DefenseHookRuntimeMixin):
         legacy_keys = {
             "defense_name",
             "defense_params",
-            "model_type",
+            "name",
             "classifier",
             "probability",
             "clip_values",
@@ -413,15 +413,15 @@ class DefensePipelineConfigBehaviorMixin(DefenseHookRuntimeMixin):
         blank_values = {None, "", "None", "null", "Null", "NULL"}
 
         if (
-            hasattr(defense_obj, "model_type")
+            hasattr(defense_obj, "name")
             and getattr(
                 defense_obj,
-                "model_type",
+                "name",
                 None,
             )
             in blank_values
         ):
-            defense_obj.model_type = (
+            defense_obj.name = (
                 f"{base_estimator.__class__.__module__}."
                 f"{base_estimator.__class__.__name__}"
             )
@@ -930,7 +930,7 @@ class ARTDefenseBehaviorMixin(DefenseHookRuntimeMixin):
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
 
-    model_type: StringifiedClass | None
+    name: StringifiedClass | None
     classifier: Union[bool, str, None]
     model_params: dict
     probability: bool
@@ -1028,7 +1028,7 @@ class ARTDefenseBehaviorMixin(DefenseHookRuntimeMixin):
     def _get_model_config(self) -> ModelConfig:
         if getattr(self, "model_config", None) is None:
             self.model_config = ModelConfig(
-                model_type=self.model_type,
+                name=self.name,
                 classifier=cast(
                     bool | str,
                     self.classifier if self.classifier is not None else True,
@@ -1042,7 +1042,7 @@ class ARTDefenseBehaviorMixin(DefenseHookRuntimeMixin):
         return self.model_config
 
     def __post_init__(self):
-        if not is_null_config_value(self.model_type, allow_empty=True):
+        if not is_null_config_value(self.name, allow_empty=True):
             model_cfg = self._get_model_config()
             self.classifier = model_cfg.classifier
             self.model_params = model_cfg.model_params
@@ -1440,8 +1440,8 @@ class ARTDefenseBehaviorMixin(DefenseHookRuntimeMixin):
         if (
             _is_torch_model_instance(getattr(self, "_model", None))
             or (
-                isinstance(self.model_type, str)
-                and self.model_type.startswith("torch.")
+                isinstance(self.name, str)
+                and self.name.startswith("torch.")
             )
             or _is_art_torch_wrapper(getattr(self, "_model", None))
         ):
@@ -1525,11 +1525,14 @@ class ARTDefenseBehaviorMixin(DefenseHookRuntimeMixin):
 
         from ...utils import is_null_config_value
 
-        if is_null_config_value(self.model_type, allow_empty=True):
+        model_name = self.resolve_name(default=None)
+        if is_null_config_value(model_name, allow_empty=True):
             raise ValueError(
-                "model_type must be set before creating an ART defense estimator",
+                "name must be set before creating an ART defense estimator",
             )
-        assert self.model_type is not None
+        assert model_name is not None
+        model_name = str(model_name)
+        self.name = model_name
         try:
             art_symbols = _get_art_symbols()
         except Exception as exc:
@@ -1537,9 +1540,9 @@ class ARTDefenseBehaviorMixin(DefenseHookRuntimeMixin):
                 "ART estimators are required for defense wrapping. Install optional dependencies that include ART.",
             ) from exc
         art_class = (
-            art_symbols["classifier_dict"][self.model_type.split(".")[-1]]
+            art_symbols["classifier_dict"][model_name.split(".")[-1]]
             if self.classifier
-            else art_symbols["regressor_dict"][self.model_type.split(".")[-1]]
+            else art_symbols["regressor_dict"][model_name.split(".")[-1]]
         )
         if art_class in art_symbols["sklearn_dict"].values():
             init_params = {}
@@ -1601,7 +1604,7 @@ class DefenseConfig(ARTDefenseBehaviorMixin, BaseConfig):
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
 
-    model_type: StringifiedClass | None = None
+    name: StringifiedClass | None = None
     classifier: Union[bool, str, None] = True
     model_params: dict = field(
         default_factory=dict,

@@ -48,7 +48,7 @@ class AnjanaModelConfig(AnjanaModelInitMixin, ModelConfig):
 
 
 ANJANA_MODEL = {
-    "model_type": "sklearn.linear_model.LogisticRegression",
+    "name": "sklearn.linear_model.LogisticRegression",
     "classifier": True,
     "model_params": {
         "max_iter": 10,

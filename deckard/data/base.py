@@ -22,6 +22,7 @@ from ..utils import (
 )
 from ..frameworks.types import (
     ArrayLike,
+    DatasetLike,
     EstimatorLike,
     IndexLike,
     MatrixLike,
@@ -30,7 +31,7 @@ from ..frameworks.types import (
 )
 from ..plugins.base import OrchestratorBase
 from ..orchestration import stage_hook_token
-from ..artifacts import ArtifactLoaderConfig, ScoreDict, SerializableValue
+from ..artifacts import ArtifactLoaderMixin, ScoreDict, SerializableValue
 from .canon import (
     DEFAULT_DATA_SCORE_STAGE,
     CANONICAL_DATA_TIMES,
@@ -108,8 +109,8 @@ class DataConfig(OrchestratorBase, BaseConfig):
 
     Attributes
     ----------
-    dataset_name : str
-        Name of the dataset to load or path to a data file.
+    name : DatasetLike
+        Canonical dataset identifier to load or path to a data file.
     data_params : dict
         Additional parameters for data loading or generation.
     split : Union[int, None]
@@ -246,7 +247,7 @@ class DataConfig(OrchestratorBase, BaseConfig):
 
     Examples
     --------
-    >>> config = DataConfig(dataset_name="adult", **kwargs)
+    >>> config = DataConfig(name="adult", **kwargs)
     >>> config()
     >>> X_train = config.X_train
     >>> y_train = config.y_train
@@ -258,7 +259,7 @@ class DataConfig(OrchestratorBase, BaseConfig):
 
         from deckard.data.sample import SplitSampler
         config = DataConfig(
-            dataset_name="digits",
+            name="digits",
             sampler=SplitSampler(test_size=0.2, val_size=0.1),
         )
         config()
@@ -266,7 +267,7 @@ class DataConfig(OrchestratorBase, BaseConfig):
     """
 
     # Configuration fields
-    dataset_name: StringifiedClass = "adult"
+    name: DatasetLike = "adult"
     data_params: dict[str, Any] = field(default_factory=dict)
     split: Union[int, None] = None
     sampler: Union["BaseSampler", Literal["split", "shuffle", "fold"], dict, None] = (
@@ -326,6 +327,43 @@ class DataConfig(OrchestratorBase, BaseConfig):
         """
 
         self.data_params = self.data_params if self.data_params is not None else {}
+
+        def _is_declared_dataset(token: str) -> bool:
+            from .declarations import build_loader_registry
+
+            try:
+                declared = build_loader_registry(self)
+            except Exception:
+                return False
+            return token in declared
+
+        def _is_supported_dataset_token(token: str) -> bool:
+            normalized = token.strip()
+            if normalized == "":
+                return False
+            if normalized.lower() in {"adult", "torch_mnist"}:
+                return True
+            if ":" in normalized:
+                # Supports module:path declaration specs (e.g. torch_fairness_dataset.py:CelebASmileDataset).
+                return True
+            if _is_declared_dataset(normalized):
+                return True
+            if Path(normalized).suffix in data_supported_filetypes:
+                return True
+            return False
+        canonical_name = str(self.name or "").strip()
+        if canonical_name == "":
+            raise ValueError(
+                "DataConfig.name must be non-empty and provided as a DatasetLike "
+                "(str or pathlib.Path).",
+            )
+        self.name = canonical_name
+        if not _is_supported_dataset_token(canonical_name):
+            logger.debug(
+                "DataConfig.name=%r is not a declared dataset token or supported file extension; "
+                "deferring validation to runtime loader resolution.",
+                canonical_name,
+            )
         self.score_stage = normalize_data_score_stage(
             getattr(self, "score_stage", DEFAULT_DATA_SCORE_STAGE)
             or DEFAULT_DATA_SCORE_STAGE,
@@ -622,7 +660,7 @@ class DataConfig(OrchestratorBase, BaseConfig):
     def load(
         self,
         filepath: Union[str, None] = None,
-    ) -> "ArtifactLoaderConfig | ScoreDict | MatrixLike | ArrayLike | EstimatorLike | SerializableValue | None":
+    ) -> "ArtifactLoaderMixin | ScoreDict | MatrixLike | ArrayLike | EstimatorLike | SerializableValue | None":
         """Load a cached DataConfig object from pickle artifact storage.
 
         This method does not materialize datasets. Use :meth:`load_dataset` for
@@ -687,13 +725,13 @@ class DataConfig(OrchestratorBase, BaseConfig):
 
     def load_default_dataset(
         self,
-        dataset_name: StringifiedClass,
+        dataset: StringifiedClass,
         **loader_params: Any,
     ) -> MatrixLike | ArrayLike | None:
         """Public default dataset load entry-point delegated to declarations.
 
         Args:
-            dataset_name: Dataset identifier.
+            dataset: Dataset identifier.
             **loader_params: Dataset-loader specific kwargs.
 
         Returns:
@@ -701,7 +739,7 @@ class DataConfig(OrchestratorBase, BaseConfig):
         """
         from .declarations import load_default_dataset
 
-        return load_default_dataset(self, dataset_name=dataset_name, **loader_params)
+        return load_default_dataset(self, dataset_name=dataset, **loader_params)
 
     def fit(self, run_hooks: bool = True) -> "DataConfig":
         """Materialize train/test/(optional val) splits for this dataset.
@@ -1016,9 +1054,9 @@ class DataConfig(OrchestratorBase, BaseConfig):
         --------------------
                 - Dataset/load dispatch (DataConfig):
                     {", ".join(CANONICAL_DATASET_LOAD_FILETYPES)}
-                - Artifact save (ArtifactLoaderConfig.save_data):
+                - Artifact save (ArtifactLoaderMixin.save_data):
                     {", ".join(CANONICAL_DATA_SAVE_FILETYPES)}
-                - Artifact load (ArtifactLoaderConfig.load_data):
+                - Artifact load (ArtifactLoaderMixin.load_data):
                     {", ".join(CANONICAL_DATA_LOAD_FILETYPES)}
 
         For built-in datasets, calls the corresponding loader method.
@@ -1039,7 +1077,10 @@ class DataConfig(OrchestratorBase, BaseConfig):
         from .declarations import build_loader_registry
 
         supported_datasets = build_loader_registry(self)
-        dataset_name = str(self.dataset_name)
+        dataset_name = str(self.resolve_name(default="") or "")
+        if dataset_name == "":
+            raise ValueError("DataConfig.name must be set before loading data")
+        self.name = dataset_name
         filetype = Path(dataset_name).suffix
         supported_filetypes = data_supported_filetypes
         is_optuna_source = (
@@ -1051,22 +1092,22 @@ class DataConfig(OrchestratorBase, BaseConfig):
         if (
             not is_optuna_source
             and filetype not in supported_filetypes
-            and self.dataset_name not in supported_datasets
+            and dataset_name not in supported_datasets
         ):
             raise NotImplementedError(
-                f"Currently only {supported_filetypes} filetypes are supported for loading data. Cannot load {self.dataset_name}",
+                f"Currently only {supported_filetypes} filetypes are supported for loading data. Cannot load {dataset_name}",
             )
         if is_optuna_source:
             start_time = time.process_time()
             self._load_from_optuna_storage()
             end_time = time.process_time()
             self._set_time("data_load_time", end_time - start_time)
-        elif self.dataset_name in supported_datasets:
+        elif dataset_name in supported_datasets:
             start_time = time.process_time()
-            self.load_default_dataset(self.dataset_name, **self.data_params)
+            self.load_default_dataset(dataset_name, **self.data_params)
         elif filetype == ".openml":
             start_time = time.process_time()
-            dataset_base_name = Path(self.dataset_name).stem
+            dataset_base_name = Path(dataset_name).stem
             from .declarations import load_generic_openml
 
             load_generic_openml(
@@ -1076,12 +1117,12 @@ class DataConfig(OrchestratorBase, BaseConfig):
             )
         elif filetype in supported_filetypes:
             start_time = time.process_time()
-            self._load_from_csv(**self.data_params)
+            self._load_from_csv(dataset_name=dataset_name, **self.data_params)
             end_time = time.process_time()
             self._set_time("data_load_time", end_time - start_time)
         else:
             raise NotImplementedError(
-                f"Dataset {self.dataset_name} not implemented",
+                f"Dataset {dataset_name} not implemented",
             )
 
         assert isinstance(
@@ -1095,11 +1136,13 @@ class DataConfig(OrchestratorBase, BaseConfig):
         self._apply_max_samples()
         self._run_plugin_hook("after_load_data")
         logger.info(
-            f"Data loaded from {self.dataset_name} in {self.data_load_time:.2f} seconds",
+            f"Data loaded from {dataset_name} in {self.data_load_time:.2f} seconds",
         )
 
-    def _load_from_csv(self):
-        data = pd.DataFrame(cast(Any, self.load_data(self.dataset_name)))
+    def _load_from_csv(self, dataset_name: str | None = None):
+        if dataset_name is None:
+            dataset_name = str(self.resolve_name(default="") or "")
+        data = pd.DataFrame(cast(Any, self.load_data(dataset_name)))
         if self.target is None:
             raise ValueError(
                 "CSV file must contain a 'target' column or specify the target column name in the 'target' attribute",
@@ -1117,12 +1160,13 @@ class DataConfig(OrchestratorBase, BaseConfig):
         self._y = y
 
     def _load_from_optuna_storage(self):
+        dataset_name = str(self.resolve_name(default="") or "")
         data_params = dict(self.data_params or {})
         storage = data_params.pop("optuna_storage", None)
         if storage is None:
             storage = data_params.pop("storage", None)
-        if storage is None and str(self.dataset_name).strip().lower() != "optuna":
-            storage = self.dataset_name
+        if storage is None and dataset_name.strip().lower() != "optuna":
+            storage = dataset_name
         if storage is None:
             storage = "sqlite:///optuna.db"
 

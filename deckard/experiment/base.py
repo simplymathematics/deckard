@@ -1283,8 +1283,11 @@ class ExperimentConfig(DataConfigResolutionMixin, BaseConfig):
             )
 
             if not isinstance(self.model, fairness_types):
+                model_name = self.model.resolve_name(default=None)
+                if model_name is None:
+                    raise ValueError("ModelConfig.name must be set for fairness specialization")
                 self.model = target_model_cls(
-                    model_type=self.model.model_type,
+                    name=model_name,
                     classifier=self.model.classifier,
                     model_params=self.model.model_params,
                     probability=self.model.probability,

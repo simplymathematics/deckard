@@ -15,7 +15,14 @@ from ..artifacts import ScoreDict
 from ..data import DataConfig
 from ..model import ModelConfig
 from ..frameworks.types import AttackLike, EstimatorLike, StringifiedClass
-from .base import AttackConfig, AttackTypePlugin, AttackMixin, _sensitive_slice
+from .base import (
+    AttackConfig,
+    AttackFamily,
+    AttackSubFamily,
+    AttackTypePlugin,
+    AttackMixin,
+    _sensitive_slice,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -37,8 +44,8 @@ class InferenceAttackMixin(AttackMixin):
         model: ModelConfig | BaseEstimator | EstimatorLike,
         art_model: EstimatorLike,
         attack: AttackLike,
-        attack_type: StringifiedClass,
-        attack_subtype: StringifiedClass,
+        attack_family: AttackFamily | str,
+        attack_sub_family: AttackSubFamily | str,
     ) -> ScoreDict:
         """Dispatch inference attack execution for supported inference subtypes.
 
@@ -47,8 +54,8 @@ class InferenceAttackMixin(AttackMixin):
             model: User model configuration or estimator.
             art_model: ART-wrapped model used for inference attacks.
             attack: Instantiated inference attack implementation.
-            attack_type: Parsed attack family.
-            attack_subtype: Parsed attack subtype.
+            attack_family: Parsed attack family.
+            attack_sub_family: Parsed attack sub-family.
 
         Returns:
             Score payload for the selected inference subtype.
@@ -56,15 +63,15 @@ class InferenceAttackMixin(AttackMixin):
         Raises:
             ValueError: If attack family/subtype is unsupported.
         """
-        if (attack_type or "").lower() != "inference":
+        if (attack_family or "").lower() != "inference":
             raise ValueError(
-                f"_InferenceAttackMixin received unsupported attack type: {attack_type}",
+                f"_InferenceAttackMixin received unsupported attack family: {attack_family}",
             )
         return self.infer(
             data=data,
             art_model=art_model,
             attack=attack,
-            attack_subtype=attack_subtype,
+            attack_sub_family=attack_sub_family,
         )
 
     def infer(
@@ -73,7 +80,7 @@ class InferenceAttackMixin(AttackMixin):
         data: DataConfig,
         art_model: EstimatorLike,
         attack: AttackLike,
-        attack_subtype: StringifiedClass,
+        attack_sub_family: AttackSubFamily | str,
     ) -> ScoreDict:
         """Public type-mirroring dispatcher for inference attack subtypes.
 
@@ -81,12 +88,12 @@ class InferenceAttackMixin(AttackMixin):
             data: Runtime dataset and split container.
             art_model: ART-wrapped model used for inference attacks.
             attack: Instantiated inference attack implementation.
-            attack_subtype: Parsed inference subtype token.
+            attack_sub_family: Parsed inference sub-family token.
 
         Returns:
             Score payload for the selected inference subtype.
         """
-        subtype = (attack_subtype or "").lower()
+        subtype = (attack_sub_family or "").lower()
         if subtype == "membership_inference":
             return self.infer_membership(data=data, attack=attack)
         if subtype == "attribute_inference":
@@ -103,7 +110,9 @@ class InferenceAttackMixin(AttackMixin):
             return self.infer_model_inversion(data=data, attack=attack)
         if subtype == "reconstruction":
             return self.infer_database_reconstruction(data=data, attack=attack)
-        raise ValueError(f"Unsupported inference attack subtype: {attack_subtype}")
+        raise ValueError(
+            f"Unsupported inference attack sub-family: {attack_sub_family}",
+        )
 
     def inference(
         self,
@@ -111,7 +120,7 @@ class InferenceAttackMixin(AttackMixin):
         data: DataConfig,
         art_model: EstimatorLike,
         attack: AttackLike,
-        attack_subtype: StringifiedClass,
+        attack_sub_family: AttackSubFamily | str,
     ) -> ScoreDict:
         """Backward-compatible noun-mode alias for ``infer``.
 
@@ -119,7 +128,7 @@ class InferenceAttackMixin(AttackMixin):
             data: Runtime dataset and split container.
             art_model: ART-wrapped model used for inference attacks.
             attack: Instantiated inference attack implementation.
-            attack_subtype: Parsed inference subtype token.
+            attack_sub_family: Parsed inference sub-family token.
 
         Returns:
             Score payload for the selected inference subtype.
@@ -128,7 +137,7 @@ class InferenceAttackMixin(AttackMixin):
             data=data,
             art_model=art_model,
             attack=attack,
-            attack_subtype=attack_subtype,
+            attack_sub_family=attack_sub_family,
         )
 
     def membership_inference(
@@ -249,7 +258,7 @@ class InferenceAttackMixin(AttackMixin):
                     )
         active_mode = self.resolve_mode_for_attack_kind(
             "attribute",
-            attack_subtype=self.attack_subtype,
+            attack_sub_family=self.attack_sub_family,
         )
         if active_mode == "val":
             X_source = getattr(data, "X_val", None)
@@ -447,7 +456,7 @@ class InferenceAttackMixin(AttackMixin):
     ) -> tuple[str, object, object]:
         requested_mode = self.resolve_mode_for_attack_kind(
             attack_kind,
-            attack_subtype=self.attack_subtype,
+            attack_sub_family=self.attack_sub_family,
         )
         if requested_mode == "val":
             X_val = getattr(data, "X_val", None)
@@ -774,14 +783,14 @@ class InferenceAttackConfig(InferenceAttackMixin, AttackConfig):
         ``ReconstructionAttackConfig``.
 
     Attributes:
-        plugins: Default plugin wiring for ``attack_type='inference'``.
+        plugins: Default plugin wiring for ``attack_family='inference'``.
     """
 
     plugins: list = field(
         default_factory=lambda: [
             AttackTypePlugin(
                 mixin_type=InferenceAttackMixin,
-                attack_type="inference",
+                attack_family="inference",
                 excluded_subtypes=("reconstruction",),
             ),
         ],

@@ -350,7 +350,13 @@ class DetectorConfig(BaseConfig):
     def _resolve_filter_family(self, attack: "AttackConfig | None") -> str:
         if self.filter_mode in {"poison", "evasion"}:
             return self.filter_mode
-        attack_type = str(getattr(attack, "attack_type", "") or "").lower()
+        attack_name = ""
+        resolve_name = getattr(attack, "resolve_name", None)
+        if callable(resolve_name):
+            attack_name = str(resolve_name(default="") or "")
+        else:
+            attack_name = str(getattr(attack, "name", None) or "")
+        attack_type = attack_name.lower()
         if "poison" in attack_type:
             return "poison"
         return "evasion"

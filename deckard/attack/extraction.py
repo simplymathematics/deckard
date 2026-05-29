@@ -13,7 +13,7 @@ from ..frameworks.types import AttackLike, EstimatorLike, MatrixLike, Stringifie
 from ..model import ModelConfig
 from ..score.base import DefaultClassifierScorerDictConfig
 
-from .base import AttackConfig, AttackTypePlugin
+from .base import AttackConfig, AttackFamily, AttackSubFamily, AttackTypePlugin
 from .poisoning import PoisoningAttackMixin
 
 logger = logging.getLogger(__name__)
@@ -70,8 +70,8 @@ class ExtractionAttackMixin(PoisoningAttackMixin):
         model: ModelConfig | BaseEstimator | EstimatorLike,
         art_model: EstimatorLike,
         attack: AttackLike,
-        attack_type: StringifiedClass,
-        attack_subtype: StringifiedClass,
+        attack_family: AttackFamily | str,
+        attack_sub_family: AttackSubFamily | str,
     ) -> ScoreDict:
         """Run extraction attack runtime handler.
 
@@ -80,8 +80,8 @@ class ExtractionAttackMixin(PoisoningAttackMixin):
             model: User model object/config passed into attack orchestration.
             art_model: ART-wrapped victim model used for extraction.
             attack: Instantiated extraction attack object.
-            attack_type: Parsed runtime family; must be ``extraction``.
-            attack_subtype: Parsed subtype token from attack path.
+            attack_family: Parsed runtime family; must be ``extraction``.
+            attack_sub_family: Parsed sub-family token from attack path.
 
         Returns:
             Score payload for extraction runtime execution.
@@ -89,9 +89,10 @@ class ExtractionAttackMixin(PoisoningAttackMixin):
         Raises:
             ValueError: If attack type is not extraction.
         """
-        if (attack_type or "").lower() != "extraction":
+        _ = attack_sub_family
+        if (attack_family or "").lower() != "extraction":
             raise ValueError(
-                f"_ExtractionAttackMixin received unsupported attack type: {attack_type}",
+                f"_ExtractionAttackMixin received unsupported attack family: {attack_family}",
             )
         return self.extract(data=data, art_model=art_model, attack=attack)
 
@@ -235,14 +236,14 @@ class ExtractionAttackConfig(ExtractionAttackMixin, AttackConfig):
         ``ExtractionAttackMixin`` through the default ``AttackTypePlugin``.
 
     Attributes:
-        plugins: Default plugin wiring for ``attack_type='extraction'``.
+        plugins: Default plugin wiring for ``attack_family='extraction'``.
     """
 
     plugins: list = field(
         default_factory=lambda: [
             AttackTypePlugin(
                 mixin_type=ExtractionAttackMixin,
-                attack_type="extraction",
+                attack_family="extraction",
             ),
         ],
     )

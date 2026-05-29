@@ -17,7 +17,14 @@ from ..frameworks.pytorch.torch_utils import (
     is_tensor,
     tensor_to_numpy,
 )
-from .base import AttackConfig, AttackTypePlugin, AttackMixin, _sensitive_slice
+from .base import (
+    AttackConfig,
+    AttackFamily,
+    AttackSubFamily,
+    AttackTypePlugin,
+    AttackMixin,
+    _sensitive_slice,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -49,8 +56,8 @@ class EvasionAttackMixin(AttackMixin):
         model: ModelConfig | BaseEstimator | EstimatorLike,
         art_model: EstimatorLike,
         attack: AttackLike,
-        attack_type: StringifiedClass,
-        attack_subtype: StringifiedClass,
+        attack_family: AttackFamily | str,
+        attack_sub_family: AttackSubFamily | str,
     ) -> ScoreDict:
         """Dispatch evasion attack execution for runtime attack family validation.
 
@@ -59,8 +66,8 @@ class EvasionAttackMixin(AttackMixin):
             model: User model configuration or estimator.
             art_model: ART-wrapped model used for prediction and attack evaluation.
             attack: Instantiated evasion attack implementation.
-            attack_type: Parsed attack family.
-            attack_subtype: Parsed evasion subtype.
+            attack_family: Parsed attack family.
+            attack_sub_family: Parsed evasion sub-family.
 
         Returns:
             Score payload for evasion attack execution.
@@ -68,9 +75,10 @@ class EvasionAttackMixin(AttackMixin):
         Raises:
             ValueError: If attack family is not evasion.
         """
-        if (attack_type or "").lower() != "evasion":
+        _ = attack_sub_family
+        if (attack_family or "").lower() != "evasion":
             raise ValueError(
-                f"_EvasionAttackMixin received unsupported attack type: {attack_type}",
+                f"_EvasionAttackMixin received unsupported attack family: {attack_family}",
             )
         return self.evade(data, art_model, attack)
 
@@ -222,14 +230,14 @@ class EvasionAttackConfig(EvasionAttackMixin, AttackConfig):
         ``EvasionAttackMixin`` through the default ``AttackTypePlugin``.
 
     Attributes:
-        plugins: Default plugin wiring for ``attack_type='evasion'``.
+        plugins: Default plugin wiring for ``attack_family='evasion'``.
     """
 
     plugins: list = field(
         default_factory=lambda: [
             AttackTypePlugin(
                 mixin_type=EvasionAttackMixin,
-                attack_type="evasion",
+                attack_family="evasion",
             ),
         ],
     )

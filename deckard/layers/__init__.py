@@ -8,6 +8,12 @@ from collections.abc import Callable
 from typing import TypeAlias
 
 from .compile_results import compile_results_main, compile_results_parser
+from .extensions_cli import (
+    frameworks_main,
+    frameworks_parser,
+    plugins_main,
+    plugins_parser,
+)
 from .optimize import hydra_parser, optimize_main
 from .plot import plot_main, plot_parser
 from .progress_bar import progress_bar_main, progress_bar_parser
@@ -31,6 +37,8 @@ layer_dict: dict[str, list[Callable[..., object]]] = {
     "progress_bar": [progress_bar_parser, progress_bar_main],
     "plot": [plot_parser, plot_main],
     "optimize": [hydra_parser, optimize_main],
+    "plugins": [plugins_parser, plugins_main],
+    "frameworks": [frameworks_parser, frameworks_main],
     "rerun_failed_studies": [
         rerun_failed_studies_parser,
         rerun_failed_studies_main,
@@ -52,6 +60,10 @@ __all__ = [
     "plot_parser",
     "optimize_main",
     "hydra_parser",
+    "plugins_main",
+    "plugins_parser",
+    "frameworks_main",
+    "frameworks_parser",
     "rerun_failed_studies_main",
     "rerun_failed_studies_parser",
     "layer_dict",

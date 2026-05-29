@@ -41,7 +41,7 @@ from .data import DataConfig  # noqa E402
 from .model import ModelConfig  # noqa E402
 from .model.defense.base import DefenseConfig  # noqa E402
 from .attack import AttackConfig  # noqa E402
-from .artifacts import ArtifactLoaderConfig  # noqa E402
+from .artifacts import ArtifactLoaderMixin  # noqa E402
 from .detector import DetectorConfig  # noqa E402
 from .experiment import ExperimentConfig  # noqa E402
 
@@ -246,7 +246,7 @@ def _coerce_artifact_path(path: Any) -> str:
 
 def _load_artifact_resolver(method_name: str, payload_kind: str):
     def _resolver(path: Any):
-        artifact = ArtifactLoaderConfig(
+        artifact = ArtifactLoaderMixin(
             path=_coerce_artifact_path(path),
             payload_kind=payload_kind,
         )
@@ -257,7 +257,7 @@ def _load_artifact_resolver(method_name: str, payload_kind: str):
 
 def _save_artifact_resolver(method_name: str, payload_kind: str):
     def _resolver(payload: Any, path: Any):
-        artifact = ArtifactLoaderConfig(
+        artifact = ArtifactLoaderMixin(
             path=_coerce_artifact_path(path),
             payload_kind=payload_kind,
         )

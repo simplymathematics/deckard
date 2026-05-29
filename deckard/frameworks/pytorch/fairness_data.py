@@ -153,7 +153,7 @@ class FairlearnPytorchDataConfig(FairlearnDataConfig, PytorchCustomDataConfig):
         FairlearnDataConfig.__post_init__(self)
         PytorchCustomDataConfig.__post_init__(self)
         if not hasattr(self, "dataset") or not self.dataset:
-            self.dataset = self.dataset_name
+            self.dataset = str(self.resolve_name(default="") or "")
         self._ensure_data_scorer_default()
 
     # ------------------------------------------------------------------

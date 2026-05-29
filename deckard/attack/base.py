@@ -58,6 +58,17 @@ from ..score.attack import AttackScorerConfig
 
 logger = logging.getLogger(__name__)
 
+AttackFamily = Literal[
+    "evasion",
+    "poisoning",
+    "inference",
+    "extraction",
+    "reconstruction",
+]
+AttackSubFamily = str
+AttackFamilyLike = AttackFamily | str
+AttackSubFamilyLike = AttackSubFamily | str
+
 
 def _sensitive_slice(sensitive, n):
     """Return the first *n* rows of *sensitive*, or None if unavailable."""
@@ -209,8 +220,8 @@ class AttackMixin:
         model: ModelConfig | EstimatorLike | BaseEstimator,
         art_model: EstimatorLike,
         attack: AttackLike,
-        attack_type: str,
-        attack_subtype: str,
+        attack_family: AttackFamilyLike,
+        attack_sub_family: AttackSubFamilyLike,
     ) -> ScoreDict:
         """Execute one attack handler.
 
@@ -219,8 +230,8 @@ class AttackMixin:
             model: User model object or model config supplied to ``AttackConfig``.
             art_model: ART estimator wrapper used by the selected attack implementation.
             attack: Instantiated attack object (for example ART attack instance).
-            attack_type: Parsed attack family.
-            attack_subtype: Parsed attack subtype from attack path.
+            attack_family: Parsed attack family.
+            attack_sub_family: Parsed attack sub-family from attack path.
 
         Returns:
             Score dictionary merged into runtime ``score_dict``.
@@ -239,8 +250,8 @@ class AttackMixin:
         model: ModelConfig | EstimatorLike | BaseEstimator,
         art_model: EstimatorLike,
         attack: AttackLike,
-        attack_type: str,
-        attack_subtype: str,
+        attack_family: AttackFamilyLike,
+        attack_sub_family: AttackSubFamilyLike,
     ) -> ScoreDict:
         """Public alias for base attack dispatch.
 
@@ -252,8 +263,8 @@ class AttackMixin:
             model=model,
             art_model=art_model,
             attack=attack,
-            attack_type=attack_type,
-            attack_subtype=attack_subtype,
+            attack_family=attack_family,
+            attack_sub_family=attack_sub_family,
         )
 
 
@@ -265,9 +276,9 @@ class AttackTypePlugin:
     ---------------------
     mixin_type : Any
         Mixin class (or import path) implementing runtime ``__call__``.
-    attack_type : str
+    attack_family : str
         Attack family this plugin matches.
-    attack_subtype : str | None
+    attack_sub_family : str | None
         Optional subtype constraint.
     excluded_subtypes : tuple[str, ...]
         Subtypes explicitly excluded from this plugin match.
@@ -284,8 +295,8 @@ class AttackTypePlugin:
     """
 
     mixin_type: Any
-    attack_type: str
-    attack_subtype: Union[str, None] = None
+    attack_family: str
+    attack_sub_family: Union[str, None] = None
     excluded_subtypes: tuple[str, ...] = field(default_factory=tuple)
 
     def _resolve_mixin_type(self) -> type:
@@ -295,11 +306,11 @@ class AttackTypePlugin:
             return resolved
         return self.mixin_type
 
-    def _matches(self, *, attack_type: str, attack_subtype: str) -> bool:
-        if (attack_type or "").lower() != (self.attack_type or "").lower():
+    def _matches(self, *, attack_family: str, attack_sub_family: str) -> bool:
+        if (attack_family or "").lower() != (self.attack_family or "").lower():
             return False
-        subtype = (attack_subtype or "").lower()
-        if self.attack_subtype is not None and subtype != self.attack_subtype.lower():
+        subtype = (attack_sub_family or "").lower()
+        if self.attack_sub_family is not None and subtype != self.attack_sub_family.lower():
             return False
         if subtype in {item.lower() for item in self.excluded_subtypes}:
             return False
@@ -309,23 +320,26 @@ class AttackTypePlugin:
         self,
         runtime: "AttackConfig",
         *,
-        attack_type: str,
-        attack_subtype: str,
+        attack_family: str,
+        attack_sub_family: str,
         default_mixins: tuple[type, ...],
     ) -> tuple[type, ...]:
         """Return mixin tuple for matching attack family/subtype.
 
         Args:
             runtime: Active runtime attack config.
-            attack_type: Requested attack family.
-            attack_subtype: Requested attack subtype.
+            attack_family: Requested attack family.
+            attack_sub_family: Requested attack sub-family.
             default_mixins: Default mixins for this attack family.
 
         Returns:
             Mixin tuple to attach to runtime context.
         """
         _ = (runtime, default_mixins)
-        if not self._matches(attack_type=attack_type, attack_subtype=attack_subtype):
+        if not self._matches(
+            attack_family=attack_family,
+            attack_sub_family=attack_sub_family,
+        ):
             return ()
         mixin = self._resolve_mixin_type()
         return (mixin,)
@@ -334,8 +348,8 @@ class AttackTypePlugin:
         self,
         runtime: "AttackConfig",
         *,
-        attack_type: str,
-        attack_subtype: str,
+        attack_family: str,
+        attack_sub_family: str,
         default_handler: Callable[..., ScoreDict] | None,
         default_mixins: tuple[type, ...],
     ) -> Callable[..., ScoreDict] | None:
@@ -343,8 +357,8 @@ class AttackTypePlugin:
 
         Args:
             runtime: Active runtime attack config.
-            attack_type: Requested attack family.
-            attack_subtype: Requested attack subtype.
+            attack_family: Requested attack family.
+            attack_sub_family: Requested attack sub-family.
             default_handler: Existing resolved runtime handler.
             default_mixins: Existing resolved mixins.
 
@@ -352,7 +366,10 @@ class AttackTypePlugin:
             Callable runtime handler when plugin matches; otherwise ``None``.
         """
         _ = (default_handler, default_mixins)
-        if not self._matches(attack_type=attack_type, attack_subtype=attack_subtype):
+        if not self._matches(
+            attack_family=attack_family,
+            attack_sub_family=attack_sub_family,
+        ):
             return None
         return lambda *args, **kwargs: self(runtime, *args, **kwargs)
 
@@ -400,7 +417,7 @@ class AttackConfig(BaseConfig):
         before attack object construction.
 
     Attributes:
-        attack_type: Attack family/type path used to resolve attack class.
+        name: Fully-qualified attack class path used to resolve attack class.
         attack_params: Constructor and runtime parameters for attack execution.
         attack_size: Number of samples used for attack execution.
         plugins: Runtime attack plugins used for dispatch/hook extension.
@@ -409,7 +426,7 @@ class AttackConfig(BaseConfig):
     """
 
     # Configuration fields
-    attack_type: str = "art.attacks.evasion.HopSkipJump"
+    name: str = "art.attacks.evasion.HopSkipJump"
     attack_params: dict = field(
         default_factory=dict,
         metadata={"help": "Parameters for the attack."},
@@ -438,8 +455,8 @@ class AttackConfig(BaseConfig):
     score_y_pred: Union[object, None] = None
     score_y_proba: Union[object, None] = None
     target_index: Union[int, None] = None
-    _attack_type: Union[str, None] = None
-    _attack_subtype: Union[str, None] = None
+    _attack_family: Union[str, None] = None
+    _attack_sub_family: Union[str, None] = None
     score_dict: ScoreDict = field(default_factory=ScoreDict)
     _target_: Union[str, None] = None
     _plugin_objects: Union[list, None] = field(
@@ -458,6 +475,11 @@ class AttackConfig(BaseConfig):
         Sets the internal attack attribute to None. If attack_params is not provided,
         initializes it as an empty dictionary.
         """
+        attack_name = str(self.name).strip()
+        if attack_name == "":
+            raise ValueError("AttackConfig.name must be a non-empty attack class path")
+        self.name = attack_name
+
         self._target_ = "deckard.attack.AttackConfig"
         attack_scorer_cls = resolve_class(
             "deckard.score.attack.AttackScorerConfig",
@@ -529,11 +551,11 @@ class AttackConfig(BaseConfig):
 
     def _validate_poisoning_params(self):
         """Validate poisoning-specific configuration parameters."""
-        attack_type = (self.attack_family or "").lower()
-        if attack_type != "poisoning":
+        attack_family = (self.attack_family or "").lower()
+        if attack_family != "poisoning":
             return
 
-        if str(self.attack_type).endswith("PoisoningAttackSVM"):
+        if str(self.resolve_name(default="") or "").endswith("PoisoningAttackSVM"):
             return
 
         required_keys = ("class_source", "class_target")
@@ -587,7 +609,7 @@ class AttackConfig(BaseConfig):
         self,
         attack_kind: Optional[str],
         *,
-        attack_subtype: Optional[str] = None,
+        attack_sub_family: Optional[str] = None,
         split_override: Optional[str] = None,
     ) -> Literal["train", "test", "val"]:
         """Resolve active split mode from overrides, explicit mode, or auto defaults.
@@ -599,7 +621,7 @@ class AttackConfig(BaseConfig):
 
         Args:
             attack_kind: Canonical attack kind token.
-            attack_subtype: Optional attack subtype token.
+            attack_sub_family: Optional attack sub-family token.
             split_override: Optional split override token.
 
         Returns:
@@ -630,7 +652,7 @@ class AttackConfig(BaseConfig):
         if mode_value in {"train", "test", "val"}:
             return mode_value
         attack_family = (self.attack_family or "").lower()
-        subtype = (attack_subtype or self.attack_subtype or "").lower()
+        subtype = (attack_sub_family or self.attack_sub_family or "").lower()
         kind = (attack_kind or "").lower()
 
         if attack_family == "poisoning":
@@ -654,10 +676,11 @@ class AttackConfig(BaseConfig):
         return "test"
 
     def _parse_attack_path(self) -> tuple[str, str]:
-        parts = (self.attack_type or "").split("attacks.")[-1].split(".")
-        attack_type = parts[0] if len(parts) > 0 else ""
-        attack_subtype = parts[1] if len(parts) > 1 else ""
-        return attack_type, attack_subtype
+        attack_path = str(self.resolve_name(default="") or "")
+        parts = attack_path.split("attacks.")[-1].split(".")
+        attack_family = parts[0] if len(parts) > 0 else ""
+        attack_sub_family = parts[1] if len(parts) > 1 else ""
+        return attack_family, attack_sub_family
 
     def _attack_target_token(self) -> str:
         """Resolve a stable target token used in emitted attack metric labels."""
@@ -744,27 +767,27 @@ class AttackConfig(BaseConfig):
 
     def _resolve_runtime_attack_mixins(
         self,
-        attack_type: str,
-        attack_subtype: str,
+        attack_family: str,
+        attack_sub_family: str,
     ) -> tuple[type, ...]:
         mixins: list[type] = []
-        attack_type_lower = (attack_type or "").lower()
-        attack_subtype_lower = (attack_subtype or "").lower()
+        attack_family_lower = (attack_family or "").lower()
+        attack_sub_family_lower = (attack_sub_family or "").lower()
 
-        if attack_type_lower == "evasion":
+        if attack_family_lower == "evasion":
             from .evasion import EvasionAttackMixin
 
             mixins.append(EvasionAttackMixin)
-        elif attack_type_lower == "poisoning":
+        elif attack_family_lower == "poisoning":
             from .poisoning import PoisoningAttackMixin
 
             mixins.append(PoisoningAttackMixin)
-        elif attack_type_lower == "extraction":
+        elif attack_family_lower == "extraction":
             from .extraction import ExtractionAttackMixin
 
             mixins.append(ExtractionAttackMixin)
-        elif attack_type_lower == "inference":
-            if attack_subtype_lower == "reconstruction":
+        elif attack_family_lower == "inference":
+            if attack_sub_family_lower == "reconstruction":
                 from .reconstruction import ReconstructionAttackMixin
 
                 mixins.append(ReconstructionAttackMixin)
@@ -775,8 +798,8 @@ class AttackConfig(BaseConfig):
 
         plugin_outputs = self._run_plugin_hook(
             "resolve_attack_mixins",
-            attack_type=attack_type,
-            attack_subtype=attack_subtype,
+            attack_family=attack_family,
+            attack_sub_family=attack_sub_family,
             default_mixins=tuple(mixins),
         )
         for output in plugin_outputs:
@@ -793,8 +816,15 @@ class AttackConfig(BaseConfig):
                 deduped.append(mixin)
         return tuple(deduped)
 
-    def _resolve_attack_handler(self, attack_type: str, attack_subtype: str):
-        mixins = self._resolve_runtime_attack_mixins(attack_type, attack_subtype)
+    def _resolve_attack_handler(
+        self,
+        attack_family: str,
+        attack_sub_family: str,
+    ):
+        mixins = self._resolve_runtime_attack_mixins(
+            attack_family,
+            attack_sub_family,
+        )
         default_handler = None
         for mixin in mixins:
             if isinstance(mixin, type) and issubclass(mixin, AttackMixin):
@@ -803,8 +833,8 @@ class AttackConfig(BaseConfig):
 
         hook_outputs = self._run_plugin_hook(
             "resolve_attack_handler",
-            attack_type=attack_type,
-            attack_subtype=attack_subtype,
+            attack_family=attack_family,
+            attack_sub_family=attack_sub_family,
             default_handler=default_handler,
             default_mixins=mixins,
         )
@@ -816,16 +846,20 @@ class AttackConfig(BaseConfig):
 
         return default_handler
 
-    def _with_attack_context(self, attack_type: str, attack_subtype: str):
+    def _with_attack_context(
+        self,
+        attack_family: str,
+        attack_sub_family: str,
+    ):
         mixins = self._resolve_runtime_attack_mixins(
-            attack_type=attack_type,
-            attack_subtype=attack_subtype,
+            attack_family=attack_family,
+            attack_sub_family=attack_sub_family,
         )
         if len(mixins) == 0:
             return self
 
         runtime_cls = type(
-            f"RuntimeAttackContext_{attack_type}_{attack_subtype}_{self.__class__.__name__}",
+            f"RuntimeAttackContext_{attack_family}_{attack_sub_family}_{self.__class__.__name__}",
             (*mixins, self.__class__),
             {},
         )
@@ -840,22 +874,26 @@ class AttackConfig(BaseConfig):
         Returns:
             Canonical attack family token when available.
         """
-        if self._attack_type:
-            return self._attack_type
-        attack_type, _ = self._parse_attack_path()
-        return attack_type or None
+        if self._attack_family:
+            return self._attack_family
+        attack_family, _ = self._parse_attack_path()
+        return attack_family or None
+
+    @attack_family.setter
+    def attack_family(self, value: Optional[str]) -> None:
+        self._attack_family = value
 
     @property
-    def attack_subtype(self) -> Optional[str]:
+    def attack_sub_family(self) -> Optional[str]:
         """Return canonical attack subtype resolved from runtime attack declaration.
 
         Returns:
             Canonical attack subtype token when available.
         """
-        if self._attack_subtype:
-            return self._attack_subtype
-        _, attack_subtype = self._parse_attack_path()
-        return attack_subtype or None
+        if self._attack_sub_family:
+            return self._attack_sub_family
+        _, attack_sub_family = self._parse_attack_path()
+        return attack_sub_family or None
 
     @property
     def attack_kind(self) -> Optional[str]:
@@ -864,14 +902,14 @@ class AttackConfig(BaseConfig):
         Returns:
             Normalized attack scoring kind token.
         """
-        attack_type = (self.attack_family or "").lower()
-        subtype = (self.attack_subtype or "").lower()
+        attack_family = (self.attack_family or "").lower()
+        subtype = (self.attack_sub_family or "").lower()
 
-        if attack_type == "evasion":
+        if attack_family == "evasion":
             return "evasion"
-        if attack_type == "inference" and "membership" in subtype:
+        if attack_family == "inference" and "membership" in subtype:
             return "membership"
-        if attack_type == "inference" and "attribute" in subtype:
+        if attack_family == "inference" and "attribute" in subtype:
             return "attribute"
         return None
 
@@ -900,9 +938,9 @@ class AttackConfig(BaseConfig):
         model: ModelConfig | EstimatorLike | BaseEstimator,
     ):
         """Fail fast for known unsupported task/attack combinations."""
-        attack_type = (self.attack_family or "").lower()
+        attack_family = (self.attack_family or "").lower()
         task_is_classification = self._infer_task_is_classification(data, model)
-        if attack_type == "evasion" and task_is_classification is False:
+        if attack_family == "evasion" and task_is_classification is False:
             raise ValueError(
                 "Evasion attacks are not supported for regression models in the current sklearn+ART integration.",
             )
@@ -924,13 +962,13 @@ class AttackConfig(BaseConfig):
         Raises:
             ValueError: If attack type/model type is unsupported.
         """
-        attack_type = self.attack_family or ""
-        attack_subtype = self.attack_subtype or ""
+        attack_family = self.attack_family or ""
+        attack_sub_family = self.attack_sub_family or ""
 
         art_model = None
         if isinstance(model, ModelConfig):
             runtime_model = getattr(model, "_model", None)
-            if attack_type == "extraction" and is_torch_model(runtime_model):
+            if attack_family == "extraction" and is_torch_model(runtime_model):
                 # Extraction expects a neural-network ART classifier; build directly
                 # from the underlying torch module when available.
                 art_model = build_torch_art_model(model=runtime_model, data=data)
@@ -941,19 +979,24 @@ class AttackConfig(BaseConfig):
         else:
             check_is_fitted(model)
 
-        # Validate attack type
-        if attack_type not in [
+        # Validate attack family
+        if attack_family not in [
             "evasion",
             "poisoning",
             "extraction",
             "inference",
         ]:
-            raise ValueError(f"Unsupported attack type: {attack_type}")
+            raise ValueError(f"Unsupported attack family: {attack_family}")
 
-        if attack_type == "poisoning":
+        if attack_family == "poisoning":
             self._validate_poisoning_params()
 
-        attack_class = resolve_class(self.attack_type)
+        attack_name = self.resolve_name(default=None)
+        if attack_name is None or str(attack_name).strip() == "":
+            raise ValueError("AttackConfig.name must be set before attack initialization")
+        attack_name = str(attack_name)
+        self.name = attack_name
+        attack_class = resolve_class(attack_name)
         if art_model is None:
             sklearn_dict = _get_sklearn_dict()
             if isinstance(model, _get_supported_models()):
@@ -1058,7 +1101,7 @@ class AttackConfig(BaseConfig):
                 )
             self.attack_params["attack_model"] = attack_model
         attack_init_params = copy.deepcopy(self.attack_params)
-        if attack_type == "poisoning":
+        if attack_family == "poisoning":
             # Internal orchestration fields are not constructor args for ART attacks.
             for key in (
                 "class_source",
@@ -1073,7 +1116,7 @@ class AttackConfig(BaseConfig):
                 attack_init_params.update(
                     self._build_poisoning_svm_init_params(data),
                 )
-        if attack_type == "inference" and attack_subtype == "model_inversion":
+        if attack_family == "inference" and attack_sub_family == "model_inversion":
             for key in (
                 "split",
                 "targets",
@@ -1081,16 +1124,16 @@ class AttackConfig(BaseConfig):
                 "x_init",
             ):
                 attack_init_params.pop(key, None)
-        if attack_type == "inference" and attack_subtype == "reconstruction":
+        if attack_family == "inference" and attack_sub_family == "reconstruction":
             for key in (
                 "split",
                 "missing_index",
             ):
                 attack_init_params.pop(key, None)
         attack = attack_class(art_model, **attack_init_params)
-        self._attack_type = attack_type
-        self._attack_subtype = attack_subtype
-        return attack, art_model, attack_type, attack_subtype
+        self._attack_family = attack_family
+        self._attack_sub_family = attack_sub_family
+        return attack, art_model, attack_family, attack_sub_family
 
     def initialize_attack(
         self,
@@ -1169,7 +1212,7 @@ class AttackConfig(BaseConfig):
             A score payload containing attack scores and timing information.
 
         Raises:
-            ValueError: If attack type/subtype/model wiring is unsupported.
+            ValueError: If attack family/sub-family/model wiring is unsupported.
             NotImplementedError: If selected attack runtime is not implemented.
             AssertionError: If runtime outputs fail payload assertions.
         """
@@ -1188,21 +1231,21 @@ class AttackConfig(BaseConfig):
         ensure_attack_runtime_contract(self)
         self._validate_attack_task_compatibility(data, model)
 
-        attack, art_model, attack_type, attack_subtype = self._initialize_attack(
+        attack, art_model, attack_family, attack_sub_family = self._initialize_attack(
             model,
             data,
         )
         runtime = self._with_attack_context(
-            attack_type=attack_type,
-            attack_subtype=attack_subtype,
+            attack_family=attack_family,
+            attack_sub_family=attack_sub_family,
         )
         handler = runtime._resolve_attack_handler(
-            attack_type=attack_type,
-            attack_subtype=attack_subtype,
+            attack_family=attack_family,
+            attack_sub_family=attack_sub_family,
         )
         if handler is None:
             raise NotImplementedError(
-                f"Attack type {attack_type} subtype {attack_subtype} has no registered runtime handler.",
+                f"Attack type {attack_family} subtype {attack_sub_family} has no registered runtime handler.",
             )
 
         before_outputs = runtime._run_plugin_hook(
@@ -1211,8 +1254,8 @@ class AttackConfig(BaseConfig):
             model=model,
             attack=attack,
             art_model=art_model,
-            attack_type=attack_type,
-            attack_subtype=attack_subtype,
+            attack_family=attack_family,
+            attack_sub_family=attack_sub_family,
             runtime=runtime,
             handler=handler,
         )
@@ -1226,8 +1269,8 @@ class AttackConfig(BaseConfig):
             model=model,
             attack=attack,
             art_model=art_model,
-            attack_type=attack_type,
-            attack_subtype=attack_subtype,
+            attack_family=attack_family,
+            attack_sub_family=attack_sub_family,
             execution_order=attack_execution_order,
         )
 
@@ -1236,8 +1279,8 @@ class AttackConfig(BaseConfig):
             model=model,
             art_model=art_model,
             attack=attack,
-            attack_type=attack_type,
-            attack_subtype=attack_subtype,
+            attack_family=attack_family,
+            attack_sub_family=attack_sub_family,
         )
 
         self.__dict__.update(runtime.__dict__)
@@ -1248,8 +1291,8 @@ class AttackConfig(BaseConfig):
             model=model,
             attack=attack,
             art_model=art_model,
-            attack_type=attack_type,
-            attack_subtype=attack_subtype,
+            attack_family=attack_family,
+            attack_sub_family=attack_sub_family,
             execution_order=attack_execution_order,
         )
         after_outputs = self._run_plugin_hook(
@@ -1258,8 +1301,8 @@ class AttackConfig(BaseConfig):
             model=model,
             attack=attack,
             art_model=art_model,
-            attack_type=attack_type,
-            attack_subtype=attack_subtype,
+            attack_family=attack_family,
+            attack_sub_family=attack_sub_family,
             scores=scores,
         )
         self._merge_plugin_scores(after_outputs)
@@ -1520,7 +1563,7 @@ class AttackConfig(BaseConfig):
             "attack_size": self.attack_size,
             "mode": self.resolve_mode_for_attack_kind(
                 attack_kind,
-                attack_subtype=self.attack_subtype,
+                attack_sub_family=self.attack_sub_family,
             ),
             **kwargs,
         }

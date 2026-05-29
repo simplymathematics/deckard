@@ -677,7 +677,7 @@ class SurvivalSeabornPlotConfigList(BaseConfig):
             raise ValueError(f"{duration_col} not in data columns")
 
         runtime_data = DataConfig(
-            dataset_name=dataset or "provided_data",
+            name=dataset or "provided_data",
             target=target,
             classifier=False,
             sampler={
@@ -728,7 +728,7 @@ class SurvivalSeabornPlotConfigList(BaseConfig):
 
         default_model = next(iter(model_config.keys()), "weibull")
         survival_config = SurvivalExperimentConfig(
-            data=DataConfig(dataset_name=dataset or "provided_data"),
+            data=DataConfig(name=dataset or "provided_data"),
             model=default_model,
             target=target,
             duration_col=duration_col,

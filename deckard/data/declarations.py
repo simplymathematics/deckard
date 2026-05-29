@@ -335,7 +335,7 @@ def load_adult_income_data(cfg: Any, **loader_params: Any) -> Any:
     """Load and preprocess Adult Income data into ``cfg._X``/``cfg._y``."""
     start_time = time.process_time()
     adult = fetch_openml(
-        name=cfg.dataset_name,
+        name=str(cfg.resolve_name(default=None) or cfg.name),
         version=2,
         as_frame=True,
         **loader_params,

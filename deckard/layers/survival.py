@@ -86,8 +86,8 @@ def _validate_raw_data_model_specs(survival_cfg: dict) -> None:
 def _coerce_survival_model_spec(survival_cfg: dict) -> dict:
     """Normalize `survival.model` to a survival-model string.
 
-    Accepts either a direct model string (preferred) or a mapping from Hydra
-    model group configs where the alias/model_type carries the fitter name.
+    Accepts either a direct model string (preferred) or a mapping that
+    explicitly provides canonical `name`.
     """
 
     def _resolve_model_alias_placeholders(value, model_name: str):
@@ -139,15 +139,11 @@ def _coerce_survival_model_spec(survival_cfg: dict) -> dict:
     if not isinstance(model_spec, dict):
         return survival_cfg
 
-    candidate = (
-        model_spec.get("alias")
-        or model_spec.get("survival_model")
-        or model_spec.get("model_type")
-    )
+    candidate = model_spec.get("name")
     if not isinstance(candidate, str) or candidate.strip() == "":
         raise ValueError(
             "Could not resolve survival model string from survival.model mapping. "
-            "Provide 'alias', 'survival_model', or 'model_type'.",
+            "Provide canonical 'name'.",
         )
     normalized = dict(survival_cfg)
     model_name = _normalize_model_name(candidate)

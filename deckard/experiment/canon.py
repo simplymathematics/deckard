@@ -569,6 +569,12 @@ def build_experiment_params_manifest(
             "type": f"{component.__class__.__module__}.{component.__class__.__name__}",
             "alias": getattr(component, "alias", None),
         }
+        component_fingerprint = getattr(component, "fingerprint", None)
+        if isinstance(component_fingerprint, str):
+            token = component_fingerprint.strip()
+            if token != "":
+                base_payload["fingerprint"] = token
+                return base_payload
         if hasattr(component, "to_dict") and callable(getattr(component, "to_dict")):
             try:
                 payload = component.to_dict(for_hash=True)
@@ -732,6 +738,35 @@ _MANIFEST_COMPONENT_KEY_ALIASES: Final[dict[str, tuple[str, ...]]] = {
     "files": (),
 }
 
+_EXPERIMENT_COMPONENT_ALIASES: Final[dict[str, str]] = {
+    # Canonical component tokens
+    "data": "data",
+    "sampler": "sampler",
+    "pipeline": "pipeline",
+    "framework": "framework",
+    "plugins": "plugins",
+    "model": "model",
+    "trainer": "trainer",
+    "defense": "defense",
+    "detector": "detector",
+    "attack": "attack",
+    "score": "score",
+    "plot": "plot",
+    "experiment": "experiment",
+    "files": "files",
+    # Common alias spellings
+    "dataset": "data",
+    "data_config": "data",
+    "model_config": "model",
+    "defender": "defense",
+    "detector_config": "detector",
+    "attack_config": "attack",
+    "scorer": "score",
+    "scoring": "score",
+    "file": "files",
+    "artifact": "files",
+}
+
 _MANIFEST_RUNTIME_KEY_PATHS: Final[tuple[str, ...]] = (
     "schema_version",
     "experiment_name",
@@ -765,6 +800,14 @@ def _runtime_stage_for_param_selection(stage: str | None) -> str:
     return _PIPELINE_STAGE_TO_RUNTIME_STAGE.get(normalized, normalized)
 
 
+def normalize_experiment_component(component: str | None) -> str:
+    """Normalize one experiment component/subcomponent alias token."""
+    token = str(component or "").strip().lower().replace("-", "_")
+    if token == "":
+        return ""
+    return _EXPERIMENT_COMPONENT_ALIASES.get(token, token)
+
+
 def _manifest_component_keys_for_stage(
     *,
     stage: str | None,
@@ -775,7 +818,7 @@ def _manifest_component_keys_for_stage(
         CANONICAL_EXPERIMENT_STAGE_COMPONENTS.get(runtime_stage, ()),
     )
 
-    component_token = str(component or "").strip().lower()
+    component_token = normalize_experiment_component(component)
     if component_token != "":
         stage_components = [component_token]
 

@@ -578,6 +578,12 @@ class DefaultOptimizerCallback(HydraCallback):
 
 
 def _ensure_experiment_hash(value) -> str:
+    fingerprint = getattr(value, "fingerprint", None)
+    if isinstance(fingerprint, str):
+        token = fingerprint.strip()
+        if len(token) == 32 and all(c in "0123456789abcdefABCDEF" for c in token):
+            return token.lower()
+
     raw = "" if value is None else str(value).strip()
     if len(raw) == 32 and all(c in "0123456789abcdefABCDEF" for c in raw):
         return raw.lower()
@@ -1143,10 +1149,7 @@ def prepare_multirun_file_paths(
     """Populate standard output file paths for a Hydra multirun job."""
     current_name = getattr(conf_obj, "experiment_name", None)
     if current_name is None or str(current_name).strip() == "":
-        if hasattr(conf_obj, "to_dict"):
-            conf_obj.experiment_name = hash_conf_values(conf_obj.to_dict())
-        else:
-            conf_obj.experiment_name = hash_conf_values(str(conf_obj))
+        conf_obj.experiment_name = _ensure_experiment_hash(conf_obj)
     else:
         conf_obj.experiment_name = _ensure_experiment_hash(current_name)
     if (

@@ -24,7 +24,7 @@ from hydra.core.config_store import ConfigStore
 from hydra.utils import get_class, instantiate
 from omegaconf import DictConfig, ListConfig, OmegaConf
 
-from .artifacts import ArtifactLoaderConfig, ScoreDict
+from .artifacts import ArtifactLoaderMixin, ScoreDict
 
 logger = logging.getLogger(__name__)
 
@@ -902,7 +902,7 @@ data_supported_filetypes = [
 
 
 @dataclass(init=False)
-class BaseConfig(ArtifactLoaderConfig):
+class BaseConfig(ArtifactLoaderMixin):
     """Base class for deckard configuration objects.
 
     ``BaseConfig`` provides a common lifecycle for config dataclasses: argument
@@ -937,7 +937,6 @@ class BaseConfig(ArtifactLoaderConfig):
         "_predictions",
         "_probabilities",
     )
-
     def __post_init__(self):
         pass
 
@@ -951,6 +950,81 @@ class BaseConfig(ArtifactLoaderConfig):
         # execution cannot alter experiment identity.
         self._hash_payload = self.to_dict(for_hash=True)
         self._hash_value = hash_conf_values(self._hash_payload)
+
+    def _parse_raw_component_input(self, component: ComponentInput) -> Any:
+        """Step 1: parse raw component input into a config-like payload."""
+        return coerce_config(component)
+
+    def _coerce_child_component_values(self, payload: Any, expected_type: type) -> Any:
+        """Step 2: coerce child-level canonical name tokens."""
+        if not isinstance(payload, dict):
+            return payload
+
+        coerced = dict(payload)
+        return coerced
+
+    def _validate_coerced_component_values(
+        self,
+        payload: Any,
+        expected_type: type,
+    ) -> None:
+        """Step 3: validate coerced child payload values before defaults."""
+        if not isinstance(payload, dict):
+            raise TypeError(
+                "Config must resolve to a dict-like object for instantiation. "
+                f"Got {type(payload)}",
+            )
+
+        target = payload.get("_target_")
+        if target is not None and is_null_config_value(target):
+            raise ValueError(
+                f"Invalid _target_ value for {expected_type.__name__}: {target}",
+            )
+
+        if "name" in payload:
+            name_value = payload.get("name")
+            if isinstance(name_value, str) and name_value.strip() == "":
+                raise ValueError(
+                    f"Invalid name value for {expected_type.__name__}: empty string",
+                )
+
+    def _apply_component_defaults(
+        self,
+        payload: dict[str, Any],
+        *,
+        default_target: Optional[str],
+        overrides: Optional[dict[str, RuntimeSerializable]],
+    ) -> dict[str, Any]:
+        """Step 4: apply defaults only to unresolved or missing fields."""
+        spec = dict(payload)
+
+        if default_target is not None and (
+            "_target_" not in spec or is_null_config_value(spec.get("_target_"))
+        ):
+            spec["_target_"] = default_target
+
+        if overrides:
+            for key, value in overrides.items():
+                if key not in spec or is_null_config_value(spec.get(key)):
+                    spec[key] = value
+
+        return spec
+
+    def _finalize_parent_component_values(
+        self,
+        instance: Any,
+        *,
+        overrides: Optional[dict[str, RuntimeSerializable]],
+    ) -> None:
+        """Step 6: finalize parent-derived values without overriding explicit child input."""
+        if not overrides:
+            return
+        for key, value in overrides.items():
+            if not hasattr(instance, key):
+                setattr(instance, key, value)
+                continue
+            if is_null_config_value(getattr(instance, key)):
+                setattr(instance, key, value)
 
     def coerce_component(
         self,
@@ -988,16 +1062,29 @@ class BaseConfig(ArtifactLoaderConfig):
         if default_target is None:
             default_target = f"{expected_type.__module__}.{expected_type.__name__}"
 
-        spec = prepare_instantiation_dict(component, default_target=default_target)
-        if overrides:
-            spec.update(overrides)
+        # Step 1: parse raw inputs.
+        parsed = self._parse_raw_component_input(component)
+        # Step 2: coerce child-level values first (types, aliases, canonical names).
+        coerced = self._coerce_child_component_values(parsed, expected_type)
+        # Step 3: validate coerced child values.
+        self._validate_coerced_component_values(coerced, expected_type)
+        # Step 4: apply defaults only to unresolved/missing fields.
+        spec = self._apply_component_defaults(
+            dict(coerced),
+            default_target=default_target,
+            overrides=overrides,
+        )
 
+        # Step 5: compose normalized children into parent (instantiate the child config).
         instance = instantiate(spec)
         if not isinstance(instance, expected_type):
             raise TypeError(
                 f"Expected instantiated config to be {expected_type.__name__}, "
                 f"got {type(instance)}",
             )
+
+        # Step 6: finalize derived parent values without overriding explicit child values.
+        self._finalize_parent_component_values(instance, overrides=overrides)
         return instance
 
     def __call__(self) -> ScoreDict:
@@ -1013,16 +1100,55 @@ class BaseConfig(ArtifactLoaderConfig):
 
     def __hash__(self):
         """Return the initialization-time configuration hash as int."""
+        return int(self.fingerprint, 16)
+
+    @property
+    def fingerprint(self) -> str:
+        """Stable initialization fingerprint for runtime reproducibility.
+
+        The fingerprint is computed from the hash-normalized configuration
+        payload captured during post-init finalization. If an instance is
+        constructed without the post-init lifecycle (for example in some tests),
+        this property computes and caches the same payload lazily.
+
+        Returns:
+            Hex digest string representing the configuration fingerprint.
+        """
         if "_hash_value" not in self.__dict__:
             self._hash_payload = self.to_dict(for_hash=True)
             self._hash_value = hash_conf_values(self._hash_payload)
-        return int(self._hash_value, 16)
+        return str(self._hash_value)
 
     def __eq__(self, other: object) -> bool:
         """Two BaseConfig instances are equal when their configuration hashes match."""
         if not isinstance(other, BaseConfig):
             return NotImplemented
         return hash(self) == hash(other)
+
+    def resolve_name(self, default: Optional[str] = None) -> Optional[str]:
+        """Return the canonical runtime name token for this config instance.
+
+        Resolution prefers the Phase 4 canonical ``name`` field and optionally
+        falls back to ``alias`` for user-facing display labels.
+
+        Args:
+            default: Fallback value when no name-like field is populated.
+
+        Returns:
+            Canonicalized name token or ``default`` when unresolved.
+        """
+        name_value = getattr(self, "name", None)
+        if name_value is not None:
+            token = str(name_value).strip()
+            if token != "":
+                return token
+
+        alias_value = getattr(self, "alias", None)
+        if alias_value is not None:
+            token = str(alias_value).strip()
+            if token != "":
+                return token
+        return default
 
     def _is_hash_field(self, name: str) -> bool:
         if name == "_target_":
@@ -1359,15 +1485,15 @@ def save_data(
     filepath: Union[str, None] = None,
     **kwargs,
 ) -> None:
-    """Persist tabular data via ArtifactLoaderConfig IO contract."""
-    loader = ArtifactLoaderConfig(payload_kind="data")
+    """Persist tabular data via ArtifactLoaderMixin IO contract."""
+    loader = ArtifactLoaderMixin(payload_kind="data")
     loader.save_data(data, filepath, **kwargs)
     if filepath is not None:
         logger.info(f"Data saved to {Path(filepath)}")
 
 
 def load_data(filepath: str, **kwargs) -> pd.DataFrame:
-    """Load tabular data via ArtifactLoaderConfig IO contract.
+    """Load tabular data via ArtifactLoaderMixin IO contract.
 
     Args:
         filepath: Source data file path.
@@ -1381,7 +1507,7 @@ def load_data(filepath: str, **kwargs) -> pd.DataFrame:
         ValueError: If the file extension is unsupported.
     """
 
-    loader = ArtifactLoaderConfig(payload_kind="data")
+    loader = ArtifactLoaderMixin(payload_kind="data")
     data = loader.load_data(filepath, **kwargs)
     logger.info(f"Data loaded from {Path(filepath)}")
     return pd.DataFrame(data)

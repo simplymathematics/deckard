@@ -132,7 +132,7 @@ class PytorchModelConfig(ModelConfig):
     """Configuration for PyTorch models using load_class for generic instantiation.
 
     Attributes:
-        model_type: Fully qualified class path, an in-memory class, or an nn.Module instance
+        name: Fully qualified class path, an in-memory class, or an nn.Module instance
         model_params: Constructor parameters for the model
         device: torch.device ("cpu", "cuda", etc.)
         criterion: Loss function spec (str name or dict with _target_)
@@ -141,7 +141,7 @@ class PytorchModelConfig(ModelConfig):
         classifier: Whether model is classifier (True) or regressor (False)
     """
 
-    model_type: ModelType = "torch.nn.Linear"
+    name: ModelType = "torch.nn.Linear"
     model_params: dict = field(default_factory=dict)
     classifier: bool = True
     fit_params: dict = field(default_factory=dict)
@@ -157,12 +157,12 @@ class PytorchModelConfig(ModelConfig):
     _epoch_attack: Any = field(default=None, repr=False, compare=False)
 
     @staticmethod
-    def _pickle_safe_model_type(model_type: Any) -> Any:
-        if model_type is None or isinstance(model_type, str):
-            return model_type
-        if isinstance(model_type, type):
-            return f"{model_type.__module__}.{model_type.__qualname__}"
-        return f"{model_type.__class__.__module__}.{model_type.__class__.__qualname__}"
+    def _pickle_safe_model_name(name: Any) -> Any:
+        if name is None or isinstance(name, str):
+            return name
+        if isinstance(name, type):
+            return f"{name.__module__}.{name.__qualname__}"
+        return f"{name.__class__.__module__}.{name.__class__.__qualname__}"
 
     def __getstate__(self):
         state = dict(self.__dict__)
@@ -176,7 +176,7 @@ class PytorchModelConfig(ModelConfig):
                 state["_pickled_model_state_dict"] = None
             state["_model"] = None
 
-        state["model_type"] = self._pickle_safe_model_type(state.get("model_type"))
+        state["name"] = self._pickle_safe_model_name(state.get("name"))
         state["_checkpoint_context"] = None
         state["_epoch_attack"] = None
         return state
@@ -220,9 +220,9 @@ class PytorchModelConfig(ModelConfig):
 
         # For in-memory model instances, infer constructor params so config
         # metadata remains serializable and reproducible.
-        if isinstance(self.model_type, torch.nn.Module):
+        if isinstance(self.name, torch.nn.Module):
             inferred_params = self._infer_model_init_params_from_instance(
-                self.model_type,
+                self.name,
             )
             if self.model_params is None:
                 self.model_params = inferred_params
@@ -377,24 +377,24 @@ class PytorchModelConfig(ModelConfig):
     def _initialize_model(self):
         """Initialize PyTorch model from path, class, or in-memory instance."""
         params = self.model_params if self.model_params is not None else {}
-        if isinstance(self.model_type, torch.nn.Module):
+        if isinstance(self.name, torch.nn.Module):
             # Avoid mutating a caller-owned module instance.
-            self._model = copy.deepcopy(self.model_type)
-        elif isinstance(self.model_type, type):
-            if not issubclass(self.model_type, torch.nn.Module):
+            self._model = copy.deepcopy(self.name)
+        elif isinstance(self.name, type):
+            if not issubclass(self.name, torch.nn.Module):
                 raise TypeError(
-                    "model_type class must inherit torch.nn.Module",
+                    "name class must inherit torch.nn.Module",
                 )
-            self._model = self.model_type(**params)
+            self._model = self.name(**params)
         elif self.model_params is not None:
-            self._model = load_class(self.model_type, **self.model_params)
+            self._model = load_class(self.name, **self.model_params)
         else:
-            self._model = load_class(self.model_type)
+            self._model = load_class(self.name)
 
         # Move model to device
         self._model = self._model.to(self.device)
         logger.info(
-            f"Initialized model {self.model_type} on device {self.device}",
+            f"Initialized model {self.name} on device {self.device}",
         )
 
     def get_model(self) -> ModelType:
@@ -474,7 +474,7 @@ class PytorchModelConfig(ModelConfig):
             raise ValueError("Model not initialized")
 
         payload = {
-            "model_type": self.model_type,
+            "name": self.name,
             "model_params": self.model_params,
             "state_dict": model_obj.state_dict(),
             "device": str(self.device),
@@ -509,7 +509,7 @@ class PytorchModelConfig(ModelConfig):
             delete_corrupt=delete_corrupt,
         )
         if isinstance(payload, dict) and "state_dict" in payload:
-            self.model_type = payload.get("model_type", self.model_type)
+            self.name = payload.get("name", self.name)
             self.model_params = payload.get("model_params", self.model_params)
             self._initialize_model()
             self._model.load_state_dict(payload["state_dict"])
@@ -564,7 +564,7 @@ class PytorchModelConfig(ModelConfig):
             elif self.alias not in {None, ""}:
                 checkpoint_prefix = self.alias
             else:
-                checkpoint_prefix = str(self.model_type).split(":")[-1].split(".")[-1]
+                checkpoint_prefix = str(self.name).split(":")[-1].split(".")[-1]
 
         return {
             "every": every,
@@ -582,7 +582,7 @@ class PytorchModelConfig(ModelConfig):
 
     def _build_checkpoint_snapshot(self):
         snapshot = type(self)(
-            model_type=self.model_type,
+            name=self.name,
             model_params=copy.deepcopy(self.model_params),
             classifier=self.classifier,
             fit_params=copy.deepcopy(self.fit_params),

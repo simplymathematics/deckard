@@ -15,7 +15,13 @@ from ..data import DataConfig
 from ..frameworks.types import AttackLike, EstimatorLike, MatrixLike, StringifiedClass
 from ..model import ModelConfig
 from ..frameworks.pytorch.torch_utils import is_torch_model
-from .base import AttackConfig, AttackTypePlugin, AttackMixin
+from .base import (
+    AttackConfig,
+    AttackFamily,
+    AttackSubFamily,
+    AttackTypePlugin,
+    AttackMixin,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -106,8 +112,8 @@ class PoisoningAttackMixin(AttackMixin):
         model: ModelConfig | BaseEstimator | EstimatorLike,
         art_model: EstimatorLike,
         attack: AttackLike,
-        attack_type: StringifiedClass,
-        attack_subtype: StringifiedClass,
+        attack_family: AttackFamily | str,
+        attack_sub_family: AttackSubFamily | str,
     ) -> ScoreDict:
         """Dispatch poisoning attack execution for runtime attack family validation.
 
@@ -116,8 +122,8 @@ class PoisoningAttackMixin(AttackMixin):
             model: User model configuration or estimator.
             art_model: ART-wrapped model used to run poisoning workflow.
             attack: Instantiated poisoning attack implementation.
-            attack_type: Parsed attack family.
-            attack_subtype: Parsed poisoning subtype.
+            attack_family: Parsed attack family.
+            attack_sub_family: Parsed poisoning sub-family.
 
         Returns:
             Score payload for poisoning runtime execution.
@@ -125,9 +131,10 @@ class PoisoningAttackMixin(AttackMixin):
         Raises:
             ValueError: If attack type is not poisoning.
         """
-        if (attack_type or "").lower() != "poisoning":
+        _ = attack_sub_family
+        if (attack_family or "").lower() != "poisoning":
             raise ValueError(
-                f"_PoisoningAttackMixin received unsupported attack type: {attack_type}",
+                f"_PoisoningAttackMixin received unsupported attack family: {attack_family}",
             )
 
         return self.poison(data=data, art_model=art_model, attack=attack)
@@ -458,7 +465,7 @@ class PoisoningAttackMixin(AttackMixin):
     def _resolve_eval_split(self, data: DataConfig):
         requested_mode = self.resolve_mode_for_attack_kind(
             "poisoning",
-            attack_subtype=self.attack_subtype,
+            attack_sub_family=self.attack_sub_family,
         )
 
         if requested_mode == "val":
@@ -495,14 +502,14 @@ class PoisoningAttackConfig(PoisoningAttackMixin, AttackConfig):
         ``PoisoningAttackMixin`` through the default ``AttackTypePlugin``.
 
     Attributes:
-        plugins: Default plugin wiring for ``attack_type='poisoning'``.
+        plugins: Default plugin wiring for ``attack_family='poisoning'``.
     """
 
     plugins: list = field(
         default_factory=lambda: [
             AttackTypePlugin(
                 mixin_type=PoisoningAttackMixin,
-                attack_type="poisoning",
+                attack_family="poisoning",
             ),
         ],
     )

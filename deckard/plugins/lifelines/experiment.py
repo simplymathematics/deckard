@@ -166,7 +166,7 @@ class SurvivalExperimentConfig(ExperimentConfig):
             The fitted lifelines regression fitter.
         """
         config = SurvivalModelConfig(
-            model_type="lifelines",
+            name="lifelines",
             classifier=False,
             survival_model=mtype,
             duration_col=duration_col,
@@ -208,7 +208,7 @@ class SurvivalExperimentConfig(ExperimentConfig):
             returns a 4-tuple with the calibration curve dataframe appended.
         """
         config = SurvivalModelConfig(
-            model_type="lifelines",
+            name="lifelines",
             classifier=False,
             duration_col=cast(Any, model).duration_col,
             event_col=cast(Any, model).event_col,
@@ -266,7 +266,7 @@ class SurvivalExperimentConfig(ExperimentConfig):
             Dataframe with failure-count columns added when derivable.
         """
         config = cls(
-            data=DataConfig(dataset_name="toy"),
+            data=DataConfig(name="toy"),
             model="weibull",
             target="E",
             duration_col="T",
@@ -287,7 +287,7 @@ class SurvivalExperimentConfig(ExperimentConfig):
     ) -> pd.DataFrame:
         """Derive failure-count columns from attack and non-attack signals."""
         config = cls(
-            data=DataConfig(dataset_name="toy"),
+            data=DataConfig(name="toy"),
             model="weibull",
             target="E",
             duration_col="T",
@@ -333,15 +333,15 @@ class SurvivalExperimentConfig(ExperimentConfig):
 
     def _before_post_init(self) -> None:
         if isinstance(self.data, str):
-            dataset_name = self.data.strip()
-            if dataset_name == "":
+            data_name = self.data.strip()
+            if data_name == "":
                 raise ValueError("data string cannot be blank")
-            if dataset_name.startswith("lifelines-"):
-                dataset_name = dataset_name.replace("-", "_", 1)
-            if dataset_name.startswith("lifelines."):
-                dataset_name = dataset_name.replace(".", "_", 1)
+            if data_name.startswith("lifelines-"):
+                data_name = data_name.replace("-", "_", 1)
+            if data_name.startswith("lifelines."):
+                data_name = data_name.replace(".", "_", 1)
             self.data = DataConfig(
-                dataset_name=dataset_name,
+                name=data_name,
                 target=self.target,
                 classifier=False,
             )
@@ -760,7 +760,7 @@ class SurvivalExperimentConfig(ExperimentConfig):
                 else normalized_data_spec
             )
             return {
-                "dataset_name": normalized_data_spec,
+                "name": normalized_data_spec,
                 "target": (
                     None
                     if _is_lifelines_dataset_name(normalized_data_spec)
@@ -771,24 +771,22 @@ class SurvivalExperimentConfig(ExperimentConfig):
             }, data_name
 
         if isinstance(data_spec, DataConfig):
-            data_spec.dataset_name = _normalize_survival_dataset_name(
-                str(data_spec.dataset_name),
-            )
-            if _is_lifelines_dataset_name(str(data_spec.dataset_name)):
+            data_spec.name = _normalize_survival_dataset_name(str(data_spec.name))
+            if _is_lifelines_dataset_name(str(data_spec.name)):
                 data_spec.target = None
-            return data_spec, data_spec.dataset_name
+            return data_spec, str(data_spec.name)
 
         if isinstance(data_spec, Mapping):
             spec = dict(data_spec)
-            dataset_name_value = spec.get("dataset_name", spec.get("alias"))
+            dataset_name_value = spec.get("name", spec.get("alias"))
             if dataset_name_value is not None:
                 normalized_data_spec = _normalize_survival_dataset_name(
                     str(dataset_name_value),
                 )
-                spec["dataset_name"] = normalized_data_spec
+                spec["name"] = normalized_data_spec
                 if _is_lifelines_dataset_name(normalized_data_spec):
                     spec["target"] = None
-            data_name = str(spec.get("dataset_name", spec.get("alias", "dataset")))
+            data_name = str(spec.get("name", spec.get("alias", "dataset")))
             return spec, data_name
 
         raise TypeError(
@@ -985,13 +983,13 @@ class SurvivalExperimentConfig(ExperimentConfig):
                 data_cfg=self.data,
                 survival_config=self,
             )
-            data_name = getattr(self.data, "dataset_name", None) or "data"
+            data_name = self.data.resolve_name(default=None) or "data"
         else:
             loaded_data, attack_cfg, aux_model = self.run_native_mode(
                 data_cfg=self.data,
                 survival_config=self,
             )
-            data_name = getattr(self.data, "dataset_name", None) or "data"
+            data_name = self.data.resolve_name(default=None) or "data"
 
         if (
             self.calculate_attack_failures
