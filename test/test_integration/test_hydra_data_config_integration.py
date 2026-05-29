@@ -65,6 +65,6 @@ def test_pytorch_data_profile_torch_mnist_composes():
     cfg = _compose_pytorch("data/torch_mnist")
     data_cfg = OmegaConf.to_container(cfg.data, resolve=True)
 
-    assert data_cfg["name"] == "torch_mnist"
+    assert data_cfg["name"] == "torchvision.datasets.MNIST"
     assert data_cfg["_target_"] == "deckard.frameworks.pytorch.data.PytorchDataConfig"
     assert data_cfg["alias"] == "torch_mnist"

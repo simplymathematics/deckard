@@ -1,4 +1,4 @@
-name: torch_mnist
+name: torchvision.datasets.MNIST
 _target_: deckard.frameworks.pytorch.data.PytorchDataConfig
 classifier: true
 data_dir: raw_data/torch_mnist

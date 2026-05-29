@@ -20,6 +20,11 @@ PYTORCH_CONFIG_DIR = (
     Path(__file__).resolve().parents[2] / "examples" / "pytorch" / "config"
 )
 
+PYTORCH_SMALL_SYNTHETIC_OVERRIDES = [
+    "data.sampler.train_size=20",
+    "data.sampler.test_size=10",
+]
+
 
 def _reset_hydra_state():
     if GlobalHydra.instance().is_initialized():
@@ -83,6 +88,7 @@ def test_sklearn_data_config_composes(config_name: str, expected_fields: dict):
     """Test sklearn data config profiles compose and contain expected fields."""
     cfg = _compose_sklearn(config_name)
     data_cfg = OmegaConf.to_container(cfg.data, resolve=True)
+    assert isinstance(data_cfg, dict)
 
     for field_name, expected_value in expected_fields.items():
         assert data_cfg[field_name] == expected_value
@@ -93,15 +99,19 @@ def test_sklearn_data_config_composes(config_name: str, expected_fields: dict):
     [
         pytest.param(
             "data/torch_mnist",
-            {"name": "torch_mnist", "alias": "torch_mnist"},
+            {"name": "torchvision.datasets.MNIST", "alias": "torch_mnist"},
             id="pytorch-mnist",
         ),
     ],
 )
 def test_pytorch_data_config_composes(config_name: str, expected_fields: dict):
     """Test pytorch data config profiles compose and contain expected fields."""
-    cfg = _compose_pytorch(config_name)
+    cfg = _compose_pytorch(
+        config_name,
+        overrides=PYTORCH_SMALL_SYNTHETIC_OVERRIDES,
+    )
     data_cfg = OmegaConf.to_container(cfg.data, resolve=True)
+    assert isinstance(data_cfg, dict)
 
     for field_name, expected_value in expected_fields.items():
         assert data_cfg[field_name] == expected_value

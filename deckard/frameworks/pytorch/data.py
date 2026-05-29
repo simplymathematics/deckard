@@ -38,29 +38,31 @@ from ...utils import load_class, resolve_torch_device
 logger = logging.getLogger(__name__)
 
 
-class TorchDatasetSamplingMixin:
-    """Sampling adapter returning Dataset objects.
-
-    Required attrs:
-        dataset: Dataset
-        test_size: float
-        train_size: float
-        val_size: float
-        random_state: int
-        sample: Literal["split", "fold", "shuffle"]
-        stratify: bool
+@dataclass(eq=False, kw_only=True)
+class PytorchDataConfig(DataConfig):
+    """Configuration for PyTorch datasets.
 
     Attributes:
-        Runtime attributes are inherited or configured via class fields documented in this module.
+        name (str): Fully qualified class name of dataset
+            (e.g., "torchvision.datasets.MNIST" or "custom_module.CustomDataset").
+        data_params (dict): Additional parameters for dataset loading.
+        pipeline (Dict[str, deckard.data.base.DataConfig]): Data processing pipelines.
+
     """
 
-    dataset: Dataset
-    test_size: float
-    train_size: float
-    val_size: float
-    random_state: int
-    sample: Literal["split", "fold", "shuffle"]
-    stratify: bool
+    name: DatasetLike = "torchvision.datasets.MNIST"
+    device: Union[str, None] = None
+    data_dir: str = "./raw_data"
+    pipeline: dict[str, Any] = field(default_factory=dict)
+    classifier: bool = True
+    target: Optional[str] = None
+    data_params: dict = field(default_factory=dict)
+    drop: List[str] = field(default_factory=list)
+    keep: List[str] = field(default_factory=list)
+    sampler: Union[str, dict, Callable[..., Any], None] = "split"
+    sampler_params: dict[str, Any] = field(default_factory=dict)
+    dataset_type: Union[str, None] = None
+    n_splits: int = 5
 
     def _sampler_value(self, key: str, default: Any) -> Any:
         getter = getattr(self, "_get_sampler_option", None)
@@ -80,54 +82,6 @@ class TorchDatasetSamplingMixin:
 
         raise AttributeError(
             "Stratified sampling requires dataset.targets or dataset.labels.",
-        )
-
-    def sample(
-        self,
-        *,
-        n_splits: int = 5,
-    ) -> tuple[Subset, Subset, Subset] | list[tuple[Subset, Subset]] | Dataset:
-        """Sample dataset according to configured runtime strategy.
-
-        Modes:
-            split: returns train/val/test subsets.
-            fold: returns list of train/val subset pairs.
-            shuffle: returns full dataset (shuffle deferred to DataLoader).
-
-        Args:
-            n_splits: Number of folds when sample mode is fold.
-
-        Returns:
-            Sampled dataset payload for the configured sampling mode.
-
-        Raises:
-            TypeError: If dataset is not a torch Dataset.
-            ValueError: If sample mode is unsupported or split sizes are invalid.
-        """
-        ds = self.dataset
-
-        if not isinstance(ds, Dataset):
-            raise TypeError(
-                "dataset must be torch.utils.data.Dataset",
-            )
-
-        indices = list(range(len(ds)))
-
-        if self.sample == "split":
-            return self._sample_split(ds, indices)
-
-        if self.sample == "fold":
-            return self._sample_fold(
-                ds,
-                indices,
-                n_splits=n_splits,
-            )
-
-        if self.sample == "shuffle":
-            return self._sample_shuffle(ds)
-
-        raise ValueError(
-            "sample must be 'split', 'fold', or 'shuffle'",
         )
 
     def _sample_split(
@@ -215,39 +169,12 @@ class TorchDatasetSamplingMixin:
         self.folds = folds
         return folds
 
-    def _sample_shuffle(
-        self,
-        ds: Dataset,
-    ) -> Dataset:
-        """
-        Return the full dataset unchanged.
-
-        Shuffling is deferred to DataLoader.
-        """
+    def _sample_shuffle(self, ds: Dataset) -> Dataset:
+        """Return the full dataset unchanged; shuffling is deferred to DataLoader."""
         return ds
 
-
-class TorchDatasetMixin(TorchDatasetSamplingMixin):
-    """PyTorch data mixin with dataset-aware sampling behavior.
-
-    Attributes:
-        Runtime attributes are inherited or configured via class fields documented in this module.
-    """
-
-    sampler: Union[str, dict, Callable[..., Any], None]
-    sampler_params: dict[str, Any]
-    dataset_type: Union[str, None]
-    n_splits: int
-
     def resolve_dataset_type(self, dataset_obj: Dataset) -> str:
-        """Classify runtime dataset shape for downstream sampling behavior.
-
-        Args:
-            dataset_obj: Runtime dataset instance to classify.
-
-        Returns:
-            One of tensor, iterable, map, or unknown.
-        """
+        """Classify runtime dataset shape for downstream sampling behavior."""
         if isinstance(dataset_obj, TensorDataset):
             return "tensor"
         if isinstance(dataset_obj, IterableDataset):
@@ -284,7 +211,6 @@ class TorchDatasetMixin(TorchDatasetSamplingMixin):
 
     def _sample_with_configurable_sampler(self) -> tuple[Tensor, Tensor]:
         """Return train/test index tensors based on the configured sampler."""
-        # Ensure runtime edits to split params are reflected in the sampler object.
         self._sampler_obj = None
         train_idx, test_idx, val_idx = PytorchBaseSampler.execute(self)
         self.val_indices = torch.as_tensor(val_idx, dtype=torch.long)
@@ -292,33 +218,6 @@ class TorchDatasetMixin(TorchDatasetSamplingMixin):
             torch.as_tensor(train_idx, dtype=torch.long),
             torch.as_tensor(test_idx, dtype=torch.long),
         )
-
-
-@dataclass(eq=False, kw_only=True)
-class PytorchDataConfig(TorchDatasetMixin, DataConfig):
-    """Configuration for PyTorch datasets.
-
-    Attributes:
-        name (str): Fully qualified class name of dataset
-            (e.g., "torchvision.datasets.MNIST" or "custom_module.CustomDataset").
-        data_params (dict): Additional parameters for dataset loading.
-        pipeline (Dict[str, deckard.data.base.DataConfig]): Data processing pipelines.
-
-    """
-
-    name: DatasetLike = "torchvision.datasets.MNIST"
-    device: Union[str, None] = None
-    data_dir: str = "./raw_data"
-    pipeline: dict[str, Any] = field(default_factory=dict)
-    classifier: bool = True
-    target: Optional[str] = None
-    data_params: dict = field(default_factory=dict)
-    drop: List[str] = field(default_factory=list)
-    keep: List[str] = field(default_factory=list)
-    sampler: Union[str, dict, Callable[..., Any], None] = "split"
-    sampler_params: dict[str, Any] = field(default_factory=dict)
-    dataset_type: Union[str, None] = None
-    n_splits: int = 5
 
     def __post_init__(self):
         """Initialize runtime config and coerce PyTorch-specific scorer defaults."""
@@ -415,11 +314,7 @@ class PytorchDataConfig(TorchDatasetMixin, DataConfig):
         if (
             "root" not in self.data_params
             and dataset_name != ""
-            and (
-                dataset_name.startswith("torchvision.datasets.")
-                or dataset_name.lower()
-                in {"mnist", "torch_mnist", "cifar10", "torch_cifar10"}
-            )
+            and dataset_name.startswith("torchvision.datasets.")
         ):
             self.data_params["root"] = self.data_dir
 
@@ -455,20 +350,6 @@ class PytorchDataConfig(TorchDatasetMixin, DataConfig):
         start = time.perf_counter()
 
         try:
-            # Backward compatibility for historical shorthand names.
-            if "." not in dataset_name and ":" not in dataset_name:
-                dataset_aliases = {
-                    "mnist": "torchvision.datasets.MNIST",
-                    "torch_mnist": "torchvision.datasets.MNIST",
-                    "cifar10": "torchvision.datasets.CIFAR10",
-                    "torch_cifar10": "torchvision.datasets.CIFAR10",
-                }
-                if dataset_name.lower() not in dataset_aliases:
-                    raise ImportError(
-                        f"Unknown dataset alias '{dataset_name}'. Use a fully qualified class path.",
-                    )
-                dataset_name = dataset_aliases[dataset_name.lower()]
-
             # If using torchvision image datasets, ensure transform=ToTensor() if not set
             if dataset_name.startswith("torchvision.datasets."):
                 try:

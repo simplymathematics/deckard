@@ -1,1 +1,1 @@
-_target_: deckard.score.data.DefaultDataScorerConfig
+_target_: deckard.score.data.DefaultDataScorerDictConfig

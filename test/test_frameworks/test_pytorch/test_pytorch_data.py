@@ -387,7 +387,7 @@ class TestPytorchDataConfig:
 
     def test_post_init_normalizes_data_dir_and_torchvision_root(self):
         cfg = PytorchDataConfig(
-            name="mnist",
+            name="torchvision.datasets.MNIST",
             data_dir=None,
             sampler={"name": "split", "train_size": 4, "test_size": 2},
             data_params=None,
@@ -396,9 +396,9 @@ class TestPytorchDataConfig:
         assert isinstance(cfg.data_dir, str)
         assert cfg.data_params["root"] == cfg.data_dir
 
-    def test_load_data_alias_and_numpy_fallback_paths(self):
+    def test_load_data_uses_canonical_torchvision_name_and_numpy_fallback_paths(self):
         cfg = PytorchDataConfig(
-            name="torch_mnist",
+            name="torchvision.datasets.MNIST",
             data_dir=self.temp_dir,
             sampler={"name": "split", "train_size": 2, "test_size": 2},
             data_params={"batch_size": 8, "_args_": ["ignored"]},

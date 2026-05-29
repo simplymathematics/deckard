@@ -1,4 +1,4 @@
-_target_: deckard.score.data.DefaultDataRegressionConfig
+_target_: deckard.score.data.DefaultDataRegressionScorerDictConfig
 scorers:
   mutual_information_mean:
     score_function: deckard.score.data.data_mutual_information_mean_score

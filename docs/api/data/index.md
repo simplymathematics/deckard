@@ -88,7 +88,7 @@ splitting, optional preprocessing, plugin hooks, and data scoring.
 
 At a high level, data execution follows this order:
 
-1. Resolve and load `dataset_name` into `_X` and `_y`.
+1. Resolve and load `name` into `_X` and `_y`.
 1. Run sampling to produce `X_train`, `X_test`, and optional `X_val`.
 1. Optionally run pipeline transforms.
 1. Optionally run data scoring (for split-scoped or pre-sample diagnostics).
@@ -104,7 +104,7 @@ The same config model supports:
 
 ### Core pre-loaded datasets
 
-These names work directly with `deckard.data.base.DataConfig` in `dataset_name`:
+These names work directly with `deckard.data.base.DataConfig` in `name`:
 
 - `openml.adult` (canonical) via [sklearn.fetch_openml](https://scikit-learn.org/stable/modules/generated/sklearn.datasets.fetch_openml.html)
    and aliases `adult`, `openml_adult`, `sklearn.adult`, `sklearn_adult`

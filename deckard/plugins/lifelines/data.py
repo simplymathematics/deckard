@@ -24,19 +24,22 @@ LifelinesScalar = str | int | float | bool | None
 LifelinesValue = LifelinesScalar | list["LifelinesValue"] | dict[str, "LifelinesValue"]
 
 
-class LifelinesValidationMixin:
-    """Reusable validation behavior for lifelines-compatible configs.
+@dataclass(eq=False, kw_only=True)
+class LifelinesDataConfig(DataConfig):
+    """DataConfig specialization for survival-analysis mode management.
 
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
 
-    mode: "LifelinesDataMode"
-    duration_col: str
-    event_col: str
-    reference_metric: str
-    failure_profile: Optional[dict[str, Any]]
-    optuna_db: Optional[str]
+    mode: LifelinesDataMode = field(default=LifelinesDataMode.NATIVE)
+    duration_col: str = "T"
+    event_col: str = "E"
+    reference_metric: str = "accuracy"
+    failure_profile: Optional[dict[str, Any]] = None
+    optuna_db: Optional[str] = None
+    optuna_schema: Optional[Union[str, dict[str, Any]]] = None
+    optuna_query: Optional[str] = None
 
     def _validate_native_mode(self) -> None:
         if self.duration_col in [None, ""]:
@@ -69,24 +72,6 @@ class LifelinesValidationMixin:
             self._validate_auxiliary_failure_mode()
         elif self.mode == LifelinesDataMode.OPTUNA_DB:
             self._validate_optuna_db_mode()
-
-
-@dataclass(eq=False, kw_only=True)
-class LifelinesDataConfig(LifelinesValidationMixin, DataConfig):
-    """DataConfig specialization for survival-analysis mode management.
-
-    Attributes:
-        Runtime attributes are inherited or configured via class fields documented in this module.
-    """
-
-    mode: LifelinesDataMode = field(default=LifelinesDataMode.NATIVE)
-    duration_col: str = "T"
-    event_col: str = "E"
-    reference_metric: str = "accuracy"
-    failure_profile: Optional[dict[str, Any]] = None
-    optuna_db: Optional[str] = None
-    optuna_schema: Optional[Union[str, dict[str, Any]]] = None
-    optuna_query: Optional[str] = None
 
     def __post_init__(self) -> None:
         """Validate mode-specific requirements after dataclass initialization."""
