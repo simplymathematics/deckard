@@ -1,5 +1,5 @@
 
-attack_type : "art.attacks.evasion.CarliniLInfMethod"
+name: "art.attacks.evasion.CarliniLInfMethod"
 attack_params : 
   max_iter: 1
   confidence: .99

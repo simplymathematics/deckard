@@ -1,4 +1,4 @@
-model_type: sklearn.svm.SVC
+name: sklearn.svm.SVC
 classifier : True
 model_params:
   C: 1.0

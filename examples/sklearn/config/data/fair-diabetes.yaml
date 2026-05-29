@@ -1,4 +1,4 @@
-dataset_name: diabetes
+name: diabetes
 _target_: deckard.plugins.fairlearn.FairlearnDataConfig
 classifier: false
 alias: fair-diabetes

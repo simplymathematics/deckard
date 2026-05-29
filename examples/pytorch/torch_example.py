@@ -59,7 +59,7 @@ if __name__ == "__main__":
     # Example usage
     model = ResNet18(num_channels=1, num_classes=10)
     data_conf = PytorchDataConfig(
-        dataset_name="torch_mnist",
+        name="torch_mnist",
         train_size=128,
         test_size=128,
         random_state=128,
@@ -74,7 +74,7 @@ if __name__ == "__main__":
         len(data_conf.X_test) == 128
     ), f"Expected 128 test samples, got {len(data_conf.X_test)}"
     model_conf = PytorchModelConfig(
-        model_type="torch_example.ResNet18",  # file.ClassName
+        name="torch_example.ResNet18",  # file.ClassName
         model_params={
             "num_channels": 1,
             "num_classes": 10,

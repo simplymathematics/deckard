@@ -1,4 +1,4 @@
-dataset_name: make_regression
+name: make_regression
 data_params:
   n_samples: 10000
   n_features: 20

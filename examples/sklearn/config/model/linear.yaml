@@ -1,4 +1,4 @@
-model_type: sklearn.linear_model.LinearRegression
+name: sklearn.linear_model.LinearRegression
 classifier : False
 model_params:
   tol: 0.0001

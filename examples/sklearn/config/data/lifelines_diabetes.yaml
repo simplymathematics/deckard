@@ -1,4 +1,4 @@
-dataset_name: lifelines_diabetes
+name: lifelines_diabetes
 classifier: false
 target: E
 alias: diabetes

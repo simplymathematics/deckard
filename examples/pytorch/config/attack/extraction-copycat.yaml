@@ -1,5 +1,5 @@
 
-attack_type : "art.attacks.extraction.CopycatCNN"
+name: "art.attacks.extraction.CopycatCNN"
 attack_params : 
   batch_size_fit: 2
   batch_size_query: 1

@@ -1,4 +1,4 @@
-dataset_name: torch_cifar10
+name: torch_cifar10
 _target_: deckard.frameworks.pytorch.data.PytorchDataConfig
 classifier: true
 data_dir: raw_data/torch_cifar10

@@ -1,4 +1,4 @@
-dataset_name: diabetes
+name: diabetes
 sampler:
   name: deckard.data.sample.SplitSampler
   test_size: 0.2

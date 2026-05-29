@@ -1,4 +1,4 @@
-dataset_name: https://gist.githubusercontent.com/simplymathematics/8c6c04bd151950d5ea9e62825db97fdd/raw/c91944733b8f2b9a6ac0b8c8fab01ddcdf0898eb/sms-spam.csv
+name: https://gist.githubusercontent.com/simplymathematics/8c6c04bd151950d5ea9e62825db97fdd/raw/c91944733b8f2b9a6ac0b8c8fab01ddcdf0898eb/sms-spam.csv
 target: label
 keep:
 - message

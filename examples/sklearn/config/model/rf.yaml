@@ -1,4 +1,4 @@
-model_type: sklearn.ensemble.RandomForestClassifier
+name: sklearn.ensemble.RandomForestClassifier
 classifier : True
 model_params:
   n_estimators: 100

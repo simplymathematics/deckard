@@ -1,4 +1,4 @@
-model_type: sklearn.cluster.KMeans
+name: sklearn.cluster.KMeans
 classifier : True
 model_params:
   tol: 0.0001

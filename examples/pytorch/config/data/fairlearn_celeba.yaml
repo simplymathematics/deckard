@@ -1,9 +1,9 @@
 _target_: deckard.frameworks.pytorch.data.PytorchDataConfig
-dataset_name: torch_fairness_dataset.py:CelebASmileDataset
+name: torch_fairness_dataset.py:CelebASmileDataset
 classifier: true
 alias: fairlearn_celeba
 data_params:
-  dataset_name: flwrlabs/celeba
+  name: flwrlabs/celeba
   subset: img_align+identity+attr
   smile_attribute: Smiling
   sensitive_attribute: Male

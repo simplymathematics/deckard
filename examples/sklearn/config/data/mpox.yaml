@@ -1,4 +1,4 @@
-dataset_name: https://mpox-2024.s3.eu-central-1.amazonaws.com/latest.csv
+name: https://mpox-2024.s3.eu-central-1.amazonaws.com/latest.csv
 target: Case_status
 alias: mpox
 drop:

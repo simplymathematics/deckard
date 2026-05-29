@@ -1,4 +1,4 @@
-attack_type : "art.attacks.evasion.ZooAttack"
+name: "art.attacks.evasion.ZooAttack"
 attack_params : 
   confidence: 0.0
   targeted: false

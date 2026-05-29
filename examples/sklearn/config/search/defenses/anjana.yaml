@@ -10,7 +10,7 @@ hydra:
       ++defense.init_params.class: anonymization
       ++data._target_: deckard.plugins.anjana.AnjanaDataConfig
       ++data.alias: anjana
-      ++data.dataset_name: make_classification
+      ++data.name: make_classification
       ++data.classifier: bool(True)
       ++data.sampler: split
       ++data.anjana_defense.name: anjana.anonymity.k_anonymity

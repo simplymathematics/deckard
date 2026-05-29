@@ -1,4 +1,4 @@
-dataset_name: make_classification
+name: make_classification
 data_params:
   n_samples: 80
   n_features: 8

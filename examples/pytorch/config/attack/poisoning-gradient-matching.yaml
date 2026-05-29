@@ -1,4 +1,4 @@
-attack_type : "art.attacks.poisoning.gradient_matching_attack.GradientMatchingAttack"
+name: "art.attacks.poisoning.gradient_matching_attack.GradientMatchingAttack"
 attack_params : 
   percent_poison: .05
   max_trials: 1

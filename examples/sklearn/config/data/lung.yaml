@@ -1,4 +1,4 @@
-dataset_name: lung
+name: lung
 classifier: false
 target: E
 alias: lung

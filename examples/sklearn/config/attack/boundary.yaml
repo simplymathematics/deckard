@@ -1,4 +1,4 @@
-attack_type : "art.attacks.evasion.BoundaryAttack"
+name: "art.attacks.evasion.BoundaryAttack"
 attack_params : 
   batch_size : ${..attack_size}
   targeted: false

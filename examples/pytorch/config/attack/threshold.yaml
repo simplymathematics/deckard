@@ -1,4 +1,4 @@
-attack_type : "art.attacks.evasion.ThresholdAttack"
+name: "art.attacks.evasion.ThresholdAttack"
 attack_params : 
   max_iter: 1
   th: 255

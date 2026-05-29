@@ -1,6 +1,6 @@
 _target_: deckard.model.ModelConfig
-# Keep model_type fully-qualified so custom/user-defined fitters can be imported reliably.
-model_type: lifelines.fitters.weibull_aft_fitter.WeibullAFTFitter
+# Keep name fully-qualified so custom/user-defined fitters can be imported reliably.
+name: lifelines.fitters.weibull_aft_fitter.WeibullAFTFitter
 classifier: false
 model_params: {}
 alias: weibull

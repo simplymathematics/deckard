@@ -1,5 +1,5 @@
 
-attack_type : "art.attacks.evasion.CarliniL0Method"
+name: "art.attacks.evasion.CarliniL0Method"
 attack_params : 
   batch_size: 2
   max_iter: 1

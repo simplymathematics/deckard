@@ -182,7 +182,7 @@ def build_celeba_smile_loaders(cfg):
     num_workers = int(cfg.dataset.num_workers)
 
     train_dataset = CelebASmileDataset(
-        dataset_name=cfg.dataset.dataset_name,
+        name=cfg.dataset.name,
         subset=cfg.dataset.subset,
         smile_attribute=cfg.dataset.smile_attribute,
         sensitive_attribute=cfg.dataset.sensitive_attribute,
@@ -192,7 +192,7 @@ def build_celeba_smile_loaders(cfg):
     )
 
     val_dataset = CelebASmileDataset(
-        dataset_name=cfg.dataset.dataset_name,
+        name=cfg.dataset.name,
         subset=cfg.dataset.subset,
         smile_attribute=cfg.dataset.smile_attribute,
         sensitive_attribute=cfg.dataset.sensitive_attribute,
@@ -202,7 +202,7 @@ def build_celeba_smile_loaders(cfg):
     )
 
     test_dataset = CelebASmileDataset(
-        dataset_name=cfg.dataset.dataset_name,
+        name=cfg.dataset.name,
         subset=cfg.dataset.subset,
         smile_attribute=cfg.dataset.smile_attribute,
         sensitive_attribute=cfg.dataset.sensitive_attribute,

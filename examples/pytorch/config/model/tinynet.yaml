@@ -1,4 +1,4 @@
-model_type: deckard.frameworks.pytorch.model.TinyNet
+name: deckard.frameworks.pytorch.model.TinyNet
 classifier: true
 model_params:
   input_dim: 10  # Set default, should be overridden by data shape

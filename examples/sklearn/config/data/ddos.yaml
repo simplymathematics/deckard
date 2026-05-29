@@ -1,4 +1,4 @@
-dataset_name: https://gist.githubusercontent.com/simplymathematics/8c6c04bd151950d5ea9e62825db97fdd/raw/712b528dcd212d5a6d1767332f50161fc1cfe55c/ddos.csv
+name: https://gist.githubusercontent.com/simplymathematics/8c6c04bd151950d5ea9e62825db97fdd/raw/712b528dcd212d5a6d1767332f50161fc1cfe55c/ddos.csv
 target: Label
 drop:
 - Timestamp

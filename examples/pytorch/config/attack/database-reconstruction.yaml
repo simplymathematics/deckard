@@ -1,4 +1,4 @@
-attack_type: art.attacks.inference.reconstruction.DatabaseReconstruction
+name: art.attacks.inference.reconstruction.DatabaseReconstruction
 attack_size: 1
 attack_params:
   split: train

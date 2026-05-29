@@ -1,4 +1,4 @@
-attack_type: art.attacks.inference.model_inversion.mi_face.MIFace
+name: art.attacks.inference.model_inversion.mi_face.MIFace
 attack_size: 10
 attack_params:
   max_iter: 200

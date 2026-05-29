@@ -5,7 +5,7 @@ fit_params:
   nb_epochs: 1
   split: test
 detector_model:
-  model_type: sklearn.linear_model.LogisticRegression
+  name: sklearn.linear_model.LogisticRegression
   classifier: true
   model_params:
     max_iter: 50

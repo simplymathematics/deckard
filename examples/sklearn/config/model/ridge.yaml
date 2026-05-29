@@ -1,4 +1,4 @@
-model_type: sklearn.linear_model.Ridge
+name: sklearn.linear_model.Ridge
 classifier : False
 model_params:
   tol: 0.0001

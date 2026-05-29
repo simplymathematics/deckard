@@ -1,4 +1,4 @@
-attack_type : "art.attacks.inference.attribute_inference.AttributeInferenceBlackBox"
+name: "art.attacks.inference.attribute_inference.AttributeInferenceBlackBox"
 targeted_attribute: 
 - "age"
 attack_params : 
