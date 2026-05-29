@@ -14,7 +14,7 @@ from omegaconf import ListConfig, OmegaConf
 from ..artifacts import ScoreDict
 from ..data import DataConfig
 from ..model import ModelConfig
-from ..frameworks.types import AttackLike, EstimatorLike, StringifiedClass
+from ..frameworks.types import AttackLike, EstimatorLike
 from .base import (
     AttackConfig,
     AttackFamily,

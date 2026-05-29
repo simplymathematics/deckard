@@ -740,7 +740,6 @@ class PytorchCustomDataConfig(PytorchDataConfig):
         # For custom split datasets, only explicit integer caps should truncate.
         train_size = self._get_sampler_option("train_size", None)
         test_size = self._get_sampler_option("test_size", 0.2)
-        random_state = int(self._get_sampler_option("random_state", 42))
         if isinstance(train_size, int):
             train_ds = self._truncate_dataset(train_ds, train_size)
             self.train_n = len(train_ds)

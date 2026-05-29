@@ -9,7 +9,7 @@ import numpy as np
 from sklearn.base import BaseEstimator
 from ..artifacts import ScoreDict
 from ..data import DataConfig
-from ..frameworks.types import AttackLike, EstimatorLike, MatrixLike, StringifiedClass
+from ..frameworks.types import AttackLike, EstimatorLike, MatrixLike
 from ..model import ModelConfig
 from ..score.base import DefaultClassifierScorerDictConfig
 
