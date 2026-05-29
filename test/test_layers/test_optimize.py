@@ -13,6 +13,7 @@ from helpers import make_runtime_env
 from hydra import compose, initialize_config_dir
 from omegaconf import OmegaConf
 
+from deckard.file import FileConfig
 from deckard.layers import optimize as optimize_module
 from deckard.experiment.canon import CANONICAL_EXPERIMENT_STAGE_COMPONENTS
 
@@ -356,8 +357,9 @@ def test_save_params_file_writes_config_without_params(tmp_path):
     saved = OmegaConf.load(files["params_file"])
 
     assert "params" not in cfg
-    assert "params" not in result
-    assert saved.trainer.epochs == 5
+    assert "params" not in result.init
+    assert saved.init.trainer.epochs == 5
+    assert saved.derived.params_manifest.schema_version is not None
 
 
 def test_save_params_file_requires_params_file():
@@ -489,7 +491,9 @@ def test_hydra_optuna_callback_on_compose_config_writes_params_file(
     callback.on_compose_config(cfg)
 
     assert (tmp_path / "params.yaml").exists()
-    assert "name: demo" in (tmp_path / "params.yaml").read_text()
+    saved = OmegaConf.load(tmp_path / "params.yaml")
+    assert saved.init.name == "demo"
+    assert saved.runtime.hydra.mode == "RunMode.MULTIRUN"
 
 
 def test_hydra_optuna_callback_on_job_end_writes_score_file(
@@ -651,7 +655,9 @@ def test_hydra_optuna_callback_on_compose_config_uses_constructor_params_file(
 
     params_path = tmp_path / "params.yaml"
     assert params_path.exists()
-    assert "name: demo" in params_path.read_text()
+    saved = OmegaConf.load(params_path)
+    assert saved.init.name == "demo"
+    assert saved.runtime.hydra.mode == "RunMode.RUN"
 
 
 def test_hydra_optuna_callback_on_compose_config_resolves_single_run_paths_from_hydra_run_dir(
@@ -1735,7 +1741,49 @@ def test_save_params_file_accepts_dictconfig(tmp_path):
     files = {"params_file": str(tmp_path / "params.yaml")}
 
     result = optimize_module.save_params_file(cfg, files)
-    assert result.trainer.epochs == 2
+    assert result.init.trainer.epochs == 2
+
+
+def test_save_params_file_serializes_file_config_as_init_payload(tmp_path):
+    cfg = {
+        "name": "demo",
+        "files": FileConfig(
+            model_file="{experiment_name}.pkl",
+            replace={"{experiment_name}": "demo-exp"},
+        ),
+    }
+    files = {"params_file": str(tmp_path / "params.yaml")}
+
+    optimize_module.save_params_file(cfg, files)
+
+    saved = OmegaConf.load(files["params_file"])
+    assert saved.init.files.model_file == "{experiment_name}.pkl"
+    assert saved.init.files.replace["{experiment_name}"] == "demo-exp"
+    assert "handler" not in saved.init.files
+    assert "runtime" not in saved or saved.runtime is None
+    assert "object at 0x" not in Path(files["params_file"]).read_text(encoding="utf-8")
+
+
+def test_save_params_file_runtime_section_uses_resolved_file_payload(tmp_path):
+    cfg = {"name": "demo"}
+    files = {"params_file": str(tmp_path / "params.yaml")}
+    file_cfg = FileConfig(
+        model_file="{experiment_name}.pkl",
+        replace={"{experiment_name}": "demo-exp"},
+    )
+    file_cfg.apply_runtime_paths(model_file="outputs/demo-exp.pkl")
+
+    optimize_module.save_params_file(
+        cfg,
+        files,
+        files_config=file_cfg,
+        hydra_cfg=SimpleNamespace(mode="RunMode.MULTIRUN"),
+    )
+
+    saved = OmegaConf.load(files["params_file"])
+    assert saved.init.files.model_file == "{experiment_name}.pkl"
+    assert saved.runtime.files.model_file == "outputs/demo-exp.pkl"
+    assert saved.runtime.hydra.mode == "RunMode.MULTIRUN"
 
 
 def test_filter_scores_missing_min_max_and_no_directions_paths():

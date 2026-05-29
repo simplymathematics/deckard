@@ -1,8 +1,8 @@
-"""Shared utility layer for deckard's public Python API.
+"""Shared runtime utilities for config coercion, instantiation, and device resolution.
 
-This module contains the base configuration protocol used across the project,
-stable hashing helpers for config identity, file IO helpers, and utility
-functions for dynamically resolving and instantiating classes.
+This module owns the base configuration protocol, normalization helpers,
+Hydra/OmegaConf glue, and class-resolution utilities. Artifact persistence and
+file-schema handling live in their dedicated modules.
 """
 
 import argparse

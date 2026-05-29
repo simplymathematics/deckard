@@ -1,7 +1,7 @@
-"""Core orchestration primitives shared across runtime modules.
+"""Core orchestration primitives for score-stage routing and runtime hook order.
 
-This module centralizes common orchestration behavior that was previously
-embedded in component-specific canon modules.
+This module owns canonical stage/mode normalization and score-hook dispatch.
+It does not serialize artifacts or mutate config payload schemas.
 """
 
 from __future__ import annotations

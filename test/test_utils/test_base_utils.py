@@ -194,6 +194,15 @@ class TestUtilsAdditional:
         cfg = BaseConfig(score_dict={"alpha": 1})
         assert cfg.__hash__() == int(cfg.fingerprint, 16)
 
+    def test_BaseConfig_fingerprint_ignores_runtime_mutations(self):
+        cfg = BaseConfig(score_dict={"alpha": 1})
+        fingerprint = cfg.fingerprint
+
+        cfg.runtime_only = {"ephemeral": True}
+
+        assert cfg.fingerprint == fingerprint
+        assert cfg.__hash__() == int(fingerprint, 16)
+
     def test_BaseConfig_resolve_name_prefers_canonical_name_field(self):
         cfg = BaseConfig(score_dict={"alpha": 1})
         cfg.name = "canonical-name"

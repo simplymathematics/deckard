@@ -106,3 +106,23 @@ class TestFileConfig:
         status = config.disk_status()
         assert status["data_file"]
         assert not status["model_file"]
+
+    def test_to_init_dict_preserves_templates_and_omits_handler(self):
+        payload = self.config.to_init_dict()
+
+        assert payload["model_file"] == "{experiment_name}.pkl"
+        assert payload["attack_file"] == "{hash}.pkl"
+        assert payload["replace"]["{experiment_name}"] == "foo"
+        assert "handler" not in payload
+
+    def test_hash_artifact_paths_only_updates_runtime_values(self):
+        config = FileConfig(
+            data_file="outputs/raw.csv",
+            score_file="outputs/scores.json",
+        )
+
+        config.hash_artifact_paths("abc123", exclude={"score_file"})
+
+        assert config.data_file == "outputs/abc123.csv"
+        assert config.score_file == "outputs/scores.json"
+        assert config.to_init_dict()["data_file"] == "outputs/raw.csv"

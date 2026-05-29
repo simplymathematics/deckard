@@ -1,7 +1,8 @@
-"""Compatibility helpers for artifact loading.
+"""Artifact persistence helpers and score payload serialization utilities.
 
-This module provides the small public surface expected by integration tests
-and older callers that imported ``deckard.artifacts`` directly.
+This module owns runtime artifact load/save behavior and ``ScoreDict``
+serialization. It is separate from file-template resolution and orchestration
+hook routing.
 """
 
 from __future__ import annotations

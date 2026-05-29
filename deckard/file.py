@@ -1,14 +1,22 @@
+"""Canonical file-schema helpers for runtime path templates and placeholder resolution.
+
+This module owns the file-key TypedDict registry, validation, placeholder parsing,
+and job-specific path substitution used by runtime configs.
+It does not own generic persistence or scoring serialization.
+"""
+
 from __future__ import annotations
 
 import re
 import time
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Mapping
+from typing import Collection, Mapping
 from typing import Any, TypedDict
 from uuid import uuid4
 
 from hydra.core.hydra_config import HydraConfig
+from omegaconf import DictConfig, OmegaConf
 
 from .attack.canon import AttackFiles
 from .data.canon import BaseFiles, DataFiles
@@ -33,7 +41,7 @@ class LogFiles(TypedDict, total=False):
 # -----------------------------------------------------------------------------
 
 
-def collect_typed_dict_keys(*td_classes: type[TypedDict]) -> set[str]:
+def collect_typed_dict_keys(*td_classes: type[Any]) -> set[str]:
     keys: set[str] = set()
     for cls in td_classes:
         keys |= set(cls.__annotations__.keys())
@@ -301,10 +309,32 @@ class FileConfig(PlaceholderResolverMixin):
         self.replace = replace or {}
         self.handler = handler or CanonFileHandler()
         self._files: dict[str, Any] = {}
+        self._raw_files: dict[str, Any] = {}
 
         self.handler.validate_keys(files)
         for k, v in files.items():
             self._set(k, v)
+
+    @classmethod
+    def from_payload(cls, payload: Any) -> "FileConfig":
+        """Coerce a dict-like files payload into a FileConfig instance."""
+        if isinstance(payload, cls):
+            return payload
+        if payload is None:
+            return cls()
+        if isinstance(payload, DictConfig):
+            payload = OmegaConf.to_container(payload, resolve=False)
+        if not isinstance(payload, Mapping):
+            raise TypeError(f"files payload must be mapping-like. Got {type(payload)}")
+
+        replace = payload.get("replace")
+        handler = payload.get("handler")
+        file_values = {key: value for key, value in payload.items() if key in _ALLOWED_KEYS}
+        return cls(
+            replace=dict(replace) if isinstance(replace, Mapping) else None,
+            handler=handler if isinstance(handler, AbstractFileHandler) else None,
+            **file_values,
+        )
 
     # -------------------------------------------------------------------------
     # validation
@@ -318,9 +348,11 @@ class FileConfig(PlaceholderResolverMixin):
     # -------------------------------------------------------------------------
 
     def _set(self, key: str, value: Any) -> None:
+        raw_value = value
         if isinstance(value, str):
             value = self._resolve(value)
 
+        self._raw_files[key] = raw_value
         self._files[key] = value
         setattr(self, key, value)
 
@@ -338,13 +370,60 @@ class FileConfig(PlaceholderResolverMixin):
             self._validate_key(k)
             self._set(k, v)
 
-    def as_dict(self) -> dict[str, str | int | float | bool | None]:
+    def apply_runtime_paths(self, **kwargs: Any) -> None:
+        """Assign resolved runtime paths for configured file fields."""
+        runtime_updates = {key: value for key, value in kwargs.items() if value is not None}
+        for key, value in runtime_updates.items():
+            self._validate_key(key)
+            self._files[key] = value
+            setattr(self, key, value)
+
+    def hash_artifact_paths(
+        self,
+        context_hash: str,
+        *,
+        exclude: Collection[str] = (),
+    ) -> None:
+        """Hash runtime artifact filenames while preserving init templates."""
+        for key, value in list(self._files.items()):
+            if (
+                key.endswith("_file")
+                and key not in exclude
+                and isinstance(value, str)
+                and value.strip() != ""
+            ):
+                hashed_value = self._hash_file_path_basename(value, context_hash)
+                self._files[key] = hashed_value
+                setattr(self, key, hashed_value)
+
+    @staticmethod
+    def _hash_file_path_basename(path_value: str, context_hash: str) -> str:
+        path = Path(path_value)
+        suffix = "".join(path.suffixes)
+        hashed_name = f"{context_hash}{suffix}" if suffix else context_hash
+        return (path.parent / hashed_name).as_posix()
+
+    def as_dict(self) -> dict[str, Any]:
         """Return file mapping as a plain dictionary.
 
         Returns:
             Serialized file mapping dictionary.
         """
         return dict(self._files)
+
+    def to_init_dict(self) -> dict[str, Any]:
+        """Return reproducible initialization payload without live helper objects."""
+        payload = dict(self._raw_files)
+        if self.replace:
+            payload["replace"] = dict(self.replace)
+        return payload
+
+    def to_runtime_dict(self) -> dict[str, Any]:
+        """Return runtime-resolved file mapping for execution/config propagation."""
+        payload = self.as_dict()
+        if self.replace:
+            payload["replace"] = dict(self.replace)
+        return payload
 
     def disk_status(self) -> dict[str, bool]:
         """Return per-file existence status for configured file paths.

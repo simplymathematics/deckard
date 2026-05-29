@@ -21,8 +21,10 @@ from optuna.storages._rdb.storage import (
 from ..experiment import ExperimentConfig
 from ..experiment.canon import (
     CANONICAL_EXPERIMENT_STAGE_COMPONENTS,
+    build_experiment_params_manifest,
     normalize_experiment_stage,
 )
+from ..file import FileConfig
 from ..utils import BaseConfig, hash_conf_values
 
 # Set up logging
@@ -366,49 +368,31 @@ class DefaultOptimizerCallback(HydraCallback):
         self._resolved_error_file = _resolve(self._error_file, "error_file")
         self._resolved_score_file = _resolve(self._score_file, "score_file")
 
-        # Propagate resolved paths into cfg.files so downstream code sees them.
-        files_cfg = getattr(config, "files", None)
+        files_cfg = FileConfig.from_payload(getattr(config, "files", None))
         resolved = {
             "log_file": self._resolved_log_file,
             "params_file": self._resolved_params_file,
             "error_file": self._resolved_error_file,
             "score_file": self._resolved_score_file,
         }
-        for k, v in resolved.items():
-            if v is None:
-                continue
-            if isinstance(files_cfg, DictConfig):
-                files_cfg[k] = v
-            elif isinstance(files_cfg, dict):
-                files_cfg[k] = v
-            else:
-                try:
-                    config["files"] = {
-                        k: v for k, v in resolved.items() if v is not None
-                    }
-                    break
-                except Exception:
-                    pass
-
-        _apply_runtime_context_file_hashes(
-            files_cfg=getattr(config, "files", None),
-            hydra_cfg=hydra_cfg,
-            experiment_name=getattr(config, "experiment_name", None),
+        files_cfg.apply_runtime_paths(**resolved)
+        files_cfg.hash_artifact_paths(
+            _runtime_context_file_hash(
+                hydra_cfg,
+                getattr(config, "experiment_name", None),
+            ),
+            exclude=_RUNTIME_FILE_HASH_EXCLUDE,
         )
+        config["files"] = files_cfg.to_runtime_dict()
 
         # Write params.yaml now that paths are resolved.
         if self._resolved_params_file:
-            params_path = Path(str(self._resolved_params_file))
-            params_path.parent.mkdir(parents=True, exist_ok=True)
-            params_payload = _sanitize_initialization_payload(
-                OmegaConf.to_container(config, resolve=False),
+            save_params_file(
+                config,
+                {"params_file": str(self._resolved_params_file)},
+                files_config=files_cfg,
+                hydra_cfg=hydra_cfg,
             )
-            with open(params_path, "w") as f:
-                yaml.dump(
-                    params_payload,
-                    f,
-                    indent=4,
-                )
 
     def on_run_start(self, config: DictConfig, **kwargs: Any) -> None:
         """
@@ -1379,6 +1363,8 @@ _DROP_RUNTIME_VALUE = object()
 
 def _sanitize_initialization_payload(payload: Any) -> Any:
     """Return params-safe payload containing only initialization configuration data."""
+    if isinstance(payload, FileConfig):
+        return payload.to_init_dict()
     if isinstance(payload, DictConfig):
         payload = OmegaConf.to_container(payload, resolve=False)
     if isinstance(payload, ListConfig):
@@ -1417,18 +1403,65 @@ def _sanitize_initialization_payload(payload: Any) -> Any:
     return _DROP_RUNTIME_VALUE
 
 
+def _build_params_payload(
+    cfg: dict[str, Any] | DictConfig,
+    *,
+    files_config: FileConfig | None = None,
+    hydra_cfg: Any | None = None,
+) -> dict[str, Any]:
+    init_payload = _coerce_cfg_to_dict(cfg)
+    init_payload.pop("params", None)
+    if files_config is not None:
+        init_payload["files"] = files_config.to_init_dict()
+    elif "files" in init_payload:
+        init_payload["files"] = FileConfig.from_payload(
+            init_payload.get("files"),
+        ).to_init_dict()
+    sanitized_init = _sanitize_initialization_payload(init_payload)
+    assert isinstance(
+        sanitized_init,
+        dict,
+    ), f"params init payload must be dict-like. Got {type(sanitized_init)}"
+
+    payload: dict[str, Any] = {
+        "init": sanitized_init,
+        "derived": {
+            "params_manifest": build_experiment_params_manifest(sanitized_init),
+        },
+    }
+
+    runtime_payload: dict[str, Any] = {}
+    if files_config is not None:
+        runtime_payload["files"] = files_config.to_runtime_dict()
+    if hydra_cfg is not None:
+        runtime_payload["hydra"] = {
+            "mode": str(getattr(hydra_cfg, "mode", "")) or None,
+        }
+    if runtime_payload:
+        payload["runtime"] = runtime_payload
+    return payload
+
+
 def save_params_file(
     cfg: dict[str, Any] | DictConfig,
     files: dict[str, str],
+    *,
+    files_config: FileConfig | None = None,
+    hydra_cfg: Any | None = None,
 ) -> DictConfig:
     """Persist run parameters to ``files['params_file']`` and return DictConfig."""
     if isinstance(cfg, DictConfig):
-        cfg_container = OmegaConf.to_container(cfg, resolve=False)
-        cfg = cast(dict[str, Any], cfg_container)
-    assert isinstance(cfg, dict), f"cfg must be dict-like. Got {type(cfg)}"
-    _ = cfg.pop("params", None)
+        cfg.pop("params", None)
+    elif isinstance(cfg, dict):
+        cfg.pop("params", None)
     if "params_file" in files:
-        cfg = OmegaConf.create(_sanitize_initialization_payload(cfg))
+        cfg = OmegaConf.create(
+            _build_params_payload(
+                cfg,
+                files_config=files_config,
+                hydra_cfg=hydra_cfg,
+            ),
+        )
         Path(files["params_file"]).parent.mkdir(parents=True, exist_ok=True)
         OmegaConf.save(cfg, files["params_file"])
     else:
