@@ -48,45 +48,45 @@ def test_sensitive_label_builder_and_validation_errors():
         cfg._validate_sensitive_runtime([" ", ""], "ctx")
 
 
-def test_inject_fairness_defense_step_branch_paths():
+def test_apply_defense_branch_paths():
     cfg = _cfg()
 
     cfg.fairness_defense = True
     with pytest.raises(ValueError, match="ambiguous"):
-        cfg._inject_fairness_defense_step()
+        cfg.apply_defense()
 
     cfg.fairness_defense = 7
     with pytest.raises(TypeError, match="must be a dict"):
-        cfg._inject_fairness_defense_step()
+        cfg.apply_defense()
 
     cfg.fairness_defense = {"name": "fairlearn.preprocessing.CorrelationRemover"}
     cfg._X = None
-    cfg._inject_fairness_defense_step()
+    cfg.apply_defense()
 
     cfg._X = pd.DataFrame({"group": ["a", "b"], "x": [1, 2]})
     cfg.sensitive_columns = None
     with pytest.raises(ValueError, match="must be configured"):
-        cfg._inject_fairness_defense_step()
+        cfg.apply_defense()
 
     cfg.sensitive_columns = ["missing"]
     with pytest.raises(RuntimeError, match="Sensitive features not found"):
-        cfg._inject_fairness_defense_step()
+        cfg.apply_defense()
 
     cfg.sensitive_columns = ["group"]
     cfg.fairness_defense = {}
     with pytest.raises(ValueError, match="include a 'name' key"):
-        cfg._inject_fairness_defense_step()
+        cfg.apply_defense()
 
     cfg.fairness_defense = {
         "name": "fairlearn.preprocessing.CorrelationRemover",
         "step_name": "fairness_step",
     }
     cfg.pipeline = {"existing": {"name": "noop"}}
-    cfg._inject_fairness_defense_step()
+    cfg.apply_defense()
     assert "fairness_step" in cfg.pipeline
 
     before = dict(cfg.pipeline)
-    cfg._inject_fairness_defense_step()
+    cfg.apply_defense()
     assert cfg.pipeline == before
 
     cfg.fairness_defense = {
@@ -95,7 +95,7 @@ def test_inject_fairness_defense_step_branch_paths():
         "max_iter": 1,
     }
     cfg.pipeline = {}
-    cfg._inject_fairness_defense_step()
+    cfg.apply_defense()
     assert "prototype_step" in cfg.pipeline
     assert (
         cfg.pipeline["prototype_step"]["name"]

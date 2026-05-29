@@ -549,7 +549,7 @@ class DataConfig(OrchestratorBase, BaseConfig):
         )
 
     def _init_pipeline(self):
-        """Legacy compatibility hook returning the resolved pipeline runtime."""
+        """Resolve and return the configured runtime X-stage pipeline."""
         self._coerce_pipeline_runtime()
         pipeline_runtime = getattr(self, "pipeline", None)
         if pipeline_runtime is None:
@@ -573,7 +573,7 @@ class DataConfig(OrchestratorBase, BaseConfig):
         y_test,
         pipeline,
     ):
-        """Legacy compatibility hook for direct pipeline fit/transform tests."""
+        """Fit the provided runtime pipeline and transform train/test features."""
         from .pipeline.base import DataPipeline
 
         if pipeline is None:

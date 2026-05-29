@@ -493,7 +493,7 @@ class TestKFoldSampler:
         cfg = DataConfig(
             name="make_classification",
             data_params={
-                "n_samples": 1200,
+                "n_samples": 120,
                 "n_features": 10,
                 "n_informative": 5,
                 "n_redundant": 2,
@@ -505,9 +505,9 @@ class TestKFoldSampler:
                 "name": "deckard.data.sample.KFoldSampler",
                 "n_splits": 5,
                 "split": 0,
-                "train_size": 1000,
-                "test_size": 201,
-                "val_size": 200,
+                "train_size": 100,
+                "test_size": 21,
+                "val_size": 20,
                 "random_state": 42,
                 "stratify": True,
             },

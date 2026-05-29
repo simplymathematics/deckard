@@ -182,20 +182,20 @@ def test_apply_anjana_defense_branch_paths(monkeypatch):
 
     cfg.anjana_defense = True
     with pytest.raises(ValueError, match="ambiguous"):
-        cfg._apply_anjana_defense()
+        cfg.apply_defense()
 
     cfg.anjana_defense = 3
     with pytest.raises(TypeError, match="must be a dict"):
-        cfg._apply_anjana_defense()
+        cfg.apply_defense()
 
     cfg.anjana_defense = {}
-    with pytest.raises(ValueError, match="include a 'name' or '_target_'"):
-        cfg._apply_anjana_defense()
+    with pytest.raises(ValueError, match="include 'name'"):
+        cfg.apply_defense()
 
     cfg.anjana_defense = {"name": "anjana.fake"}
     monkeypatch.setattr(anjana_data_module, "resolve_class", lambda _: "not-callable")
     with pytest.raises(TypeError, match="not callable"):
-        cfg._apply_anjana_defense()
+        cfg.apply_defense()
 
     def _wrong_type(**kwargs):
         _ = kwargs
@@ -203,7 +203,7 @@ def test_apply_anjana_defense_branch_paths(monkeypatch):
 
     monkeypatch.setattr(anjana_data_module, "resolve_class", lambda _: _wrong_type)
     with pytest.raises(TypeError, match="must return pandas.DataFrame"):
-        cfg._apply_anjana_defense()
+        cfg.apply_defense()
 
     seen = {}
 
@@ -215,8 +215,11 @@ def test_apply_anjana_defense_branch_paths(monkeypatch):
     cfg.hierarchies = {"feature": {0: np.array([1, 2, 3])}}
     cfg.anjana_defense = {"_target_": "anjana.fake", "k": 2}
     monkeypatch.setattr(anjana_data_module, "resolve_class", lambda _: _drop_target)
+    with pytest.raises(ValueError, match="include 'name'"):
+        cfg.apply_defense()
 
-    cfg._apply_anjana_defense()
+    cfg.anjana_defense = {"name": "anjana.fake", "k": 2}
+    cfg.apply_defense()
 
     assert seen["ident"] == ["id"]
     assert seen["quasi_ident"] == ["feature"]
@@ -227,6 +230,12 @@ def test_apply_anjana_defense_branch_paths(monkeypatch):
     )
     assert cfg._X.index.tolist() == [10, 11]
     assert cfg._y.index.tolist() == [10, 11]
+
+    cfg._X = pd.DataFrame({"feature": [1, 2, 3]}, index=[10, 11, 12])
+    cfg._y = pd.Series([0, 1, 0], index=[10, 11, 12])
+    cfg.anjana_defense = {"name": "anjana.fake", "defense_params": {"k": 3}}
+    cfg.apply_defense()
+    assert seen["k"] == 3
 
 
 def test_apply_anjana_defense_signature_filtering_and_defaults(monkeypatch):
@@ -247,13 +256,33 @@ def test_apply_anjana_defense_signature_filtering_and_defaults(monkeypatch):
         lambda _: recorder,
     )
 
-    cfg._apply_anjana_defense()
+    cfg.apply_defense()
 
     assert recorder.seen["ident"] == []
     assert recorder.seen["quasi_ident"] == ["feature"]
     assert recorder.seen["k"] == 2
     assert recorder.seen["supp_level"] == 100
     assert "feature" in recorder.seen["hierarchies"]
+
+
+def test_inject_privacy_defense_step_accepts_canonical_defense_fields():
+    cfg = _bare_cfg()
+    cfg._X = pd.DataFrame({"group": ["a", "b"], "feature": [1, 2]})
+    cfg.sensitive_columns = ["group"]
+    cfg.fairness_defense = {
+        "step_name": "fairness_step",
+        "name": "fairlearn.preprocessing.CorrelationRemover",
+        "defense_params": {"alpha": 0.2},
+    }
+
+    cfg._inject_privacy_defense_step()
+
+    assert "fairness_step" in cfg.pipeline
+    assert cfg.pipeline["fairness_step"]["name"] == (
+        "fairlearn.preprocessing.CorrelationRemover"
+    )
+    assert cfg.pipeline["fairness_step"]["alpha"] == 0.2
+    assert cfg.pipeline["fairness_step"]["sensitive_feature_ids"] == ["group"]
 
 
 def test_call_delegates_to_canonical_runtime(monkeypatch):
@@ -290,7 +319,7 @@ def test_load_init_sample_and_score_paths(monkeypatch):
     )
     monkeypatch.setattr(
         AnjanaDataConfig,
-        "_apply_anjana_defense",
+        "apply_defense",
         lambda self: calls.append("defense"),
     )
     assert cfg.load_dataset() is cfg

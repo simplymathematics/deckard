@@ -200,6 +200,37 @@ class PrivacyBehaviorMixin(SensitiveColumnsMixin):
             return target
         return "__deckard_target__"
 
+    @staticmethod
+    def _normalize_named_defense_mapping(
+        defense_mapping: Dict[str, Any],
+        *,
+        field_name: str,
+    ) -> Dict[str, Any]:
+        """Normalize defense mapping keys to a canonical runtime shape.
+
+        Requires canonical ``name`` and optional ``defense_params``.
+        """
+        normalized = dict(defense_mapping)
+        defense_params = normalized.pop("defense_params", {})
+        if isinstance(defense_params, DictConfig):
+            defense_params = dict(defense_params)
+        elif not isinstance(defense_params, dict):
+            raise TypeError(
+                f"{field_name}.defense_params must be a dict/DictConfig when provided. Got {type(defense_params)}",
+            )
+
+        defense_name = normalized.pop("name", None)
+        if not isinstance(defense_name, str):
+            raise ValueError(
+                f"{field_name} config must include 'name'",
+            )
+        result: Dict[str, Any] = {"name": defense_name}
+        for key, value in defense_params.items():
+            result[str(key)] = value
+        for key, value in normalized.items():
+            result[str(key)] = value
+        return result
+
     def _inject_privacy_defense_step(self) -> None:
         if self.fairness_defense in [None, False]:
             return
@@ -230,22 +261,21 @@ class PrivacyBehaviorMixin(SensitiveColumnsMixin):
             "sensitive_feature_ids": list(sensitive_columns),
         }
         step_name = "fairness_correlation_remover"
-        custom = dict(self.fairness_defense)
+        custom = self._normalize_named_defense_mapping(
+            dict(self.fairness_defense),
+            field_name="fairness_defense",
+        )
         step_name = custom.pop("step_name", step_name)
         step_config.update(custom)
         if "name" not in step_config:
             raise ValueError(
-                "fairness_defense config must include a 'name' key",
+                "fairness_defense config must include 'name'",
             )
 
         if step_name in self.pipeline:
             return
 
         self.pipeline = {step_name: step_config, **self.pipeline}
-
-    def _inject_fairness_defense_step(self) -> None:
-        """Backward-compatible bridge for fairness-defense pipeline injection."""
-        self._inject_privacy_defense_step()
 
     def _build_privacy_frame(self) -> pd.DataFrame:
         frame = getattr(self, "_X", None)
@@ -270,7 +300,7 @@ class AnjanaDataConfig(
 
     This config extends ``DataConfig`` with optional privacy
     anonymization and fairness-preprocessing hooks. The default plugin setup
-    executes ``apply_anjana_defense`` after data load when an ANJANA defense
+    executes ``apply_defense`` after data load when an ANJANA defense
     configuration is provided.
 
     Privacy metrics default to test-split score scope while retaining
