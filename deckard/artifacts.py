@@ -349,13 +349,7 @@ def _flat_by_scope(flat_payload: dict[str, Any]) -> dict[str, dict[str, Any]]:
 def _serialize_scores_payload(scores: dict[str, Any] | pd.Series) -> dict[str, Any]:
     """Build canonical score payload envelope for persistence."""
     score_dict = ScoreDict.from_payload(scores)
-    envelope = score_dict.to_contract_envelope(schema=SCORE_PAYLOAD_SCHEMA)
-    # Backward compatibility: keep payload keys at top-level for readers that
-    # still expect flat/nested score keys directly in JSON/YAML root.
-    for key, value in dict(score_dict).items():
-        if key not in envelope:
-            envelope[key] = value
-    return envelope
+    return score_dict.to_contract_envelope(schema=SCORE_PAYLOAD_SCHEMA)
 
 
 def _deserialize_scores_payload(raw: Any) -> dict[str, Any]:
@@ -923,7 +917,6 @@ class ArtifactLoaderMixin:
         Raises:
             ValueError: If filepath is missing or extension is unsupported.
         """
-        # Backward compatibility: many callers use save(filepath) positional style.
         if filepath is None and isinstance(payload, (str, Path)):
             filepath = str(payload)
             payload = self

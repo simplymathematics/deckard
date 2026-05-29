@@ -138,5 +138,8 @@ class DefenseTypePlugin:
             Two-item tuple returned by the defense handler.
         """
         mixin = self._resolve_mixin_type()
-        handler = mixin(runtime)
+        if isinstance(mixin, type) and mixin in type(runtime).mro():
+            handler = runtime
+        else:
+            handler = mixin(runtime)
         return handler(*args, **kwargs)

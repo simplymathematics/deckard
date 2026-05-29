@@ -1,5 +1,5 @@
 """Sklearn framework defense exports."""
 
-from ...model.defense import DefaultSklearnDefenseConfig
+from ...model.defense import DefenseConfig
 
-__all__ = ["DefaultSklearnDefenseConfig"]
+__all__ = ["DefenseConfig"]

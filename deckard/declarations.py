@@ -18,13 +18,29 @@ Usage:
 import importlib.util
 import logging
 import os
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, Iterator, List, Optional, Set
+from typing import Any, Dict, Iterator, List, Optional, Set
 
 import yaml
 from hydra.core.config_store import ConfigStore
+from omegaconf import OmegaConf
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass(frozen=True)
+class DeclarationIndexEntry:
+    """Resolved declaration metadata for runtime registration and CLI queries."""
+
+    root: Path
+    root_kind: str
+    path: Path
+    group: str
+    name: str
+    component: str
+    subcomponent: str
+    selector: str
 
 
 def discover_config_roots() -> List[Path]:
@@ -229,6 +245,115 @@ def _get_config_group_and_name(path: Path, root: Path) -> tuple:
     return group, name
 
 
+def _root_kind(root: Path) -> str:
+    root_str = str(root).replace("\\", "/")
+    if root_str.endswith("/examples/sklearn/config"):
+        return "sklearn"
+    if root_str.endswith("/examples/pytorch/config"):
+        return "pytorch"
+    return "external"
+
+
+def _entry_from_path(path: Path, root: Path) -> Optional[DeclarationIndexEntry]:
+    relative_path = path.relative_to(root)
+    parts = list(relative_path.parts[:-1])
+    if len(parts) < 2:
+        return None
+
+    group, name = _get_config_group_and_name(path, root)
+    component = parts[0]
+    subcomponent = parts[1]
+    nested_name_parts = [*parts[2:], name]
+    selector_name = (
+        nested_name_parts[0]
+        if len(nested_name_parts) == 1
+        else "/".join(nested_name_parts)
+    )
+    selector = f"{component}/{subcomponent}/{selector_name}"
+
+    return DeclarationIndexEntry(
+        root=root,
+        root_kind=_root_kind(root),
+        path=path,
+        group=group,
+        name=name,
+        component=component,
+        subcomponent=subcomponent,
+        selector=selector,
+    )
+
+
+def discover_declaration_index(
+    roots: Optional[List[Path]] = None,
+) -> List[DeclarationIndexEntry]:
+    """Discover declaration index entries preserving declaration tree ownership."""
+    active_roots = roots if roots is not None else discover_config_roots()
+    entries: List[DeclarationIndexEntry] = []
+    for root in active_roots:
+        for config_file in iter_config_files(root):
+            if not _should_register_config(config_file):
+                continue
+            entry = _entry_from_path(config_file, root)
+            if entry is None:
+                continue
+            entries.append(entry)
+    return entries
+
+
+def get_declaration_by_selector(
+    selector: str,
+    *,
+    root_kind: Optional[str] = None,
+    index: Optional[List[DeclarationIndexEntry]] = None,
+) -> Optional[DeclarationIndexEntry]:
+    """Return first matching declaration for selector `<component>/<subcomponent>/<name>`."""
+    active_index = index if index is not None else discover_declaration_index()
+    for entry in active_index:
+        if root_kind is not None and entry.root_kind != root_kind:
+            continue
+        if entry.selector == selector:
+            return entry
+    return None
+
+
+def load_declaration_payload(entry: DeclarationIndexEntry) -> Dict[str, Any]:
+    """Load one declaration payload from disk."""
+    payload = parse_config_file(entry.path)
+    if payload is None:
+        raise ValueError(f"Failed to parse declaration: {entry.path}")
+    return payload
+
+
+def validate_declaration(entry: DeclarationIndexEntry) -> Dict[str, Any]:
+    """Validate declaration parseability and emit non-fatal warnings."""
+    payload = load_declaration_payload(entry)
+    warnings: List[str] = []
+    if "_target_" not in payload and "name" not in payload:
+        warnings.append("Declaration has neither '_target_' nor 'name' key.")
+    return {
+        "selector": entry.selector,
+        "file": str(entry.path),
+        "group": entry.group,
+        "name": entry.name,
+        "root": entry.root_kind,
+        "valid": True,
+        "warnings": warnings,
+    }
+
+
+def compose_declaration(
+    entry: DeclarationIndexEntry,
+    overrides: Optional[List[str]] = None,
+) -> Dict[str, Any]:
+    """Compose one declaration payload with optional dotlist overrides."""
+    payload = load_declaration_payload(entry)
+    cfg = OmegaConf.create(payload)
+    if overrides:
+        cfg = OmegaConf.merge(cfg, OmegaConf.from_dotlist(overrides))
+    resolved = OmegaConf.to_container(cfg, resolve=True)
+    return resolved if isinstance(resolved, dict) else {"value": resolved}
+
+
 def register_configs() -> None:
     """
     Discover, parse, and register all configs with Hydra ConfigStore.
@@ -259,44 +384,40 @@ def register_configs() -> None:
 
     for root in roots:
         logger.debug(f"Scanning config root: {root}")
-
         for config_file in iter_config_files(root):
             total_files += 1
-
-            # Skip configs with missing dependencies
             if not _should_register_config(config_file):
                 skipped_count += 1
-                continue
 
-            # Parse YAML file
-            config_dict = parse_config_file(config_file)
-            if config_dict is None:
-                error_count += 1
-                continue
+    index = discover_declaration_index(roots)
 
-            # Compute Hydra group and config name
-            group, name = _get_config_group_and_name(config_file, root)
+    for entry in index:
+        # Parse YAML file
+        config_dict = parse_config_file(entry.path)
+        if config_dict is None:
+            error_count += 1
+            continue
 
-            # Detect and log duplicate registrations
-            registration_key = f"{group}/{name}" if group else name
-            if registration_key in registered:
-                logger.warning(
-                    f"Duplicate config registration (later registration ignored): {registration_key}",
-                )
-                continue
+        # Detect and log duplicate registrations
+        registration_key = f"{entry.group}/{entry.name}" if entry.group else entry.name
+        if registration_key in registered:
+            logger.warning(
+                f"Duplicate config registration (later registration ignored): {registration_key}",
+            )
+            continue
 
-            # Register config with Hydra ConfigStore
-            try:
-                if group:
-                    cs.store(name=name, group=group, node=config_dict)
-                else:
-                    cs.store(name=name, node=config_dict)
-                registered.add(registration_key)
-                registered_count += 1
-                logger.debug(f"Registered config: {registration_key}")
-            except Exception as e:
-                logger.error(f"Failed to register config {registration_key}: {e}")
-                error_count += 1
+        # Register config with Hydra ConfigStore
+        try:
+            if entry.group:
+                cs.store(name=entry.name, group=entry.group, node=config_dict)
+            else:
+                cs.store(name=entry.name, node=config_dict)
+            registered.add(registration_key)
+            registered_count += 1
+            logger.debug(f"Registered config: {registration_key}")
+        except Exception as e:
+            logger.error(f"Failed to register config {registration_key}: {e}")
+            error_count += 1
 
     logger.info(
         f"Config registration complete: {registered_count} registered, "
@@ -306,9 +427,15 @@ def register_configs() -> None:
 
 
 __all__ = [
+    "DeclarationIndexEntry",
     "discover_config_roots",
+    "discover_declaration_index",
+    "get_declaration_by_selector",
     "iter_config_files",
+    "load_declaration_payload",
     "parse_config_file",
     "is_package_available",
+    "validate_declaration",
+    "compose_declaration",
     "register_configs",
 ]

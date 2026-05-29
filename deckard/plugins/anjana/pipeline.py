@@ -15,7 +15,7 @@ ANJANA_PIPELINE_HOOKS = HookBundle(
     hooks=(
         HookPlugin(
             hook_name="before_sample",
-            method_name="_apply_anjana_defense",
+            method_name="apply_defense",
             init_params={
                 "library": "anjana",
                 "type": "data",
@@ -34,11 +34,8 @@ class AnjanaPipelineHooksMixin:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
 
-    def apply_anjana_defense(self) -> None:
-        """Public entrypoint for ANJANA pipeline defense application."""
-        self._apply_anjana_defense()
-
-    def _apply_anjana_defense(self) -> None:
+    def apply_defense(self) -> None:
+        """Canonical public entrypoint for ANJANA pipeline defense application."""
         if self.anjana_defense in [None, False]:
             return
         if self.anjana_defense is True:
@@ -51,12 +48,10 @@ class AnjanaPipelineHooksMixin:
                 f"Got {type(self.anjana_defense)}",
             )
 
-        defense_cfg = dict(self.anjana_defense)
-        defense_name = defense_cfg.pop("name", defense_cfg.pop("_target_", None))
-        if not isinstance(defense_name, str):
-            raise ValueError(
-                "anjana_defense config must include a 'name' or '_target_' key",
-            )
+        defense_name, defense_cfg = self._normalize_runtime_defense_config(
+            dict(self.anjana_defense),
+            field_name="anjana_defense",
+        )
 
         from . import data as anjana_data_module
 
@@ -120,5 +115,31 @@ class AnjanaPipelineHooksMixin:
 
         self._X = transformed
 
+    @staticmethod
+    def _normalize_runtime_defense_config(
+        defense_cfg: dict,
+        *,
+        field_name: str,
+    ) -> tuple[str, dict]:
+        """Normalize runtime defense mappings to canonical defense fields.
+
+        Requires canonical ``name`` and merges ``defense_params`` into call kwargs.
+        """
+        normalized = dict(defense_cfg)
+        defense_params = normalized.pop("defense_params", {})
+        if isinstance(defense_params, DictConfig):
+            defense_params = dict(defense_params)
+        elif not isinstance(defense_params, dict):
+            raise TypeError(
+                f"{field_name}.defense_params must be a dict/DictConfig when provided. Got {type(defense_params)}",
+            )
+
+        defense_name = normalized.pop("name", None)
+        if not isinstance(defense_name, str):
+            raise ValueError(
+                f"{field_name} config must include 'name'",
+            )
+
+        return defense_name, {**defense_params, **normalized}
 
 __all__ = ["ANJANA_PIPELINE_HOOKS", "AnjanaPipelineHooksMixin"]

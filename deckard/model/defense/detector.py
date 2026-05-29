@@ -106,6 +106,29 @@ class DetectorDefenseMixin(DefenseMixin):
         setattr(detector_classifier, "_deckard_evasion_detector", defense)
         return defense, detector_classifier
 
+    def _build_art_wrapper(
+        self,
+        art_class,
+        base_estimator,
+        init_params,
+        preprocessing_defences,
+        postprocessing_defences,
+    ):
+        art_params = dict(init_params or {})
+        art_params["preprocessing_defences"] = preprocessing_defences or None
+        art_params["postprocessing_defences"] = postprocessing_defences or None
+        wrapped_estimator = art_class(base_estimator, **art_params)
+        setattr(
+            wrapped_estimator,
+            "_deckard_art_wrapper_state",
+            {
+                "wrapped_by_deckard": True,
+                "base_estimator": base_estimator,
+                "wrapper_type": type(wrapped_estimator).__name__,
+            },
+        )
+        return wrapped_estimator
+
     def detect_poison(
         self,
         *,

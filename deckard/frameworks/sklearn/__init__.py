@@ -1,7 +1,7 @@
 """Sklearn framework package."""
 
-from .defense import DefaultSklearnDefenseConfig
+from .defense import DefenseConfig
 
 __all__ = [
-    "DefaultSklearnDefenseConfig",
+    "DefenseConfig",
 ]

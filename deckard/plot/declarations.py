@@ -1,6 +1,5 @@
 """Plot configuration module.
 
-This module is kept for backward compatibility.
 Canonical plot configs are now loaded from examples/*/config/plot/ YAML files
 at runtime via deckard.declarations.register_configs().
 

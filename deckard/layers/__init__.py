@@ -8,6 +8,7 @@ from collections.abc import Callable
 from typing import TypeAlias
 
 from .compile_results import compile_results_main, compile_results_parser
+from .declarations_cli import declarations_main, declarations_parser
 from .extensions_cli import (
     frameworks_main,
     frameworks_parser,
@@ -34,6 +35,7 @@ LayerMain: TypeAlias = Callable[..., object]
 #: Mapping from CLI subcommand name to ``[parser, main]`` callables.
 layer_dict: dict[str, list[Callable[..., object]]] = {
     "compile_results": [compile_results_parser, compile_results_main],
+    "declarations": [declarations_parser, declarations_main],
     "progress_bar": [progress_bar_parser, progress_bar_main],
     "plot": [plot_parser, plot_main],
     "optimize": [hydra_parser, optimize_main],
@@ -54,6 +56,8 @@ SUPPORTED_LAYERS: list[str] = list(layer_dict.keys())
 __all__ = [
     "compile_results_main",
     "compile_results_parser",
+    "declarations_main",
+    "declarations_parser",
     "progress_bar_main",
     "progress_bar_parser",
     "plot_main",

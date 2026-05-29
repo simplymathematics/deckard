@@ -13,7 +13,7 @@ FAIRLEARN_PIPELINE_HOOKS = HookBundle(
     hooks=(
         HookPlugin(
             hook_name="before_sample",
-            method_name="_inject_fairness_defense_step",
+            method_name="apply_defense",
             init_params={
                 "library": "fairlearn",
                 "type": "data",
@@ -42,11 +42,8 @@ class FairlearnPipelineHooksMixin:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
 
-    def apply_fairlearn_pipeline_hooks(self) -> None:
-        """Public entrypoint for fairlearn pipeline hook setup."""
-        self._inject_fairness_defense_step()
-
-    def _inject_fairness_defense_step(self) -> None:
+    def apply_defense(self) -> None:
+        """Canonical public entrypoint for fairlearn pipeline defense injection."""
         if self.fairness_defense in [None, False]:
             return
         if self.fairness_defense is True:

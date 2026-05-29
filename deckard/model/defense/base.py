@@ -1085,7 +1085,7 @@ class ARTDefenseBehaviorMixin(DefenseHookRuntimeMixin):
                 default_handler = self
                 break
             if isinstance(mixin, type) and issubclass(mixin, DefenseMixin):
-                default_handler = mixin(self)
+                default_handler = mixin(runtime=self)
                 break
 
         hook_outputs = self._run_plugin_hook(
@@ -1099,7 +1099,7 @@ class ARTDefenseBehaviorMixin(DefenseHookRuntimeMixin):
             if callable(output):
                 return output
             if isinstance(output, type) and issubclass(output, DefenseMixin):
-                return output(self)
+                return output(runtime=self)
 
         return default_handler
 

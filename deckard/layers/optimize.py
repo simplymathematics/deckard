@@ -1562,6 +1562,3 @@ hydra_parser = argparse.ArgumentParser(
     add_help=False,
     usage="deckard optimize --config-dir=conf --config-name=default.yaml",
 )
-
-# Backward compatibility alias. Keep until downstream configs migrate.
-OptunaStudyCallback = DefaultOptimizerCallback
