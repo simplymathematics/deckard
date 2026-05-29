@@ -240,22 +240,25 @@ class FairlearnDefenseConfig(SensitiveColumnsMixin, DefenseConfig):
     data: Union[FairlearnDataConfig, None] = None
 
     def _resolve_fairness_defense_spec(self):
-        if hasattr(self, "defense_name"):
-            return getattr(self, "defense_name", None), dict(
-                getattr(self, "defense_params", {}) or {},
-            )
+        if hasattr(self, "name"):
+            candidate = getattr(self, "name", None)
+            if isinstance(candidate, str) and candidate.startswith("fairlearn."):
+                return candidate, dict(getattr(self, "defense_params", {}) or {})
+        normalized_name = getattr(self, "defense_name", None)
+        if isinstance(normalized_name, str) and normalized_name.startswith("fairlearn."):
+            return normalized_name, dict(getattr(self, "defense_params", {}) or {})
         defense_obj = getattr(self, "defense", None)
         if defense_obj is not None:
-            return getattr(defense_obj, "defense_name", None), dict(
-                getattr(defense_obj, "defense_params", {}) or {},
-            )
+            nested_name = getattr(defense_obj, "name", None)
+            if isinstance(nested_name, str) and nested_name.startswith("fairlearn."):
+                return nested_name, dict(getattr(defense_obj, "defense_params", {}) or {})
         return None, {}
 
     def _apply_fairlearn_defense(self, data):
         defense_name, defense_params = self._resolve_fairness_defense_spec()
         if not defense_name or not defense_name.startswith("fairlearn."):
             raise ValueError(
-                "Fairlearn defense helper requires a fairlearn defense_name",
+                "Fairlearn defense helper requires a fairlearn defense name",
             )
 
         if getattr(self, "data", None) is None:

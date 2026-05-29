@@ -6,12 +6,12 @@ from deckard.model.defense.base import DefensePipelineConfig, DefenseStep
 
 class _DummyDefense:
     def __init__(self, name):
-        self.defense_name = name
+        self.name = name
         self.calls = 0
 
     def apply_to(self, estimator, data):
         self.calls += 1
-        return {"wrapped": estimator, "data": data, "name": self.defense_name}
+        return {"wrapped": estimator, "data": data, "name": self.name}
 
 
 def test_fairlearn_and_anjana_defense_steps_default_to_fit_and_predict():
@@ -48,7 +48,7 @@ def test_art_defense_flags_can_be_provided_in_defense_params():
     pipeline = DefensePipelineConfig(
         defenses=[
             {
-                "defense_name": "art.defences.postprocessor.ClassLabels",
+                "name": "art.defences.postprocessor.ClassLabels",
                 "defense_params": {"apply_fit": True, "apply_predict": False},
             },
         ],
@@ -119,6 +119,7 @@ def test_pretrained_model_with_fit_defense_snapshots_and_retrains(
         requires_fit_application=lambda: True,
         resolve_stage=lambda **_kwargs: "post_fit_pre_predict",
         apply=lambda estimator, data, stage: estimator,
+        apply_defense=lambda estimator, data, stage: estimator,
         defense_application_time=None,
         score_dict={},
     )
@@ -183,6 +184,7 @@ def test_loaded_non_pretrained_model_with_fit_defense_does_not_force_retrain(
         requires_fit_application=lambda: True,
         resolve_stage=lambda **_kwargs: "post_fit_pre_predict",
         apply=lambda estimator, data, stage: estimator,
+        apply_defense=lambda estimator, data, stage: estimator,
         defense_application_time=None,
         score_dict={},
     )

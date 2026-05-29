@@ -429,7 +429,7 @@ class TestModelPostInitScorerBranches:
         # Should not raise; scorer transformed from raw dict to ScorerDictConfig
         assert model.scorer is not None
 
-    def test_defense_with_null_defense_name_sets_defense_none(self):
+    def test_defense_with_legacy_shape_raises_typeerror(self):
         defense = SimpleNamespace(defense_name=None)
         model = ModelConfig.__new__(ModelConfig)
         object.__setattr__(model, "defense", defense)
@@ -444,8 +444,8 @@ class TestModelPostInitScorerBranches:
         object.__setattr__(model, "_plugin_objects", None)
         object.__setattr__(model, "_defense_pipeline", None)
         object.__setattr__(model, "score_dict", None)
-        model.__post_init__()
-        assert model.defense is None
+        with pytest.raises(TypeError):
+            model.__post_init__()
 
     def test_classifier_string_to_bool(self):
         model = ModelConfig(
@@ -1079,6 +1079,7 @@ class TestModelEvaluateAndScoreBranches:
         defense_pipeline = SimpleNamespace(
             resolve_stage=lambda **_kwargs: "before_predict",
             apply=lambda estimator, data, stage: estimator,
+            apply_defense=lambda estimator, data, stage: estimator,
             defense_application_time=0.25,
             score_dict={"defense_metric": 1.0},
         )

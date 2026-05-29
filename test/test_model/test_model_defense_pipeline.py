@@ -34,8 +34,8 @@ class TestDefenseConfig:
         )
 
         self.defense_config = DefenseConfig(
-            defense_name="art.defences.postprocessor.HighConfidence",
-            name="sklearn.ensemble.RandomForestClassifier",
+            name="art.defences.postprocessor.HighConfidence",
+            model_name="sklearn.ensemble.RandomForestClassifier",
         )
 
     def test_defense_config_initialization(self):
@@ -120,11 +120,11 @@ class TestDefensePipelineConfigListCoerce:
     """DefensePipelineConfig.coerce() with a list should chain all specs."""
 
     spec_a = {
-        "defense_name": "art.defences.postprocessor.HighConfidence",
+        "name": "art.defences.postprocessor.HighConfidence",
         "defense_params": {"cutoff": 0.25},
     }
     spec_b = {
-        "defense_name": "art.defences.postprocessor.ClassLabels",
+        "name": "art.defences.postprocessor.ClassLabels",
         "defense_params": {"apply_fit": False, "apply_predict": True},
     }
 
@@ -165,7 +165,7 @@ def test_defense_behavior_defaults_signature_and_apply_to_paths(monkeypatch):
     defense.model_params = {}
     defense.probability = False
     defense.alias = ""
-    defense.defense_name = "art.defences.postprocessor.HighConfidence"
+    defense.name="art.defences.postprocessor.HighConfidence"
     defense.defense_params = None
     defense.score_dict = None
     defense._target_ = None
@@ -204,7 +204,6 @@ def test_defense_behavior_defaults_signature_and_apply_to_paths(monkeypatch):
 
 def test_parse_defense_name_and_get_art_class_edge_paths(monkeypatch):
     defense = DefenseConfig(
-        defense_name=None,
         name="sklearn.linear_model.LogisticRegression",
         classifier=True,
     )
@@ -226,8 +225,7 @@ def test_parse_defense_name_and_get_art_class_edge_paths(monkeypatch):
         defense.parse_defense_name()
 
     defense = DefenseConfig(
-        defense_name="art.defences.postprocessor.HighConfidence",
-        name=None,
+        name="art.defences.postprocessor.HighConfidence",
         classifier=True,
     )
     with pytest.raises(ValueError, match="name must be set"):
@@ -255,8 +253,8 @@ def test_parse_defense_name_and_get_art_class_edge_paths(monkeypatch):
 
 def test_extract_art_wrapper_context_ignores_untyped_cached_wrappers():
     defense = DefenseConfig(
-        defense_name="art.defences.postprocessor.HighConfidence",
-        name="sklearn.linear_model.LogisticRegression",
+        name="art.defences.postprocessor.HighConfidence",
+        model_name="sklearn.linear_model.LogisticRegression",
         classifier=True,
     )
 
@@ -288,8 +286,8 @@ def test_extract_art_wrapper_context_ignores_untyped_cached_wrappers():
 
 def test_extract_art_wrapper_context_prefers_explicit_wrapper_state(monkeypatch):
     defense = DefenseConfig(
-        defense_name="art.defences.postprocessor.HighConfidence",
-        name="sklearn.linear_model.LogisticRegression",
+        name="art.defences.postprocessor.HighConfidence",
+        model_name="sklearn.linear_model.LogisticRegression",
         classifier=True,
     )
     state_base = SimpleNamespace(name="base-estimator")
@@ -332,8 +330,7 @@ def test_extract_art_wrapper_context_prefers_explicit_wrapper_state(monkeypatch)
 
 def test_get_art_class_torch_requires_typed_base_estimator(monkeypatch):
     defense = DefenseConfig(
-        defense_name="art.defences.postprocessor.HighConfidence",
-        name=None,
+        name="art.defences.postprocessor.HighConfidence",
         classifier=True,
     )
     defense.name= "torch.nn.Linear"
@@ -378,7 +375,7 @@ def test_pipeline_coerce_plugin_context_and_stage_helpers(monkeypatch):
     assert (
         len(
             DefensePipelineConfig.coerce(
-                [{"defense_name": "art.defences.postprocessor.HighConfidence"}],
+                [{"name": "art.defences.postprocessor.HighConfidence"}],
             ).defenses,
         )
         == 1
@@ -400,7 +397,7 @@ def test_pipeline_coerce_plugin_context_and_stage_helpers(monkeypatch):
     monkeypatch.setattr(
         "deckard.model.defense.base.coerce_config",
         lambda obj: (
-            [{"defense_name": "art.defences.postprocessor.HighConfidence"}]
+            [{"name": "art.defences.postprocessor.HighConfidence"}]
             if obj == "legacy-list"
             else obj
         ),
@@ -483,7 +480,7 @@ def test_pipeline_single_defense_coercion_and_context_inheritance(monkeypatch):
     assert coerced_target.kwargs == {"x": 1}
 
     coerced_fair = pipeline._coerce_single_defense(
-        {"defense_name": "fairlearn.reductions.ExponentiatedGradient", "eps": 0.1},
+        {"name": "fairlearn.reductions.ExponentiatedGradient", "eps": 0.1},
     )
     assert isinstance(coerced_fair, FairDefense)
     assert coerced_fair.kwargs["eps"] == 0.1
@@ -493,7 +490,7 @@ def test_pipeline_single_defense_coercion_and_context_inheritance(monkeypatch):
         lambda name: (_ for _ in ()).throw(RuntimeError(name)),
     )
     coerced_plain = pipeline._coerce_single_defense(
-        {"defense_name": "fairlearn.reductions.ExponentiatedGradient"},
+        {"name": "fairlearn.reductions.ExponentiatedGradient"},
     )
     assert isinstance(coerced_plain, DefenseConfig)
     with pytest.raises(TypeError, match="Unsupported defense specification"):
@@ -536,7 +533,7 @@ def test_pipeline_single_defense_coercion_and_context_inheritance(monkeypatch):
     assert (
         len(
             pipeline.normalize_defenses(
-                {"defense_name": "art.defences.postprocessor.HighConfidence"},
+                {"name": "art.defences.postprocessor.HighConfidence"},
             ),
         )
         == 1
@@ -551,6 +548,8 @@ def test_pipeline_apply_validation_and_elapsed_fallback(monkeypatch):
 
     estimator = object()
     assert pipeline.apply(estimator=estimator, data=object()) is estimator
+    assert pipeline.apply_to(estimator=estimator, data=object()) is estimator
+    assert pipeline.apply_defense(estimator=estimator, data=object()) is estimator
 
     bad_pipeline = DefensePipelineConfig(defenses=[SimpleNamespace(apply_to=1)])
     with pytest.raises(TypeError, match="must implement apply_to"):
@@ -559,7 +558,7 @@ def test_pipeline_apply_validation_and_elapsed_fallback(monkeypatch):
     hook_calls = []
 
     class TimelessDefense:
-        defense_name = "custom.timeless"
+        name="custom.timeless"
         defense_application_time = None
         data = None
         name= None

@@ -89,17 +89,17 @@ class TestFairlearnModelConfig:
         model._model = Mock()
 
         art_defense = DefenseConfig(
-            name=self.name,
+            model_name=self.name,
             classifier=True,
             model_params={"n_estimators": 10},
-            defense_name=None,
+            name="art.defences.postprocessor.GaussianNoise",
             defense_params={},
         )
         fair_defense = FairlearnDefenseConfig(
-            name=self.name,
+            name="fairlearn.postprocessing.ThresholdOptimizer",
+            model_name=self.name,
             classifier=True,
             model_params={"n_estimators": 10},
-            defense_name="fairlearn.postprocessing.ThresholdOptimizer",
             defense_params={"constraints": "demographic_parity"},
             data=None,
         )
@@ -141,10 +141,10 @@ class TestFairlearnModelConfig:
 
         model.defense = [
             DefenseConfig(
-                name=self.name,
+                model_name=self.name,
                 classifier=True,
                 model_params={"n_estimators": 10},
-                defense_name=None,
+                name="art.defences.postprocessor.GaussianNoise",
                 defense_params={},
             ),
         ]
@@ -279,10 +279,10 @@ class TestFairlearnDefenseConfigApplyDefense:
 
     def _make_fitted_defense(self, defense_name, defense_params=None):
         cfg = self.FairlearnDefenseConfig(
-            name=self.name,
+            name=defense_name,
+            model_name=self.name,
             classifier=True,
             model_params={"max_iter": 200},
-            defense_name=defense_name,
             defense_params=defense_params or {},
             data=self.fairness_data,
         )

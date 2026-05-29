@@ -224,9 +224,6 @@ class ModelConfig(BaseConfig):
 
     def _normalize_classifier_flag(self) -> None:
         """Normalize classifier/regressor selector to a strict boolean."""
-        if hasattr(self, "defense") and hasattr(self.defense, "defense_name"):
-            if is_null_config_value(self.defense.defense_name):
-                self.defense = None
         if self.classifier in ["classifier", True]:
             self.classifier = True
         elif self.classifier in ["regressor", False]:
@@ -529,7 +526,7 @@ class ModelConfig(BaseConfig):
         )
 
         def _apply(estimator: EstimatorLike) -> EstimatorLike:
-            return defense_pipeline.apply(
+            return defense_pipeline.apply_defense(
                 estimator=estimator,
                 data=data,
                 stage=stage,
