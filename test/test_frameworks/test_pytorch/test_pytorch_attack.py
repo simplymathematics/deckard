@@ -13,8 +13,9 @@ from conftest import TinyData
 from numpy.exceptions import AxisError
 from sklearn.linear_model import LinearRegression, LogisticRegression
 
-from deckard.attack import AttackConfig, ExtractionAttackConfig
+from deckard.attack import AttackConfig
 from deckard.attack.base import SensitiveFeaturesWrapper, _sensitive_slice
+from deckard.attack.extraction import ExtractionAttackMixin
 from deckard.score.attack import FairlearnAttackScorerConfig
 
 pytest.importorskip("torch")
@@ -69,7 +70,7 @@ class TestAttackConfig:
         assert hasattr(self.attack, "attack_params")
 
     def test_select_extraction_scorer_falls_back_for_logits(self):
-        scorer, use_proba = ExtractionAttackConfig._select_extraction_scorer(
+        scorer, use_proba = ExtractionAttackMixin._select_extraction_scorer(
             benign_pred=np.array([[0.8, 0.2], [0.1, 0.9]]),
             extracted_pred=np.array([[1.5, -0.2], [-0.4, 2.1]]),
         )
@@ -2614,7 +2615,7 @@ class TestStaticHelpers:
     def test_select_extraction_scorer_with_probabilities(self):
         benign = np.array([[0.3, 0.7], [0.6, 0.4]])
         extracted = np.array([[0.4, 0.6], [0.5, 0.5]])
-        scorer, has_proba = ExtractionAttackConfig._select_extraction_scorer(
+        scorer, has_proba = ExtractionAttackMixin._select_extraction_scorer(
             benign,
             extracted,
         )
