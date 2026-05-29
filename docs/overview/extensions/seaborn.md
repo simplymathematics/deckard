@@ -23,46 +23,9 @@ Related docs:
 4. Consume scorer outputs for visualization inputs.
 5. Render seaborn figures and persist plot artifacts.
 
-## Execution Flows
-
-### Data Flow
-
-```mermaid
-flowchart TD
-    A[data or experiment artifact input] --> B[seaborn data adapter]
-    B --> C[plot-ready dataframe payload]
-```
-
-### Pipeline Flow
-
-```mermaid
-flowchart TD
-    A[plot input payload] --> B[optional pre-plot transform]
-    B --> C[seaborn render input]
-```
-
-### Defense Flow
-
-```mermaid
-flowchart TD
-    A[source model/experiment defense outputs] --> B[seaborn reads defended artifacts]
-    B --> C[no plugin-local defense execution]
-```
-
-### Scoring Flow
-
-```mermaid
-flowchart TD
-    A[persisted score payload] --> B[metric selection for charting]
-    B --> C[annotated seaborn visualization]
-```
-
-### Plot Flow
-
-```mermaid
-flowchart TD
-    A[seaborn backend adapter] --> B[render statistical figure]
-    B --> C[persist figure asset and metadata]
+```{include} ../flowcharts.md
+:start-after: <!-- seaborn-execution-flows-start -->
+:end-before: <!-- seaborn-execution-flows-end -->
 ```
 
 ## YAML Examples

@@ -1,53 +1,161 @@
 # Core Modules
 
-This page is a compact guide to the core runtime surfaces that power the
-experiment workflow. Use it after {doc}`summary` and before {doc}`experiment`
-to understand which configuration objects participate in an end-to-end run.
+This page gives a simple guide to the main deckard runtime objects. Each
+section keeps the view high-level and shows the broad path through the object,
+including any optional branches.
 
-Detailed core-module documentation lives in {doc}`../api/modules`.
+The full API reference lives in {doc}`../api/modules`, which contains the
+module-level docs for each object.
 
-## Overview Flow
+## Data API
 
-The core overview path is:
+The data object starts the run. It loads the data, samples it, and can apply a
+pipeline transform before scoring or passing on to the next step.
 
-1. {doc}`summary`
-2. {doc}`core`
-3. {doc}`experiment`
-4. {doc}`scoring`
+This overview chart keeps the data path simple and shows the optional transform
+step.
 
-## Core API Map
+```{include} flowcharts.md
+:start-after: <!-- core-data-overview-start -->
+:end-before: <!-- core-data-overview-end -->
+```
 
-- [Data](../api/data): dataset loading, sampling, pipelines, and data scoring.
-- [Pipeline](../api/pipeline): preprocessing pipeline runtime and stage execution.
-- [Model](../api/model): model orchestration, scoring, persistence, and defense stages.
-- [Training](../api/train): training mixins and trainer-defense integration.
-- [Defense](../api/defend): defense pipeline runtime and defense-family dispatch.
-- [Attack](../api/attack): attack family execution and attack scoring integration.
-- [Detector](../api/detector): detector runtime, filtering, and detector metrics.
-- [Score](../api/score): scorer configs, mode normalization, and metric composition.
-- [File](../api/file): canonical artifact path management and persistence helpers.
-- [Experiment](../api/experiment): end-to-end experiment orchestration runtime.
-- [Plot](../api/plot): backend routing and plotting runtime configs.
-- [Utils](../api/utils): shared runtime utilities and config helpers.
+Scoping detail:
 
-## How This Connects To Experiments
+```{include} flowcharts.md
+:start-after: <!-- core-data-scope-start -->
+:end-before: <!-- core-data-scope-end -->
+```
 
-{class}`deckard.experiment.ExperimentConfig` composes the core runtime surfaces listed above. In normal
-use, most runs combine:
+- [Data](../api/data): dataset loading and runtime coordination.
+- [Sample](../api/sample): sampling helpers.
+- [Pipeline](../api/pipeline): preprocessing transforms.
 
-1. data
-2. model
-3. optional attack and detector branches
-4. scoring
-5. file-backed persistence
+## Model API
 
-See {doc}`experiment` for the orchestration flow and {doc}`scoring` for score
-outputs and optimization targets.
+The model object learns from the data, can train or load a model, and may add
+an optional defense before prediction. The final step is to persist outputs.
 
-## Related
+This overview chart shows the simple model path and where defense fits.
 
-- {doc}`index`
-- {doc}`summary`
-- {doc}`experiment`
-- {doc}`scoring`
-- {doc}`../api/modules`
+```{include} flowcharts.md
+:start-after: <!-- core-model-overview-start -->
+:end-before: <!-- core-model-overview-end -->
+```
+
+Scoping detail for trainer choices:
+
+```{include} flowcharts.md
+:start-after: <!-- core-model-trainer-scope-start -->
+:end-before: <!-- core-model-trainer-scope-end -->
+```
+
+Scoping detail for defense subtypes:
+
+```{include} flowcharts.md
+:start-after: <!-- core-defense-subtypes-start -->
+:end-before: <!-- core-defense-subtypes-end -->
+```
+
+- [Model](../api/model): model setup and runtime behavior.
+- [Training](../api/train): trainer helpers.
+- [Defense](../api/defend): defense behavior.
+
+## Attack API
+
+The attack object checks how the model behaves when inputs are changed on
+purpose. The main families are evasion, poisoning, inference, and extraction,
+and they all end in score output.
+
+This overview chart shows those attack families without going into stage-level
+runtime detail.
+
+```{include} flowcharts.md
+:start-after: <!-- core-attack-overview-start -->
+:end-before: <!-- core-attack-overview-end -->
+```
+
+Scoping detail for attack subtypes:
+
+```{include} flowcharts.md
+:start-after: <!-- core-attack-family-start -->
+:end-before: <!-- core-attack-family-end -->
+```
+
+- [Attack](../api/attack): attack execution and scoring.
+
+## Detector API
+
+Detectors either train a detector model or filter attack outputs. The most
+important split is train versus filter.
+
+```{include} flowcharts.md
+:start-after: <!-- core-detector-overview-start -->
+:end-before: <!-- core-detector-overview-end -->
+```
+
+Scoping detail for detector train and filter modes:
+
+```{include} flowcharts.md
+:start-after: <!-- core-detector-mode-start -->
+:end-before: <!-- core-detector-mode-end -->
+```
+
+- [Detector](../api/detector): detector training and filter-mode behavior.
+
+## Score API
+
+Scoring combines outputs from data, model, attack, and optional group scorers
+into one score payload.
+
+```{include} flowcharts.md
+:start-after: <!-- core-score-overview-start -->
+:end-before: <!-- core-score-overview-end -->
+```
+
+Scoping detail for data, model, attack, and group scorers:
+
+```{include} flowcharts.md
+:start-after: <!-- core-score-composition-start -->
+:end-before: <!-- core-score-composition-end -->
+```
+
+- [Score](../api/score): scorer setup and score payload composition.
+- [Fairlearn](../api/fairlearn): group-aware scorers.
+
+## Experiment API
+
+The experiment object ties data, model, attack, detector, and scoring together
+into one run.
+
+Experiment pages show the orchestration layer that connects the smaller pieces.
+This is where the runtime order becomes clear: prepare data, run the model,
+apply attacks or detectors if needed, and then score the result.
+
+```{include} flowcharts.md
+:start-after: <!-- core-experiment-overview-start -->
+:end-before: <!-- core-experiment-overview-end -->
+```
+
+- [Experiment](../api/experiment): end-to-end orchestration runtime.
+- [Score](../api/score): scorer setup and metric composition.
+- [Plot](../api/plot): plotting configuration for run outputs.
+
+
+## Persistence API
+
+The persistence layer saves the run so it can be checked, compared, and
+reused later.
+
+Persistence includes file helpers, stored artifacts, and utility code that keep
+outputs organized. These pieces make it possible to reopen a run later and
+compare it with other experiments.
+
+```{include} flowcharts.md
+:start-after: <!-- core-persistence-overview-start -->
+:end-before: <!-- core-persistence-overview-end -->
+```
+
+- [File](../api/file): file paths, persistence helpers, and saved outputs.
+- [Artifacts](../api/artifacts): artifact handling and stored run data.
+- [Utils](../api/utils): shared helpers for file and runtime support.

@@ -10,39 +10,10 @@ from uuid import uuid4
 
 from hydra.core.hydra_config import HydraConfig
 
-
-class ModelFiles(TypedDict, total=False):
-    """Typed mapping for model-related artifact file paths.
-
-    Attributes:
-        model_file: Serialized model configuration or runtime checkpoint path.
-        training_predictions_file: Training split prediction artifact path.
-        test_predictions_file: Test split prediction artifact path.
-        training_probabilities_file: Training split probability artifact path.
-        test_probabilities_file: Test split probability artifact path.
-        score_file: Model score artifact path.
-    """
-
-    model_file: str
-    training_predictions_file: str
-    test_predictions_file: str
-    training_probabilities_file: str
-    test_probabilities_file: str
-    score_file: str
-
-
-class AttackFiles(TypedDict, total=False):
-    """Typed mapping for attack-related artifact file paths.
-
-    Attributes:
-        attack_file: Serialized attack artifact path.
-        attack_predictions_file: Attack prediction artifact path.
-        score_file: Attack score artifact path.
-    """
-
-    attack_file: str
-    attack_predictions_file: str
-    score_file: str
+from .attack.canon import AttackFiles
+from .data.canon import BaseFiles, DataFiles
+from .detector.canon import DetectorFiles
+from .model.canon import DefenseFiles, ModelFiles
 
 
 class LogFiles(TypedDict, total=False):
@@ -55,52 +26,6 @@ class LogFiles(TypedDict, total=False):
 
     log_file: str
     error_file: str
-
-
-class BaseFiles(TypedDict, total=False):
-    """Typed mapping for shared data/config artifact file paths.
-
-    Attributes:
-        data_file: Primary data artifact path.
-        params_file: Serialized parameter/config artifact path.
-        score_file: Shared score artifact path.
-    """
-
-    data_file: str
-    params_file: str
-    score_file: str
-
-
-class DefenseFiles(TypedDict, total=False):
-    """DefenseFiles runtime class.
-
-    Attributes:
-        defended_model_file: Defended model artifact path.
-        defended_predictions_file: Defended prediction artifact path.
-        defended_probabilities_file: Defended probability artifact path.
-        score_file: Defense score artifact path.
-    """
-
-    defended_model_file: str
-    defended_predictions_file: str
-    defended_probabilities_file: str
-    score_file: str
-
-
-class DetectorFiles(TypedDict, total=False):
-    """Typed mapping for detector-related artifact file paths.
-
-    Attributes:
-        detector_model_file: Detector model artifact path.
-        detected_predictions_file: Detector prediction artifact path.
-        detected_probabilities_file: Detector probability artifact path.
-        score_file: Detector score artifact path.
-    """
-
-    detector_model_file: str
-    detected_predictions_file: str
-    detected_probabilities_file: str
-    score_file: str
 
 
 # -----------------------------------------------------------------------------
@@ -120,12 +45,13 @@ _ALLOWED_KEYS = collect_typed_dict_keys(
     AttackFiles,
     LogFiles,
     BaseFiles,
+    DataFiles,
     DefenseFiles,
     DetectorFiles,
 )
 
 # Key registries for each file type category
-data_files = tuple(collect_typed_dict_keys(BaseFiles, LogFiles))
+data_files = tuple(collect_typed_dict_keys(BaseFiles, DataFiles, LogFiles))
 model_files = tuple(collect_typed_dict_keys(ModelFiles))
 attack_files = tuple(collect_typed_dict_keys(AttackFiles))
 

@@ -632,6 +632,66 @@ class ExperimentConfig(DataConfigResolutionMixin, BaseConfig):
 
         return y_true, y_pred, y_proba
 
+    @staticmethod
+    def _merge_reserved_runtime_kwargs(
+        *payloads: dict[str, Any],
+    ) -> dict[str, Any]:
+        merged: dict[str, Any] = {}
+        for payload in payloads:
+            if not payload:
+                continue
+            for key, value in payload.items():
+                if key in merged:
+                    raise ValueError(f"Reserved runtime key collision: {key}")
+                merged[key] = value
+        return merged
+
+    def _build_reserved_runtime_kwargs(
+        self,
+        mode: str,
+        y_true: Any,
+        y_pred: Any,
+        y_proba: Any = None,
+    ) -> dict[str, Any]:
+        data = self.data
+        model = self.model
+        defense = getattr(model, "defense", None)
+        trainer = getattr(model, "trainer", None)
+        pipeline = getattr(data, "pipeline", None)
+        sampler = getattr(data, "sampler", None)
+        sensitive = getattr(data, "_sensitive_test", None)
+
+        return {
+            "__deckard__labels__": y_true,
+            f"__deckard__labels__{mode}__": y_true,
+            "__deckard__predictions__": y_pred,
+            f"__deckard__predictions__{mode}__": y_pred,
+            "__deckard__probabilities__": y_proba,
+            f"__deckard__probabilities__{mode}__": y_proba,
+            "__deckard__mode__": mode,
+            f"__deckard__mode__{mode}__": mode,
+            "__deckard__data__": data,
+            f"__deckard__data__{mode}__": data,
+            "__deckard__model__": model,
+            f"__deckard__model__{mode}__": model,
+            "__deckard__attack__": self.attack,
+            "__deckard__detector__": self.detector,
+            "__deckard__experiment__": self,
+            "__deckard__files__": self.files,
+            "__deckard__score__": self.score,
+            "__deckard__scorer__": self.score,
+            "__deckard__defense__": defense,
+            f"__deckard__defense__{mode}__": defense,
+            "__deckard__trainer__": trainer,
+            f"__deckard__trainer__{mode}__": trainer,
+            "__deckard__pipeline__": pipeline,
+            f"__deckard__pipeline__{mode}__": pipeline,
+            "__deckard__sampler__": sampler,
+            f"__deckard__sampler__{mode}__": sampler,
+            "__deckard__sensitive__": sensitive,
+            f"__deckard__sensitive__{mode}__": sensitive,
+        }
+
     def _run_experiment_scorer_modes(self, score_file=None) -> dict:
         if self.score is None:
             return {}
@@ -653,10 +713,16 @@ class ExperimentConfig(DataConfigResolutionMixin, BaseConfig):
             }
             if scorer_is_data_profile:
                 y_true, y_pred = self._resolve_data_mode_inputs(mode)
+                runtime_kwargs = self._build_reserved_runtime_kwargs(
+                    mode,
+                    y_true,
+                    y_pred,
+                )
                 mode_scores = self.score(
                     **common_kwargs,
-                    y_true=y_true,
-                    y_pred=y_pred,
+                    dep=y_true,
+                    ind=y_pred,
+                    **runtime_kwargs,
                 )
             else:
                 if mode == "pre-sample":
@@ -665,11 +731,17 @@ class ExperimentConfig(DataConfigResolutionMixin, BaseConfig):
                     )
                 self._ensure_mode_predictions(mode)
                 y_true, y_pred, y_proba = self._resolve_mode_model_outputs(mode)
+                runtime_kwargs = self._build_reserved_runtime_kwargs(
+                    mode,
+                    y_true,
+                    y_pred,
+                    y_proba,
+                )
                 mode_scores = self.score(
                     **common_kwargs,
-                    y_true=y_true,
-                    y_pred=y_pred,
-                    y_proba=y_proba,
+                    dep=y_true,
+                    ind=y_pred,
+                    **runtime_kwargs,
                 )
             if (
                 isinstance(mode_scores, dict)

@@ -743,7 +743,8 @@ class ArtifactLoaderConfig:
 
         Raises:
             EOFError: If the pickle stream is truncated and ignore_corrupt is False.
-            ``pickle.UnpicklingError``: If pickle data is invalid and ignore_corrupt is False.
+            Exception: ``pickle.UnpicklingError`` if pickle data is invalid and
+                ignore_corrupt is False.
             AttributeError: If object attributes cannot be restored and ignore_corrupt is False.
             OSError: If file IO fails and ignore_corrupt is False.
         """

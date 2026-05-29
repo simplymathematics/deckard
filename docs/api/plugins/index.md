@@ -2,19 +2,19 @@
 
 Plugin integration APIs are grouped here.
 
-- {doc}`../../api/anjana`
-- {doc}`../../api/fairlearn`
-- {doc}`../../api/lifelines`
-- {doc}`../../api/seaborn`
-- {doc}`../../api/yellowbrick`
+- {doc}`anjana`
+- {doc}`fairlearn`
+- {doc}`lifelines`
+- {doc}`seaborn`
+- {doc}`yellowbrick`
 
 ```{toctree}
 :hidden:
 :maxdepth: 1
 
-../../api/anjana
-../../api/fairlearn
-../../api/lifelines
-../../api/seaborn
-../../api/yellowbrick
+anjana
+fairlearn
+lifelines
+seaborn
+yellowbrick
 ```

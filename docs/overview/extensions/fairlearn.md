@@ -27,47 +27,9 @@ Related docs:
 4. Group fairness scoring merge.
 5. Canonical persistence and fairness diagnostics.
 
-## Execution Flows
-
-### Data Flow
-
-```mermaid
-flowchart TD
-        A[Data load + sensitive attrs] --> B[fairlearn data policy hooks]
-        B --> C[prepared fairness-aware split payload]
-```
-
-### Pipeline Flow
-
-```mermaid
-flowchart TD
-        A[before_pipeline] --> B[fairlearn preprocessing/postprocessing stage]
-        B --> C[after_pipeline]
-```
-
-### Defense Flow
-
-```mermaid
-flowchart TD
-        A[fairlearn model runtime] --> B{defense type}
-        B -- reductions --> C[pre_fit stage]
-        B -- adversarial/postprocessing --> D[post_fit_pre_predict stage]
-```
-
-### Scoring Flow
-
-```mermaid
-flowchart TD
-        A[predictions + groups] --> B[group metric scorer execution]
-        B --> C[fairness merge last into score_dict]
-```
-
-### Plot Flow
-
-```mermaid
-flowchart TD
-        A[persisted fairness metrics] --> B[plot adapter]
-        B --> C[group fairness visual diagnostics]
+```{include} ../flowcharts.md
+:start-after: <!-- fairlearn-execution-flows-start -->
+:end-before: <!-- fairlearn-execution-flows-end -->
 ```
 
 ## YAML Examples

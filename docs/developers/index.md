@@ -14,42 +14,107 @@ documentation, and architecture references.
 Use this map to choose where to read first:
 
 - User-facing behavior and usage: {doc}`../overview/index` and {doc}`../api/modules`.
-- Developer architecture and runtime contracts: {doc}`design`, {doc}`orchestration`, {doc}`canon_runtime`.
-- Extension authoring and execution surfaces: {doc}`plugins`, {doc}`hooks`, {doc}`mixins`.
+- Developer architecture and runtime contracts: {doc}`design/design`, {doc}`design/orchestration`, {doc}`design/canon_runtime`.
+- Extension authoring and execution surfaces: {doc}`extensions/plugins`, {doc}`extensions/hooks`, {doc}`extensions/mixins`.
 
-## Core Runtime Docs
 
-- {doc}`Data Design and Contract <data>`
-- {doc}`Model Design and Contract <model>`
-- {doc}`Attack Design and Contract <attack>`
-- {doc}`Detector Design and Contract <detector>`
-- {doc}`Experiment Design and Contract <experiment>`
-- {doc}`Score Serialization Contract <score>`
-- {doc}`Plot Design and Contract <plot>`
-- {doc}`Orchestration Guide <orchestration>`
-- {doc}`Canon Runtime Execution Guide <canon_runtime>`
+## Design Docs
 
-## Documentation Standards
+The core design pages define the runtime shape, the orchestration contract,
+and the canonical execution flow.
 
-- {doc}`Documentation Standards and Build Guide <documentation>`
-- {doc}`Developer Page Template <template>`
+- {doc}`Design Principles <design/design>`
+- {doc}`Config Declaration Architecture <design/declarations>`
+- {doc}`Orchestration Guide <design/orchestration>`
+- {doc}`Canon Runtime Execution Guide <design/canon_runtime>`
 
-- {doc}`Matplotlibrc Behavior and Extension Examples <matplotlibrc>`
+<!-- Data API -->
 
-## Framework Integration Docs
+## Data API
 
-- {doc}`../api/pytorch`
-- {doc}`Hydra and Optuna Orchestration Contract <hydra>`
+Data-specific developer docs live with the data runtime contract and sampler
+behavior.
 
-## Plugin Integration Docs
+- {doc}`Data Design and Contract <data/data>`
+- {doc}`Sampler Class Contract <data/samplers>`
+- {doc}`Pipeline Class Contract <data/pipelines>`
 
-- {doc}`Mixin and Plugin Rules <plugins>`
-- {doc}`Plugin and Hook Execution Reference <hooks>`
-- {doc}`../api/fairlearn`
-- {doc}`../api/lifelines`
-- {doc}`../api/anjana`
-- {doc}`../api/seaborn`
-- {doc}`../api/yellowbrick`
+<!-- Model API -->
+
+## Model API
+
+Model pages cover trainer/defense orchestration, fit/predict semantics, and the
+supporting mixin layers.
+
+- {doc}`Model Design and Contract <model/model>`
+- {doc}`Trainer Class Contract <model/trainers>`
+- {doc}`Defense Class Contract <model/defenses>`
+
+<!-- Attack API -->
+
+## Attack API
+
+Attack and detector docs describe runtime application, scoring, and filtering
+behavior.
+
+- {doc}`Attack Design and Contract <attack/attack>`
+- {doc}`Detector Design and Contract <attack/detector>`
+
+<!-- Experiment API -->
+
+## Experiment API
+
+Experiment pages tie together the component configs, runtime state, and score
+serialization rules.
+
+- {doc}`Experiment Design and Contract <experiment/experiment>`
+- {doc}`Score Serialization Contract <experiment/score>`
+- {doc}`Plot Design and Contract <experiment/plot>`
+- {doc}`Matplotlibrc Behavior and Extension Examples <experiment/matplotlibrc>`
+
+<!-- Persistence API -->
+
+## Persistence API
+
+Persistence docs cover file aliasing, runtime artifacts, and the shared state
+helpers used across the pipeline.
+
+- {doc}`Persistence and Runtime State Contract <persistence/persistence>`
+- {doc}`DVC Pipeline Autogeneration Spec <optimization/dvc>`
+- {doc}`Plugin Runtime Migration Guardrails <contributor/migration>`
+
+<!-- Optimization API -->
+
+## Optimization API
+
+Optimization docs explain Hydra/Optuna wiring and pruning behavior.
+
+- {doc}`Optimization Runtime Contract <optimization/optimization>`
+- {doc}`Hydra and Optuna Orchestration Contract <optimization/hydra>`
+- {doc}`Pruning Runtime Contract <optimization/pruning>`
+
+<!-- Extension API -->
+
+## Extension API
+
+Extension docs group the shared mixin/plugin rules and the framework/plugin
+integration pages.
+
+- {doc}`Developer Extensions <extensions/index>`
+- {doc}`Mixin and Plugin Rules <extensions/plugins>`
+- {doc}`Plugin and Hook Execution Reference <extensions/hooks>`
+
+<!-- Contributor Notes -->
+
+## Contributor Notes
+
+These pages document the standards and templates used when expanding the
+developer docs.
+
+- {doc}`Documentation Standards and Build Guide <contributor/documentation>`
+- {doc}`Developer Page Template <contributor/template>`
+- {doc}`GH Actions Cache Setup <contributor/actionscache>`
+- {doc}`Testing Standards and Escalation Map <contributor/testing>`
 
 ## Development Workflow
 
@@ -95,7 +160,7 @@ as well as HuggingFace `datasets`, and `lint` for code-quality checks.
 Typical contributor loop:
 
 1. Identify the pipeline stage affected ([data](../api/data), [model](../api/model), [attack](../api/attack), [score](../api/score),
-     or `experiment`).
+     or [experiment](../api/experiment)).
 2. Update implementation and associated declarations/config wiring.
 3. Add or update tests for behavior changes.
 4. Update notebooks/docs when the user-facing behavior changes.
@@ -103,72 +168,8 @@ Typical contributor loop:
 
 ### Testing and Validation
 
-Install development test tooling:
-
-```bash
-pip install -e .[test]
-```
-
-Before opening a PR, ensure:
-
-- tests pass
-- formatting is correct
-- linting passes
-- type checks pass
-
-If CI fails, install broader tooling and run checks locally:
-
-```bash
-pip install -e ".[test,lint,docs]"
-pre-commit install
-bash scripts/coverage.sh
-flake8 deckard/
-black deckard/
-mypy deckard/
-./.venv/bin/pymarkdown scan $(find . -type f -name '*.md' -not -path './.venv/*' -not -path './build/*' -not -path './docs/build/*')
-```
-
-Markdown linting uses PyMarkdown with `MD013` (line length) disabled in
-`pyproject.toml` to avoid noisy failures on long URLs and table rows.
-
-Tools used:
-
-- [`pre-commit`](https://pre-commit.com) — multi-language pre-commit hook framework
-- [`flake8`](https://flake8.pycqa.org) — Python style and lint checker
-- [`black`](https://black.readthedocs.io) — opinionated Python code formatter
-- [`mypy`](https://mypy.readthedocs.io) — static type checker for Python
-- [`PyMarkdown`](https://pymarkdown.readthedocs.io) — Markdown linting and style checks
-- [`Hydra`](https://hydra.cc) — hierarchical configuration composition and overrides
-- [`Optuna`](https://optuna.org) — hyperparameter optimization and pruning workflows
-- [`Adversarial Robustness Toolbox
-    (ART)`](https://adversarial-robustness-toolbox.org/) — adversarial attacks and
-    defenses
-- [`DVC`](https://dvc.org) — data and artifact versioning for reproducible pipelines
-
-### Coverage Script
-
-Use `scripts/coverage.sh` for a unified test and coverage workflow.
-
-Generated outputs in `build/`:
-
-- `build/coverage.txt`
-- `build/timing.txt`
-- `build/error.log`
-
-Run against full suite (default):
-
-```bash
-bash scripts/coverage.sh
-```
-
-Run against a specific test subtree:
-
-```bash
-bash scripts/coverage.sh test/test_layers
-```
-
-The script captures errors without failing immediately, then exits non-zero if
-any step fails.
+Contributor testing requirements, fail-fast escalation ordering, and CI mapping
+now live in {doc}`contributor/testing`.
 
 ### Development Guidelines
 
@@ -204,113 +205,115 @@ make html
 ```
 
 For [DVC](https://dvc.org) notebook caching behavior in local and CI docs builds,
-see [DVC Cache Setup Summary](actionscache).
-
-## Contents
-
-- {doc}`Design Principles <design>`
-- {doc}`Security Report <security-report>`
-- {doc}`GitHub Actions Workflows <workflows>`
-- {doc}`Refactor Plan <refactor_plan>`
-- {doc}`Config Declaration Architecture <declarations>`
-- {doc}`Naming Conventions <naming>`
-- {doc}`Mixin and Plugin Rules <plugins>`
-- {doc}`Data Design and Contract <data>`
-- {doc}`Model Design and Contract <model>`
-- {doc}`Attack Design and Contract <attack>`
-- {doc}`Experiment Design and Contract <experiment>`
-- {doc}`Plugin and Hook Execution Reference <hooks>`
-- {doc}`Persistence and Runtime State Contract <persistence>`
-- {doc}`Score Serialization Contract <score>`
-- {doc}`Optimization Runtime Contract <optimization>`
-- {doc}`Hydra and Optuna Orchestration Contract <hydra>`
-- {doc}`Pruning Runtime Contract <pruning>`
-- {doc}`DVC Pipeline Autogeneration Spec <dvc>`
-- {doc}`Plugin Runtime Migration Guardrails <migration>`
-- {doc}`Documentation Standards and Build Guide <documentation>`
-
-- {doc}`Matplotlibrc Behavior and Extension Examples <matplotlibrc>`
-- {doc}`Config Class Contract <configs>`
-- {doc}`Mixin Class Contract <mixins>`
-- {doc}`Plugin Rules and Capabilities <plugins>`
-- {doc}`Sampler Class Contract <samplers>`
-- {doc}`Pipeline Class Contract <pipelines>`
-- {doc}`Trainer Class Contract <trainers>`
-- {doc}`Defense Class Contract <defenses>`
-- {doc}`Scorer Contract (Score Page) <score>`
-- {doc}`Orchestration Guide <orchestration>`
-- {doc}`Canon Runtime Execution Guide <canon_runtime>`
-- {doc}`Detector Design and Contract <detector>`
-- {doc}`Plot Design and Contract <plot>`
-- {doc}`Developer Page Template <template>`
-- {doc}`GH Actions Cache Setup <actionscache>`
+see [DVC Cache Setup Summary](contributor/actionscache).
 
 ```{toctree}
 :maxdepth: 2
 :hidden:
+:caption: Design Docs
 
-design
-security-report
-workflows
-refactor_plan
-declarations
-naming
-plugins
+design/design
+design/configs
+design/declarations
+design/orchestration
+design/canon_runtime
+```
+
+```{toctree}
+:maxdepth: 2
+:hidden:
+:caption: Data API
+
+data/data
+data/samplers
+data/pipelines
+```
+
+```{toctree}
+:maxdepth: 2
+:hidden:
+:caption: Model API
+
+model/model
+model/trainers
+model/defenses
+```
+
+```{toctree}
+:maxdepth: 2
+:hidden:
+:caption: Attack API
+
+attack/attack
+attack/detector
+```
+
+```{toctree}
+:maxdepth: 2
+:hidden:
+:caption: Experiment API
+
+experiment/experiment
+experiment/score
+experiment/plot
+experiment/matplotlibrc
+```
+
+```{toctree}
+:maxdepth: 2
+:hidden:
+:caption: Persistence API
+
+persistence/persistence
+persistence/artifacts
+persistence/file
+persistence/utils
+```
+
+```{toctree}
+:maxdepth: 2
+:hidden:
+:caption: Optimization API
+
+optimization/optimization
+optimization/hydra
+optimization/pruning
+optimization/dvc
+```
+
+```{toctree}
+:maxdepth: 2
+:hidden:
+:caption: Extension API
+
+extensions/mixins
+extensions/hooks
+extensions/plugins
 extensions/index
-data
-model
-attack
-detector
-experiment
-hooks
-persistence
-score
-plot
-artifacts
-file
-utils
-optimization
-hydra
-pruning
-dvc
-migration
-documentation
-configs
-mixins
-samplers
-pipelines
-trainers
-defenses
-matplotlibrc
-orchestration
-canon_runtime
-prediction-history-implementation-checklist
-template
-actionscache
+```
+
+```{toctree}
+:maxdepth: 2
+:hidden:
+:caption: Contributor Notes
+
+contributor/migration
+contributor/naming
+contributor/documentation
+contributor/template
+contributor/workflows
+contributor/actionscache
+contributor/testing
+```
+
+```{toctree}
+:maxdepth: 2
+:hidden:
+:caption: Future Work
+
+future/refactor_plan
+future/security-report
+future/prediction-history-implementation-checklist
 ```
 
 For user-facing documentation, see {doc}`../overview/index` and {doc}`../notebooks/index`.
-
-______________________________________________________________________
-
-**Quick links:**
-
-- {doc}`API Reference <../api/modules>`
-- {doc}`Notebook Index <../notebooks/index>`
-- {doc}`Security Report <security-report>`
-- {doc}`Data Design and Contract <data>`
-- {doc}`Model Design and Contract <model>`
-- {doc}`Attack Design and Contract <attack>`
-- {doc}`Experiment Design and Contract <experiment>`
-- {doc}`Plugin and Hook Execution Reference <hooks>`
-- {doc}`Persistence and Runtime State Contract <persistence>`
-- {doc}`Score Serialization Contract <score>`
-- {doc}`Optimization Runtime Contract <optimization>`
-- {doc}`Hydra and Optuna Orchestration Contract <hydra>`
-- {doc}`Pruning Runtime Contract <pruning>`
-- {doc}`DVC Pipeline Autogeneration Spec <dvc>`
-- {doc}`Plugin Runtime Migration Guardrails <migration>`
-- {doc}`Canon Runtime Execution Guide <canon_runtime>`
-- {doc}`Detector Design and Contract <detector>`
-- {doc}`Plot Design and Contract <plot>`
-- {doc}`Developer Page Template <template>`

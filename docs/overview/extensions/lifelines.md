@@ -26,47 +26,9 @@ Related docs:
 5. Survival scoring execution.
 6. Survival plot rendering and persistence.
 
-## Execution Flows
-
-### Data Flow
-
-```mermaid
-flowchart TD
-        A[data load/split] --> B[survival target/time preparation]
-        B --> C[lifelines-ready payload]
-```
-
-### Pipeline Flow
-
-```mermaid
-flowchart TD
-        A[pipeline transforms] --> B[survival feature engineering]
-        B --> C[model runtime input]
-```
-
-### Defense Flow
-
-```mermaid
-flowchart TD
-        A[lifelines model path] --> B{defense configured?}
-        B -- yes --> C[delegate to canonical model defense stages]
-        B -- no --> D[baseline survival path]
-```
-
-### Scoring Flow
-
-```mermaid
-flowchart TD
-        A[survival predictions] --> B[c-index and survival metrics]
-        B --> C[merge and persist score artifacts]
-```
-
-### Plot Flow
-
-```mermaid
-flowchart TD
-        A[persisted survival outputs] --> B[survival plot backend]
-        B --> C[render and persist charts]
+```{include} ../flowcharts.md
+:start-after: <!-- lifelines-execution-flows-start -->
+:end-before: <!-- lifelines-execution-flows-end -->
 ```
 
 ## YAML Examples

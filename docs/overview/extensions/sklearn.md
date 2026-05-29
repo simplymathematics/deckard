@@ -29,49 +29,9 @@ Related docs:
 4. Split-scoped scoring and score merge.
 5. Artifact/file persistence and optional downstream plotting.
 
-## Execution Flows
-
-### Data Flow
-
-```mermaid
-flowchart TD
-        A[DataConfig load/sample] --> B[sklearn-ready tabular payload]
-        B --> C[pass to sklearn trainer/runtime]
-```
-
-### Pipeline Flow
-
-```mermaid
-flowchart TD
-        A[before_pipeline hook] --> B[fit_pre_sample -> fit_X -> fit_y -> fit_Xy]
-        B --> C[after_pipeline hook]
-```
-
-### Defense Flow
-
-```mermaid
-flowchart TD
-        A[trained or loaded sklearn model] --> B{defense configured?}
-        B -- yes --> C[map to pre_art_defense/pre_fit/post_fit_pre_predict]
-        C --> D[apply defense and optional retrain]
-        B -- no --> E[use baseline model path]
-```
-
-### Scoring Flow
-
-```mermaid
-flowchart TD
-        A[predictions available] --> B[mode select train/test/val]
-        B --> C[score stage dispatch]
-        C --> D[merge score_dict and persist score_file]
-```
-
-### Plot Flow
-
-```mermaid
-flowchart TD
-        A[persisted sklearn artifacts] --> B[PlotConfig backend adapter]
-        B --> C[render and persist figure outputs]
+```{include} ../flowcharts.md
+:start-after: <!-- sklearn-execution-flows-start -->
+:end-before: <!-- sklearn-execution-flows-end -->
 ```
 
 ## YAML Examples

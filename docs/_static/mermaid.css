@@ -7,6 +7,7 @@
 .mermaid svg,
 .mermaid svg * {
   font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  font-size: 15px;
 }
 
 .mermaid .node rect,
@@ -14,19 +15,20 @@
 .mermaid .node ellipse,
 .mermaid .node polygon,
 .mermaid .node path {
-  stroke-width: 2px;
-  rx: 10px;
-  ry: 10px;
+  stroke-width: 2.5px;
+  rx: 12px;
+  ry: 12px;
 }
 
 .mermaid .edgePath .path,
 .mermaid .flowchart-link {
-  stroke-width: 2px;
+  stroke-width: 2.5px;
 }
 
 .mermaid .edgeLabel,
 .mermaid .label {
   color: #111827;
+  font-size: 14px;
 }
 
 .mermaid .edgeLabel rect,
@@ -39,4 +41,67 @@
   fill: #ffffff;
   stroke: #d1d5db;
   stroke-width: 1.5px;
+}
+
+.mermaid .data rect,
+.mermaid .data circle,
+.mermaid .data ellipse,
+.mermaid .data polygon,
+.mermaid .data path {
+  fill: #dcfce7;
+  stroke: #16a34a;
+}
+
+.mermaid .model rect,
+.mermaid .model circle,
+.mermaid .model ellipse,
+.mermaid .model polygon,
+.mermaid .model path {
+  fill: #dbeafe;
+  stroke: #2563eb;
+}
+
+.mermaid .attack rect,
+.mermaid .attack circle,
+.mermaid .attack ellipse,
+.mermaid .attack polygon,
+.mermaid .attack path {
+  fill: #fee2e2;
+  stroke: #dc2626;
+}
+
+.mermaid .detector rect,
+.mermaid .detector circle,
+.mermaid .detector ellipse,
+.mermaid .detector polygon,
+.mermaid .detector path {
+  fill: #f3e8ff;
+  stroke: #7c3aed;
+}
+
+.mermaid .files rect,
+.mermaid .files circle,
+.mermaid .files ellipse,
+.mermaid .files polygon,
+.mermaid .files path {
+  fill: #e5e7eb;
+  stroke: #6b7280;
+}
+
+.mermaid .scores rect,
+.mermaid .scores circle,
+.mermaid .scores ellipse,
+.mermaid .scores polygon,
+.mermaid .scores path {
+  fill: #ffedd5;
+  stroke: #f97316;
+}
+
+.mermaid .experiment rect,
+.mermaid .experiment circle,
+.mermaid .experiment ellipse,
+.mermaid .experiment polygon,
+.mermaid .experiment path {
+  fill: #d1d5db;
+  stroke: #374151;
 }

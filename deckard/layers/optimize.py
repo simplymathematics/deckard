@@ -32,6 +32,29 @@ logger = logging.getLogger(__name__)
 OptimizerScalar = str | int | float | bool | None
 OptimizerValue = OptimizerScalar | list["OptimizerValue"] | dict[str, "OptimizerValue"]
 
+_RUNTIME_FILE_HASH_EXCLUDE = {
+    "log_file",
+    "score_file",
+    "params_file",
+    "error_file",
+}
+
+_RUNTIME_PARAM_EXCLUDE_KEYS = {
+    "_X",
+    "_y",
+    "_model",
+    "score_dict",
+    "attack",
+    "detector",
+    "training_predictions",
+    "predictions",
+    "probabilities",
+    "val_predictions",
+    "val_probabilities",
+    "dataset_obj",
+    "loaders",
+}
+
 
 class OptimizerRuntimeConfigLike(Protocol):
     """Structural protocol for runtime configs exposing optimizer fields."""
@@ -367,13 +390,22 @@ class DefaultOptimizerCallback(HydraCallback):
                 except Exception:
                     pass
 
+        _apply_runtime_context_file_hashes(
+            files_cfg=getattr(config, "files", None),
+            hydra_cfg=hydra_cfg,
+            experiment_name=getattr(config, "experiment_name", None),
+        )
+
         # Write params.yaml now that paths are resolved.
         if self._resolved_params_file:
             params_path = Path(str(self._resolved_params_file))
             params_path.parent.mkdir(parents=True, exist_ok=True)
+            params_payload = _sanitize_initialization_payload(
+                OmegaConf.to_container(config, resolve=False),
+            )
             with open(params_path, "w") as f:
                 yaml.dump(
-                    OmegaConf.to_container(config, resolve=False),
+                    params_payload,
                     f,
                     indent=4,
                 )
@@ -552,6 +584,67 @@ def _ensure_experiment_hash(value) -> str:
     return hash_conf_values(value)
 
 
+def _runtime_context_file_hash(hydra_cfg: Any, experiment_name: Any) -> str:
+    """Build a deterministic runtime-context hash for artifact file naming."""
+    payload = {
+        "experiment_name": _ensure_experiment_hash(experiment_name),
+        "job_id": _get_hydra_job_identifier(hydra_cfg),
+        "job_name": getattr(getattr(hydra_cfg, "job", None), "name", None),
+        "sweep_subdir": getattr(getattr(hydra_cfg, "sweep", None), "subdir", None),
+    }
+    return hash_conf_values(payload)
+
+
+def _hash_file_path_with_runtime_context(path_value: str, context_hash: str) -> str:
+    """Replace file basename with runtime-context hash while preserving parent/suffix."""
+    path = Path(path_value)
+    suffix = "".join(path.suffixes)
+    hashed_name = f"{context_hash}{suffix}" if suffix else context_hash
+    return (path.parent / hashed_name).as_posix()
+
+
+def _apply_runtime_context_file_hashes(
+    files_cfg: Any,
+    *,
+    hydra_cfg: Any,
+    experiment_name: Any,
+) -> None:
+    """Hash configured ``*_file`` artifact paths using runtime context."""
+    if files_cfg is None:
+        return
+
+    context_hash = _runtime_context_file_hash(hydra_cfg, experiment_name)
+
+    if isinstance(files_cfg, DictConfig):
+        for key, value in list(files_cfg.items()):
+            key_token = str(key)
+            if (
+                key_token.endswith("_file")
+                and key_token not in _RUNTIME_FILE_HASH_EXCLUDE
+                and isinstance(value, str)
+                and value.strip() != ""
+            ):
+                files_cfg[key_token] = _hash_file_path_with_runtime_context(
+                    value,
+                    context_hash,
+                )
+        return
+
+    if isinstance(files_cfg, dict):
+        for key, value in list(files_cfg.items()):
+            key_token = str(key)
+            if (
+                key_token.endswith("_file")
+                and key_token not in _RUNTIME_FILE_HASH_EXCLUDE
+                and isinstance(value, str)
+                and value.strip() != ""
+            ):
+                files_cfg[key_token] = _hash_file_path_with_runtime_context(
+                    value,
+                    context_hash,
+                )
+
+
 def _is_multirun_mode(hydra_cfg) -> bool:
     return str(getattr(hydra_cfg, "mode", "")) == "RunMode.MULTIRUN"
 
@@ -578,11 +671,6 @@ def _assert_multirun_sweeper(hydra_cfg):
 
 def _resolve_multirun_sweep_paths(hydra_cfg) -> dict:
     log_dir = Path(hydra_cfg.sweep.dir, hydra_cfg.sweep.subdir)
-    # TODO: Ensure that data/model/attack *_file names are hashes if they exist in the cfg.files dict.
-    # data_file: data/${hash:${data}}.pkl
-    # model_file: model/${hash:${data},${model}$}.pkl
-    # attack_file: attack/${hash:${data},${model},${attack}}.pkl
-    # predictions and probabilities files should follow the same hashing convention to avoid unintended collisions and allow artifact storage
     return {
         "log_file": (log_dir / f"{hydra_cfg.job.name}.log").as_posix(),
         "score_file": (log_dir / "scores.json").as_posix(),
@@ -1283,6 +1371,49 @@ def set_trial_attributes(
             )
 
 
+_DROP_RUNTIME_VALUE = object()
+
+
+def _sanitize_initialization_payload(payload: Any) -> Any:
+    """Return params-safe payload containing only initialization configuration data."""
+    if isinstance(payload, DictConfig):
+        payload = OmegaConf.to_container(payload, resolve=False)
+    if isinstance(payload, ListConfig):
+        payload = list(payload)
+
+    if payload is None or isinstance(payload, (str, int, float, bool)):
+        return payload
+
+    if isinstance(payload, Path):
+        return payload.as_posix()
+
+    if isinstance(payload, dict):
+        cleaned: dict[str, Any] = {}
+        for key, value in payload.items():
+            key_token = str(key)
+            if key_token in _RUNTIME_PARAM_EXCLUDE_KEYS:
+                continue
+            sanitized = _sanitize_initialization_payload(value)
+            if sanitized is _DROP_RUNTIME_VALUE:
+                continue
+            cleaned[key_token] = sanitized
+        return cleaned
+
+    if isinstance(payload, (list, tuple, set)):
+        cleaned_list: list[Any] = []
+        for value in payload:
+            sanitized = _sanitize_initialization_payload(value)
+            if sanitized is _DROP_RUNTIME_VALUE:
+                continue
+            cleaned_list.append(sanitized)
+        return cleaned_list
+
+    if callable(payload):
+        return _DROP_RUNTIME_VALUE
+
+    return _DROP_RUNTIME_VALUE
+
+
 def save_params_file(
     cfg: dict[str, Any] | DictConfig,
     files: dict[str, str],
@@ -1294,7 +1425,7 @@ def save_params_file(
     assert isinstance(cfg, dict), f"cfg must be dict-like. Got {type(cfg)}"
     _ = cfg.pop("params", None)
     if "params_file" in files:
-        cfg = OmegaConf.create(cfg)
+        cfg = OmegaConf.create(_sanitize_initialization_payload(cfg))
         Path(files["params_file"]).parent.mkdir(parents=True, exist_ok=True)
         OmegaConf.save(cfg, files["params_file"])
     else:

@@ -25,46 +25,9 @@ Related docs:
 4. Privacy-oriented scorer merge.
 5. Canonical persistence and optional plotting.
 
-## Execution Flows
-
-### Data Flow
-
-```mermaid
-flowchart TD
-    A[Data load] --> B[before_sample privacy hook]
-    B --> C[sampled privacy-aware payload]
-```
-
-### Pipeline Flow
-
-```mermaid
-flowchart TD
-    A[privacy-constrained input] --> B[pipeline stages]
-    B --> C[policy-compliant transformed payload]
-```
-
-### Defense Flow
-
-```mermaid
-flowchart TD
-    A[model runtime with ANJANA] --> B[map defense to pre_art_defense]
-    B --> C[apply defense path]
-```
-
-### Scoring Flow
-
-```mermaid
-flowchart TD
-    A[privacy run outputs] --> B[anjana scorer execution]
-    B --> C[merge privacy metrics into score_dict]
-```
-
-### Plot Flow
-
-```mermaid
-flowchart TD
-    A[persisted privacy metrics/artifacts] --> B[plot adapter]
-    B --> C[render privacy diagnostics]
+```{include} ../flowcharts.md
+:start-after: <!-- anjana-execution-flows-start -->
+:end-before: <!-- anjana-execution-flows-end -->
 ```
 
 ## YAML Examples

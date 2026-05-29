@@ -5,11 +5,14 @@ contributors. It follows the same overview flow as the rest of this section:
 understand the project, inspect the core runtime surfaces, then move into
 experiment orchestration and scoring.
 
+Use this page for execution-oriented onboarding. For architecture context and
+capability mapping, use {doc}`index`.
+
 ## Overview Flow
 
 The fastest path through the overview section is:
 
-1. {doc}`summary`
+1. {doc}`index`
 2. {doc}`core`
 3. {doc}`experiment`
 4. {doc}`scoring`
@@ -27,7 +30,7 @@ The fastest path through the overview section is:
 If your goal is to run an experiment quickly:
 
 1. Read {doc}`installation` to create a working environment.
-2. Read {doc}`summary` for the package model.
+2. Read {doc}`index` for the package model and capability map.
 3. Read {doc}`core` to identify the API surfaces you will configure.
 4. Read {doc}`experiment` for the end-to-end runtime workflow.
 5. Read {doc}`scoring` to understand objective metrics and runtime outputs.
@@ -57,6 +60,30 @@ If your goal is to extend deckard:
 - [Seaborn](../api/seaborn)
 - [Yellowbrick](../api/yellowbrick)
 
+## Programmatic Example
+
+```python
+from deckard import DataConfig, ModelConfig, AttackConfig, ExperimentConfig
+
+data = DataConfig(dataset_name="adult", test_size=0.2)
+model = ModelConfig(model_type="sklearn.linear_model.LogisticRegression")
+attack = AttackConfig()
+experiment = ExperimentConfig(data=data, model=model, attack=attack)
+
+scores = experiment()
+print(scores)
+```
+
+## Command-Line Orientation
+
+Use the package through module entrypoints or the top-level CLI router:
+
+```bash
+python -m deckard --help
+python -m deckard optimize --help
+python -m deckard plot --help
+```
+
 Base runtime config docs:
 
 - {class}`deckard.data.DataConfig`
@@ -68,7 +95,7 @@ Base runtime config docs:
 
 ## Documentation Map
 
-- {doc}`summary`: high-level architecture and purpose.
+- {doc}`index`: high-level architecture and capability map.
 - {doc}`core`: compact map of the core runtime and API surfaces.
 - {doc}`experiment`: end-to-end orchestration flow through {class}`deckard.experiment.ExperimentConfig`.
 - {doc}`scoring`: score outputs, objectives, and persisted runtime metrics.
@@ -80,6 +107,26 @@ Base runtime config docs:
 - {doc}`docker`: containerized workflows.
 - {doc}`../developers/index`: contributor-facing design docs.
 - {doc}`changelog`: project history.
+
+## Experiment Management Snapshot
+
+Typical run composition includes:
+
+1. dataset loading and sampling
+2. model training/evaluation
+3. optional defense application
+4. optional attack and detector execution
+5. scoring and artifact persistence
+
+This stage model keeps large parameter sweeps auditable and comparable.
+
+## Optimization-First Workflow
+
+1. Define objective scorers in {doc}`../api/score`.
+2. Compose experiment config with [Hydra](https://hydra.cc) groups.
+3. Run single or multi-objective optimization through [Optuna](https://optuna.org).
+4. Persist predictions, scores, and metadata through {doc}`../api/file`.
+5. Run post-hoc analysis via {doc}`../api/layers`.
 
 ## Recommended Learning Paths
 

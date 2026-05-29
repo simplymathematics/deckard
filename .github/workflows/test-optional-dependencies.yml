@@ -29,7 +29,9 @@ jobs:
           - dep_name: yellowbrick
             dep_group: "seaborn,yellowbrick"
             test_paths: test/test_plugins/test_yellowbrick/test_yellowbrick.py
-          # TODO: test anjana
+          - dep_name: anjana
+            dep_group: anjana
+            test_paths: test/test_plugins/test_anjana
     uses: ./.github/workflows/optional-dependency-test-reusable.yml
     with:
       workflow_name: pr-${{ matrix.dep_name }}

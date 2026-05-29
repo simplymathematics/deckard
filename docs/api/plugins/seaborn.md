@@ -1,0 +1,86 @@
+# Seaborn Visualization
+
+deckard provides statistical visualization through Seaborn via the
+{class}`deckard.plugins.seaborn.plot.SeabornPlotConfig` class. The Seaborn
+backend is designed for **multi-run aggregation plots** — visualizing compiled
+results across many experiment runs stored in a tabular data file (CSV,
+Parquet, etc.).
+
+## Parent Core Modules and Behavior Deltas
+
+Parent core pages:
+
+- {doc}`../plot/index`
+- {doc}`../score/index`
+
+Behavior deltas in this integration:
+
+- seaborn-specific plotting configuration and plot-type dispatch,
+- tabular data source preparation for aggregate/compiled run visualization,
+- backend rendering behaviors layered on shared plot artifact contracts.
+
+(seaborn-overview)=
+
+## Overview
+
+The {mod}`deckard.plugins.seaborn.plot` module provides:
+
+- {class}`~deckard.plugins.seaborn.plot.SeabornPlotConfig` — single-plot
+  configuration with x/y columns, plot type, and optional hue/style
+- {class}`~deckard.plugins.seaborn.plot.SeabornPlotConfigList` — ordered list of
+  {class}`~deckard.plugins.seaborn.plot.SeabornPlotConfig` instances sharing a
+  common `data_file`
+
+These configs are intended for post-hoc visualization of compiled experiment
+results rather than single-run diagnostics.
+
+External references:
+
+- [Seaborn documentation](https://seaborn.pydata.org)
+- [`seaborn.scatterplot`](https://seaborn.pydata.org/generated/seaborn.scatterplot.html)
+- [`seaborn.lineplot`](https://seaborn.pydata.org/generated/seaborn.lineplot.html)
+- [`seaborn.heatmap`](https://seaborn.pydata.org/generated/seaborn.heatmap.html)
+
+Related Deckard docs:
+
+- {doc}`../score/index` for how plotted fields are produced by scorer configs
+- {doc}`../layers/index` for compiled-results and plotting layer orchestration
+
+### Supported plot types
+
+The `plot_type` field accepts:
+
+- `scatter` — scatter plot ([`seaborn.scatterplot`](https://seaborn.pydata.org/generated/seaborn.scatterplot.html))
+- `line` — line plot ([`seaborn.lineplot`](https://seaborn.pydata.org/generated/seaborn.lineplot.html))
+- `hist` — histogram ([`seaborn.histplot`](https://seaborn.pydata.org/generated/seaborn.histplot.html))
+- `cat` — categorical plot ([`seaborn.catplot`](https://seaborn.pydata.org/generated/seaborn.catplot.html))
+- `bar` — bar plot ([`seaborn.barplot`](https://seaborn.pydata.org/generated/seaborn.barplot.html))
+- `heatmap` — heatmap ([`seaborn.heatmap`](https://seaborn.pydata.org/generated/seaborn.heatmap.html))
+
+## Examples
+
+```{seealso}
+
+  Notebook-based Seaborn plotting workflows are documented in:
+
+  - {doc}`notebooks/seaborn.ipynb </notebooks/seaborn>`
+  - {doc}`notebooks/sklearn.ipynb </notebooks/sklearn>`
+
+```
+
+### Troubleshooting
+
+- **AssertionError on column names**: verify that `x`, `y`, `hue`, and
+  `style` match column names in the data file exactly.
+- **File not found**: ensure `data_file` path exists before constructing
+  {class}`~deckard.plugins.seaborn.plot.SeabornPlotConfig`; directories for
+  `plot_file` are created automatically.
+- **Import error**: install the optional plotting dependencies with
+  `pip install "deckard[plot]"`.
+
+### See also
+
+- {doc}`../plot/index` — general plotting documentation
+- {doc}`../../overview/extensions/yellowbrick` — single-run diagnostics (ROC, confusion matrix, etc.)
+- {doc}`../layers/index` — CLI layer registry (compile_results, plot)
+- {doc}`../experiment/index` — experiment orchestration that produces scored outputs

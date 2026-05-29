@@ -161,7 +161,7 @@ For full documentation, use the docs navigation:
 
 - Developer docs: {doc}`../developers/index`
 - Landing page: {doc}`/index`
-- Summary: {doc}`summary`
+- Overview index: {doc}`index`
 
 API entry points:
 

@@ -27,49 +27,9 @@ Related docs:
 4. Split/stage scoring and score merge.
 5. Artifact persistence and optional plotting.
 
-## Execution Flows
-
-### Data Flow
-
-```mermaid
-flowchart TD
-        A[DataConfig split payload] --> B[tokenizer and encoding adapters]
-        B --> C[transformers runtime inputs]
-```
-
-### Pipeline Flow
-
-```mermaid
-flowchart TD
-        A[pipeline transforms] --> B[encoded feature payload]
-        B --> C[transformers trainer consumption]
-```
-
-### Defense Flow
-
-```mermaid
-flowchart TD
-        A[transformers model state] --> B{defense configured?}
-        B -- yes --> C[canonical defense stage dispatch]
-        C --> D[defended inference/train path]
-        B -- no --> E[baseline transformers path]
-```
-
-### Scoring Flow
-
-```mermaid
-flowchart TD
-        A[predictions/probabilities] --> B[mode and stage selection]
-        B --> C[scorer execution]
-        C --> D[persist score artifacts]
-```
-
-### Plot Flow
-
-```mermaid
-flowchart TD
-        A[persisted transformer outputs] --> B[plot adapter]
-        B --> C[render diagnostics]
+```{include} ../flowcharts.md
+:start-after: <!-- transformers-execution-flows-start -->
+:end-before: <!-- transformers-execution-flows-end -->
 ```
 
 ## YAML Examples

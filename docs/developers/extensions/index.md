@@ -1,21 +1,65 @@
-# Developer Extensions
+# Developer Extensions Design and Contract
 
-Framework and plugin extension docs are grouped here.
+Framework and plugin extension docs are grouped here so the extension surface
+is easy to navigate from the developer index.
 
-## Frameworks
+## Purpose and Rationale
 
-- {doc}`../../developers/pytorch`
+This page is the developer-facing hub for extension-specific docs. It keeps
+framework and plugin guidance in one place while letting the root developer
+index stay focused on the higher-level runtime families.
 
-## Plugins
+## Internal Architecture
 
-- {doc}`../../developers/anjana`
-- {doc}`../../developers/fairlearn`
+The extension docs are organized by implementation family:
+
+- Framework-specific runtime docs: {doc}`pytorch`
+- Plugin-specific runtime docs: {doc}`anjana`, {doc}`fairlearn`
+
+Each page covers the internal contract for its subsystem and links back to the
+shared rules that govern mixins and plugins.
+
+## Execution Model
+
+Extension docs follow the same core flow as the runtime they document: the
+developer page explains the contract, then the linked pages drill into the
+framework or plugin-specific lifecycle.
+
+## Contracts and Invariants
+
+- Keep shared extension rules in {doc}`../../developers/plugins` and
+	{doc}`../../developers/mixins`.
+- Keep framework/plugin-specific behavior in the owning developer page.
+- Avoid duplicating the same extension overview text in the root developer
+	index and in this hub page.
+
+## Extension Points
+
+- {doc}`pytorch`
+- {doc}`anjana`
+- {doc}`fairlearn`
+
+## Validation and Guardrails
+
+- Keep extension guidance in sync with the API and overview extension maps.
+- Verify that root navigation links to this hub instead of repeating the same
+	extension pages in multiple places.
+
+## Migration and Compatibility
+
+When adding a new extension page, surface it here first and then link to it
+from the root developer index if needed.
+
+## See also
+
+- {doc}`../index`
+- {doc}`../../overview/extensions/index`
 
 ```{toctree}
 :hidden:
 :maxdepth: 1
 
-../../developers/pytorch
-../../developers/anjana
-../../developers/fairlearn
+pytorch
+anjana
+fairlearn
 ```

@@ -4,7 +4,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, IterableDataset
 
 torch = pytest.importorskip("torch")
 Tensor = pytest.importorskip("torch").Tensor
@@ -124,6 +124,12 @@ class InvalidBatchDataset(Dataset):
         return self.values[idx]
 
 
+class StreamingIterableDataset(IterableDataset):
+    def __iter__(self):
+        for i in range(4):
+            yield torch.randn(4), torch.tensor(i % 2)
+
+
 class TestPytorchDataConfig:
 
     def setup_method(self):
@@ -151,7 +157,6 @@ class TestPytorchDataConfig:
         shutil.rmtree(cls.temp_dir, ignore_errors=True)
 
     def test_initialization(self):
-        assert self.config.dataset_name == "torch.utils.data.TensorDataset"
         assert self.config.data_dir == self.temp_dir
         assert self.config._get_sampler_option("test_size", None) == 100
         assert self.config._get_sampler_option("train_size", None) == 100
@@ -212,9 +217,15 @@ class TestPytorchDataConfig:
         assert scores["data_sample_time"] > 0
 
     def test_invalid_dataset_name(self):
-        self.config.dataset_name = "invalid_dataset"
+        self.config.data_params["name"] = "invalid_dataset"
         with pytest.raises(Exception):
             self.config.load_dataset()
+
+    def test_resolve_dataset_type_map_style_dataset(self):
+        assert self.config.resolve_dataset_type(IntImageDataset()) == "map"
+
+    def test_resolve_dataset_type_iterable_dataset(self):
+        assert self.config.resolve_dataset_type(StreamingIterableDataset()) == "iterable"
 
     def test_hash_method(self):
         h1 = hash(self.config)
@@ -623,6 +634,36 @@ class TestPytorchCustomDataConfig:
         with pytest.raises(TypeError):
             cfg._as_dataset(12345, split="train", transform=None)
 
+    def test_as_dataset_accepts_pre_split_dataset_for_unknown_split_tag(self):
+        cfg = PytorchCustomDataConfig(
+            dataset_name="torch.utils.data.TensorDataset",
+            dataset="dummy",
+            data_dir=str(self.temp_dir),
+            sampler={"name": "split", "train_size": 10, "test_size": 10},
+            data_params={},
+        )
+        ds = self._make_simple_dataset(8)
+
+        resolved = cfg._as_dataset(ds, split="holdout", transform=None)
+
+        assert resolved is ds
+
+    def test_as_dataset_forwards_unknown_split_tag_to_loader(self):
+        cfg = PytorchCustomDataConfig(
+            dataset_name="torch.utils.data.TensorDataset",
+            dataset="dummy",
+            data_dir=str(self.temp_dir),
+            sampler={"name": "split", "train_size": 10, "test_size": 10},
+            data_params={},
+        )
+        ds = self._make_simple_dataset(6)
+
+        with patch("deckard.frameworks.pytorch.data.load_class", return_value=ds) as loader:
+            resolved = cfg._as_dataset("dummy.dataset", split="holdout", transform=None)
+
+        assert resolved is ds
+        assert loader.call_args.kwargs["split"] == "holdout"
+
     def test_custom_config_post_init_and_hash_defaults(self):
         from deckard.frameworks.pytorch.data import PytorchCustomDataConfig
 
@@ -631,6 +672,7 @@ class TestPytorchCustomDataConfig:
             dataset="dummy",
             data_dir=str(self.temp_dir),
             sampler={
+                "name": "split",
                 "train_size": 4,
                 "test_size": 2,
             },

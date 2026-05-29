@@ -8,7 +8,7 @@ import pandas as pd
 
 # Typing imports
 from dataclasses import dataclass, field
-from typing import Any, Callable, Literal, Optional, Union
+from typing import Any, Callable, Literal, Mapping, Optional, Union
 
 # Sklearn and numpy imports
 from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin
@@ -658,6 +658,51 @@ class AttackConfig(BaseConfig):
         attack_type = parts[0] if len(parts) > 0 else ""
         attack_subtype = parts[1] if len(parts) > 1 else ""
         return attack_type, attack_subtype
+
+    def _attack_target_token(self) -> str:
+        """Resolve a stable target token used in emitted attack metric labels."""
+        attack_params = self.attack_params if isinstance(self.attack_params, dict) else {}
+        target_token: Any = attack_params.get("class_target")
+
+        if target_token in {None, ""}:
+            target_token = self.targeted_attribute
+
+        if target_token in {None, ""}:
+            target_token = "targeted" if bool(attack_params.get("targeted", False)) else "untargeted"
+
+        normalized = "".join(
+            ch if ch.isalnum() else "_" for ch in str(target_token).strip().lower()
+        ).strip("_")
+        return normalized or "untargeted"
+
+    def _with_targeted_attack_labels(
+        self,
+        scores: Mapping[str, Any],
+        attack_family: str,
+    ) -> ScoreDict:
+        """Add `<target>_evasion_<metric>` aliases for evasion and poisoning metrics."""
+        payload = dict(scores)
+        if attack_family not in {"evasion", "poisoning"}:
+            return ScoreDict.from_payload(payload)
+
+        target_token = self._attack_target_token()
+        aliases: dict[str, Any] = {}
+        for key, value in payload.items():
+            token = str(key)
+            metric: str | None = None
+            if token.startswith("evasion_"):
+                metric = token[len("evasion_") :]
+            elif token.startswith("poisoned_"):
+                metric = token[len("poisoned_") :]
+            elif token.startswith("benign_"):
+                metric = f"benign_{token[len('benign_') :]}"
+
+            if metric is not None and metric != "":
+                aliases[f"{target_token}_evasion_{metric}"] = value
+
+        if aliases:
+            payload.update(aliases)
+        return ScoreDict.from_payload(payload)
 
     def _instantiate_plugin(self, plugin_spec: Any):
         return instantiate_plugin_spec(

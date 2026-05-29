@@ -2,11 +2,11 @@
 
 Framework adapter APIs are grouped here.
 
-- {doc}`../../api/pytorch`
+- {doc}`../../api/pytorch/index`
 
 ```{toctree}
 :hidden:
 :maxdepth: 1
 
-../../api/pytorch
+../../api/pytorch/index
 ```

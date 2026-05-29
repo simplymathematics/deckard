@@ -4,11 +4,13 @@ import argparse
 import inspect
 import logging
 import os
+import re
 import sys
 from pathlib import Path
 
 import hydra
 from omegaconf import DictConfig
+import yaml
 
 from . import DECKARD_CONFIG_DIR
 from .declarations import register_configs
@@ -17,6 +19,82 @@ from .utils import normalize_hydra_list_overrides
 
 # Set up logging
 logger = logging.getLogger(__name__)
+
+
+def _discover_deckard_rc(start_dir: str | Path | None = None) -> Path | None:
+    """Find the nearest ``.deckard_rc`` from the current directory upward."""
+    search_root = Path(start_dir or os.getcwd()).resolve()
+    for candidate in (search_root, *search_root.parents):
+        rc_path = candidate / ".deckard_rc"
+        if rc_path.exists() and rc_path.is_file():
+            return rc_path
+    return None
+
+
+def _parse_deckard_rc_exports(raw_text: str) -> dict[str, str]:
+    """Parse dotenv/export key-value declarations from ``.deckard_rc`` text."""
+    parsed: dict[str, str] = {}
+    for raw_line in raw_text.splitlines():
+        line = raw_line.strip()
+        if line == "" or line.startswith("#"):
+            continue
+        if line.startswith("export "):
+            line = line[len("export ") :]
+        if "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        key = key.strip()
+        value = value.strip().strip('"').strip("'")
+        if key:
+            parsed[key] = value
+    return parsed
+
+
+def _parse_deckard_rc_yaml(raw_text: str) -> dict[str, str]:
+    """Parse YAML key-value declarations from ``.deckard_rc`` text."""
+    try:
+        payload = yaml.safe_load(raw_text)
+    except yaml.YAMLError:
+        return {}
+    if not isinstance(payload, dict):
+        return {}
+
+    parsed: dict[str, str] = {}
+    for key, value in payload.items():
+        if key is None or value is None:
+            continue
+        parsed[str(key)] = str(value)
+    return parsed
+
+
+def _load_deckard_rc_defaults(start_dir: str | Path | None = None) -> dict[str, str]:
+    """Load defaults from nearest ``.deckard_rc`` using YAML and dotenv parsing."""
+    rc_path = _discover_deckard_rc(start_dir)
+    if rc_path is None:
+        return {}
+
+    raw_text = rc_path.read_text(encoding="utf-8")
+    yaml_values = _parse_deckard_rc_yaml(raw_text)
+    export_values = _parse_deckard_rc_exports(raw_text)
+    # Dotenv/export entries win when both formats define the same key.
+    return {**yaml_values, **export_values}
+
+
+def _resolve_config_default(
+    key: str,
+    rc_defaults: dict[str, str],
+    fallback: str | None,
+) -> str | None:
+    """Resolve config default using ENV first, then .deckard_rc, then fallback."""
+    env_value = os.environ.get(key)
+    if env_value not in {None, ""}:
+        return env_value
+
+    rc_value = rc_defaults.get(key)
+    if rc_value not in {None, ""}:
+        return rc_value
+
+    return fallback
 
 
 def _layer_help_summary(layer_name: str) -> str:
@@ -87,9 +165,12 @@ def get_configuration_paths():
     Raises:
         FileNotFoundError: If the config file does not exist in the specified directory.
     """
-    # Get config dir from environment variable if set
-    config_dir = os.environ.get(
+    rc_defaults = _load_deckard_rc_defaults()
+
+    # Environment values override .deckard_rc defaults.
+    config_dir = _resolve_config_default(
         "DECKARD_CONFIG_DIR",
+        rc_defaults,
         DECKARD_CONFIG_DIR,
     )
     if config_dir is None:
@@ -101,7 +182,12 @@ def get_configuration_paths():
 
     logger.debug("No optional arguments provided.")
     requested_config_file = Path(
-        os.environ.get("DECKARD_DEFAULT_CONFIG_FILE") or "default.yaml",
+        _resolve_config_default(
+            "DECKARD_DEFAULT_CONFIG_FILE",
+            rc_defaults,
+            "default.yaml",
+        )
+        or "default.yaml",
     ).as_posix()
     config_file = requested_config_file
     working_dir = os.getcwd()
@@ -176,6 +262,12 @@ def main():
     to the appropriate layer entrypoint based on CLI arguments.
     """
     parser = _build_router()
+
+    # Use .deckard_rc defaults only when the environment does not already define values.
+    rc_defaults = _load_deckard_rc_defaults()
+    for key in ("DECKARD_CONFIG_DIR", "DECKARD_DEFAULT_CONFIG_FILE"):
+        if key not in os.environ and key in rc_defaults and rc_defaults[key] != "":
+            os.environ[key] = rc_defaults[key]
 
     config_dir = os.environ.get("DECKARD_CONFIG_DIR", "config")
     while not Path(config_dir).exists():

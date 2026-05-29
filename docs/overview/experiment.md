@@ -12,7 +12,7 @@ Primary API reference:
 
 This page sits in the same core overview path as:
 
-1. {doc}`summary`
+1. {doc}`index`
 2. {doc}`core`
 3. {doc}`experiment`
 4. {doc}`scoring`

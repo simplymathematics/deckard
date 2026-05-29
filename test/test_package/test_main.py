@@ -64,6 +64,78 @@ def test_get_configuration_paths_raises_for_missing_config_file(
         main_module.get_configuration_paths()
 
 
+def test_get_configuration_paths_reads_dotenv_deckard_rc_defaults(
+    main_module,
+    monkeypatch,
+    tmp_path,
+):
+    config_dir = tmp_path / "config_from_rc"
+    config_dir.mkdir()
+    (config_dir / "from_rc.yaml").write_text("x: 1\n")
+    (tmp_path / ".deckard_rc").write_text(
+        f"export DECKARD_CONFIG_DIR={config_dir}\n"
+        "export DECKARD_DEFAULT_CONFIG_FILE=from_rc.yaml\n",
+    )
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.delenv("DECKARD_CONFIG_DIR", raising=False)
+    monkeypatch.delenv("DECKARD_DEFAULT_CONFIG_FILE", raising=False)
+
+    resolved_dir, config_file = main_module.get_configuration_paths()
+
+    assert resolved_dir == str(config_dir)
+    assert config_file == "from_rc.yaml"
+
+
+def test_get_configuration_paths_reads_yaml_deckard_rc_defaults(
+    main_module,
+    monkeypatch,
+    tmp_path,
+):
+    config_dir = tmp_path / "config_yaml_rc"
+    config_dir.mkdir()
+    (config_dir / "yaml_rc.yaml").write_text("x: 1\n")
+    (tmp_path / ".deckard_rc").write_text(
+        "DECKARD_CONFIG_DIR: ./config_yaml_rc\n"
+        "DECKARD_DEFAULT_CONFIG_FILE: yaml_rc.yaml\n",
+    )
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.delenv("DECKARD_CONFIG_DIR", raising=False)
+    monkeypatch.delenv("DECKARD_DEFAULT_CONFIG_FILE", raising=False)
+
+    resolved_dir, config_file = main_module.get_configuration_paths()
+
+    assert resolved_dir == "config_yaml_rc"
+    assert config_file == "yaml_rc.yaml"
+
+
+def test_get_configuration_paths_env_overrides_deckard_rc_defaults(
+    main_module,
+    monkeypatch,
+    tmp_path,
+):
+    rc_dir = tmp_path / "config_from_rc"
+    env_dir = tmp_path / "config_from_env"
+    rc_dir.mkdir()
+    env_dir.mkdir()
+    (rc_dir / "from_rc.yaml").write_text("x: 1\n")
+    (env_dir / "from_env.yaml").write_text("x: 2\n")
+    (tmp_path / ".deckard_rc").write_text(
+        f"export DECKARD_CONFIG_DIR={rc_dir}\n"
+        "export DECKARD_DEFAULT_CONFIG_FILE=from_rc.yaml\n",
+    )
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("DECKARD_CONFIG_DIR", str(env_dir))
+    monkeypatch.setenv("DECKARD_DEFAULT_CONFIG_FILE", "from_env.yaml")
+
+    resolved_dir, config_file = main_module.get_configuration_paths()
+
+    assert resolved_dir == str(env_dir)
+    assert config_file == "from_env.yaml"
+
+
 def test_main_dispatches_to_default_module(main_module, monkeypatch, tmp_path):
     monkeypatch.setenv("DECKARD_CONFIG_DIR", str(tmp_path))
     monkeypatch.setattr(sys, "argv", ["deckard"])

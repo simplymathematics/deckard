@@ -37,11 +37,6 @@ from ...score.base import (
 )
 from ...utils import coerce_to_list, is_default_config_value, merge_list_of_dicts
 
-# TODO: Remove this
-# Backward-compatible aliases used in existing tests and downstream imports.
-_series_like_to_float_dict = series_like_to_float_dict
-_resolve_yt_yp = resolve_yt_yp
-
 try:
     from fairlearn.metrics import MetricFrame
 except ImportError:  # pragma: no cover

@@ -9,7 +9,6 @@ from deckard.plugins.fairlearn.score import (
     FairlearnScorerDictConfig,
     _flatten_metric_frame_by_group,
     _resolve_sensitive_features,
-    _series_like_to_float_dict,
     as_group_scorer,
     fairness_stage_to_split_mode,
     fairness_demographic_parity_difference,
@@ -18,6 +17,7 @@ from deckard.plugins.fairlearn.score import (
     fairness_group_mean_prediction_difference,
     fairness_group_mse_difference,
 )
+from deckard.score._runtime import series_like_to_float_dict
 from deckard.score.base import ScorerConfig, ScorerDictConfig
 
 
@@ -171,10 +171,10 @@ def test_flatten_metric_frame_by_group():
 
 def test_series_like_to_float_dict():
     s = pd.Series([1.0, 2.0], index=["a", "b"])
-    assert _series_like_to_float_dict(s) == {"a": 1.0, "b": 2.0}
+    assert series_like_to_float_dict(s) == {"a": 1.0, "b": 2.0}
     df = pd.DataFrame({"x": [1, 2]}, index=["a", "b"])
-    assert _series_like_to_float_dict(df) == {"a_x": 1.0, "b_x": 2.0}
-    assert _series_like_to_float_dict(3.5) == {"value": 3.5}
+    assert series_like_to_float_dict(df) == {"a_x": 1.0, "b_x": 2.0}
+    assert series_like_to_float_dict(3.5) == {"value": 3.5}
 
 
 # --- group mean/mae/mse difference ---

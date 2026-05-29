@@ -1,5 +1,20 @@
 # Changelog
 
+## .98.3
+
+- Documentation hardening, notebook refresh/lockfile sync, runtime/config consistency fixes, and CI/test stabilization across core workflows.
+- Scope highlights: improved API/extension coverage (including Fairlearn, Lifelines, Yellowbrick, and Anjana), refined sklearn/lifelines fixtures, and targeted cleanup in DVC experiment lint/test paths.
+- Phase 3 closure TODOs:
+  - [x] Add anjana matrix coverage.
+  - [x] Remove fairlearn compatibility aliases.
+  - [x] Add .deckard_rc env loading.
+  - [x] Add targeted attack metric labels.
+  - [x] Hash runtime artifact file names.
+  - [x] Sanitize params export configs.
+  - [x] Reduce file.py to canon types.
+  - [x] Expand pytorch data loader tests.
+  - [x] Run fail-fast targeted tests.
+  - [x] Update Phase 3 checklist statuses.
 ## .98.2
 
 - Finalized repository enforcement pass for core scope checks and verified no baseline violations in `deckard/` via `scripts/repository_enforcement.py --scope deckard/`.
@@ -43,11 +58,11 @@ data/experiment utilities, and fairlearn scoring).
 
 ### Phase 2: Documentation Coverage + Repo Settings
 
-- [ ] Audit individual files for missing cross-references (e.g., [AttackConfig](../api/modules) or [fairlearn](extensions/index) references should link to docs), create a way to track this per-file, and add it to repository enforcement so that we can systematically eliminate the lack of cross-references. Also audit for broken `:mod` and `:doc` syntax inside all docs/ *.md files and all docs/notebooks/*.ipynb files
-- [ ] Ensure that all docs/ files cross-reference instead of merely wrap objects with ``.
-- [ ] Fix broken :mod syntax
-- [ ] Fix broken :doc syntax
-- [ ] Ensure that notebook .md cells properly cross-link to the docs.
+- [x] Audit individual files for missing cross-references (e.g., [AttackConfig](../api/modules) or [fairlearn](extensions/index) references should link to docs), create a way to track this per-file, and add it to repository enforcement so that we can systematically eliminate the lack of cross-references. Also audit for broken `:mod` and `:doc` syntax inside all docs/ *.md files and all docs/notebooks/*.ipynb files
+- [x] Ensure that all docs/ files cross-reference instead of merely wrap objects with ``.
+- [x] Fix broken :mod syntax
+- [x] Fix broken :doc syntax
+- [x] Ensure that notebook .md cells properly cross-link to the docs.
 - [x] Add dependency licenses and hyperlinks across all top-level docs and relevant index pages.
 - [x] Add links to plugins and their licenses.
 - [x] Create a new LICENSES file for this content and move the existing LICENSES section from docs/index.md there and link to it from the index.
@@ -57,31 +72,61 @@ data/experiment utilities, and fairlearn scoring).
 - [x] `docs/developers/workflows.md`: wire security scanning workflow/checklist updates in docs.
 - [x] `docs/developers/workflows.md`: document security scanning integration with repository enforcement and CI gates.
 - [x] `docs/developers/workflows.md`: document Dependabot repository settings and update flow.
-- [ ] audit index files and toctrees to mirror the source code
-- [ ] Ensure that the flow between base module mirrors the experiment flow
+- [x] audit index files and toctrees to mirror the source code
+- [x] Ensure that the flow between base module mirrors the experiment flow
 - [ ] Ensure that the flow from base -> frameworks is obvious and parallel
 - [ ] Ensure that the flow from base -> plugins is obvious and parallel
 
 ### Phase 3: Targeted Code + Workflow Updates
 
+- [x] `.github/workflows/test-optional-dependencies.yml`: add [anjana](extensions/index) optional dependency test coverage in the existing matrix job.
+- [x] `deckard/plugins/fairlearn/score.py`: remove temporary compatibility logic (`TODO: Remove this`) at lines 40-43 and apply all required downstream call site, docs, tests, and config updates in the same effort.
+- [x] `deckard/__main__.py`: read from existing `.deckard_rc` when present to set environment defaults. Support both dotenv-style key/value and YAML. Precedence must be CLI args > environment variables > `.deckard_rc` defaults. Test and document.
+- [x] `deckard/attack/base.py`: set labels to distinguish targeted from non-targeted evasion and poisoning attacks with a shared Mixin. Use label pattern `<target>_evasion_<metric>`. Test and document.
 
-- [ ] `.github/workflows/test-optional-dependencies.yml`: add [anjana](extensions/index) optional dependency test coverage.
-- [ ] `deckard/plugins/fairlearn/score.py`: remove temporary compatibility logic (`TODO: Remove this`).
-- [ ] `deckard/__main__.py`: read from existing `.deckard_rc` when present.
-- [ ] `deckard/attack/base.py`: set labels to distinguish targeted from non-targeted evasion and poisoning attacks with a shared Mixin.
-- [ ] `deckard/layers/optimize.py`: ensure `data/model/attack *_file` names are hashes when present in `cfg.files`.
-- [ ] `test/test_frameworks/test_pytorch/test_pytorch_data.py`: add dataloader and custom tensor mixin coverage for PyTorch data paths.
-- [ ] Ensure that dvc params file exports do not include in-memory objects and that everything is reproducible from the emitted config and hashed
+- [x] files: reduce `deckard/file.py` to thin runtime helpers only and unify canon files with the TypeDict objects in favor of authoritative schemas in each module's `canon.py`.
+- [x] `test/test_frameworks/test_pytorch/test_pytorch_data.py`: add coverage for map-style dataset, iterable dataset, and pre-split dataloaders with unknown split tags.
+- [x] Ensure DVC params exports contain only initialization configuration data so runtime pipelines are fully reproducible from emitted config artifacts.
+- [x] Run targeted tests on touched files using fail-fast over core touched files.
 
 ### Phase 4: Refactors + Runtime Composition
+papers/ folder is out of scope
+This is a hard-cut. Tests, docs, and configs must be updated.
 
-- [ ] `deckard/model/base.py`: replace manual init parsing with `inspect`-based parsing.
+Testing standards for this phase were moved to:
+- {doc}`../developers/contributor/testing`
+
+- [ ] `deckard/*/base.py`: replace manual init parsing with `inspect`-based parsing and fast-failure during post_init.
+- [ ] `deckard/*/base.py`: dataset_name, model_type, attack_type init params/attributes with "name" for uniformity.
+- [ ] Unite coercion logic and default logic in BaseConfig.
+- [ ] Rename ArtifactLoaderConfig to --> ArtifactLoaderMixin
+- [ ] Reduce the number of other Mixins in core modules for simplicity, but keep run-time behavior the same.
+  - [ ] Which mixins are mandatory to keep for behavior parity (must-not-break list)?
+  - [ ] Which mixins can be merged into BaseConfig versus kept as thin runtime adapters?
+  - [ ] Which contract tests should be treated as gating coverage for each removed/merged mixin?
 - [ ] `deckard/experiment/canon.py`: correctly map components and subcomponents to existing `*Config` objects.
+- [ ] `deckard/experiment/base.py`: compose data behavior at run time from mixins.
 - [ ] `deckard/frameworks/pytorch/data.py`: compose data behavior at run time from mixins.
+- [ ] `deckard/frameworks/pytorch/experiment.py`: compose data behavior at run time from mixins.
 - [ ] Add a formal @fingerprint property to BaseConfig that contains the *Config initialization hash.
 - [ ] Add fingerprint property to {class}`deckard.utils.BaseConfig` for run-time access (This should correctly calculate hashes on subsets of composition objects: e.g. `_apply_fit` and `_apply_predict` integration, partial pipelines, partial defense chains, sampling, splitting, folding, partial attack chains, etc.).
 - [ ] Update all hashing flows to consume this public property.
 - [ ] Create plugin install script with stable re-exports and discovery for core module plugins.
+- [ ] Update tests accordingly. 
+- [ ] Generate a canonical folder-by-folder fail-fast test flow from the docs/api/index flow and set it as the source of truth for Phase 4 acceptance + CI parity.
+
+Phase 4 decisions (resolved):
+
+- Unknown init kwargs: do not hard-fail yet; emit warnings and allow duck-typed passthrough where needed.
+- Legacy aliases (`dataset_name`, `model_type`, `attack_type`): remove in Phase 4 and standardize on `name`.
+- `ArtifactLoaderConfig` rename: cut directly to `ArtifactLoaderMixin` and update imports now (no compatibility shim).
+- `deckard/experiment/canon.py` mapping: unify aliases to one canonical component/subcomponent mapping.
+- `BaseConfig.fingerprint`: hash all components required for reproducibility and compute as the last post-init step (or the existing post-init-finalization hook).
+- Plugin install interface: add a general script under `deckard/layers` that supports all existing plugin folders.
+
+Open questions for Phase 4:
+
+- Coercion/default precedence in `BaseConfig`: should defaults resolve before child composition coercion, or after child coercion with parent override/finalization?
 
 ### Phase 5: Stabilization + Contract Finalization
 

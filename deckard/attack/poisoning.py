@@ -129,11 +129,8 @@ class PoisoningAttackMixin(AttackMixin):
             raise ValueError(
                 f"_PoisoningAttackMixin received unsupported attack type: {attack_type}",
             )
-        return self.poison(
-            data=data,
-            art_model=cast(_PoisoningArtModel, art_model),
-            attack=cast(_PoisoningAttack, attack),
-        )
+
+        return self.poison(data=data, art_model=art_model, attack=attack)
 
     def poison(
         self,
@@ -141,16 +138,8 @@ class PoisoningAttackMixin(AttackMixin):
         art_model: _PoisoningArtModel,
         attack: _PoisoningAttack,
     ) -> ScoreDict:
-        """Execute a poisoning attack and score benign vs poisoned model accuracy.
+        """Execute poisoning workflow and emit poisoned/benign comparison metrics."""
 
-        Args:
-            data: Runtime dataset and split container.
-            art_model: ART-wrapped model used for poisoned fitting and prediction.
-            attack: Instantiated poisoning attack implementation.
-
-        Returns:
-            Score payload comparing benign and adversarial predictions.
-        """
         attack_name: StringifiedClass = type(attack).__name__.lower()
         if "poisoningattacksvm" in attack_name:
             return self._poison_svm(data=data, art_model=art_model, attack=attack)
@@ -313,20 +302,23 @@ class PoisoningAttackMixin(AttackMixin):
         self.attack_predictions = poisoned_pred
         self.attacked_labels = y_eval
         self.attack = art_model
-        self.score_dict = ScoreDict.from_payload(
-            {
-                **self.score_dict,
-                **benign_scores,
-                **poisoned_scores,
-                "poison_attack_target_class": class_target,
-                "poison_attack_source_class": class_source,
-                "poison_trigger_index": trigger_idx,
-                "poison_trigger_predicted_class": trigger_label,
-                "poison_trigger_success": int(trigger_label == class_target),
-                "attack_size": len(x_poison),
-                "poison_mode": mode_used,
-            },
+        merged_scores = self._with_targeted_attack_labels(
+            ScoreDict.from_payload(
+                {
+                    **benign_scores,
+                    **poisoned_scores,
+                    "poison_attack_target_class": class_target,
+                    "poison_attack_source_class": class_source,
+                    "poison_trigger_index": trigger_idx,
+                    "poison_trigger_predicted_class": trigger_label,
+                    "poison_trigger_success": int(trigger_label == class_target),
+                    "attack_size": len(x_poison),
+                    "poison_mode": mode_used,
+                },
+            ),
+            "poisoning",
         )
+        self.score_dict = ScoreDict.from_payload({**self.score_dict, **merged_scores})
         return ScoreDict.from_payload(self.score_dict)
 
     def _poison_svm(
@@ -411,16 +403,19 @@ class PoisoningAttackMixin(AttackMixin):
         self.attack_predictions = poisoned_pred
         self.attacked_labels = y_eval
         self.attack = art_model
-        self.score_dict = ScoreDict.from_payload(
-            {
-                **self.score_dict,
-                **benign_scores,
-                **poisoned_scores,
-                "poisoning_attack_points": int(len(x_adv_arr)),
-                "poison_mode": mode_used,
-                "attack_size": int(len(x_adv_arr)),
-            },
+        merged_scores = self._with_targeted_attack_labels(
+            ScoreDict.from_payload(
+                {
+                    **benign_scores,
+                    **poisoned_scores,
+                    "poisoning_attack_points": int(len(x_adv_arr)),
+                    "poison_mode": mode_used,
+                    "attack_size": int(len(x_adv_arr)),
+                },
+            ),
+            "poisoning",
         )
+        self.score_dict = ScoreDict.from_payload({**self.score_dict, **merged_scores})
         return ScoreDict.from_payload(self.score_dict)
 
     @staticmethod

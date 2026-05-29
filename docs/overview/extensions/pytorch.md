@@ -28,49 +28,9 @@ Related docs:
 4. Mode/stage scoring and score merge.
 5. Checkpoint/artifact persistence and plot consumption.
 
-## Execution Flows
-
-### Data Flow
-
-```mermaid
-flowchart TD
-        A[DataConfig load/sample] --> B[tensor conversion and dataloader prep]
-        B --> C[pytorch model runtime]
-```
-
-### Pipeline Flow
-
-```mermaid
-flowchart TD
-        A[data pipeline hooks] --> B[feature transforms before torch training]
-        B --> C[dataloader consumes transformed payload]
-```
-
-### Defense Flow
-
-```mermaid
-flowchart TD
-        A[torch trainer output] --> B{defense configured?}
-        B -- yes --> C[map to canonical defense stage]
-        C --> D[apply defense, optional retrain]
-        B -- no --> E[baseline inference path]
-```
-
-### Scoring Flow
-
-```mermaid
-flowchart TD
-        A[predictions and logits] --> B[mode train/test/val]
-        B --> C[scorer execution]
-        C --> D[persist score artifacts]
-```
-
-### Plot Flow
-
-```mermaid
-flowchart TD
-        A[persisted torch artifacts] --> B[plot backend adapter]
-        B --> C[render and store outputs]
+```{include} ../flowcharts.md
+:start-after: <!-- pytorch-execution-flows-start -->
+:end-before: <!-- pytorch-execution-flows-end -->
 ```
 
 ## YAML Examples

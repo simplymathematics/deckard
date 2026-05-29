@@ -197,11 +197,15 @@ class EvasionAttackMixin(AttackMixin):
                 n,
             ),
         )
+        merged_attack_scores = self._with_targeted_attack_labels(
+            ScoreDict.from_payload({**benign_scores, **score_dict}),
+            "evasion",
+        )
         logger.info(
             f"Attack scoring took {self.attack_score_time} seconds for {len(adv_pred_labels)} samples and {len(self.score_dict)} scores.",
         )
         self.score_dict = ScoreDict.from_payload(
-            {**self.score_dict, **benign_scores, **score_dict},
+            {**self.score_dict, **merged_attack_scores},
         )
         for score in self.score_dict:
             logger.info(f"{score}: {self.score_dict[score]}")

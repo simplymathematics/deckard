@@ -20,6 +20,7 @@ import argparse
 import ast
 import json
 import re
+from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable
@@ -854,6 +855,61 @@ def collect_docs_violations(scope: str) -> list[Violation]:
     return sorted(violations, key=lambda v: (v.path, v.line, v.code, v.message))
 
 
+def collect_docs_audit(scope: str) -> list[dict[str, object]]:
+    """Return per-file docs enforcement coverage and violation metadata."""
+    candidate = Path(scope)
+    base = candidate if candidate.is_absolute() else ROOT / scope
+    catalog = build_docs_reference_catalog()
+    entries: list[dict[str, object]] = []
+
+    if base.is_file() and base.suffix in {".md", ".ipynb"}:
+        paths = [base]
+    else:
+        paths = sorted(_iter_docs_files(base), key=lambda p: p.as_posix())
+
+    for path in paths:
+        violations = validate_docs_file(path, catalog)
+        rule_counts = Counter(v.code for v in violations)
+        lines_checked = len(_iter_docs_lines(path))
+        rel = path.relative_to(ROOT).as_posix()
+        entries.append(
+            {
+                "path": rel,
+                "lines_checked": lines_checked,
+                "violation_count": len(violations),
+                "violation_codes": dict(sorted(rule_counts.items())),
+            },
+        )
+
+    return entries
+
+
+def _write_docs_audit_report(
+    report_path: str,
+    docs_scopes: list[str],
+    entries: list[dict[str, object]],
+) -> Path:
+    target = Path(report_path)
+    if not target.is_absolute():
+        target = ROOT / target
+    target.parent.mkdir(parents=True, exist_ok=True)
+
+    files_with_violations = sum(
+        1 for entry in entries if int(entry.get("violation_count", 0)) > 0
+    )
+    payload = {
+        "docs_scopes": docs_scopes,
+        "summary": {
+            "files_checked": len(entries),
+            "files_with_violations": files_with_violations,
+            "total_violations": sum(int(entry.get("violation_count", 0)) for entry in entries),
+        },
+        "files": entries,
+    }
+    target.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    return target
+
+
 def _parse_docs_scopes(raw_scope: str) -> list[str]:
     """Parse comma-separated docs scopes; supports 'none' to disable docs checks."""
     value = str(raw_scope).strip()
@@ -890,6 +946,14 @@ def main() -> int:
             f"Default: {', '.join(DEFAULT_DOCS_SCOPES)}. Use 'none' to disable docs checks."
         ),
     )
+    parser.add_argument(
+        "--docs-audit-report",
+        default="",
+        help=(
+            "Optional JSON output path for per-file docs audit coverage and "
+            "violation counts. Can be relative to repository root."
+        ),
+    )
     args = parser.parse_args()
 
     violations = collect_violations(
@@ -904,6 +968,21 @@ def main() -> int:
         violations = sorted(
             violations,
             key=lambda v: (v.path, v.line, v.code, v.message),
+        )
+
+    if args.docs_audit_report and docs_scopes:
+        audit_entries: list[dict[str, object]] = []
+        for docs_scope in docs_scopes:
+            audit_entries.extend(collect_docs_audit(docs_scope))
+        audit_entries = sorted(audit_entries, key=lambda item: str(item.get("path", "")))
+        report_path = _write_docs_audit_report(
+            args.docs_audit_report,
+            docs_scopes,
+            audit_entries,
+        )
+        print(
+            "Wrote docs audit report to "
+            f"{report_path.relative_to(ROOT).as_posix() if report_path.is_relative_to(ROOT) else report_path}",
         )
     if violations:
         for violation in violations:
