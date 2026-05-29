@@ -28,7 +28,11 @@ try:
 except ImportError:  # pragma: no cover
     FairlearnDataConfig = None
 from ..model.defense.base import DefensePipelineConfig
-from ..attack import AttackConfig
+
+try:
+    from ..attack import AttackConfig
+except Exception:  # pragma: no cover
+    AttackConfig = None
 from ..detector import DetectorConfig
 from ..score import ScorerDictConfig
 from ..file import FileConfig, data_files, model_files, attack_files
@@ -66,7 +70,7 @@ except ImportError:  # pragma: no cover
 
 try:
     import torch
-except ImportError:  # pragma: no cover
+except Exception:  # pragma: no cover
     torch = None
 
 try:

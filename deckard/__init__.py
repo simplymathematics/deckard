@@ -40,16 +40,29 @@ warnings.filterwarnings(
 from .data import DataConfig  # noqa E402
 from .model import ModelConfig  # noqa E402
 from .model.defense.base import DefenseConfig  # noqa E402
-from .attack import AttackConfig  # noqa E402
+
+try:
+    from .attack import AttackConfig  # noqa E402
+except Exception:  # pragma: no cover
+    # Keep top-level package importable for scopes that do not require attacks
+    # when optional ART/Torch stacks fail during interpreter instrumentation.
+    AttackConfig = None
 from .artifacts import ArtifactLoaderMixin  # noqa E402
 from .detector import DetectorConfig  # noqa E402
-from .experiment import ExperimentConfig  # noqa E402
+
+try:
+    from .experiment import ExperimentConfig  # noqa E402
+except Exception:  # pragma: no cover
+    ExperimentConfig = None
 
 try:
     from .experiment import SurvivalExperimentConfig  # noqa E402
-except ImportError:  # pragma: no cover
+except Exception:  # pragma: no cover
     SurvivalExperimentConfig = None
-from .file import FileConfig  # noqa E402
+try:
+    from .file import FileConfig  # noqa E402
+except Exception:  # pragma: no cover
+    FileConfig = None
 from .score import ScorerDictConfig  # noqa E402
 from .utils import hash_conf_values  # noqa E402
 

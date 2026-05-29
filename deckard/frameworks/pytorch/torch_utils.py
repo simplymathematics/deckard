@@ -9,7 +9,7 @@ try:
     from torch.utils.data import DataLoader, Dataset, Subset
 
     HAS_TORCH = True
-except ImportError:  # pragma: no cover
+except Exception:  # pragma: no cover
     torch = None
     Tensor = ()
     DataLoader = ()

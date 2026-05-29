@@ -17,7 +17,12 @@ from sklearn.exceptions import NotFittedError
 import numpy as np
 
 # ART imports
-from art.config import ART_NUMPY_DTYPE
+try:
+    from art.config import ART_NUMPY_DTYPE
+except Exception:
+    # Keep non-ART workflows importable (for example score-only test scopes)
+    # when optional ART/Torch stacks are unavailable or fail at import time.
+    ART_NUMPY_DTYPE = np.float32
 
 from omegaconf import DictConfig, OmegaConf
 
