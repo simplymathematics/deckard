@@ -1,2 +1,2 @@
-_target_: deckard.frameworks.sklearn.defense.DefaultSklearnDefenseConfig
+_target_: deckard.model.DefenseConfig
 alias: sklearn_default_defense

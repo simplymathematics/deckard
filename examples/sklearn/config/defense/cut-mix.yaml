@@ -1,4 +1,4 @@
-defense_name: art.defences.preprocessor.CutMix
+name: art.defences.preprocessor.CutMix
 defense_params:
     apply_fit : True
     apply_predict : False

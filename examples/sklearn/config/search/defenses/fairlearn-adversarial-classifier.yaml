@@ -2,7 +2,7 @@
 hydra:
   sweeper:
     params:
-      ++defense.defense_name: fairlearn.adversarial.AdversarialFairnessClassifier
+      ++defense.name: fairlearn.adversarial.AdversarialFairnessClassifier
       ++defense.defense_params.backend: choice("auto")
       ++defense.defense_params.predictor_model: choice([64, 32])
       ++defense.defense_params.adversary_model: choice([32, 16])

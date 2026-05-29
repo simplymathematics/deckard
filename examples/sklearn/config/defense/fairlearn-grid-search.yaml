@@ -1,4 +1,4 @@
-defense_name: fairlearn.reductions.GridSearch
+name: fairlearn.reductions.GridSearch
 defense_params:
   constraints: fairlearn.reductions.DemographicParity
   grid_size: 20

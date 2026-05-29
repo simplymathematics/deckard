@@ -4,8 +4,8 @@ attack_alias: ${oc.select:attack.alias,no_attack}
 defense_alias: ${oc.select:defense.alias,no_defense}
 defaults:
 - _self_
-- sampler@data.sampler: split
 - data: adult
+- sampler@data.sampler: split
 - model: rf
 - trainer@model.trainer: sklearn
 - defense: class-labels

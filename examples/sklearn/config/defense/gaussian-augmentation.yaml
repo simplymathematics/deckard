@@ -1,4 +1,4 @@
-defense_name: art.defences.preprocessor.GaussianAugmentation
+name: art.defences.preprocessor.GaussianAugmentation
 defense_params:
     apply_fit : True
     apply_predict : False

@@ -1,4 +1,4 @@
-defense_name: art.defences.postprocessor.ClassLabels
+name: art.defences.postprocessor.ClassLabels
 defense_params:
     apply_fit : False
     apply_predict : True

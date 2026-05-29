@@ -2,7 +2,7 @@
 hydra:
   sweeper:
     params:
-      ++defense.defense_name: art.defences.postprocessor.ClassLabels
+      ++defense.name: art.defences.postprocessor.ClassLabels
       ++defense.defense_params.apply_fit: bool(False)
       ++defense.defense_params.apply_predict: bool(True,False)
 defense_alias: class-labels

@@ -1,4 +1,4 @@
-defense_name: fairlearn.postprocessing.ThresholdOptimizer
+name: fairlearn.postprocessing.ThresholdOptimizer
 defense_params:
   constraints: demographic_parity
   prefit: true

@@ -1,4 +1,4 @@
-defense_name: null
+name: null
 defense_params:
   name: anjana.anonymity.k_anonymity
   k: 2
