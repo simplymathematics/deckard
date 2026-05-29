@@ -1,0 +1,8 @@
+name: deckard.frameworks.pytorch.sample.PytorchFoldSampler
+n_splits: 5
+split: 0
+train_size: null
+test_size: null
+val_size: null
+random_state: 42
+stratify: true

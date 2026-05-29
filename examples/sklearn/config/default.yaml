@@ -4,7 +4,7 @@ attack_alias: ${oc.select:attack.alias,no_attack}
 defense_alias: ${oc.select:defense.alias,no_defense}
 defaults:
 - _self_
-- sampler@data.sampler: default
+- sampler@data.sampler: split
 - data: adult
 - model: rf
 - trainer@model.trainer: sklearn
@@ -12,6 +12,7 @@ defaults:
 - attack: hsj
 - score: classification
 - search/models: ${oc.select:model,rf}
+- search/samplers: split
 - search/trainers: sklearn
 - search/defenses: ${oc.select:defense,class-labels}
 - search/attacks: ${oc.select:attack,hsj}

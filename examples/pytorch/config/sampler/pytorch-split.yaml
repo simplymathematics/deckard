@@ -1,0 +1,6 @@
+name: deckard.frameworks.pytorch.sample.PytorchSplitSampler
+train_size: null
+test_size: 0.2
+val_size: null
+random_state: 42
+stratify: true

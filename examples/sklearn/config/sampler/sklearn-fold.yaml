@@ -1,0 +1,9 @@
+name: deckard.data.sample.KFoldSampler
+n_splits: 5
+shuffle: true
+split: 0
+train_size: null
+test_size: null
+val_size: null
+random_state: 42
+stratify: true

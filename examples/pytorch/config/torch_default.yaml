@@ -1,6 +1,6 @@
 defaults:
 - _self_
-- sampler@data.sampler: default
+- sampler@data.sampler: split
 - data: torch_mnist
 - model: default
 - trainer@model.trainer: pytorch

@@ -1,0 +1,7 @@
+name: deckard.frameworks.pytorch.sample.PytorchShuffleSampler
+n_splits: 5
+split: 0
+test_size: 0.2
+val_size: null
+random_state: 42
+stratify: true

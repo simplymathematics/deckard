@@ -148,7 +148,7 @@ experiment:
     train_n: null
     test_n: null
     val_n: null
-  experiment_name: fb87701f0aac9b3825bc3009e1c8ef0e
+  experiment_name: 833b602f8c7dcae953c22b855b00070b
   model:
     id: ''
     path: ''
@@ -304,7 +304,7 @@ experiment:
           probability_clip_eps: 1.0e-12
       stage: []
     score_mode: test
-    trainer: sklearn
+    trainer: {}
     trainer_params: {}
     training_n: null
     prediction_n: null
@@ -704,7 +704,7 @@ experiment:
   detector: null
   files:
     replace: {}
-    handler: <deckard.file.CanonFileHandler object at 0x1697303d0>
+    handler: <deckard.file.CanonFileHandler object at 0x31f611c60>
   score: null
   random_state: 42
   library: sklearn
@@ -783,7 +783,7 @@ experiment:
       position: first
       executed: true
   params:
-    experiment_name: fb87701f0aac9b3825bc3009e1c8ef0e
+    experiment_name: 833b602f8c7dcae953c22b855b00070b
     library: sklearn
     classifier: true
     evaluation_mode: standard
@@ -796,7 +796,7 @@ experiment:
     model:
       type: deckard.model.base.ModelConfig
       alias: test_logistic
-      fingerprint: 4225cf2171bd36fa4ff80ec769e9a04a
+      fingerprint: 5f5c482da31290d4a8968af29a5187e6
     defense:
       type: deckard.model.defense.base.DefensePipelineConfig
       alias: ''
@@ -838,7 +838,7 @@ _dvc:
   stage_selection: load
   run_mode: single
   params_manifest:
-    experiment_name: fb87701f0aac9b3825bc3009e1c8ef0e
+    experiment_name: 833b602f8c7dcae953c22b855b00070b
     library: sklearn
     classifier: true
     evaluation_mode: standard
@@ -851,7 +851,7 @@ _dvc:
     model:
       type: deckard.model.base.ModelConfig
       alias: test_logistic
-      fingerprint: 4225cf2171bd36fa4ff80ec769e9a04a
+      fingerprint: 5f5c482da31290d4a8968af29a5187e6
     defense:
       type: deckard.model.defense.base.DefensePipelineConfig
       alias: ''
