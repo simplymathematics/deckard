@@ -1,4 +1,4 @@
-defense_name: art.defences.preprocessor.LabelSmoothing
+name: art.defences.preprocessor.LabelSmoothing
 defense_params:
     apply_fit : True
     apply_predict : False

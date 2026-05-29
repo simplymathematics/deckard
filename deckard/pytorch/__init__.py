@@ -11,7 +11,7 @@ Examples:
 """
 
 from ..frameworks.pytorch import (
-    DefaultPytorchDefenseConfig,
+    DefenseConfig,
     PytorchAttackConfig,
     PytorchCustomDataConfig,
     PytorchDataConfig,
@@ -25,5 +25,5 @@ __all__ = [
     "PytorchModelConfig",
     "PytorchAttackConfig",
     "TorchExperimentConfig",
-    "DefaultPytorchDefenseConfig",
+    "DefenseConfig",
 ]

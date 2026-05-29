@@ -1,4 +1,4 @@
-defense_name: fairlearn.adversarial.AdversarialFairnessClassifier
+name: fairlearn.adversarial.AdversarialFairnessClassifier
 defense_params:
   backend: auto
   predictor_model: [64, 32]

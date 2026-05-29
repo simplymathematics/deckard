@@ -269,10 +269,10 @@ def test_pytorch_art_defense_pipeline_runs_with_real_art_defense():
     defense_cfg = DefensePipelineConfig(
         defenses=[
             {
-                "defense_name": "art.defences.postprocessor.ClassLabels",
+                "name": "art.defences.postprocessor.ClassLabels",
                 "defense_params": {"apply_fit": False, "apply_predict": True},
                 "classifier": True,
-                "name": "torch.nn.Linear",
+                "model_name": "torch.nn.Linear",
                 "model_params": {
                     "in_features": 3 * 32 * 32,
                     "out_features": 2,

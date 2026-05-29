@@ -1,2 +1,2 @@
-_target_: deckard.frameworks.pytorch.defense.DefaultPytorchDefenseConfig
+_target_: deckard.model.DefenseConfig
 alias: pytorch_default_defense

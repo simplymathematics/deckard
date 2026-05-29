@@ -1,2 +1,2 @@
-defense_name: art.defences.detector.evasion.BinaryInputDetector
+name: art.defences.detector.evasion.BinaryInputDetector
 defense_params: {}

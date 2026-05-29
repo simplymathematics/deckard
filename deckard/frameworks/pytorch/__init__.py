@@ -2,7 +2,7 @@
 
 from typing import TYPE_CHECKING
 
-from .defense import DefaultPytorchDefenseConfig
+from .defense import DefenseConfig
 
 if TYPE_CHECKING:  # pragma: no cover
     from .attack import PytorchAttackConfig
@@ -30,7 +30,7 @@ __all__ = [
     "FairlearnPytorchDataConfig",
     "PytorchModelConfig",
     "PytorchAttackConfig",
-    "DefaultPytorchDefenseConfig",
+    "DefenseConfig",
     "TorchExperimentConfig",
     "PytorchBaseSampler",
     "PytorchSplitSampler",
@@ -70,6 +70,10 @@ def __getattr__(name):
         from .attack import PytorchAttackConfig
 
         return PytorchAttackConfig
+    if name == "DefenseConfig":
+        from .defense import DefenseConfig
+
+        return DefenseConfig
     if name == "TorchExperimentConfig":
         from .experiment import TorchExperimentConfig
 

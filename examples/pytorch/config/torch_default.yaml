@@ -1,7 +1,7 @@
 defaults:
 - _self_
-- sampler@data.sampler: split
 - data: torch_mnist
+- sampler@data.sampler: split
 - model: default
 - trainer@model.trainer: pytorch
 - attack: fgm

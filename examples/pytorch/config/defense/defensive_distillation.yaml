@@ -1,4 +1,4 @@
-defense_name: art.defences.transformer.evasion.DefensiveDistillation
+name: art.defences.transformer.evasion.DefensiveDistillation
 defense_params:
     batch_size: 8
     nb_epochs: 1

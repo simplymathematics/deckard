@@ -1,4 +1,4 @@
-defense_name: art.defences.trainer.AdversarialTrainerMadryPGD
+name: art.defences.trainer.AdversarialTrainerMadryPGD
 defense_params:
     nb_epochs: 1
     batch_size: 8

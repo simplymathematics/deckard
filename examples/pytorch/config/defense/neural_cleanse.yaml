@@ -1,2 +1,2 @@
-defense_name: art.defences.transformer.poisoning.NeuralCleanse
+name: art.defences.transformer.poisoning.NeuralCleanse
 defense_params: {}

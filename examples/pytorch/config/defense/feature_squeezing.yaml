@@ -1,4 +1,4 @@
-defense_name: art.defences.preprocessor.FeatureSqueezing
+name: art.defences.preprocessor.FeatureSqueezing
 defense_params:
     apply_fit : False
     apply_predict : True

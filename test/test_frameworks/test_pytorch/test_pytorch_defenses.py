@@ -46,7 +46,7 @@ class TestRetrainingDefensePipeline:
         )
         model.train(data.X_train, data.y_train)
         defense = DefenseConfig(
-            defense_name="art.defences.trainer.AdversarialTrainerMadryPGD",
+            name="art.defences.trainer.AdversarialTrainerMadryPGD",
             defense_params={"nb_epochs": 1, "batch_size": 4, "max_iter": 1},
         )
 
@@ -82,7 +82,7 @@ class TestRetrainingDefensePipeline:
         )
         defense_cfg = yaml.safe_load(config_path.read_text(encoding="utf-8"))
         defense = DefenseConfig(
-            name="torch.nn.Linear",
+            model_name="torch.nn.Linear",
             classifier=True,
             model_params={"in_features": 3, "out_features": 2},
             **defense_cfg,
@@ -128,7 +128,7 @@ class TestRetrainingDefensePipeline:
             device_type=("gpu" if torch.cuda.is_available() else "cpu"),
         )
         defense = DefenseConfig(
-            defense_name="art.defences.trainer.AdversarialTrainerMadryPGD",
+            name="art.defences.trainer.AdversarialTrainerMadryPGD",
             defense_params={
                 "nb_epochs": 1,
                 "batch_size": 8,
@@ -137,7 +137,7 @@ class TestRetrainingDefensePipeline:
                 "max_iter": 1,
                 "num_random_init": 1,
             },
-            name=None,
+            model_name=None,
             classifier=True,
         )
 
@@ -161,7 +161,7 @@ class TestRetrainingDefensePipeline:
         )
         model.train(data.X_train, data.y_train)
         defense = DefenseConfig(
-            defense_name="art.defences.detector.evasion.BinaryInputDetector",
+            name="art.defences.detector.evasion.BinaryInputDetector",
             defense_params={},
         )
 
@@ -188,9 +188,9 @@ class TestRetrainingDefensePipeline:
         )
 
         defense = DefenseConfig(
-            defense_name="art.defences.detector.evasion.BinaryInputDetector",
+            name="art.defences.detector.evasion.BinaryInputDetector",
             defense_params={},
-            name="torch.nn.Linear",
+            model_name="torch.nn.Linear",
             classifier=True,
             model_params={"in_features": 3, "out_features": 2},
         )
@@ -235,9 +235,9 @@ class TestRetrainingDefensePipeline:
             device_type=("gpu" if torch.cuda.is_available() else "cpu"),
         )
         defense = DefenseConfig(
-            defense_name="art.defences.detector.evasion.BinaryInputDetector",
+            name="art.defences.detector.evasion.BinaryInputDetector",
             defense_params={},
-            name=None,
+            model_name=None,
             classifier=True,
         )
 
@@ -249,7 +249,7 @@ class TestRetrainingDefensePipeline:
 
     def test_transformer_defense_name_parses_supported_subtype(self):
         defense = DefenseConfig(
-            defense_name="art.defences.transformer.evasion.DefensiveDistillation",
+            name="art.defences.transformer.evasion.DefensiveDistillation",
             defense_params={"batch_size": 8, "nb_epochs": 1},
         )
         defense_type, defense_subtype, _ = defense.parse_defense_name()
@@ -271,7 +271,7 @@ class TestRetrainingDefensePipeline:
         )
         model.train(data.X_train, data.y_train)
         defense = DefenseConfig(
-            defense_name="art.defences.transformer.evasion.DefensiveDistillation",
+            name="art.defences.transformer.evasion.DefensiveDistillation",
             defense_params={"batch_size": 8, "nb_epochs": 1},
         )
 
@@ -292,7 +292,7 @@ class TestRetrainingDefensePipeline:
         )
         model.train(data.X_train, data.y_train)
         defense = DefenseConfig(
-            defense_name="art.defences.transformer.poisoning.NeuralCleanse",
+            name="art.defences.transformer.poisoning.NeuralCleanse",
             defense_params={},
         )
 
@@ -328,7 +328,7 @@ class TestRetrainingDefensePipeline:
         )
         defense_cfg = yaml.safe_load(config_path.read_text(encoding="utf-8"))
         defense = DefenseConfig(
-            name="torch.nn.Linear",
+            model_name="torch.nn.Linear",
             classifier=True,
             model_params={"in_features": 3, "out_features": 2},
             **defense_cfg,
@@ -371,7 +371,7 @@ class TestRetrainingDefensePipeline:
         )
         defense_cfg = yaml.safe_load(config_path.read_text(encoding="utf-8"))
         defense = DefenseConfig(
-            name="torch.nn.Linear",
+            model_name="torch.nn.Linear",
             classifier=True,
             model_params={"in_features": 3, "out_features": 2},
             **defense_cfg,

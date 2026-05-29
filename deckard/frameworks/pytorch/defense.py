@@ -1,5 +1,5 @@
 """Pytorch framework defense exports."""
 
-from ...model.defense import DefaultPytorchDefenseConfig
+from ...model.defense import DefenseConfig
 
-__all__ = ["DefaultPytorchDefenseConfig"]
+__all__ = ["DefenseConfig"]
