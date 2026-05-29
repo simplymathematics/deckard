@@ -35,13 +35,13 @@ class TestDefenseConfig:
 
         self.defense_config = DefenseConfig(
             defense_name="art.defences.postprocessor.HighConfidence",
-            model_type="sklearn.ensemble.RandomForestClassifier",
+            name="sklearn.ensemble.RandomForestClassifier",
         )
 
     def test_defense_config_initialization(self):
         # Test default initialization
         assert (
-            self.defense_config.model_type == "sklearn.ensemble.RandomForestClassifier"
+            self.defense_config.name== "sklearn.ensemble.RandomForestClassifier"
         )
         assert self.defense_config.classifier
         assert not self.defense_config.probability
@@ -68,7 +68,7 @@ class TestDefenseConfig:
 
     def test_apply_to_trained_model(self):
         model = ModelConfig(
-            model_type="sklearn.ensemble.RandomForestClassifier",
+            name="sklearn.ensemble.RandomForestClassifier",
             classifier=True,
             model_params={"n_estimators": 5, "random_state": 42},
         )
@@ -160,7 +160,7 @@ class TestDefensePipelineConfigListCoerce:
 
 def test_defense_behavior_defaults_signature_and_apply_to_paths(monkeypatch):
     defense = DefenseConfig.__new__(DefenseConfig)
-    defense.model_type = None
+    defense.name= None
     defense.classifier = True
     defense.model_params = {}
     defense.probability = False
@@ -205,7 +205,7 @@ def test_defense_behavior_defaults_signature_and_apply_to_paths(monkeypatch):
 def test_parse_defense_name_and_get_art_class_edge_paths(monkeypatch):
     defense = DefenseConfig(
         defense_name=None,
-        model_type="sklearn.linear_model.LogisticRegression",
+        name="sklearn.linear_model.LogisticRegression",
         classifier=True,
     )
     defense_type, subtype, defense_class = defense.parse_defense_name()
@@ -227,10 +227,10 @@ def test_parse_defense_name_and_get_art_class_edge_paths(monkeypatch):
 
     defense = DefenseConfig(
         defense_name="art.defences.postprocessor.HighConfidence",
-        model_type=None,
+        name=None,
         classifier=True,
     )
-    with pytest.raises(ValueError, match="model_type must be set"):
+    with pytest.raises(ValueError, match="name must be set"):
         defense.get_art_class(
             SimpleNamespace(X_train=np.zeros((2, 3)), y_train=[0, 1]),
         )
@@ -243,7 +243,7 @@ def test_parse_defense_name_and_get_art_class_edge_paths(monkeypatch):
         "LogisticRegression",
         custom_art,
     )
-    defense.model_type = "sklearn.linear_model.LogisticRegression"
+    defense.name= "sklearn.linear_model.LogisticRegression"
     art_class, init_params = defense.get_art_class(
         SimpleNamespace(X_train=np.zeros((2, 3)), y_train=[0, 1]),
     )
@@ -256,7 +256,7 @@ def test_parse_defense_name_and_get_art_class_edge_paths(monkeypatch):
 def test_extract_art_wrapper_context_ignores_untyped_cached_wrappers():
     defense = DefenseConfig(
         defense_name="art.defences.postprocessor.HighConfidence",
-        model_type="sklearn.linear_model.LogisticRegression",
+        name="sklearn.linear_model.LogisticRegression",
         classifier=True,
     )
 
@@ -289,7 +289,7 @@ def test_extract_art_wrapper_context_ignores_untyped_cached_wrappers():
 def test_extract_art_wrapper_context_prefers_explicit_wrapper_state(monkeypatch):
     defense = DefenseConfig(
         defense_name="art.defences.postprocessor.HighConfidence",
-        model_type="sklearn.linear_model.LogisticRegression",
+        name="sklearn.linear_model.LogisticRegression",
         classifier=True,
     )
     state_base = SimpleNamespace(name="base-estimator")
@@ -333,10 +333,10 @@ def test_extract_art_wrapper_context_prefers_explicit_wrapper_state(monkeypatch)
 def test_get_art_class_torch_requires_typed_base_estimator(monkeypatch):
     defense = DefenseConfig(
         defense_name="art.defences.postprocessor.HighConfidence",
-        model_type=None,
+        name=None,
         classifier=True,
     )
-    defense.model_type = "torch.nn.Linear"
+    defense.name= "torch.nn.Linear"
     defense._model = SimpleNamespace(model="not-a-torch-module")
 
     monkeypatch.setattr(
@@ -500,7 +500,7 @@ def test_pipeline_single_defense_coercion_and_context_inheritance(monkeypatch):
         pipeline._coerce_single_defense(3)
 
     defense = SimpleNamespace(
-        model_type=None,
+        name=None,
         classifier=None,
         model_params=None,
         probability=False,
@@ -513,13 +513,13 @@ def test_pipeline_single_defense_coercion_and_context_inheritance(monkeypatch):
         ),
     )
     pipeline._inherit_model_context(defense, estimator)
-    assert defense.model_type.endswith("SimpleNamespace")
+    assert defense.name.endswith("SimpleNamespace")
     assert defense.classifier is True
     assert defense.model_params == {"depth": 3}
     assert defense.probability is True
 
     reg_defense = SimpleNamespace(
-        model_type="",
+        name="",
         classifier=None,
         model_params={},
         probability=False,
@@ -562,7 +562,7 @@ def test_pipeline_apply_validation_and_elapsed_fallback(monkeypatch):
         defense_name = "custom.timeless"
         defense_application_time = None
         data = None
-        model_type = None
+        name= None
         classifier = None
         model_params = None
         probability = False

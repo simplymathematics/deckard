@@ -34,7 +34,7 @@ class TestDataConfigListMerge:
 
     def test_list_of_two_dicts_merges_steps(self):
         cfg = DataConfig(
-            dataset_name="make_classification",
+            name="make_classification",
             pipeline=[self.steps_a, self.steps_b],
         )
         assert isinstance(cfg.pipeline, dict)
@@ -43,14 +43,14 @@ class TestDataConfigListMerge:
 
     def test_list_later_entry_wins_on_key_conflict(self):
         cfg = DataConfig(
-            dataset_name="make_classification",
+            name="make_classification",
             pipeline=[self.steps_a, self.steps_override],
         )
         assert cfg.pipeline["imputer"]["strategy"] == "median"
 
     def test_single_dict_still_works(self):
         cfg = DataConfig(
-            dataset_name="make_classification",
+            name="make_classification",
             pipeline={"imputer": {"name": "sklearn.impute.SimpleImputer"}},
         )
         assert "imputer" in cfg.pipeline
@@ -175,7 +175,7 @@ class TestDataConfig:
     def test_invalid_score_mode_raises(self):
         with pytest.raises(ValueError):
             DataConfig(
-                dataset_name="make_classification",
+                name="make_classification",
                 data_params={"n_samples": 10, "n_features": 2},
                 score_mode="invalid",
                 scorer=lambda y_true, y_pred: {"dummy": 1},
@@ -184,7 +184,7 @@ class TestDataConfig:
     def basic_config(self):
         # Minimal config for DataConfig
         return DataConfig(
-            dataset_name="make_classification",
+            name="make_classification",
             data_params={
                 "n_samples": 100,
                 "n_features": 5,
@@ -215,7 +215,7 @@ class TestDataConfig:
     def test_private_max_samples_caps_loaded_dataset(self):
         with patch.dict("os.environ", {"DECKARD_TEST_MAX_SAMPLES": "40"}):
             cfg = DataConfig(
-                dataset_name="make_classification",
+                name="make_classification",
                 data_params={
                     "n_samples": 300,
                     "n_features": 5,
@@ -235,7 +235,7 @@ class TestDataConfig:
 
     def test_scorer_none_skips_data_scoring(self):
         cfg = DataConfig(
-            dataset_name="make_classification",
+            name="make_classification",
             data_params={
                 "n_samples": 30,
                 "n_features": 4,
@@ -252,7 +252,7 @@ class TestDataConfig:
 
     def test_presample_stage_does_not_override_score_mode(self):
         cfg = DataConfig(
-            dataset_name="make_classification",
+            name="make_classification",
             data_params={
                 "n_samples": 30,
                 "n_features": 4,
@@ -283,7 +283,7 @@ class TestDataConfig:
                 return 1.0
 
         cfg = DataConfig(
-            dataset_name="make_classification",
+            name="make_classification",
             data_params={
                 "n_samples": 30,
                 "n_features": 4,
@@ -305,7 +305,7 @@ class TestDataConfig:
 
     def test_make_regression_data_loading_and_sampling(self):
         cfg = DataConfig(
-            dataset_name="make_regression",
+            name="make_regression",
             data_params={
                 "n_samples": 50,
                 "n_features": 4,
@@ -329,7 +329,7 @@ class TestDataConfig:
 
     def test_diabetes_data_loading_and_sampling(self):
         cfg = DataConfig(
-            dataset_name="diabetes",
+            name="diabetes",
             data_params={},
             classifier=False,
         )
@@ -348,7 +348,7 @@ class TestDataConfig:
 
     def test_digits_data_loading_and_sampling(self):
         cfg = DataConfig(
-            dataset_name="digits",
+            name="digits",
             data_params={},
         )
         cfg()
@@ -372,7 +372,7 @@ class TestDataConfig:
 
     def test_split_data_loads_when_data_missing(self):
         cfg = DataConfig(
-            dataset_name="make_classification",
+            name="make_classification",
             data_params={
                 "n_samples": 60,
                 "n_features": 6,
@@ -391,7 +391,7 @@ class TestDataConfig:
         assert cfg.y_test is not None
 
     def test_load_data_raises_not_implemented_for_unknown_dataset(self):
-        cfg = DataConfig(dataset_name="unknown_dataset", data_params={})
+        cfg = DataConfig(name="unknown_dataset", data_params={})
         with pytest.raises(NotImplementedError):
             cfg.load_dataset()
 
@@ -405,7 +405,7 @@ class TestDataConfig:
             },
         )
         cfg = DataConfig(
-            dataset_name="optuna",
+            name="optuna",
             target="value",
             data_params={
                 "optuna_storage": "sqlite:///optuna.db",
@@ -430,7 +430,7 @@ class TestDataConfig:
             },
         )
         cfg = DataConfig(
-            dataset_name="optuna",
+            name="optuna",
             target="value",
             data_params={
                 "optuna_storage": "sqlite:///optuna.db",
@@ -457,13 +457,13 @@ class TestDataConfig:
                 csv_path,
                 index=False,
             )
-            cfg = DataConfig(dataset_name=str(csv_path), data_params={})
+            cfg = DataConfig(name=str(csv_path), data_params={})
             with pytest.raises(ValueError):
                 cfg.load_dataset()
 
     def test_call_returns_expected_shapes_for_make_classification(self):
         cfg = DataConfig(
-            dataset_name="make_classification",
+            name="make_classification",
             data_params={
                 "n_samples": 60,
                 "n_features": 6,
@@ -550,7 +550,7 @@ class TestDataConfig:
     )
     def test_load_lifelines_lung_dataset(self):
         cfg = DataConfig(
-            dataset_name="lung",
+            name="lung",
             classifier=False,
             target="status",
             sampler={"name": "deckard.data.sample.SplitSampler", "stratify": False},
@@ -565,7 +565,7 @@ class TestDataConfig:
     )
     def test_load_lifelines_leukemia_dataset(self):
         cfg = DataConfig(
-            dataset_name="leukemia",
+            name="leukemia",
             classifier=False,
             target="status",
             sampler={"name": "deckard.data.sample.SplitSampler", "stratify": False},
@@ -580,7 +580,7 @@ class TestDataConfig:
     )
     def test_load_lifelines_diabetes_dataset_with_prefix(self):
         cfg = DataConfig(
-            dataset_name="lifelines_diabetes",
+            name="lifelines_diabetes",
             classifier=False,
             target="gender",
             sampler={"name": "deckard.data.sample.SplitSampler", "stratify": False},
@@ -747,7 +747,7 @@ class TestDataConfigAdditional:
     def basic_config(self):
         # Minimal config for DataConfig
         return DataConfig(
-            dataset_name="make_classification",
+            name="make_classification",
             data_params={
                 "n_samples": 100,
                 "n_features": 5,
@@ -777,7 +777,7 @@ class TestDataConfigAdditional:
 
     def test_make_regression_data_loading_and_sampling(self):
         cfg = DataConfig(
-            dataset_name="make_regression",
+            name="make_regression",
             data_params={
                 "n_samples": 50,
                 "n_features": 4,
@@ -801,7 +801,7 @@ class TestDataConfigAdditional:
 
     def test_diabetes_data_loading_and_sampling(self):
         cfg = DataConfig(
-            dataset_name="diabetes",
+            name="diabetes",
             data_params={},
             classifier=False,
         )
@@ -820,7 +820,7 @@ class TestDataConfigAdditional:
 
     def test_digits_data_loading_and_sampling(self):
         cfg = DataConfig(
-            dataset_name="digits",
+            name="digits",
             data_params={},
         )
         cfg()
@@ -844,7 +844,7 @@ class TestDataConfigAdditional:
 
     def test_split_data_loads_when_data_missing(self):
         cfg = DataConfig(
-            dataset_name="make_classification",
+            name="make_classification",
             data_params={
                 "n_samples": 60,
                 "n_features": 6,
@@ -863,7 +863,7 @@ class TestDataConfigAdditional:
         assert cfg.y_test is not None
 
     def test_load_data_raises_not_implemented_for_unknown_dataset(self):
-        cfg = DataConfig(dataset_name="unknown_dataset", data_params={})
+        cfg = DataConfig(name="unknown_dataset", data_params={})
         with pytest.raises(NotImplementedError):
             cfg.load_dataset()
 
@@ -876,13 +876,13 @@ class TestDataConfigAdditional:
                 csv_path,
                 index=False,
             )
-            cfg = DataConfig(dataset_name=str(csv_path), data_params={})
+            cfg = DataConfig(name=str(csv_path), data_params={})
             with pytest.raises(ValueError):
                 cfg.load_dataset()
 
     def test_call_returns_expected_shapes_for_make_classification(self):
         cfg = DataConfig(
-            dataset_name="make_classification",
+            name="make_classification",
             data_params={
                 "n_samples": 60,
                 "n_features": 6,
@@ -966,7 +966,7 @@ class TestDataConfigAdditional:
     def test_multiple_plugins_run_in_order(self):
         events = []
         cfg = DataConfig(
-            dataset_name="make_classification",
+            name="make_classification",
             data_params={
                 "n_samples": 40,
                 "n_features": 4,
@@ -998,7 +998,7 @@ class TestDataConfigAdditional:
 
     def test_plugin_can_augment_scores(self):
         cfg = DataConfig(
-            dataset_name="make_classification",
+            name="make_classification",
             data_params={
                 "n_samples": 40,
                 "n_features": 4,

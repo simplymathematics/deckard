@@ -40,7 +40,7 @@ class TestMode1NativeSurvivalData:
     def test_native_survival_config_creation(self):
         """Create SurvivalExperimentConfig for Mode 1."""
         base_config = DataConfig(
-            dataset_name="lifelines_diabetes",
+            name="lifelines_diabetes",
             target="T",
             classifier=False,
         )
@@ -62,7 +62,7 @@ class TestMode2AuxiliaryModelData:
     def test_mode2_config_creation(self):
         """Create LifelinesDataConfig for Mode 2."""
         base_config = DataConfig(
-            dataset_name="toy_dataset",
+            name="toy_dataset",
             target="adv_failure_rate",
             classifier=False,
         )
@@ -77,7 +77,7 @@ class TestMode2AuxiliaryModelData:
     def test_mode2_experiment_config_with_auxiliary_model(self):
         """Create SurvivalExperimentConfig that uses auxiliary model mode."""
         base_config = DataConfig(
-            dataset_name="toy",
+            name="toy",
             target="accuracy",
             classifier=False,
         )
@@ -115,7 +115,7 @@ class TestMode3AuxiliaryAttackData:
     def test_mode3_config_creation(self):
         """Create LifelinesDataConfig for Mode 3."""
         base_config = DataConfig(
-            dataset_name="attack_dataset",
+            name="attack_dataset",
             target="adv_failure_rate",
             classifier=False,
         )
@@ -132,11 +132,11 @@ class TestMode3AuxiliaryAttackData:
         """Create SurvivalExperimentConfig that uses attack config."""
         # Test creating AttackConfig for Mode 3
         attack_cfg = AttackConfig(
-            attack_type="art.attacks.evasion.FastGradientMethod",
+            name="art.attacks.evasion.FastGradientMethod",
             attack_params={"eps": 0.2},
             attack_size=100,
         )
-        assert attack_cfg.attack_type == "art.attacks.evasion.FastGradientMethod"
+        assert attack_cfg.name == "art.attacks.evasion.FastGradientMethod"
         assert attack_cfg.attack_size == 100
 
     def test_mode3_attack_failure_computation(self):
@@ -172,7 +172,7 @@ class TestMode4OptunaDatabase:
         optuna_db_path = str(tmp_path / "optuna.db")
         survival_data_config = LifelinesDataConfig.from_optuna_db(
             optuna_db=optuna_db_path,
-            dataset_name="optuna_results",
+            name="optuna_results",
             optuna_schema={"attack_kind": "evasion"},
         )
         assert survival_data_config.mode == LifelinesDataMode.OPTUNA_DB
@@ -184,7 +184,7 @@ class TestMode4OptunaDatabase:
         optuna_db_path = str(tmp_path / "optuna.db")
         survival_data_config = LifelinesDataConfig.from_optuna_db(
             optuna_db=optuna_db_path,
-            dataset_name="optuna_results",
+            name="optuna_results",
             optuna_query="trial_id > 10",
         )
         assert survival_data_config.optuna_query == "trial_id > 10"
@@ -199,20 +199,20 @@ class TestModeInteroperability:
         configs = [
             LifelinesDataConfig(
                 mode=LifelinesDataMode.NATIVE,
-                dataset_name="test",
+                name="test",
                 target="T",
                 duration_col="T",
                 event_col="E",
             ),
             LifelinesDataConfig(
                 mode=LifelinesDataMode.AUXILIARY_METRIC,
-                dataset_name="test",
+                name="test",
                 target="T",
                 reference_metric="accuracy",
             ),
             LifelinesDataConfig(
                 mode=LifelinesDataMode.AUXILIARY_FAILURE,
-                dataset_name="test",
+                name="test",
                 target="T",
                 failure_profile={"attack_kind": "evasion"},
             ),
@@ -232,7 +232,7 @@ class TestModeInteroperability:
     def test_mode_transitions(self):
         """Verify we can transition between different mode configs."""
         base_config = DataConfig(
-            dataset_name="test",
+            name="test",
             target="T",
             classifier=False,
         )
@@ -252,7 +252,7 @@ class TestModeInteroperability:
     def test_non_attack_auxiliary_failure_profile(self):
         """Mode 3 supports non-attack failure profiles."""
         base_config = DataConfig(
-            dataset_name="incident_dataset",
+            name="incident_dataset",
             target="adv_failure_rate",
             classifier=False,
         )

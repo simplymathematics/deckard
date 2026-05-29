@@ -55,7 +55,7 @@ def test_detector_requires_attack_predictions():
     data, _ = _make_data_and_attack()
     detector = DetectorConfig(
         detector_model={
-            "model_type": "sklearn.linear_model.LogisticRegression",
+            "name": "sklearn.linear_model.LogisticRegression",
             "classifier": True,
             "model_params": {"max_iter": 20},
         },
@@ -72,7 +72,7 @@ def test_detector_runs_and_emits_scores_with_mock_detector():
     data, attack = _make_data_and_attack()
     detector = DetectorConfig(
         detector_model={
-            "model_type": "sklearn.linear_model.LogisticRegression",
+            "name": "sklearn.linear_model.LogisticRegression",
             "classifier": True,
             "model_params": {"max_iter": 20},
         },
@@ -230,7 +230,7 @@ def test_detector_model_coercion_dictconfig_and_invalid_type():
     cfg = DetectorConfig(
         detector_model=OmegaConf.create(
             {
-                "model_type": "sklearn.linear_model.LogisticRegression",
+                "name": "sklearn.linear_model.LogisticRegression",
                 "classifier": True,
                 "model_params": {"max_iter": 10},
             },
@@ -246,7 +246,7 @@ def test_detector_model_coercion_from_yaml_string(monkeypatch):
     class _DummyLoaded:
         def to_dict(self):
             return {
-                "model_type": "sklearn.linear_model.LogisticRegression",
+                "name": "sklearn.linear_model.LogisticRegression",
                 "classifier": True,
                 "model_params": {"max_iter": 10},
             }
@@ -273,7 +273,7 @@ def test_detector_build_dataset_split_and_size_validation():
     data, attack = _make_data_and_attack(n=4, d=3)
     cfg = DetectorConfig(
         detector_model={
-            "model_type": "sklearn.linear_model.LogisticRegression",
+            "name": "sklearn.linear_model.LogisticRegression",
             "classifier": True,
             "model_params": {"max_iter": 10},
         },
@@ -316,7 +316,7 @@ def test_detector_constructor_fallback_and_detect_poison_indices(monkeypatch):
     data, attack = _make_data_and_attack(n=4, d=2)
     cfg = DetectorConfig(
         detector_model={
-            "model_type": "sklearn.linear_model.LogisticRegression",
+            "name": "sklearn.linear_model.LogisticRegression",
             "classifier": True,
             "model_params": {"max_iter": 10},
         },
@@ -349,7 +349,7 @@ def test_detector_persists_files_and_score_state(tmp_path):
     data, attack = _make_data_and_attack(n=6, d=3)
     cfg = DetectorConfig(
         detector_model={
-            "model_type": "sklearn.linear_model.LogisticRegression",
+            "name": "sklearn.linear_model.LogisticRegression",
             "classifier": True,
             "model_params": {"max_iter": 20},
         },
@@ -392,7 +392,7 @@ def test_detector_detect_poison_invalid_shape_raises(monkeypatch):
     data, attack = _make_data_and_attack(n=3, d=2)
     cfg = DetectorConfig(
         detector_model={
-            "model_type": "sklearn.linear_model.LogisticRegression",
+            "name": "sklearn.linear_model.LogisticRegression",
             "classifier": True,
             "model_params": {"max_iter": 10},
         },
@@ -420,7 +420,7 @@ def test_detector_raises_when_backend_has_no_detection_api(monkeypatch):
     data, attack = _make_data_and_attack(n=3, d=2)
     cfg = DetectorConfig(
         detector_model={
-            "model_type": "sklearn.linear_model.LogisticRegression",
+            "name": "sklearn.linear_model.LogisticRegression",
             "classifier": True,
             "model_params": {"max_iter": 10},
         },
@@ -473,7 +473,7 @@ class _ConfigLikeModel:
 
 
 class _ConfigLikeAttack:
-    attack_type = "art.attacks.poisoning.BackdoorAttack"
+    name= "art.attacks.poisoning.BackdoorAttack"
 
     def __init__(self):
         self.attack_predictions = None
@@ -508,7 +508,7 @@ def test_detector_filter_mode_poison_updates_attack_and_retrains(monkeypatch):
 
     cfg = DetectorConfig(
         detector_model={
-            "model_type": "sklearn.linear_model.LogisticRegression",
+            "name": "sklearn.linear_model.LogisticRegression",
             "classifier": True,
             "model_params": {"max_iter": 10},
         },
@@ -537,13 +537,13 @@ def test_detector_filter_mode_poison_updates_attack_and_retrains(monkeypatch):
 
 def test_detector_filter_mode_evasion_sets_filtered_labels(monkeypatch):
     data, attack = _make_data_and_attack(n=6, d=3)
-    attack.attack_type = "art.attacks.evasion.FastGradientMethod"
+    attack.name= "art.attacks.evasion.FastGradientMethod"
     attack.attacked_labels = np.zeros(6, dtype=int)
     model = SimpleNamespace(_model=object())
 
     cfg = DetectorConfig(
         detector_model={
-            "model_type": "sklearn.linear_model.LogisticRegression",
+            "name": "sklearn.linear_model.LogisticRegression",
             "classifier": True,
             "model_params": {"max_iter": 10},
         },
@@ -568,3 +568,34 @@ def test_detector_filter_mode_evasion_sets_filtered_labels(monkeypatch):
     assert "poison_filter_success" in scores
     assert hasattr(attack, "filtered_attack_inputs")
     assert np.array_equal(attack.attacked_labels[:1], data.y_test[:1])
+
+
+def test_detector_auto_filter_mode_uses_attack_name_field(monkeypatch):
+    data = _ConfigLikeData(n=5, d=2)
+    model = _ConfigLikeModel()
+    attack = _ConfigLikeAttack()
+    attack.name = "art.attacks.poisoning.BackdoorAttack"
+
+    cfg = DetectorConfig(
+        detector_model={
+            "name": "sklearn.linear_model.LogisticRegression",
+            "classifier": True,
+            "model_params": {"max_iter": 10},
+        },
+        mode="filter",
+        filter_mode="auto",
+        fit_params={"split": "test"},
+    )
+
+    monkeypatch.setattr(
+        DetectorConfig,
+        "_build_detector_backend",
+        lambda self, x_train, y_train: object(),
+    )
+    monkeypatch.setattr(
+        "deckard.detector.base.resolve_class",
+        lambda _name: _FixedDetectDetector,
+    )
+
+    scores = cfg(data=data, model=model, attack=attack)
+    assert scores["poison_filter_success"] > 0.0

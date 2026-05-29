@@ -197,7 +197,7 @@ def test_anjana_experiment_end_to_end(monkeypatch):
     exp = ExperimentConfig(
         data=cfg,
         model=ModelConfig(
-            model_type="sklearn.linear_model.LogisticRegression",
+            name="sklearn.linear_model.LogisticRegression",
             classifier=True,
             model_params={"max_iter": 25},
         ),
@@ -236,7 +236,7 @@ def test_anjana_experiment_with_defense(monkeypatch):
     exp = ExperimentConfig(
         data=cfg,
         model=ModelConfig(
-            model_type="sklearn.linear_model.LogisticRegression",
+            name="sklearn.linear_model.LogisticRegression",
             classifier=True,
             model_params={"max_iter": 25},
         ),
@@ -287,12 +287,12 @@ def test_anjana_data_with_art_model_defense_chain(monkeypatch):
                 "defense_name": "art.defences.postprocessor.ClassLabels",
                 "defense_params": {"apply_fit": False, "apply_predict": True},
                 "classifier": True,
-                "model_type": "sklearn.linear_model.LogisticRegression",
+                "name": "sklearn.linear_model.LogisticRegression",
             },
         ],
     )
     model_cfg = ModelConfig(
-        model_type="sklearn.linear_model.LogisticRegression",
+        name="sklearn.linear_model.LogisticRegression",
         classifier=True,
         model_params={"max_iter": 25},
         defense=defense_cfg,
@@ -341,7 +341,7 @@ def test_anjana_art_defense_is_applied_last(monkeypatch):
                 "defense_name": "art.defences.postprocessor.ClassLabels",
                 "defense_params": {"apply_fit": False, "apply_predict": True},
                 "classifier": True,
-                "model_type": "sklearn.linear_model.LogisticRegression",
+                "name": "sklearn.linear_model.LogisticRegression",
             },
         ],
     )
@@ -381,7 +381,7 @@ def test_anjana_fairness_data_and_art_model_chain(monkeypatch):
     )
 
     data_cfg = AnjanaDataConfig(
-        dataset_name="make_classification",
+        name="make_classification",
         data_params={
             "n_samples": 24,
             "n_features": 6,
@@ -409,7 +409,7 @@ def test_anjana_fairness_data_and_art_model_chain(monkeypatch):
     )
 
     model_cfg = ModelConfig(
-        model_type="sklearn.linear_model.LogisticRegression",
+        name="sklearn.linear_model.LogisticRegression",
         classifier=True,
         model_params={"max_iter": 25},
         defense=DefensePipelineConfig(
@@ -421,7 +421,7 @@ def test_anjana_fairness_data_and_art_model_chain(monkeypatch):
                         "apply_predict": True,
                     },
                     "classifier": True,
-                    "model_type": "sklearn.linear_model.LogisticRegression",
+                    "name": "sklearn.linear_model.LogisticRegression",
                 },
             ],
         ),
@@ -523,7 +523,7 @@ def test_anjana_data_with_fairlearn_model_chain(monkeypatch):
                 "defense_name": "fairlearn.reductions.ExponentiatedGradient",
                 "defense_params": {"constraints": "DemographicParity"},
                 "classifier": True,
-                "model_type": "sklearn.linear_model.LogisticRegression",
+                "name": "sklearn.linear_model.LogisticRegression",
             },
         ],
     )
@@ -566,12 +566,12 @@ def test_anjana_data_with_attack_scoring(monkeypatch):
         defense={"name": "anjana.anonymity.k_anonymity", "k": 2},
     )
     model_cfg = ModelConfig(
-        model_type="sklearn.linear_model.LogisticRegression",
+        name="sklearn.linear_model.LogisticRegression",
         classifier=True,
         model_params={"max_iter": 25},
     )
     attack_cfg = AttackConfig(
-        attack_type="art.attacks.evasion.HopSkipJump",
+        name="art.attacks.evasion.HopSkipJump",
         attack_params={
             "max_iter": 1,
             "init_eval": 1,
@@ -633,7 +633,7 @@ def test_anjana_experiment_hash_stable_after_execution(monkeypatch):
         defense={"name": "anjana.anonymity.k_anonymity", "k": 2},
     )
     model_cfg = ModelConfig(
-        model_type="sklearn.linear_model.LogisticRegression",
+        name="sklearn.linear_model.LogisticRegression",
         classifier=True,
         model_params={"max_iter": 25},
     )
@@ -672,7 +672,7 @@ def test_anjana_experiment_scores_persist_to_json(monkeypatch, tmp_path):
         defense={"name": "anjana.anonymity.k_anonymity", "k": 2},
     )
     model_cfg = ModelConfig(
-        model_type="sklearn.linear_model.LogisticRegression",
+        name="sklearn.linear_model.LogisticRegression",
         classifier=True,
         model_params={"max_iter": 25},
     )

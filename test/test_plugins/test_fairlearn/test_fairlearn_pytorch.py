@@ -20,7 +20,7 @@ class DummyDataset(torch.utils.data.Dataset):
 def test_sensitive_extraction():
     ds = DummyDataset(20)
     config = FairlearnPytorchDataConfig(
-        dataset_name="test.DummyDataset",
+        name="test.DummyDataset",
         sensitive_columns=["_sensitive"],
     )
     config._X = ds  # Pass the dataset, not just the tensor

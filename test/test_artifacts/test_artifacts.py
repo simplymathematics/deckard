@@ -1,12 +1,13 @@
 import json
 import importlib.util
+from dataclasses import dataclass
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import pytest
 
-from deckard.artifacts import ArtifactLoaderConfig, ScoreDict
+from deckard.artifacts import ArtifactLoaderMixin, ScoreDict
 from deckard.utils import BaseConfig, load_data, save_data
 
 
@@ -27,9 +28,30 @@ class _BaseCfg(BaseConfig):
         return {"ok": 1}
 
 
+@dataclass(eq=False, kw_only=True)
+class _RequiredArtifactLoader(ArtifactLoaderMixin):
+    required_value: str
+
+
 def test_scoredict_from_payload_scalar_wraps_value():
     payload = ScoreDict.from_payload(3)
     assert payload == {"value": 3}
+
+
+def test_artifact_loader_init_warns_and_preserves_unknown_kwargs():
+    with pytest.warns(UserWarning, match="unknown init kwargs"):
+        cfg = ArtifactLoaderMixin(payload_kind="score", extra_token="kept")
+    assert cfg.extra_token == "kept"
+
+
+def test_artifact_loader_init_rejects_too_many_positional_args():
+    with pytest.raises(TypeError, match="init argument error"):
+        ArtifactLoaderMixin("a", "b", "c", "d", "e")
+
+
+def test_artifact_loader_required_field_fast_failure():
+    with pytest.raises(TypeError, match="required_value"):
+        _RequiredArtifactLoader()
 
 
 def test_scoredict_update_get_and_flatten_nested_paths():
@@ -63,7 +85,7 @@ def test_scoredict_call_merges_disk_and_persists_when_loader_present(tmp_path):
 
 
 def test_save_and_load_scores_json_round_trip(tmp_path):
-    loader = ArtifactLoaderConfig(payload_kind="score")
+    loader = ArtifactLoaderMixin(payload_kind="score")
     score_path = tmp_path / "scores.json"
 
     payload = {
@@ -82,7 +104,7 @@ def test_save_and_load_scores_json_round_trip(tmp_path):
 
 def test_artifact_loader_save_load_metadata_envelope_json(tmp_path):
     artifact_path = tmp_path / "artifact.json"
-    loader = ArtifactLoaderConfig(
+    loader = ArtifactLoaderMixin(
         id="abc123",
         payload_kind="data",
         metadata={"owner": "deckard"},
@@ -90,7 +112,7 @@ def test_artifact_loader_save_load_metadata_envelope_json(tmp_path):
 
     loader.save(filepath=str(artifact_path))
 
-    reloaded = ArtifactLoaderConfig(path=str(artifact_path))
+    reloaded = ArtifactLoaderMixin(path=str(artifact_path))
     result = reloaded.load()
 
     assert result is reloaded
@@ -100,7 +122,7 @@ def test_artifact_loader_save_load_metadata_envelope_json(tmp_path):
 
 
 def test_save_and_load_data_csv_round_trip(tmp_path):
-    loader = ArtifactLoaderConfig(payload_kind="data")
+    loader = ArtifactLoaderMixin(payload_kind="data")
     data_path = tmp_path / "data.csv"
     data = pd.DataFrame({"a": [1, 2], "b": [3, 4]})
 
@@ -113,7 +135,7 @@ def test_save_and_load_data_csv_round_trip(tmp_path):
 
 
 def test_load_object_ignore_and_delete_corrupt_file(tmp_path):
-    loader = ArtifactLoaderConfig(payload_kind="model")
+    loader = ArtifactLoaderMixin(payload_kind="model")
     bad_path = tmp_path / "bad.pkl"
     bad_path.write_text("not-a-pickle", encoding="utf-8")
 
@@ -129,7 +151,7 @@ def test_load_object_ignore_and_delete_corrupt_file(tmp_path):
 
 def test_save_load_generic_pickle_object_via_dispatch(tmp_path):
     payload = {"k": "v", "n": 2}
-    loader = ArtifactLoaderConfig(payload_kind="data")
+    loader = ArtifactLoaderMixin(payload_kind="data")
     path = tmp_path / "obj.pkl"
 
     loader.save(payload, filepath=str(path))

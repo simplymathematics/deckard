@@ -14,7 +14,7 @@ def test_anjana_model_auto_scorer_uses_anjana_default(monkeypatch):
     )
 
     model = AnjanaModelConfig(
-        model_type="sklearn.linear_model.LogisticRegression",
+        name="sklearn.linear_model.LogisticRegression",
         classifier=True,
         model_params={"max_iter": 10},
         scorer="auto",

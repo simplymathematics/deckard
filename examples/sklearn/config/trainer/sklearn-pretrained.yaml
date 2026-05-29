@@ -1,0 +1,2 @@
+_target_: deckard.model.trainers.PretrainedTrainer
+allow_fallback_training: false

@@ -101,7 +101,7 @@ def test_pretrained_model_with_fit_defense_snapshots_and_retrains(
     tmp_path,
 ):
     model = ModelConfig(
-        model_type="sklearn.linear_model.LogisticRegression",
+        name="sklearn.linear_model.LogisticRegression",
         classifier=True,
         model_params={"max_iter": 10},
         alias="demo",
@@ -169,7 +169,7 @@ def test_loaded_non_pretrained_model_with_fit_defense_does_not_force_retrain(
     tmp_path,
 ):
     model = ModelConfig(
-        model_type="sklearn.linear_model.LogisticRegression",
+        name="sklearn.linear_model.LogisticRegression",
         classifier=True,
         model_params={"max_iter": 10},
         alias="demo",

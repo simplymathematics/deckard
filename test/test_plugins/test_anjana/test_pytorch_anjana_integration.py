@@ -16,7 +16,7 @@ def _make_torch_data():
     X = torch.randn(60, 8)
     y = torch.randint(0, 2, (60,))
     data = PytorchDataConfig(
-        dataset_name="torch.utils.data.TensorDataset",
+        name="torch.utils.data.TensorDataset",
         sampler={
             "train_size": 40,
             "test_size": 20,
@@ -40,7 +40,7 @@ def test_torch_data_supports_anjana_style_data_scoring_payload_shape():
 def test_torch_model_scores_include_benign_metrics_for_chain_readiness():
     data = _make_torch_data()
     model = PytorchModelConfig(
-        model_type="torch.nn.Linear",
+        name="torch.nn.Linear",
         model_params={"in_features": 8, "out_features": 2},
         classifier=True,
         fit_params={"nb_epochs": 1, "batch_size": 16},

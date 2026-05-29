@@ -47,7 +47,7 @@ def _make_torch_data(unit_interval: bool = False):
     X = torch.rand(60, 8) if unit_interval else torch.randn(60, 8)
     y = torch.randint(0, 2, (60,))
     data = PytorchDataConfig(
-        dataset_name="torch.utils.data.TensorDataset",
+        name="torch.utils.data.TensorDataset",
         sampler={
             "name": "split",
             "train_size": 40,
@@ -65,7 +65,7 @@ def _make_unloaded_torch_data():
     X = torch.randn(40, 8)
     y = torch.randint(0, 2, (40,))
     return PytorchDataConfig(
-        dataset_name="torch.utils.data.TensorDataset",
+        name="torch.utils.data.TensorDataset",
         sampler={"name": "split", "train_size": 30, "test_size": 10},
         classifier=True,
         data_params={"_args_": [X, y]},
@@ -74,7 +74,7 @@ def _make_unloaded_torch_data():
 
 def _make_torch_model(defense=None):
     return PytorchModelConfig(
-        model_type="torch.nn.Linear",
+        name="torch.nn.Linear",
         model_params={"in_features": 8, "out_features": 2},
         classifier=True,
         fit_params={"nb_epochs": 1, "batch_size": 16},
@@ -102,7 +102,7 @@ def _make_torch_fairlearn_defense_from_yaml(yaml_file: str):
 def test_pytorch_model_config_initialises():
     model = _make_torch_model()
     assert model.classifier is True
-    assert model.model_type == "torch.nn.Linear"
+    assert model.name== "torch.nn.Linear"
 
 
 def test_pytorch_model_config_hash_stable_before_training():
@@ -212,7 +212,7 @@ def test_pytorch_experiment_end_to_end():
 def test_pytorch_device_propagates_from_experiment():
     data = _make_unloaded_torch_data()
     model = PytorchModelConfig(
-        model_type="torch.nn.Linear",
+        name="torch.nn.Linear",
         model_params={"in_features": 8, "out_features": 2},
         classifier=True,
         fit_params={"nb_epochs": 1, "batch_size": 8},
@@ -235,7 +235,7 @@ def test_pytorch_device_propagates_from_experiment():
 def test_pytorch_device_propagates_from_model_when_only_one_specified():
     data = _make_unloaded_torch_data()
     model = PytorchModelConfig(
-        model_type="torch.nn.Linear",
+        name="torch.nn.Linear",
         model_params={"in_features": 8, "out_features": 2},
         classifier=True,
         fit_params={"nb_epochs": 1, "batch_size": 8},
@@ -259,7 +259,7 @@ def test_pytorch_device_propagates_from_model_when_only_one_specified():
 def test_pytorch_auto_device_propagates_to_all_components():
     data = _make_unloaded_torch_data()
     model = PytorchModelConfig(
-        model_type="torch.nn.Linear",
+        name="torch.nn.Linear",
         model_params={"in_features": 8, "out_features": 2},
         classifier=True,
         fit_params={"nb_epochs": 1, "batch_size": 8},
@@ -737,10 +737,10 @@ def test_deckard_optimize_torch_fairness_smoke_matrix():
         "files.score_file=null",
         "data.sampler.train_size=64",
         "data.sampler.test_size=32",
-        "data.dataset_name=torch_fairness_dataset.py:SyntheticTabularFairnessDataset",
+        "data.name=torch_fairness_dataset.py:SyntheticTabularFairnessDataset",
         "+data.data_params.num_samples=200",
         "+data.data_params.n_features=16",
-        "model.model_type=torch.nn.Linear",
+        "model.name=torch.nn.Linear",
         "~model.model_params.num_channels",
         "~model.model_params.num_classes",
         "+model.model_params={in_features:16,out_features:2}",

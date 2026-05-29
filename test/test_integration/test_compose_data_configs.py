@@ -51,13 +51,13 @@ def _compose_pytorch(config_name: str, overrides: list[str] | None = None):
     [
         pytest.param(
             "data/adult",
-            {"dataset_name": "adult", "alias": "adult"},
+            {"name": "adult", "alias": "adult"},
             id="sklearn-adult",
         ),
         pytest.param(
             "data/anjana",
             {
-                "dataset_name": "make_classification",
+                "name": "make_classification",
                 "_target_": "deckard.plugins.anjana.AnjanaDataConfig",
                 "alias": "anjana",
             },
@@ -66,7 +66,7 @@ def _compose_pytorch(config_name: str, overrides: list[str] | None = None):
         pytest.param(
             "data/fair-adult",
             {
-                "dataset_name": "adult",
+                "name": "adult",
                 "_target_": "deckard.plugins.fairlearn.FairlearnDataConfig",
                 "sensitive_columns": ["sex"],
             },
@@ -74,7 +74,7 @@ def _compose_pytorch(config_name: str, overrides: list[str] | None = None):
         ),
         pytest.param(
             "data/lung",
-            {"dataset_name": "lung", "target": "E", "classifier": False},
+            {"name": "lung", "target": "E", "classifier": False},
             id="sklearn-lifelines",
         ),
     ],
@@ -93,7 +93,7 @@ def test_sklearn_data_config_composes(config_name: str, expected_fields: dict):
     [
         pytest.param(
             "data/torch_mnist",
-            {"dataset_name": "torch_mnist", "alias": "torch_mnist"},
+            {"name": "torch_mnist", "alias": "torch_mnist"},
             id="pytorch-mnist",
         ),
     ],

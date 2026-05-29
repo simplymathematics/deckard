@@ -23,9 +23,9 @@ class TestModelConfig:
         self.X_test = pd.DataFrame({"a": [4, 5], "b": [5, 6]})
         self.y_test = pd.Series([1, 0])
         self.model_params = {"probability": True}
-        self.model_type = "sklearn.ensemble.RandomForestClassifier"
+        self.name= "sklearn.ensemble.RandomForestClassifier"
         self.model = ModelConfig(
-            model_type=self.model_type,
+            name=self.name,
             classifier=True,
             model_params={"n_estimators": 10},
         )
@@ -39,6 +39,15 @@ class TestModelConfig:
     def test_post_init(self):
         assert hasattr(self.model._model, "fit")
         assert hasattr(self.model._model, "predict")
+
+    def test_model_config_canonical_name_syncs_model_type(self):
+        cfg = ModelConfig(
+            name="sklearn.linear_model.LogisticRegression",
+            classifier=True,
+            model_params={},
+        )
+        assert cfg.name == "sklearn.linear_model.LogisticRegression"
+        assert cfg.name== "sklearn.linear_model.LogisticRegression"
 
     def test_train_and_predict(self):
         self.model.train(self.X_train, self.y_train)
@@ -61,7 +70,7 @@ class TestModelConfig:
     def test_call_training_and_prediction(self):
         data = DataConfig()
         model = ModelConfig(
-            model_type=self.model_type,
+            name=self.name,
             classifier=True,
             model_params={"n_estimators": 10},
         )
@@ -90,7 +99,7 @@ class TestModelConfig:
         data = DataConfig(scorer=None)
         data()
         model = ModelConfig(
-            model_type=self.model_type,
+            name=self.name,
             classifier=True,
             model_params={"n_estimators": 10},
             scorer=None,
@@ -104,7 +113,7 @@ class TestModelConfig:
 
     def test_call_saves_test_predictions_when_file_requested(self):
         data = DataConfig(
-            dataset_name="make_classification",
+            name="make_classification",
             data_params={
                 "n_samples": 40,
                 "n_features": 4,
@@ -114,7 +123,7 @@ class TestModelConfig:
         )
         data()
         model = ModelConfig(
-            model_type=self.model_type,
+            name=self.name,
             classifier=True,
             model_params={"n_estimators": 10},
         )
@@ -128,7 +137,7 @@ class TestModelConfig:
 
     def test_call_saves_train_predictions_when_file_requested(self):
         data = DataConfig(
-            dataset_name="make_classification",
+            name="make_classification",
             data_params={
                 "n_samples": 40,
                 "n_features": 4,
@@ -138,7 +147,7 @@ class TestModelConfig:
         )
         data()
         model = ModelConfig(
-            model_type=self.model_type,
+            name=self.name,
             classifier=True,
             model_params={"n_estimators": 10},
         )
@@ -152,7 +161,7 @@ class TestModelConfig:
 
     def test_call_saves_train_and_test_predictions_when_requested(self):
         data = DataConfig(
-            dataset_name="make_classification",
+            name="make_classification",
             data_params={
                 "n_samples": 40,
                 "n_features": 4,
@@ -162,7 +171,7 @@ class TestModelConfig:
         )
         data()
         model = ModelConfig(
-            model_type=self.model_type,
+            name=self.name,
             classifier=True,
             model_params={"n_estimators": 10},
         )
@@ -179,7 +188,7 @@ class TestModelConfig:
 
     def test_call_saves_test_probabilities_when_file_requested(self):
         data = DataConfig(
-            dataset_name="make_classification",
+            name="make_classification",
             data_params={
                 "n_samples": 40,
                 "n_features": 4,
@@ -189,7 +198,7 @@ class TestModelConfig:
         )
         data()
         model = ModelConfig(
-            model_type=self.model_type,
+            name=self.name,
             classifier=True,
             model_params={"n_estimators": 10},
         )
@@ -203,7 +212,7 @@ class TestModelConfig:
 
     def test_call_saves_train_probabilities_when_file_requested(self):
         data = DataConfig(
-            dataset_name="make_classification",
+            name="make_classification",
             data_params={
                 "n_samples": 40,
                 "n_features": 4,
@@ -213,7 +222,7 @@ class TestModelConfig:
         )
         data()
         model = ModelConfig(
-            model_type=self.model_type,
+            name=self.name,
             classifier=True,
             model_params={"n_estimators": 10},
         )
@@ -240,7 +249,7 @@ class TestModelConfig:
         self,
     ):
         data = DataConfig(
-            dataset_name="make_classification",
+            name="make_classification",
             data_params={
                 "n_samples": 40,
                 "n_features": 4,
@@ -250,7 +259,7 @@ class TestModelConfig:
         )
         data()
         model = ModelConfig(
-            model_type=self.model_type,
+            name=self.name,
             classifier=True,
             model_params={"n_estimators": 5},
         )
@@ -275,7 +284,7 @@ class TestModelConfig:
                 return np.array([[1.0, 1.0], [1.0, 1.0]])
 
         model = ModelConfig(
-            model_type=self.model_type,
+            name=self.name,
             classifier=True,
             model_params={"n_estimators": 10},
         )
@@ -288,7 +297,7 @@ class TestModelConfig:
         self,
     ):
         model = ModelConfig(
-            model_type=self.model_type,
+            name=self.name,
             classifier=True,
             model_params={"n_estimators": 10},
         )
@@ -303,13 +312,13 @@ class TestModelConfig:
 
     def test_hash_stable_after_call_for_model_config(self):
         model = ModelConfig(
-            model_type=self.model_type,
+            name=self.name,
             classifier=True,
             model_params={"n_estimators": 10},
         )
         original_hash = hash(model)
         data = DataConfig(
-            dataset_name="make_classification",
+            name="make_classification",
             data_params={
                 "n_samples": 40,
                 "n_features": 4,
@@ -328,7 +337,7 @@ class TestModelConfig:
 def _make_data(n_train=60, n_test=20, n_features=4, classifier=True):
     """Return a loaded DataConfig (data on object after calling it)."""
     data_cfg = DataConfig(
-        dataset_name="make_classification" if classifier else "make_regression",
+        name="make_classification" if classifier else "make_regression",
         data_params={
             "n_samples": n_train + n_test,
             "n_features": n_features,
@@ -351,13 +360,13 @@ def _make_data(n_train=60, n_test=20, n_features=4, classifier=True):
 def _make_fitted_model(n_train=60, n_test=20, n_features=4, classifier=True):
     """Return a (loaded_data, ModelConfig) pair."""
     data = _make_data(n_train, n_test, n_features, classifier)
-    model_type = (
+    model_name = (
         "sklearn.tree.DecisionTreeClassifier"
         if classifier
         else "sklearn.tree.DecisionTreeRegressor"
     )
     model_cfg = ModelConfig(
-        model_type=model_type,
+        name=model_name,
         classifier=classifier,
         model_params={"max_depth": 2},
     )
@@ -370,7 +379,7 @@ def _make_fitted_model(n_train=60, n_test=20, n_features=4, classifier=True):
 class TestModelPostInitScorerBranches:
     def test_null_scorer_becomes_none(self):
         model = ModelConfig(
-            model_type="sklearn.tree.DecisionTreeClassifier",
+            name="sklearn.tree.DecisionTreeClassifier",
             classifier=True,
             model_params={"max_depth": 2},
             scorer=None,
@@ -380,7 +389,7 @@ class TestModelPostInitScorerBranches:
     def test_default_scorer_loads_classifier_scorer(self):
         # AUTO_SCORER sentinel is "auto" (defined in model/base.py)
         model = ModelConfig(
-            model_type="sklearn.tree.DecisionTreeClassifier",
+            name="sklearn.tree.DecisionTreeClassifier",
             classifier=True,
             model_params={"max_depth": 2},
             scorer="auto",
@@ -391,7 +400,7 @@ class TestModelPostInitScorerBranches:
 
     def test_default_scorer_regressor_resolves(self):
         model = ModelConfig(
-            model_type="sklearn.tree.DecisionTreeRegressor",
+            name="sklearn.tree.DecisionTreeRegressor",
             classifier=False,
             model_params={"max_depth": 2},
             scorer="auto",
@@ -412,7 +421,7 @@ class TestModelPostInitScorerBranches:
             },
         }
         model = ModelConfig(
-            model_type="sklearn.tree.DecisionTreeClassifier",
+            name="sklearn.tree.DecisionTreeClassifier",
             classifier=True,
             model_params={"max_depth": 2},
             scorer=scorer_dict,
@@ -424,7 +433,7 @@ class TestModelPostInitScorerBranches:
         defense = SimpleNamespace(defense_name=None)
         model = ModelConfig.__new__(ModelConfig)
         object.__setattr__(model, "defense", defense)
-        object.__setattr__(model, "model_type", "sklearn.tree.DecisionTreeClassifier")
+        object.__setattr__(model, "name", "sklearn.tree.DecisionTreeClassifier")
         object.__setattr__(model, "classifier", True)
         object.__setattr__(model, "model_params", {"max_depth": 2})
         object.__setattr__(model, "plugins", None)
@@ -440,7 +449,7 @@ class TestModelPostInitScorerBranches:
 
     def test_classifier_string_to_bool(self):
         model = ModelConfig(
-            model_type="sklearn.tree.DecisionTreeClassifier",
+            name="sklearn.tree.DecisionTreeClassifier",
             classifier="classifier",
             model_params={"max_depth": 2},
             scorer=None,
@@ -449,7 +458,7 @@ class TestModelPostInitScorerBranches:
 
     def test_regressor_string_to_bool(self):
         model = ModelConfig(
-            model_type="sklearn.tree.DecisionTreeRegressor",
+            name="sklearn.tree.DecisionTreeRegressor",
             classifier="regressor",
             model_params={"max_depth": 2},
             scorer=None,
@@ -458,7 +467,7 @@ class TestModelPostInitScorerBranches:
 
     def test_other_classifier_value_raises_valueerror(self):
         model = ModelConfig.__new__(ModelConfig)
-        object.__setattr__(model, "model_type", "sklearn.tree.DecisionTreeClassifier")
+        object.__setattr__(model, "name", "sklearn.tree.DecisionTreeClassifier")
         object.__setattr__(model, "classifier", "unknown_value")
         object.__setattr__(model, "model_params", {"max_depth": 2})
         object.__setattr__(model, "plugins", None)
@@ -480,7 +489,7 @@ class TestModelPostInitScorerBranches:
 class TestPluginSystem:
     def _model(self):
         return ModelConfig(
-            model_type="sklearn.tree.DecisionTreeClassifier",
+            name="sklearn.tree.DecisionTreeClassifier",
             classifier=True,
             model_params={"max_depth": 2},
             scorer=None,
@@ -575,7 +584,7 @@ class TestPredictTypeErrorHandling:
     def _model_with_mock(self, side_effect_first, return_value_second):
         """Make a ModelConfig whose _model.predict raises then returns on second call."""
         model = ModelConfig(
-            model_type="sklearn.tree.DecisionTreeClassifier",
+            name="sklearn.tree.DecisionTreeClassifier",
             classifier=True,
             model_params={"max_depth": 2},
             scorer=None,
@@ -613,7 +622,7 @@ class TestPredictTypeErrorHandling:
 
     def test_other_type_error_reraises(self):
         model = ModelConfig(
-            model_type="sklearn.tree.DecisionTreeClassifier",
+            name="sklearn.tree.DecisionTreeClassifier",
             classifier=True,
             model_params={"max_depth": 2},
             scorer=None,
@@ -627,7 +636,7 @@ class TestPredictTypeErrorHandling:
 
     def test_predict_without_model_raises_value_error(self):
         model = ModelConfig(
-            model_type="sklearn.tree.DecisionTreeClassifier",
+            name="sklearn.tree.DecisionTreeClassifier",
             classifier=True,
             model_params={"max_depth": 2},
             scorer=None,
@@ -645,7 +654,7 @@ class TestPredictProbaBranches:
         from sklearn.tree import DecisionTreeClassifier
 
         model = ModelConfig(
-            model_type="sklearn.tree.DecisionTreeClassifier",
+            name="sklearn.tree.DecisionTreeClassifier",
             classifier=True,
             model_params={"max_depth": 2},
             probability=False,
@@ -660,7 +669,7 @@ class TestPredictProbaBranches:
 
     def test_predict_proba_no_model_raises(self):
         model = ModelConfig(
-            model_type="sklearn.tree.DecisionTreeClassifier",
+            name="sklearn.tree.DecisionTreeClassifier",
             classifier=True,
             model_params={"max_depth": 2},
             scorer=None,
@@ -677,7 +686,7 @@ class TestPredictProbaBranches:
 class TestGetArtClassAndModel:
     def test_get_art_class_sklearn_no_input_shape(self):
         model = ModelConfig(
-            model_type="sklearn.tree.DecisionTreeClassifier",
+            name="sklearn.tree.DecisionTreeClassifier",
             classifier=True,
             model_params={"max_depth": 2},
             scorer=None,
@@ -696,7 +705,7 @@ class TestGetArtClassAndModel:
 
     def test_get_model_raises_when_no_model(self):
         model = ModelConfig(
-            model_type="sklearn.tree.DecisionTreeClassifier",
+            name="sklearn.tree.DecisionTreeClassifier",
             classifier=True,
             model_params={"max_depth": 2},
             scorer=None,
@@ -714,7 +723,7 @@ class TestLoadScoreFile:
         import json
 
         model = ModelConfig(
-            model_type="sklearn.tree.DecisionTreeClassifier",
+            name="sklearn.tree.DecisionTreeClassifier",
             classifier=True,
             model_params={"max_depth": 2},
             scorer=None,
@@ -730,7 +739,7 @@ class TestLoadScoreFile:
 
     def test_load_score_file_nonexistent_returns_empty(self):
         model = ModelConfig(
-            model_type="sklearn.tree.DecisionTreeClassifier",
+            name="sklearn.tree.DecisionTreeClassifier",
             classifier=True,
             model_params={"max_depth": 2},
             scorer=None,
@@ -750,7 +759,7 @@ class TestLoadOrTrainModel:
             model(data, model_file=model_path)
             # Now create a fresh model and load from file
             model2 = ModelConfig(
-                model_type="sklearn.tree.DecisionTreeClassifier",
+                name="sklearn.tree.DecisionTreeClassifier",
                 classifier=True,
                 model_params={"max_depth": 2},
                 scorer=None,
@@ -769,7 +778,7 @@ class TestLoadOrTrainModel:
             Path(model_path).write_text("placeholder")
 
             loaded_obj = ModelConfig(
-                model_type="sklearn.tree.DecisionTreeClassifier",
+                name="sklearn.tree.DecisionTreeClassifier",
                 classifier=True,
                 model_params={"max_depth": 2},
                 scorer=None,
@@ -777,7 +786,7 @@ class TestLoadOrTrainModel:
             loaded_obj._model = model._model
 
             model2 = ModelConfig(
-                model_type="sklearn.tree.DecisionTreeClassifier",
+                name="sklearn.tree.DecisionTreeClassifier",
                 classifier=True,
                 model_params={"max_depth": 2},
                 scorer=None,
@@ -804,7 +813,7 @@ class TestLoadOrTrainModel:
             Path(model_path).write_text("placeholder")
 
             model2 = ModelConfig(
-                model_type="sklearn.tree.DecisionTreeClassifier",
+                name="sklearn.tree.DecisionTreeClassifier",
                 classifier=True,
                 model_params={"max_depth": 2},
                 scorer=None,
@@ -815,13 +824,13 @@ class TestLoadOrTrainModel:
             model2._load_or_train_model(data, model_path, times)
 
             assert model2._model is loaded_estimator
-            assert model2.model_type == "sklearn.tree._classes.DecisionTreeClassifier"
+            assert model2.name== "sklearn.tree._classes.DecisionTreeClassifier"
             assert model2.model_params.get("max_depth") == 3
 
     def test_no_model_no_file_raises_value_error(self):
         data, _ = _make_fitted_model()
         model = ModelConfig(
-            model_type="sklearn.tree.DecisionTreeClassifier",
+            name="sklearn.tree.DecisionTreeClassifier",
             classifier=True,
             model_params={"max_depth": 2},
             scorer=None,
@@ -837,7 +846,7 @@ class TestLoadOrTrainModel:
 class TestDecodePredictionsForPersistence:
     def test_regressor_passthrough(self):
         model = ModelConfig(
-            model_type="sklearn.tree.DecisionTreeRegressor",
+            name="sklearn.tree.DecisionTreeRegressor",
             classifier=False,
             model_params={"max_depth": 2},
             scorer=None,
@@ -848,7 +857,7 @@ class TestDecodePredictionsForPersistence:
 
     def test_binary_single_column_numeric_labels(self):
         model = ModelConfig(
-            model_type="sklearn.tree.DecisionTreeClassifier",
+            name="sklearn.tree.DecisionTreeClassifier",
             classifier=True,
             model_params={"max_depth": 2},
             scorer=None,
@@ -860,7 +869,7 @@ class TestDecodePredictionsForPersistence:
 
     def test_multiclass_argmax(self):
         model = ModelConfig(
-            model_type="sklearn.tree.DecisionTreeClassifier",
+            name="sklearn.tree.DecisionTreeClassifier",
             classifier=True,
             model_params={"max_depth": 2},
             scorer=None,
@@ -873,7 +882,7 @@ class TestDecodePredictionsForPersistence:
 class TestLoadAllPredictionsBranches:
     def _model(self):
         return ModelConfig(
-            model_type="sklearn.tree.DecisionTreeClassifier",
+            name="sklearn.tree.DecisionTreeClassifier",
             classifier=True,
             model_params={"max_depth": 2},
             scorer=None,
@@ -903,7 +912,7 @@ class TestLoadAllPredictionsBranches:
 class TestScoreValidationBranches:
     def test_score_with_non_callable_scorer_raises(self):
         model = ModelConfig(
-            model_type="sklearn.tree.DecisionTreeClassifier",
+            name="sklearn.tree.DecisionTreeClassifier",
             classifier=True,
             model_params={"max_depth": 2},
             scorer=None,
@@ -914,7 +923,7 @@ class TestScoreValidationBranches:
 
     def test_load_predictions_invalid_type_raises(self):
         model = ModelConfig(
-            model_type="sklearn.tree.DecisionTreeClassifier",
+            name="sklearn.tree.DecisionTreeClassifier",
             classifier=True,
             model_params={"max_depth": 2},
             scorer=None,
@@ -932,7 +941,7 @@ class TestCopyRuntimeStateTo:
         data, model = _make_fitted_model()
         model(data)
         target = ModelConfig(
-            model_type="sklearn.tree.DecisionTreeClassifier",
+            name="sklearn.tree.DecisionTreeClassifier",
             classifier=True,
             model_params={"max_depth": 2},
             scorer=None,
@@ -949,7 +958,7 @@ class TestCopyRuntimeStateTo:
 class TestRequireDefensePipeline:
     def test_no_defense_returns_none(self):
         model = ModelConfig(
-            model_type="sklearn.tree.DecisionTreeClassifier",
+            name="sklearn.tree.DecisionTreeClassifier",
             classifier=True,
             model_params={"max_depth": 2},
             scorer=None,
@@ -961,7 +970,7 @@ class TestRequireDefensePipeline:
 class TestModelEvaluateAndScoreBranches:
     def _model(self):
         model = ModelConfig(
-            model_type="sklearn.tree.DecisionTreeClassifier",
+            name="sklearn.tree.DecisionTreeClassifier",
             classifier=True,
             model_params={"max_depth": 2},
             scorer=None,
@@ -1156,7 +1165,7 @@ class TestModelEvaluateAndScoreBranches:
 
     def test_val_mode_resamples_when_validation_split_missing(self):
         data = DataConfig(
-            dataset_name="make_classification",
+            name="make_classification",
             data_params={
                 "n_samples": 120,
                 "n_features": 6,
@@ -1218,7 +1227,7 @@ class TestModelLoadOrTrainBranches:
     def test_load_or_train_trains_when_model_file_exists_but_not_fitted(self):
         data = _make_data()
         model = ModelConfig(
-            model_type="sklearn.tree.DecisionTreeClassifier",
+            name="sklearn.tree.DecisionTreeClassifier",
             classifier=True,
             model_params={"max_depth": 2},
             scorer=None,
@@ -1232,7 +1241,7 @@ class TestModelLoadOrTrainBranches:
             p.write_text("x")
 
             loaded_obj = ModelConfig(
-                model_type="sklearn.tree.DecisionTreeClassifier",
+                name="sklearn.tree.DecisionTreeClassifier",
                 classifier=True,
                 model_params={"max_depth": 2},
                 scorer=None,
@@ -1262,7 +1271,7 @@ class TestModelLoadOrTrainBranches:
     def test_load_or_train_with_none_model_and_missing_file_trains(self):
         data = _make_data()
         model = ModelConfig(
-            model_type="sklearn.tree.DecisionTreeClassifier",
+            name="sklearn.tree.DecisionTreeClassifier",
             classifier=True,
             model_params={"max_depth": 2},
             scorer=None,
@@ -1278,7 +1287,7 @@ class TestModelLoadOrTrainBranches:
     def test_load_or_train_raises_notfitted_when_model_missing_after_train(self):
         data = _make_data()
         model = ModelConfig(
-            model_type="sklearn.tree.DecisionTreeClassifier",
+            name="sklearn.tree.DecisionTreeClassifier",
             classifier=True,
             model_params={"max_depth": 2},
             scorer=None,
@@ -1297,7 +1306,7 @@ class TestModelLoadOrTrainBranches:
     def test_load_or_train_existing_file_not_fitted_applies_defense(self):
         data = _make_data()
         model = ModelConfig(
-            model_type="sklearn.tree.DecisionTreeClassifier",
+            name="sklearn.tree.DecisionTreeClassifier",
             classifier=True,
             model_params={"max_depth": 2},
             scorer=None,
@@ -1311,7 +1320,7 @@ class TestModelLoadOrTrainBranches:
             p.write_text("x")
 
             loaded_obj = ModelConfig(
-                model_type="sklearn.tree.DecisionTreeClassifier",
+                name="sklearn.tree.DecisionTreeClassifier",
                 classifier=True,
                 model_params={"max_depth": 2},
                 scorer=None,

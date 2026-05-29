@@ -7,7 +7,7 @@ from deckard.data.canon import normalize_data_score_stage
 
 def _cfg_with_loaded_splits() -> DataConfig:
     cfg = DataConfig(
-        dataset_name="make_classification",
+        name="make_classification",
         scorer=lambda **kwargs: {"base": 1},
     )
     cfg._X = pd.DataFrame({"f": [1, 2, 3, 4]})
@@ -54,7 +54,7 @@ def test_score_is_pass_through_to_scorer_dict_config():
 
 def test_call_orchestrates_scores_using_scorer_stages():
     cfg = DataConfig(
-        dataset_name="make_classification",
+        name="make_classification",
         data_params={
             "n_samples": 40,
             "n_features": 4,

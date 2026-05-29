@@ -13,14 +13,14 @@ from deckard.plugins.lifelines.experiment import SurvivalExperimentConfig
 def test_allows_aux_model_without_attack_config():
     cfg = SurvivalExperimentConfig(
         data=DataConfig(
-            dataset_name="make_regression",
+            name="make_regression",
             classifier=False,
         ),
         model="cox",
         target="E",
         classifier=False,
         aux_model=ModelConfig(
-            model_type="sklearn.linear_model.LogisticRegression",
+            name="sklearn.linear_model.LogisticRegression",
             classifier=True,
             model_params={"max_iter": 10},
         ),
@@ -45,8 +45,8 @@ def test_requires_data_config():
 @pytest.mark.parametrize(
     "data_cfg",
     [
-        DataConfig(dataset_name="make_regression", classifier=False),
-        DataConfig(dataset_name="make_regression", classifier=False, target=None),
+        DataConfig(name="make_regression", classifier=False),
+        DataConfig(name="make_regression", classifier=False, target=None),
     ],
 )
 def test_survival_config_initialization_variants(data_cfg):
@@ -89,7 +89,7 @@ def test_post_init_validates_data_model_and_duration(monkeypatch):
 
     cfg = _bare_instance()
     cfg.model = ModelConfig(
-        model_type="sklearn.tree.DecisionTreeClassifier",
+        name="sklearn.tree.DecisionTreeClassifier",
         classifier=True,
         model_params={"max_depth": 1},
     )
@@ -328,15 +328,15 @@ def test_normalize_data_spec_string_and_mapping_for_lifelines():
         data_spec="diabetes",
         target="target",
     )
-    assert string_spec["dataset_name"] == "lifelines.diabetes"
+    assert string_spec["name"] == "lifelines.diabetes"
     assert string_spec["target"] is None
     assert string_name == "lifelines"
 
     mapping_spec, mapping_name = SurvivalExperimentConfig._normalize_data_spec(
-        data_spec={"dataset_name": "lung", "target": "y"},
+        data_spec={"name": "lung", "target": "y"},
         target="target",
     )
-    assert mapping_spec["dataset_name"] == "lifelines.lung"
+    assert mapping_spec["name"] == "lifelines.lung"
     assert mapping_spec["target"] is None
     assert mapping_name == "lifelines.lung"
 

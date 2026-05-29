@@ -13,7 +13,7 @@ def _fake_anjana_defense(data, **kwargs):
 
 def test_anjana_data_defense_applies_callable_and_updates_xy(monkeypatch):
     cfg = AnjanaDataConfig(
-        dataset_name="make_classification",
+        name="make_classification",
         data_params={"n_samples": 10, "n_features": 4, "n_informative": 2},
         classifier=True,
         sampler={
@@ -51,7 +51,7 @@ def test_anjana_data_defense_applies_callable_and_updates_xy(monkeypatch):
 
 def test_anjana_data_score_uses_auto_default(monkeypatch):
     cfg = AnjanaDataConfig(
-        dataset_name="make_classification",
+        name="make_classification",
         data_params={"n_samples": 8, "n_features": 3, "n_informative": 2},
         classifier=True,
         sampler={
@@ -85,7 +85,7 @@ def test_anjana_data_score_uses_auto_default(monkeypatch):
 
 def test_generate_anjana_hierarchy_dict_builds_interval_levels():
     cfg = AnjanaDataConfig(
-        dataset_name="make_classification",
+        name="make_classification",
         data_params={"n_samples": 4, "n_features": 2, "n_informative": 2},
         classifier=True,
         sampler={
@@ -126,7 +126,7 @@ def test_generate_anjana_hierarchy_dict_builds_interval_levels():
 
 def test_anjana_data_defense_auto_injects_generated_hierarchies(monkeypatch):
     cfg = AnjanaDataConfig(
-        dataset_name="make_classification",
+        name="make_classification",
         data_params={"n_samples": 6, "n_features": 3, "n_informative": 2},
         classifier=True,
         sampler={

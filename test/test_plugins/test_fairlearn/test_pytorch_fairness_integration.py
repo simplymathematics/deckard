@@ -57,7 +57,7 @@ def _torch_fairness_data():
     sensitive_test = torch.randint(0, 2, (16,))
 
     cfg = PytorchDataConfig(
-        dataset_name="torch_fairness_dataset.py:SyntheticImageDataset",
+        name="torch_fairness_dataset.py:SyntheticImageDataset",
         sampler={
             "train_size": 32,
             "test_size": 16,
@@ -115,7 +115,7 @@ def test_pytorch_model_with_fairness_defense_instantiation():
     data.y_test = data._y_test
 
     model = FairlearnPytorchModelConfig(
-        model_type="torch.nn.Linear",
+        name="torch.nn.Linear",
         classifier=True,
         model_params={"in_features": 3 * 32 * 32, "out_features": 2},
         data=data,
@@ -136,7 +136,7 @@ def test_pytorch_fairlearn_model_trains_with_torch_fallback():
     data.y_test = data._y_test
 
     model = FairlearnPytorchModelConfig(
-        model_type="torch.nn.Linear",
+        name="torch.nn.Linear",
         model_params={"in_features": 3 * 32 * 32, "out_features": 2},
         classifier=True,
         fit_params={"nb_epochs": 1, "batch_size": 8},
@@ -163,7 +163,7 @@ def test_pytorch_model_training_with_fairness_style_data():
     data.y_test = data._y_test
 
     model = PytorchModelConfig(
-        model_type="torch.nn.Linear",
+        name="torch.nn.Linear",
         model_params={"in_features": 3 * 32 * 32, "out_features": 2},
         classifier=True,
         fit_params={"nb_epochs": 2, "batch_size": 8},
@@ -189,7 +189,7 @@ def test_pytorch_fairness_model_fit_and_score():
     data.y_test = data._y_test
 
     model = PytorchModelConfig(
-        model_type="torch.nn.Linear",
+        name="torch.nn.Linear",
         model_params={"in_features": 3 * 32 * 32, "out_features": 2},
         classifier=True,
         fit_params={"nb_epochs": 1, "batch_size": 8},
@@ -247,7 +247,7 @@ def test_pytorch_fairness_defense_receives_sensitive_features():
     )
 
     model = FairlearnPytorchModelConfig(
-        model_type="torch.nn.Linear",
+        name="torch.nn.Linear",
         model_params={"in_features": 100, "out_features": 2},
         classifier=True,
         defense=defense_cfg,
@@ -272,7 +272,7 @@ def test_pytorch_art_defense_pipeline_runs_with_real_art_defense():
                 "defense_name": "art.defences.postprocessor.ClassLabels",
                 "defense_params": {"apply_fit": False, "apply_predict": True},
                 "classifier": True,
-                "model_type": "torch.nn.Linear",
+                "name": "torch.nn.Linear",
                 "model_params": {
                     "in_features": 3 * 32 * 32,
                     "out_features": 2,
@@ -282,7 +282,7 @@ def test_pytorch_art_defense_pipeline_runs_with_real_art_defense():
     )
 
     model = PytorchModelConfig(
-        model_type="torch.nn.Linear",
+        name="torch.nn.Linear",
         model_params={"in_features": 3 * 32 * 32, "out_features": 2},
         classifier=True,
         fit_params={"nb_epochs": 1, "batch_size": 8},
@@ -330,7 +330,7 @@ def test_torch_pipeline_applies_fairlearn_and_art_style_defense_steps_in_order()
     )
 
     model = PytorchModelConfig(
-        model_type="torch.nn.Linear",
+        name="torch.nn.Linear",
         model_params={"in_features": 3 * 32 * 32, "out_features": 2},
         classifier=True,
         fit_params={"nb_epochs": 1, "batch_size": 8},
@@ -350,13 +350,13 @@ def test_pytorch_fairness_model_serialization_with_defense():
     data = _torch_fairness_data()
 
     model = FairlearnPytorchModelConfig(
-        model_type="torch.nn.Linear",
+        name="torch.nn.Linear",
         model_params={"in_features": 100, "out_features": 2},
         classifier=True,
         data=data,
     )
 
-    assert model.model_type == "torch.nn.Linear"
+    assert model.name== "torch.nn.Linear"
     assert model.classifier is True
 
 

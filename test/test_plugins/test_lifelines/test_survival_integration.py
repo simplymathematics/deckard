@@ -97,7 +97,7 @@ def test_lifelines_data_config_hash_stable_after_execution():
     from deckard.plugins.lifelines.data import LifelinesDataConfig, LifelinesDataMode
 
     cfg = LifelinesDataConfig(
-        dataset_name="make_classification",
+        name="make_classification",
         data_params={
             "n_samples": 40,
             "n_features": 6,
@@ -131,7 +131,7 @@ def test_lifelines_data_config_scores_persist_and_reload():
     from deckard.plugins.lifelines.data import LifelinesDataConfig, LifelinesDataMode
 
     cfg = LifelinesDataConfig(
-        dataset_name="make_classification",
+        name="make_classification",
         data_params={
             "n_samples": 40,
             "n_features": 6,
@@ -169,7 +169,7 @@ def test_lifelines_data_config_object_pickle_roundtrip():
     from deckard.plugins.lifelines.data import LifelinesDataConfig, LifelinesDataMode
 
     cfg = LifelinesDataConfig(
-        dataset_name="make_classification",
+        name="make_classification",
         data_params={
             "n_samples": 40,
             "n_features": 6,

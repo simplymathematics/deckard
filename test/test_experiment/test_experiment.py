@@ -75,7 +75,7 @@ class TestKFoldExperiment:
 
         return ExperimentConfig(
             data=DataConfig(
-                dataset_name="make_classification",
+                name="make_classification",
                 data_params={
                     "n_samples": 120,
                     "n_features": 6,
@@ -88,7 +88,7 @@ class TestKFoldExperiment:
                 sampler=KFoldSampler(n_splits=self.N_FOLDS),
             ),
             model=ModelConfig(
-                model_type="sklearn.ensemble.RandomForestClassifier",
+                name="sklearn.ensemble.RandomForestClassifier",
                 classifier=True,
                 model_params={"n_estimators": 5, "random_state": 0},
             ),
@@ -128,7 +128,7 @@ class TestShuffleExperiment:
 
         return ExperimentConfig(
             data=DataConfig(
-                dataset_name="make_classification",
+                name="make_classification",
                 data_params={
                     "n_samples": 120,
                     "n_features": 6,
@@ -146,7 +146,7 @@ class TestShuffleExperiment:
                 ),
             ),
             model=ModelConfig(
-                model_type="sklearn.ensemble.RandomForestClassifier",
+                name="sklearn.ensemble.RandomForestClassifier",
                 classifier=True,
                 model_params={"n_estimators": 5, "random_state": 0},
             ),
@@ -195,7 +195,7 @@ class TestExperimentValidationScoring:
     def _make_exp(self, *, val_size=0.1, evaluation_mode="standard", score_mode=None):
         return ExperimentConfig(
             data=DataConfig(
-                dataset_name="make_classification",
+                name="make_classification",
                 data_params={
                     "n_samples": 120,
                     "n_features": 6,
@@ -213,7 +213,7 @@ class TestExperimentValidationScoring:
                 },
             ),
             model=ModelConfig(
-                model_type="sklearn.ensemble.RandomForestClassifier",
+                name="sklearn.ensemble.RandomForestClassifier",
                 classifier=True,
                 model_params={"n_estimators": 5, "random_state": 0},
             ),
@@ -271,7 +271,7 @@ class TestExperimentDetectorPhase:
     def test_detector_phase_runs_after_attack(self):
         exp = ExperimentConfig(
             data=DataConfig(
-                dataset_name="make_classification",
+                name="make_classification",
                 data_params={
                     "n_samples": 60,
                     "n_features": 6,
@@ -290,12 +290,12 @@ class TestExperimentDetectorPhase:
                 },
             ),
             model=ModelConfig(
-                model_type="sklearn.linear_model.LogisticRegression",
+                name="sklearn.linear_model.LogisticRegression",
                 classifier=True,
                 model_params={"max_iter": 30},
             ),
             attack=AttackConfig(
-                attack_type="art.attacks.evasion.FastGradientMethod",
+                name="art.attacks.evasion.FastGradientMethod",
                 attack_params={"eps": 0.1},
                 attack_size=10,
             ),
@@ -313,7 +313,7 @@ class TestPoisoningExperimentIntegration:
     def test_poisoning_experiment_emits_benign_and_poisoned_accuracy(self):
         exp = ExperimentConfig(
             data=DataConfig(
-                dataset_name="make_classification",
+                name="make_classification",
                 data_params={
                     "n_samples": 120,
                     "n_features": 8,
@@ -329,12 +329,12 @@ class TestPoisoningExperimentIntegration:
                 },
             ),
             model=ModelConfig(
-                model_type="sklearn.linear_model.LogisticRegression",
+                name="sklearn.linear_model.LogisticRegression",
                 classifier=True,
                 model_params={"max_iter": 150},
             ),
             attack=AttackConfig(
-                attack_type="art.attacks.poisoning.gradient_matching_attack.GradientMatchingAttack",
+                name="art.attacks.poisoning.gradient_matching_attack.GradientMatchingAttack",
                 attack_params={"class_source": 0, "class_target": 1},
                 attack_size=20,
             ),
@@ -380,7 +380,7 @@ class TestPoisoningExperimentIntegration:
     def test_single_pass_with_attack_runs_experiment_scorer_once(self):
         exp = ExperimentConfig(
             data=DataConfig(
-                dataset_name="make_classification",
+                name="make_classification",
                 data_params={
                     "n_samples": 80,
                     "n_features": 6,
@@ -398,12 +398,12 @@ class TestPoisoningExperimentIntegration:
                 },
             ),
             model=ModelConfig(
-                model_type="sklearn.ensemble.RandomForestClassifier",
+                name="sklearn.ensemble.RandomForestClassifier",
                 classifier=True,
                 model_params={"n_estimators": 5, "random_state": 0},
             ),
             attack=AttackConfig(
-                attack_type="art.attacks.evasion.FastGradientMethod",
+                name="art.attacks.evasion.FastGradientMethod",
                 attack_params={"eps": 0.1},
                 attack_size=10,
             ),
@@ -550,7 +550,7 @@ class TestDataConfigResolutionMixin:
     def test_data_to_dict_with_dictconfig(self):
         dc = OmegaConf.create(
             {
-                "dataset_name": "make_classification",
+                "name": "make_classification",
                 "classifier": True,
                 "_target_": "deckard.data.DataConfig",
             },
@@ -559,13 +559,13 @@ class TestDataConfigResolutionMixin:
         assert isinstance(result, dict)
 
     def test_data_to_dict_with_plain_dict(self):
-        d = {"dataset_name": "make_regression", "classifier": False}
+        d = {"name": "make_regression", "classifier": False}
         result = self.mixin._data_to_dict(d)
         assert result == d
 
     def test_data_to_dict_with_yaml_path(self):
         yaml_text = (
-            "dataset_name: make_classification\n"
+            "name: make_classification\n"
             "classifier: true\n"
             "data_params:\n"
             "  n_samples: 20\n"
@@ -595,7 +595,7 @@ class TestDataConfigResolutionMixin:
 
     # @pytest.importorskip("anjana")
     # def test_select_data_cls_anjana_keys(self):
-    #     data_dict = {"dataset_name": "x", "quasi_identifiers": ["age"]}
+    #     data_dict = {"name": "x", "quasi_identifiers": ["age"]}
     #     from deckard.plugins.anjana.data import AnjanaDataConfig
     #     # cls = self.mixin._select_data_cls(data_dict)
     #     # print(type(cls))
@@ -604,7 +604,7 @@ class TestDataConfigResolutionMixin:
 
     # @pytest.importorskip("fairlearn")
     # def test_select_data_cls_fairness_keys(self):
-    #     data_dict = {"dataset_name": "x", "sensitive_columns": ["gender"]}
+    #     data_dict = {"name": "x", "sensitive_columns": ["gender"]}
     #     from deckard.plugins.fairlearn.data import FairlearnDataConfig
     #     cls = self.mixin._select_data_cls(data_dict)
     #     self.assertIs(cls, FairlearnDataConfig)
@@ -617,7 +617,7 @@ class TestDataConfigResolutionMixin:
         assert cls is DataConfig
 
     def test_select_data_cls_plain(self):
-        data_dict = {"dataset_name": "make_classification", "classifier": True}
+        data_dict = {"name": "make_classification", "classifier": True}
         cls = self.mixin._select_data_cls(data_dict)
         assert cls is DataConfig
 
@@ -626,7 +626,7 @@ class TestDataConfigResolutionMixin:
             def __call__(self):
                 pass
 
-        dc = DataConfig(dataset_name="make_classification", classifier=True)
+        dc = DataConfig(name="make_classification", classifier=True)
         exp = _Exp()
         exp.data = dc
         result = exp._resolve_data_config()
@@ -687,7 +687,7 @@ class TestSetRandomSeed:
     def _make_base_exp(self, library="sklearn"):
         return ExperimentConfig(
             data=DataConfig(
-                dataset_name="make_classification",
+                name="make_classification",
                 data_params={
                     "n_samples": 60,
                     "n_features": 4,
@@ -704,7 +704,7 @@ class TestSetRandomSeed:
                 },
             ),
             model=ModelConfig(
-                model_type="sklearn.tree.DecisionTreeClassifier",
+                name="sklearn.tree.DecisionTreeClassifier",
                 classifier=True,
                 model_params={"max_depth": 2},
             ),
@@ -747,7 +747,7 @@ class TestExperimentPostInitModelTypes:
 
     def _data(self):
         return DataConfig(
-            dataset_name="make_classification",
+            name="make_classification",
             data_params={
                 "n_samples": 60,
                 "n_features": 4,
@@ -766,7 +766,7 @@ class TestExperimentPostInitModelTypes:
 
     def test_model_as_dict(self):
         model_dict = {
-            "model_type": "sklearn.tree.DecisionTreeClassifier",
+            "name": "sklearn.tree.DecisionTreeClassifier",
             "classifier": True,
             "model_params": {"max_depth": 2},
         }
@@ -781,7 +781,7 @@ class TestExperimentPostInitModelTypes:
         model_cfg = OmegaConf.create(
             {
                 "_target_": "deckard.model.ModelConfig",
-                "model_type": "sklearn.tree.DecisionTreeClassifier",
+                "name": "sklearn.tree.DecisionTreeClassifier",
                 "classifier": True,
                 "model_params": {"max_depth": 2},
             },
@@ -797,7 +797,7 @@ class TestExperimentPostInitModelTypes:
         exp = ExperimentConfig(
             data=self._data(),
             model=ModelConfig(
-                model_type="sklearn.tree.DecisionTreeClassifier",
+                name="sklearn.tree.DecisionTreeClassifier",
                 classifier=True,
                 model_params={"max_depth": 2},
             ),
@@ -810,14 +810,14 @@ class TestExperimentPostInitModelTypes:
 
     def test_attack_as_dict(self):
         attack_dict = {
-            "attack_type": "art.attacks.evasion.FastGradientMethod",
+            "name": "art.attacks.evasion.FastGradientMethod",
             "attack_params": {"eps": 0.1},
             "attack_size": 5,
         }
         exp = ExperimentConfig(
             data=self._data(),
             model=ModelConfig(
-                model_type="sklearn.tree.DecisionTreeClassifier",
+                name="sklearn.tree.DecisionTreeClassifier",
                 classifier=True,
                 model_params={"max_depth": 2},
             ),
@@ -830,7 +830,7 @@ class TestExperimentPostInitModelTypes:
         attack_cfg = OmegaConf.create(
             {
                 "_target_": "deckard.attack.AttackConfig",
-                "attack_type": "art.attacks.evasion.FastGradientMethod",
+                "name": "art.attacks.evasion.FastGradientMethod",
                 "attack_params": {"eps": 0.1},
                 "attack_size": 5,
             },
@@ -838,7 +838,7 @@ class TestExperimentPostInitModelTypes:
         exp = ExperimentConfig(
             data=self._data(),
             model=ModelConfig(
-                model_type="sklearn.tree.DecisionTreeClassifier",
+                name="sklearn.tree.DecisionTreeClassifier",
                 classifier=True,
                 model_params={"max_depth": 2},
             ),
@@ -856,7 +856,7 @@ class TestExperimentScoreFileHandling:
         files = FileConfig(score_file=score_file) if score_file else FileConfig()
         return ExperimentConfig(
             data=DataConfig(
-                dataset_name="make_classification",
+                name="make_classification",
                 data_params={
                     "n_samples": 60,
                     "n_features": 4,
@@ -873,7 +873,7 @@ class TestExperimentScoreFileHandling:
                 },
             ),
             model=ModelConfig(
-                model_type="sklearn.tree.DecisionTreeClassifier",
+                name="sklearn.tree.DecisionTreeClassifier",
                 classifier=True,
                 model_params={"max_depth": 2},
             ),
@@ -910,7 +910,7 @@ class TestExperimentScoreFileHandling:
     def test_model_none_runs_data_only_pipeline(self):
         exp = ExperimentConfig(
             data=DataConfig(
-                dataset_name="make_classification",
+                name="make_classification",
                 data_params={
                     "n_samples": 60,
                     "n_features": 4,
@@ -996,7 +996,7 @@ class TestResolveScoreModes:
 class TestExperimentScorerModePermutations:
     def _base_data(self, *, val_size=0.1):
         return DataConfig(
-            dataset_name="make_classification",
+            name="make_classification",
             data_params={
                 "n_samples": 120,
                 "n_features": 6,
@@ -1016,7 +1016,7 @@ class TestExperimentScorerModePermutations:
 
     def _base_model(self):
         return ModelConfig(
-            model_type="sklearn.ensemble.RandomForestClassifier",
+            name="sklearn.ensemble.RandomForestClassifier",
             classifier=True,
             model_params={"n_estimators": 5, "random_state": 0},
         )
@@ -1102,7 +1102,7 @@ class TestAggregateRepeatedScores:
 class TestExperimentPostInitMoreBranches:
     def _data(self):
         return DataConfig(
-            dataset_name="make_classification",
+            name="make_classification",
             data_params={
                 "n_samples": 60,
                 "n_features": 4,
@@ -1124,7 +1124,7 @@ class TestExperimentPostInitMoreBranches:
         with tempfile.TemporaryDirectory() as td:
             yaml_path = Path(td) / "model.yaml"
             yaml_path.write_text(
-                "model_type: sklearn.tree.DecisionTreeClassifier\n"
+                "name: sklearn.tree.DecisionTreeClassifier\n"
                 "classifier: true\n"
                 "model_params:\n"
                 "  max_depth: 2\n",
@@ -1143,7 +1143,7 @@ class TestExperimentPostInitMoreBranches:
             pass
 
         alt_model = AltModel(
-            model_type="sklearn.tree.DecisionTreeClassifier",
+            name="sklearn.tree.DecisionTreeClassifier",
             classifier=True,
             model_params={"max_depth": 2},
         )
@@ -1159,7 +1159,7 @@ class TestExperimentPostInitMoreBranches:
         exp = ExperimentConfig(
             data=self._data(),
             model=ModelConfig(
-                model_type="sklearn.tree.DecisionTreeClassifier",
+                name="sklearn.tree.DecisionTreeClassifier",
                 classifier=True,
                 model_params={"max_depth": 2},
             ),
@@ -1175,7 +1175,7 @@ class TestExperimentPostInitMoreBranches:
         exp = ExperimentConfig(
             data=self._data(),
             model=ModelConfig(
-                model_type="sklearn.tree.DecisionTreeClassifier",
+                name="sklearn.tree.DecisionTreeClassifier",
                 classifier=True,
                 model_params={"max_depth": 2},
             ),
@@ -1189,7 +1189,7 @@ class TestExperimentPostInitMoreBranches:
         """Cover branch: isinstance(self.model, DictConfig) without _target_"""
         model_cfg = OmegaConf.create(
             {
-                "model_type": "sklearn.tree.DecisionTreeClassifier",
+                "name": "sklearn.tree.DecisionTreeClassifier",
                 "classifier": True,
                 "model_params": {"max_depth": 2},
             },
@@ -1206,7 +1206,7 @@ class TestExperimentPostInitMoreBranches:
         with tempfile.TemporaryDirectory() as td:
             yaml_path = Path(td) / "attack.yaml"
             yaml_path.write_text(
-                "attack_type: art.attacks.evasion.FastGradientMethod\n"
+                "name: art.attacks.evasion.FastGradientMethod\n"
                 "attack_params:\n"
                 "  eps: 0.1\n"
                 "attack_size: 5\n",
@@ -1214,7 +1214,7 @@ class TestExperimentPostInitMoreBranches:
             exp = ExperimentConfig(
                 data=self._data(),
                 model=ModelConfig(
-                    model_type="sklearn.tree.DecisionTreeClassifier",
+                    name="sklearn.tree.DecisionTreeClassifier",
                     classifier=True,
                     model_params={"max_depth": 2},
                 ),
@@ -1230,14 +1230,14 @@ class TestExperimentPostInitMoreBranches:
             pass
 
         alt_attack = AltAttack(
-            attack_type="art.attacks.evasion.FastGradientMethod",
+            name="art.attacks.evasion.FastGradientMethod",
             attack_params={"eps": 0.1},
             attack_size=5,
         )
         exp = ExperimentConfig(
             data=self._data(),
             model=ModelConfig(
-                model_type="sklearn.tree.DecisionTreeClassifier",
+                name="sklearn.tree.DecisionTreeClassifier",
                 classifier=True,
                 model_params={"max_depth": 2},
             ),
@@ -1251,18 +1251,18 @@ class TestExperimentPostInitMoreBranches:
             ExperimentConfig(
                 data=self._data(),
                 model=ModelConfig(
-                    model_type="sklearn.tree.DecisionTreeClassifier",
+                    name="sklearn.tree.DecisionTreeClassifier",
                     classifier=True,
                     model_params={"max_depth": 2},
                 ),
                 attack=[
                     {
-                        "attack_type": "art.attacks.evasion.FastGradientMethod",
+                        "name": "art.attacks.evasion.FastGradientMethod",
                         "attack_params": {"eps": 0.1},
                         "attack_size": 5,
                     },
                     {
-                        "attack_type": "art.attacks.evasion.FastGradientMethod",
+                        "name": "art.attacks.evasion.FastGradientMethod",
                         "attack_params": {"eps": 0.2},
                         "attack_size": 5,
                     },
@@ -1274,19 +1274,19 @@ class TestExperimentPostInitMoreBranches:
         exp = ExperimentConfig(
             data=self._data(),
             model=ModelConfig(
-                model_type="sklearn.tree.DecisionTreeClassifier",
+                name="sklearn.tree.DecisionTreeClassifier",
                 classifier=True,
                 model_params={"max_depth": 2},
             ),
             attack=[
                 {
-                    "attack_type": "art.attacks.evasion.FastGradientMethod",
+                    "name": "art.attacks.evasion.FastGradientMethod",
                     "attack_params": {"eps": 0.1},
                     "attack_size": 5,
                     "alias": "fgm_a",
                 },
                 {
-                    "attack_type": "art.attacks.evasion.FastGradientMethod",
+                    "name": "art.attacks.evasion.FastGradientMethod",
                     "attack_params": {"eps": 0.2},
                     "attack_size": 5,
                     "alias": "fgm_b",
@@ -1312,7 +1312,7 @@ class TestExperimentPostInitMoreBranches:
         exp = ExperimentConfig(
             data=self._data(),
             model=ModelConfig(
-                model_type="sklearn.tree.DecisionTreeClassifier",
+                name="sklearn.tree.DecisionTreeClassifier",
                 classifier=True,
                 model_params={"max_depth": 2},
             ),
@@ -1324,7 +1324,7 @@ class TestExperimentPostInitMoreBranches:
             ExperimentConfig(
                 data=self._data(),
                 model=ModelConfig(
-                    model_type="sklearn.tree.DecisionTreeClassifier",
+                    name="sklearn.tree.DecisionTreeClassifier",
                     classifier=True,
                     model_params={"max_depth": 2},
                 ),
@@ -1337,7 +1337,7 @@ class TestExperimentPostInitMoreBranches:
             ExperimentConfig(
                 data=self._data(),
                 model=ModelConfig(
-                    model_type="sklearn.tree.DecisionTreeClassifier",
+                    name="sklearn.tree.DecisionTreeClassifier",
                     classifier=True,
                     model_params={"max_depth": 2},
                 ),
@@ -1350,7 +1350,7 @@ class TestExperimentPostInitMoreBranches:
             ExperimentConfig(
                 data=self._data(),
                 model=ModelConfig(
-                    model_type="sklearn.tree.DecisionTreeClassifier",
+                    name="sklearn.tree.DecisionTreeClassifier",
                     classifier=True,
                     model_params={"max_depth": 2},
                 ),
@@ -1364,7 +1364,7 @@ class TestExperimentPostInitMoreBranches:
 class TestCoerceScorerConfig:
     def _data(self):
         return DataConfig(
-            dataset_name="make_classification",
+            name="make_classification",
             data_params={
                 "n_samples": 60,
                 "n_features": 4,
@@ -1394,7 +1394,7 @@ class TestCoerceScorerConfig:
         exp = ExperimentConfig(
             data=self._data(),
             model=ModelConfig(
-                model_type="sklearn.tree.DecisionTreeClassifier",
+                name="sklearn.tree.DecisionTreeClassifier",
                 classifier=True,
                 model_params={"max_depth": 2},
             ),
@@ -1411,7 +1411,7 @@ class TestCoerceScorerConfig:
         exp = ExperimentConfig(
             data=self._data(),
             model=ModelConfig(
-                model_type="sklearn.tree.DecisionTreeClassifier",
+                name="sklearn.tree.DecisionTreeClassifier",
                 classifier=True,
                 model_params={"max_depth": 2},
             ),
@@ -1428,7 +1428,7 @@ class TestCoerceScorerConfig:
         exp = ExperimentConfig(
             data=self._data(),
             model=ModelConfig(
-                model_type="sklearn.tree.DecisionTreeClassifier",
+                name="sklearn.tree.DecisionTreeClassifier",
                 classifier=True,
                 model_params={"max_depth": 2},
             ),
@@ -1480,7 +1480,7 @@ class TestRunSinglePipelineBranchesExtra:
 
     def test_data_file_path_loads_object_and_saves_score_file(self):
         loaded_data = DataConfig(
-            dataset_name="make_classification",
+            name="make_classification",
             data_params={
                 "n_samples": 40,
                 "n_features": 4,
@@ -1505,7 +1505,7 @@ class TestRunSinglePipelineBranchesExtra:
 
             exp = ExperimentConfig(
                 data=DataConfig(
-                    dataset_name="make_classification",
+                    name="make_classification",
                     data_params={
                         "n_samples": 20,
                         "n_features": 4,
@@ -1522,7 +1522,7 @@ class TestRunSinglePipelineBranchesExtra:
                     },
                 ),
                 model=ModelConfig(
-                    model_type="sklearn.tree.DecisionTreeClassifier",
+                    name="sklearn.tree.DecisionTreeClassifier",
                     classifier=True,
                     model_params={"max_depth": 2},
                 ),
@@ -1538,7 +1538,7 @@ class TestRunSinglePipelineBranchesExtra:
 
     def test_val_score_mode_resamples_loaded_data_for_validation_split(self):
         loaded_data = DataConfig(
-            dataset_name="make_classification",
+            name="make_classification",
             data_params={
                 "n_samples": 80,
                 "n_features": 6,
@@ -1565,7 +1565,7 @@ class TestRunSinglePipelineBranchesExtra:
 
             exp = ExperimentConfig(
                 data=DataConfig(
-                    dataset_name="make_classification",
+                    name="make_classification",
                     data_params={
                         "n_samples": 80,
                         "n_features": 6,
@@ -1583,7 +1583,7 @@ class TestRunSinglePipelineBranchesExtra:
                     },
                 ),
                 model=ModelConfig(
-                    model_type="sklearn.tree.DecisionTreeClassifier",
+                    name="sklearn.tree.DecisionTreeClassifier",
                     classifier=True,
                     model_params={"max_depth": 2},
                 ),
@@ -1617,7 +1617,7 @@ class TestSetDeviceTensorflow:
     def _make_exp(self):
         return ExperimentConfig(
             data=DataConfig(
-                dataset_name="make_classification",
+                name="make_classification",
                 data_params={
                     "n_samples": 60,
                     "n_features": 4,
@@ -1634,7 +1634,7 @@ class TestSetDeviceTensorflow:
                 },
             ),
             model=ModelConfig(
-                model_type="sklearn.tree.DecisionTreeClassifier",
+                name="sklearn.tree.DecisionTreeClassifier",
                 classifier=True,
                 model_params={"max_depth": 2},
             ),
@@ -1878,7 +1878,7 @@ class TestExperimentBranchEdges:
         with pytest.raises(ValueError):
             ExperimentConfig(
                 data=DataConfig(
-                    dataset_name="make_classification",
+                    name="make_classification",
                     data_params={
                         "n_samples": 20,
                         "n_features": 4,
@@ -1904,7 +1904,7 @@ class TestExperimentRuntimeCompositionAndPersistence:
         files = FileConfig(params_file=params_file) if params_file else FileConfig()
         return ExperimentConfig(
             data=DataConfig(
-                dataset_name="make_classification",
+                name="make_classification",
                 data_params={
                     "n_samples": 80,
                     "n_features": 6,
@@ -1920,7 +1920,7 @@ class TestExperimentRuntimeCompositionAndPersistence:
                 },
             ),
             model=ModelConfig(
-                model_type="sklearn.tree.DecisionTreeClassifier",
+                name="sklearn.tree.DecisionTreeClassifier",
                 classifier=True,
                 model_params={"max_depth": 2},
             ),
@@ -1932,13 +1932,13 @@ class TestExperimentRuntimeCompositionAndPersistence:
         exp = self._make_base_experiment()
         exp.compose_components(
             model={
-                "model_type": "sklearn.linear_model.LogisticRegression",
+                "name": "sklearn.linear_model.LogisticRegression",
                 "classifier": True,
                 "model_params": {"max_iter": 20},
             },
         )
         assert isinstance(exp.model, ModelConfig)
-        assert exp.model.model_type == "sklearn.linear_model.LogisticRegression"
+        assert exp.model.name== "sklearn.linear_model.LogisticRegression"
 
     def test_compose_components_accepts_hook_bundle_dict_and_orders_after_canonical(
         self,
@@ -1968,7 +1968,7 @@ class TestExperimentRuntimeCompositionAndPersistence:
         exp_b = self._make_base_experiment()
         exp_b.compose_components(
             model=ModelConfig(
-                model_type="sklearn.tree.DecisionTreeClassifier",
+                name="sklearn.tree.DecisionTreeClassifier",
                 classifier=True,
                 model_params={"max_depth": 5},
             ),

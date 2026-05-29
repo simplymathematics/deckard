@@ -148,7 +148,7 @@ def test_coerce_survival_model_spec_mapping_and_placeholders():
     out = layer_survival._coerce_survival_model_spec(
         {
             "data": "lifelines-lung",
-            "model": {"model_type": "lifelines.CoxPHFitter"},
+            "model": {"name": "lifelines.CoxPHFitter"},
             "plot": {"title": "${model.alias} calibration"},
         },
     )

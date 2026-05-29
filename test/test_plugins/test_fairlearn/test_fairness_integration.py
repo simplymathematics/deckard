@@ -59,7 +59,7 @@ def _split_sampler_kwargs(
 @pytest.fixture(scope="module")
 def generate_fairness_data():
     cfg = FairlearnDataConfig(
-        dataset_name="make_classification",
+        name="make_classification",
         data_params={
             "n_samples": 40,
             "n_features": 10,
@@ -87,7 +87,7 @@ def test_fairness_data_and_model_scores(generate_fairness_data):
     data = generate_fairness_data
 
     model = FairlearnModelConfig(
-        model_type="sklearn.linear_model.LogisticRegression",
+        name="sklearn.linear_model.LogisticRegression",
         classifier=True,
         model_params={"max_iter": 25},
         data=data,
@@ -115,7 +115,7 @@ def test_fairness_data_and_model_scores(generate_fairness_data):
 
 def test_fairness_regression_data_and_metric_frame_scores():
     data = FairlearnDataConfig(
-        dataset_name="make_regression",
+        name="make_regression",
         data_params={
             "n_samples": 40,
             "n_features": 8,
@@ -152,7 +152,7 @@ def test_fairness_regression_data_and_metric_frame_scores():
     )
 
     model = FairlearnModelConfig(
-        model_type="sklearn.linear_model.LinearRegression",
+        name="sklearn.linear_model.LinearRegression",
         classifier=False,
         scorer=scorer,
         data=data,
@@ -168,7 +168,7 @@ def test_fairness_defense_config_apply_to_trained_model(
     data = generate_fairness_data
 
     model = FairlearnModelConfig(
-        model_type="sklearn.linear_model.LogisticRegression",
+        name="sklearn.linear_model.LogisticRegression",
         classifier=True,
         model_params={"max_iter": 25},
         data=data,
@@ -176,7 +176,7 @@ def test_fairness_defense_config_apply_to_trained_model(
     model(data)
 
     defense = FairlearnDefenseConfig(
-        model_type="sklearn.linear_model.LogisticRegression",
+        name="sklearn.linear_model.LogisticRegression",
         classifier=True,
         defense_name="art.defences.postprocessor.GaussianNoise",
         defense_params={"scale": 0.1},
@@ -211,7 +211,7 @@ def test_mixed_fairlearn_and_art_defenses_apply_with_type_checks(
     probe = DefenseHookProbe()
 
     model = FairlearnModelConfig(
-        model_type="sklearn.linear_model.LogisticRegression",
+        name="sklearn.linear_model.LogisticRegression",
         classifier=True,
         model_params={"max_iter": 50},
         data=data,
@@ -219,7 +219,7 @@ def test_mixed_fairlearn_and_art_defenses_apply_with_type_checks(
     model.train(data.X_train, data.y_train)
 
     fair_defense = FairlearnDefenseConfig(
-        model_type="sklearn.linear_model.LogisticRegression",
+        name="sklearn.linear_model.LogisticRegression",
         classifier=True,
         defense_name="fairlearn.reductions.ExponentiatedGradient",
         defense_params={
@@ -229,13 +229,13 @@ def test_mixed_fairlearn_and_art_defenses_apply_with_type_checks(
         data=data,
     )
     art_defense = DefenseConfig(
-        model_type="sklearn.linear_model.LogisticRegression",
+        name="sklearn.linear_model.LogisticRegression",
         classifier=True,
         defense_name=None,
         defense_params={},
     )
     # Force generic ART wrapper so a fairlearn wrapped estimator can be nested.
-    art_defense.model_type = "sklearn-classifier"
+    art_defense.name= "sklearn-classifier"
 
     model.defense = DefensePipelineConfig(
         defenses=[fair_defense, art_defense],
@@ -262,7 +262,7 @@ def generate_fairness_model(generate_fairness_data):
     )
 
     model = FairlearnModelConfig(
-        model_type="sklearn.linear_model.LogisticRegression",
+        name="sklearn.linear_model.LogisticRegression",
         classifier=True,
         model_params={"max_iter": 25},
         scorer=DefaultFairlearnClassificationScorerDictConfig(),
@@ -297,7 +297,7 @@ def test_generate_fairness_data_model_with_and_without_attack(
         return
 
     attack_cfg = AttackConfig(
-        attack_type="art.attacks.evasion.BoundaryAttack",
+        name="art.attacks.evasion.BoundaryAttack",
         attack_params={
             "batch_size": 5,
             "targeted": False,
@@ -392,7 +392,7 @@ def test_fairlearn_attack_scorer_metric_frame_attribute_group_accuracy_keys():
 
 def test_fairness_data_config_hash_stable_after_execution():
     cfg = FairlearnDataConfig(
-        dataset_name="make_classification",
+        name="make_classification",
         data_params={
             "n_samples": 40,
             "n_features": 10,
@@ -417,7 +417,7 @@ def test_fairness_data_config_hash_stable_after_execution():
 
 def test_fairness_model_config_hash_stable_after_training():
     data = FairlearnDataConfig(
-        dataset_name="make_classification",
+        name="make_classification",
         data_params={
             "n_samples": 40,
             "n_features": 10,
@@ -439,7 +439,7 @@ def test_fairness_model_config_hash_stable_after_training():
     )
     data()
     model = FairlearnModelConfig(
-        model_type="sklearn.linear_model.LogisticRegression",
+        name="sklearn.linear_model.LogisticRegression",
         classifier=True,
         model_params={"max_iter": 25},
         data=data,
@@ -452,7 +452,7 @@ def test_fairness_model_config_hash_stable_after_training():
 
 def test_fairness_data_config_scores_persist_and_reload():
     cfg = FairlearnDataConfig(
-        dataset_name="make_classification",
+        name="make_classification",
         data_params={
             "n_samples": 40,
             "n_features": 10,
@@ -482,7 +482,7 @@ def test_fairness_data_config_scores_persist_and_reload():
 
 def test_fairness_model_config_object_pickle_roundtrip():
     data = FairlearnDataConfig(
-        dataset_name="make_classification",
+        name="make_classification",
         data_params={
             "n_samples": 40,
             "n_features": 10,
@@ -504,7 +504,7 @@ def test_fairness_model_config_object_pickle_roundtrip():
     )
     data()
     model = FairlearnModelConfig(
-        model_type="sklearn.linear_model.LogisticRegression",
+        name="sklearn.linear_model.LogisticRegression",
         classifier=True,
         model_params={"max_iter": 25},
         data=data,
@@ -527,7 +527,7 @@ def test_fairlearn_group_metrics_all_modes(generate_fairness_data):
 
     data = generate_fairness_data
     model = FairlearnModelConfig(
-        model_type="sklearn.linear_model.LogisticRegression",
+        name="sklearn.linear_model.LogisticRegression",
         classifier=True,
         model_params={"max_iter": 10},
         data=data,

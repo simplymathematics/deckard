@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from deckard.artifacts import ArtifactLoaderConfig, SCORE_PAYLOAD_SCHEMA
+from deckard.artifacts import ArtifactLoaderMixin, SCORE_PAYLOAD_SCHEMA
 
 
 def _sample_scores() -> dict:
@@ -24,7 +24,7 @@ def _sample_scores() -> dict:
 
 
 def test_json_score_contract_persists_payload_flat_and_dotlist(tmp_path: Path):
-    cfg = ArtifactLoaderConfig()
+    cfg = ArtifactLoaderMixin()
     scores = _sample_scores()
     score_file = tmp_path / "scores.json"
 
@@ -49,7 +49,7 @@ def test_json_score_contract_persists_payload_flat_and_dotlist(tmp_path: Path):
 
 def test_yaml_score_contract_roundtrip(tmp_path: Path):
     pytest.importorskip("yaml")
-    cfg = ArtifactLoaderConfig()
+    cfg = ArtifactLoaderMixin()
     scores = _sample_scores()
     score_file = tmp_path / "scores.yaml"
 
@@ -61,7 +61,7 @@ def test_yaml_score_contract_roundtrip(tmp_path: Path):
 
 
 def test_csv_vector_values_are_parseable(tmp_path: Path):
-    cfg = ArtifactLoaderConfig()
+    cfg = ArtifactLoaderMixin()
     scores = {
         "train": {
             "vector": [1, 2, 3],
@@ -79,7 +79,7 @@ def test_csv_vector_values_are_parseable(tmp_path: Path):
 
 
 def test_json_contract_handles_pandas_payloads(tmp_path: Path):
-    cfg = ArtifactLoaderConfig()
+    cfg = ArtifactLoaderMixin()
     scores = {
         "test": {
             "series": pd.Series([1.0, 2.0], index=["a", "b"]),

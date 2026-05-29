@@ -1,0 +1,6 @@
+# @package _global_
+hydra:
+  sweeper:
+    params:
+      ++model.trainer._target_: choice("deckard.model.trainers.PartialFitTrainer")
+trainer_alias: partial_fit

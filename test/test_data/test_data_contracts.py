@@ -11,7 +11,7 @@ from deckard.plugins import HookPlugin
 
 def _core_config() -> DataConfig:
     return DataConfig(
-        dataset_name="make_classification",
+        name="make_classification",
         data_params={
             "n_samples": 48,
             "n_features": 8,
@@ -29,7 +29,7 @@ def _fairlearn_config():
     from deckard.plugins.fairlearn import FairlearnDataConfig
 
     return FairlearnDataConfig(
-        dataset_name="make_classification",
+        name="make_classification",
         data_params={
             "n_samples": 48,
             "n_features": 8,
@@ -48,7 +48,7 @@ def _anjana_config():
     from deckard.plugins.anjana import AnjanaDataConfig
 
     return AnjanaDataConfig(
-        dataset_name="make_classification",
+        name="make_classification",
         data_params={
             "n_samples": 48,
             "n_features": 8,
@@ -72,7 +72,7 @@ def _pytorch_config():
     X = torch.randn(48, 8)
     y = torch.randint(0, 2, (48,))
     return PytorchDataConfig(
-        dataset_name="torch.utils.data.TensorDataset",
+        name="torch.utils.data.TensorDataset",
         data_params={"_args_": [X, y]},
         classifier=True,
         sampler={
@@ -120,7 +120,7 @@ def test_core_and_framework_score_hooks_use_canonical_stage_names(tmp_path: Path
     X = torch.randn(48, 8)
     y = torch.randint(0, 2, (48,))
     framework = PytorchDataConfig(
-        dataset_name="torch.utils.data.TensorDataset",
+        name="torch.utils.data.TensorDataset",
         data_params={"_args_": [X, y]},
         classifier=True,
         sampler={"name": "split", "test_size": 0.2, "random_state": 42},

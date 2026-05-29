@@ -18,7 +18,7 @@ def _load_yaml(path: str):
 
 def _base_classification_data():
     cfg = DataConfig(
-        dataset_name="make_classification",
+        name="make_classification",
         data_params={
             "n_samples": 40,
             "n_features": 8,
@@ -43,7 +43,7 @@ def _base_classification_data():
 
 def _base_model(defense=None):
     return ModelConfig(
-        model_type="sklearn.linear_model.LogisticRegression",
+        name="sklearn.linear_model.LogisticRegression",
         classifier=True,
         model_params={"max_iter": 25},
         defense=defense,
@@ -125,7 +125,7 @@ def test_model_config_accepts_legacy_single_defense_yaml(
 def test_experiment_config_accepts_legacy_single_defense_yaml():
     experiment = ExperimentConfig(
         data=DataConfig(
-            dataset_name="make_classification",
+            name="make_classification",
             data_params={
                 "n_samples": 40,
                 "n_features": 8,
@@ -145,7 +145,7 @@ def test_experiment_config_accepts_legacy_single_defense_yaml():
             },
         ),
         model=ModelConfig(
-            model_type="sklearn.linear_model.LogisticRegression",
+            name="sklearn.linear_model.LogisticRegression",
             classifier=True,
             model_params={"max_iter": 25},
         ),

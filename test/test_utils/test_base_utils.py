@@ -1,8 +1,10 @@
 import argparse
 import logging
 import tempfile
+from dataclasses import dataclass
 from pathlib import Path
 from types import SimpleNamespace
+from typing import Any
 from unittest.mock import patch
 from uuid import uuid4
 
@@ -61,6 +63,16 @@ class TypeAConfig(BaseConfig):
 class TypeBConfig(BaseConfig):
     def __call__(self):
         return "B"
+
+
+@dataclass(eq=False, kw_only=True)
+class ChildComponentConfig(BaseConfig):
+    name: str | None = None
+    model_type: str | None = None
+    defense: Any = None
+
+    def __call__(self):
+        return {}
 
 
 class TestUtilsAdditional:
@@ -168,6 +180,61 @@ class TestUtilsAdditional:
         cfg2.custom = {"a": {"n": 8, "m": 9}, "z": [1, 2]}
 
         assert hash(cfg1) == hash(cfg2)
+
+    def test_BaseConfig_fingerprint_is_stable_hex_string(self):
+        cfg1 = BaseConfig(score_dict={"alpha": 1, "beta": 2})
+        cfg2 = BaseConfig(score_dict={"beta": 2, "alpha": 1})
+
+        assert cfg1.fingerprint == cfg2.fingerprint
+        assert isinstance(cfg1.fingerprint, str)
+        assert len(cfg1.fingerprint) == 32
+        int(cfg1.fingerprint, 16)
+
+    def test_BaseConfig_hash_uses_fingerprint_value(self):
+        cfg = BaseConfig(score_dict={"alpha": 1})
+        assert cfg.__hash__() == int(cfg.fingerprint, 16)
+
+    def test_BaseConfig_resolve_name_prefers_canonical_name_field(self):
+        cfg = BaseConfig(score_dict={"alpha": 1})
+        cfg.name = "canonical-name"
+        cfg.attack_type = "legacy-attack-type"
+        assert cfg.resolve_name() == "canonical-name"
+
+    def test_BaseConfig_resolve_name_falls_back_to_legacy_alias(self):
+        cfg = BaseConfig(score_dict={"alpha": 1})
+        cfg.name= "legacy-dataset"
+        assert cfg.resolve_name() == "legacy-dataset"
+
+    def test_coerce_component_coerces_alias_to_canonical_name(self):
+        cfg = BaseConfig(score_dict={"alpha": 1})
+        child = cfg.coerce_component(
+            {"name": "torch.nn.Linear"},
+            ChildComponentConfig,
+        )
+        assert isinstance(child, ChildComponentConfig)
+        assert child.name== "torch.nn.Linear"
+        assert child.name == "torch.nn.Linear"
+
+    def test_coerce_component_rejects_blank_name_after_coercion(self):
+        cfg = BaseConfig(score_dict={"alpha": 1})
+        with pytest.raises(ValueError, match="Invalid name value"):
+            cfg.coerce_component({"name": "   "}, ChildComponentConfig)
+
+    def test_coerce_component_applies_defaults_only_when_missing(self):
+        cfg = BaseConfig(score_dict={"alpha": 1})
+        child = cfg.coerce_component(
+            {"name": "child-name"},
+            ChildComponentConfig,
+            overrides={"defense": "parent-defense"},
+        )
+        assert child.defense == "parent-defense"
+
+        child_explicit = cfg.coerce_component(
+            {"name": "child-name", "defense": "child-defense"},
+            ChildComponentConfig,
+            overrides={"defense": "parent-defense"},
+        )
+        assert child_explicit.defense == "child-defense"
 
     def test_resolve_torch_device_cuda_falls_back_to_best_available(self):
         try:

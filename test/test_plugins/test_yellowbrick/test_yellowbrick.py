@@ -293,7 +293,7 @@ class TestYellowbrickPlots:
         from deckard.model import ModelConfig
 
         model = ModelConfig(
-            model_type="sklearn.linear_model.LogisticRegression",
+            name="sklearn.linear_model.LogisticRegression",
         )
         files = FileConfig(
             data_file=f"{self.temp_dir}/data/rc_single.pkl",

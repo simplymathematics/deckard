@@ -147,7 +147,7 @@ def _make_anjana_data(n=40, monkeypatch=None, defense=None):
     from deckard.plugins.anjana.data import AnjanaDataConfig
 
     cfg = AnjanaDataConfig(
-        dataset_name="make_classification",
+        name="make_classification",
         data_params={
             "n_samples": n,
             "n_features": 6,
@@ -446,12 +446,12 @@ def test_anjana_attack_chain_type_and_scores(monkeypatch):
         defense={"name": "anjana.anonymity.k_anonymity", "k": 2},
     )
     model_cfg = ModelConfig(
-        model_type="sklearn.linear_model.LogisticRegression",
+        name="sklearn.linear_model.LogisticRegression",
         classifier=True,
         model_params={"max_iter": 30},
     )
     attack_cfg = AttackConfig(
-        attack_type="art.attacks.evasion.HopSkipJump",
+        name="art.attacks.evasion.HopSkipJump",
         attack_size=3,
         attack_params={
             "max_iter": 1,
@@ -503,7 +503,7 @@ def test_anjana_fairness_and_art_chain_type_and_transform(monkeypatch):
     }
 
     model_cfg = ModelConfig(
-        model_type="sklearn.linear_model.LogisticRegression",
+        name="sklearn.linear_model.LogisticRegression",
         classifier=True,
         model_params={"max_iter": 30},
         defense=DefensePipelineConfig(

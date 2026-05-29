@@ -19,6 +19,7 @@ from deckard.experiment.canon import (
     build_experiment_stage_cache_key,
     ensure_canonical_experiment_times,
     ensure_experiment_runtime_contract,
+    normalize_experiment_component,
     normalize_experiment_score_mode,
     normalize_experiment_score_modes,
     normalize_experiment_stage,
@@ -139,6 +140,35 @@ def test_build_experiment_params_manifest_includes_component_metadata():
     assert manifest["runtime_kwargs"]["k"] == 1
 
 
+def test_build_experiment_params_manifest_prefers_component_fingerprint_property():
+    class _Component:
+        alias = "component-alias"
+        fingerprint = "c" * 32
+
+        def to_dict(self, for_hash: bool = False):
+            _ = for_hash
+            return {"unused": True}
+
+    target = SimpleNamespace(
+        experiment_name="exp",
+        library="sklearn",
+        classifier=True,
+        evaluation_mode="standard",
+        score_mode="test",
+        random_state=7,
+        data=_Component(),
+        model=_Component(),
+        defense=None,
+        attack=None,
+        detector=None,
+        score=None,
+    )
+
+    manifest = build_experiment_params_manifest(target)
+    assert manifest["data"]["fingerprint"] == ("c" * 32)
+    assert manifest["model"]["fingerprint"] == ("c" * 32)
+
+
 def test_experiment_hook_graph_is_built_from_component_stage_contracts():
     graph = build_experiment_hook_graph()
     assert set(graph) == set(CANONICAL_EXPERIMENT_COMPONENT_STAGES)
@@ -194,6 +224,35 @@ def test_experiment_stage_param_key_paths_are_stage_scoped():
     assert "data" in load_paths
     assert "model" not in load_paths
     assert "model" in model_paths
+
+
+@pytest.mark.parametrize(
+    "alias,expected",
+    [
+        ("data_config", "data"),
+        ("model_config", "model"),
+        ("attack_config", "attack"),
+        ("scoring", "score"),
+    ],
+)
+def test_normalize_experiment_component_aliases(alias, expected):
+    assert normalize_experiment_component(alias) == expected
+
+
+def test_stage_param_key_paths_component_alias_uses_canonical_mapping():
+    data_paths = set(
+        build_experiment_stage_param_key_paths(stage="load", component="data_config"),
+    )
+    model_paths = set(
+        build_experiment_stage_param_key_paths(stage="model_score", component="model_config"),
+    )
+    attack_paths = set(
+        build_experiment_stage_param_key_paths(stage="attack_score", component="attack_config"),
+    )
+
+    assert "data" in data_paths
+    assert "model" in model_paths
+    assert "attack" in attack_paths
 
 
 def test_experiment_stage_param_subset_filters_manifest_by_stage_component():

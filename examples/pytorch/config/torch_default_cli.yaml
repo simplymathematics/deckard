@@ -3,6 +3,7 @@ defaults:
 - sampler@data.sampler: default
 - data: torch_mnist
 - model: default
+- trainer@model.trainer: pytorch
 - attack: fgm
 - files: default
 experiment_name: default

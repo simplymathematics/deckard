@@ -40,7 +40,7 @@ class TestRetrainingDefensePipeline:
             y_test=pd.Series(np.random.randint(0, 2, size=8)),
         )
         model = ModelConfig(
-            model_type="sklearn.linear_model.LogisticRegression",
+            name="sklearn.linear_model.LogisticRegression",
             classifier=True,
             model_params={"max_iter": 20},
         )
@@ -82,7 +82,7 @@ class TestRetrainingDefensePipeline:
         )
         defense_cfg = yaml.safe_load(config_path.read_text(encoding="utf-8"))
         defense = DefenseConfig(
-            model_type="torch.nn.Linear",
+            name="torch.nn.Linear",
             classifier=True,
             model_params={"in_features": 3, "out_features": 2},
             **defense_cfg,
@@ -137,7 +137,7 @@ class TestRetrainingDefensePipeline:
                 "max_iter": 1,
                 "num_random_init": 1,
             },
-            model_type=None,
+            name=None,
             classifier=True,
         )
 
@@ -155,7 +155,7 @@ class TestRetrainingDefensePipeline:
             y_test=pd.Series(np.random.randint(0, 2, size=8)),
         )
         model = ModelConfig(
-            model_type="sklearn.linear_model.LogisticRegression",
+            name="sklearn.linear_model.LogisticRegression",
             classifier=True,
             model_params={"max_iter": 20},
         )
@@ -190,7 +190,7 @@ class TestRetrainingDefensePipeline:
         defense = DefenseConfig(
             defense_name="art.defences.detector.evasion.BinaryInputDetector",
             defense_params={},
-            model_type="torch.nn.Linear",
+            name="torch.nn.Linear",
             classifier=True,
             model_params={"in_features": 3, "out_features": 2},
         )
@@ -237,7 +237,7 @@ class TestRetrainingDefensePipeline:
         defense = DefenseConfig(
             defense_name="art.defences.detector.evasion.BinaryInputDetector",
             defense_params={},
-            model_type=None,
+            name=None,
             classifier=True,
         )
 
@@ -265,7 +265,7 @@ class TestRetrainingDefensePipeline:
             y_test=pd.Series(np.random.randint(0, 2, size=8)),
         )
         model = ModelConfig(
-            model_type="sklearn.linear_model.LogisticRegression",
+            name="sklearn.linear_model.LogisticRegression",
             classifier=True,
             model_params={"max_iter": 20},
         )
@@ -286,7 +286,7 @@ class TestRetrainingDefensePipeline:
             y_test=pd.Series(np.random.randint(0, 2, size=8)),
         )
         model = ModelConfig(
-            model_type="sklearn.linear_model.LogisticRegression",
+            name="sklearn.linear_model.LogisticRegression",
             classifier=True,
             model_params={"max_iter": 20},
         )
@@ -328,7 +328,7 @@ class TestRetrainingDefensePipeline:
         )
         defense_cfg = yaml.safe_load(config_path.read_text(encoding="utf-8"))
         defense = DefenseConfig(
-            model_type="torch.nn.Linear",
+            name="torch.nn.Linear",
             classifier=True,
             model_params={"in_features": 3, "out_features": 2},
             **defense_cfg,
@@ -371,7 +371,7 @@ class TestRetrainingDefensePipeline:
         )
         defense_cfg = yaml.safe_load(config_path.read_text(encoding="utf-8"))
         defense = DefenseConfig(
-            model_type="torch.nn.Linear",
+            name="torch.nn.Linear",
             classifier=True,
             model_params={"in_features": 3, "out_features": 2},
             **defense_cfg,

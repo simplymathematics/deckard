@@ -3,7 +3,7 @@ from deckard.attack.base import AttackConfig
 
 def test_with_targeted_attack_labels_for_targeted_evasion_uses_target_token():
     cfg = AttackConfig(
-        attack_type="art.attacks.evasion.HopSkipJump",
+        name="art.attacks.evasion.HopSkipJump",
         attack_params={"targeted": True},
     )
 
@@ -18,7 +18,7 @@ def test_with_targeted_attack_labels_for_targeted_evasion_uses_target_token():
 
 def test_with_targeted_attack_labels_for_poisoning_uses_class_target_token():
     cfg = AttackConfig(
-        attack_type="art.attacks.poisoning.PoisoningAttackSVM",
+        name="art.attacks.poisoning.PoisoningAttackSVM",
         attack_params={"class_target": 7},
     )
 

@@ -140,7 +140,7 @@ class TestSeabornPlots:
 
     def test_seaborn_config_accepts_data_config_source(self):
         cfg_data = DataConfig(
-            dataset_name="make_classification",
+            name="make_classification",
             data_params={
                 "n_samples": 20,
                 "n_features": 4,

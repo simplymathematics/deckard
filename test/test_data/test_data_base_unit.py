@@ -17,6 +17,9 @@ from deckard.score.base import ScorerDictConfig
 
 def _basic_data_config(**overrides):
     params = load_canonical_data_profile("classification", framework="sklearn")
+    name = params.pop("name", None)
+    if name is not None and "name" not in params:
+        params["name"] = name
     params["data_params"].update(
         {
             "n_samples": 20,
@@ -37,6 +40,24 @@ def test_data_pipeline_config_is_legacy_alias():
     cfg = DataConfig(scorer="none")
     assert isinstance(cfg, DataConfig)
     assert cfg.pipeline is None
+
+
+def test_data_config_canonical_name_syncs_dataset_name():
+    cfg = DataConfig(name="make_classification", scorer="none")
+    assert cfg.name == "make_classification"
+
+
+def test_data_config_accepts_path_datasetlike_name(tmp_path):
+    csv_path = tmp_path / "dataset.csv"
+    csv_path.write_text("x,target\n1,0\n", encoding="utf-8")
+    cfg = DataConfig(name=csv_path, target="target", scorer="none")
+    assert cfg.name == str(csv_path)
+
+
+def test_data_config_runtime_uses_canonical_name_over_legacy_alias():
+    cfg = DataConfig(name="unknown_dataset", scorer="none")
+    assert cfg.resolve_name() == "unknown_dataset"
+    assert cfg.name == "unknown_dataset"
 
 
 def test_discover_lifelines_dataset_loaders_handles_import_error(monkeypatch):
@@ -148,7 +169,7 @@ def test_plugin_instantiation_and_hook_paths(monkeypatch):
 
     class PluginType:
         def after_load_data(self, cfg, **kwargs):
-            calls.append((cfg.dataset_name, kwargs))
+            calls.append((cfg.name, kwargs))
             return {"plugin": True}
 
     plugin_object = PluginType()
@@ -228,7 +249,7 @@ def test_resolve_sample_branches(monkeypatch):
 
 
 def test_load_lifelines_dataset_branches(monkeypatch):
-    cfg = _basic_data_config(dataset_name="lung", target=None, classifier=False)
+    cfg = _basic_data_config(name="lung", target=None, classifier=False)
 
     monkeypatch.setattr(
         data_declarations,
@@ -259,7 +280,7 @@ def test_load_lifelines_dataset_branches(monkeypatch):
 
 
 def test_load_yellowbrick_dataset_branches(monkeypatch):
-    cfg = _basic_data_config(dataset_name="energy", target=None, classifier=False)
+    cfg = _basic_data_config(name="energy", target=None, classifier=False)
 
     monkeypatch.setattr(
         data_declarations,
@@ -312,7 +333,7 @@ def test_load_yellowbrick_dataset_branches(monkeypatch):
 
 
 def test_load_data_routes_lifelines_aliases_and_csv_options(monkeypatch, tmp_path):
-    cfg = _basic_data_config(dataset_name="lung", target="target")
+    cfg = _basic_data_config(name="lung", target="target")
     monkeypatch.setattr(
         data_declarations,
         "discover_provider_dataset_loaders",
@@ -335,7 +356,7 @@ def test_load_data_routes_lifelines_aliases_and_csv_options(monkeypatch, tmp_pat
     )
 
     cfg = _basic_data_config(
-        dataset_name=csv_path.as_posix(),
+        name=csv_path.as_posix(),
         target="target",
         keep=["keep"],
     )
@@ -344,7 +365,7 @@ def test_load_data_routes_lifelines_aliases_and_csv_options(monkeypatch, tmp_pat
     assert cfg._X.name == "keep"
 
     cfg = _basic_data_config(
-        dataset_name=csv_path.as_posix(),
+        name=csv_path.as_posix(),
         target="target",
         drop=["drop"],
     )
@@ -352,7 +373,7 @@ def test_load_data_routes_lifelines_aliases_and_csv_options(monkeypatch, tmp_pat
     assert list(cfg._X.columns) == ["keep"]
 
     cfg = _basic_data_config(
-        dataset_name=csv_path.as_posix(),
+        name=csv_path.as_posix(),
         target="target",
         keep=["keep"],
         drop=["drop"],
@@ -362,7 +383,7 @@ def test_load_data_routes_lifelines_aliases_and_csv_options(monkeypatch, tmp_pat
 
 
 def test_load_data_routes_yellowbrick_aliases(monkeypatch):
-    cfg = _basic_data_config(dataset_name="energy", target="target")
+    cfg = _basic_data_config(name="energy", target="target")
     monkeypatch.setattr(
         data_declarations,
         "discover_provider_dataset_loaders",

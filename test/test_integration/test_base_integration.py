@@ -45,7 +45,7 @@ def _reset_hydra_state() -> None:
 
 def _base_classification_data():
     cfg = DataConfig(
-        dataset_name="make_classification",
+        name="make_classification",
         data_params={
             "n_samples": 40,
             "n_features": 10,
@@ -73,7 +73,7 @@ def _base_classification_data():
     [
         (
             DataConfig(
-                dataset_name="make_classification",
+                name="make_classification",
                 data_params={
                     "n_samples": 40,
                     "n_features": 10,
@@ -93,7 +93,7 @@ def _base_classification_data():
                 classifier=True,
             ),
             ModelConfig(
-                model_type="sklearn.linear_model.LogisticRegression",
+                name="sklearn.linear_model.LogisticRegression",
                 classifier=True,
                 model_params={"max_iter": 25},
             ),
@@ -101,7 +101,7 @@ def _base_classification_data():
         ),
         (
             DataConfig(
-                dataset_name="make_classification",
+                name="make_classification",
                 data_params={
                     "n_samples": 60,
                     "n_features": 10,
@@ -121,7 +121,7 @@ def _base_classification_data():
                 classifier=True,
             ),
             ModelConfig(
-                model_type="sklearn.ensemble.RandomForestClassifier",
+                name="sklearn.ensemble.RandomForestClassifier",
                 classifier=True,
                 model_params={"n_estimators": 25, "random_state": 42},
             ),
@@ -129,7 +129,7 @@ def _base_classification_data():
         ),
         (
             DataConfig(
-                dataset_name="make_regression",
+                name="make_regression",
                 data_params={
                     "n_samples": 40,
                     "n_features": 10,
@@ -147,7 +147,7 @@ def _base_classification_data():
                 classifier=False,
             ),
             ModelConfig(
-                model_type="sklearn.linear_model.LinearRegression",
+                name="sklearn.linear_model.LinearRegression",
                 classifier=False,
             ),
             "mse",
@@ -173,7 +173,7 @@ def test_base_data_model_end_to_end_without_attack(
     [
         (
             DataConfig(
-                dataset_name="make_classification",
+                name="make_classification",
                 data_params={
                     "n_samples": 60,
                     "n_features": 10,
@@ -193,12 +193,12 @@ def test_base_data_model_end_to_end_without_attack(
                 classifier=True,
             ),
             ModelConfig(
-                model_type="sklearn.linear_model.LogisticRegression",
+                name="sklearn.linear_model.LogisticRegression",
                 classifier=True,
                 model_params={"max_iter": 25},
             ),
             AttackConfig(
-                attack_type="art.attacks.evasion.FastGradientMethod",
+                name="art.attacks.evasion.FastGradientMethod",
                 attack_params={"eps": 0.1},
                 attack_size=20,
             ),
@@ -207,7 +207,7 @@ def test_base_data_model_end_to_end_without_attack(
         ),
         (
             DataConfig(
-                dataset_name="make_classification",
+                name="make_classification",
                 data_params={
                     "n_samples": 60,
                     "n_features": 10,
@@ -227,12 +227,12 @@ def test_base_data_model_end_to_end_without_attack(
                 classifier=True,
             ),
             ModelConfig(
-                model_type="sklearn.ensemble.RandomForestClassifier",
+                name="sklearn.ensemble.RandomForestClassifier",
                 classifier=True,
                 model_params={"n_estimators": 25, "random_state": 42},
             ),
             AttackConfig(
-                attack_type="art.attacks.evasion.BoundaryAttack",
+                name="art.attacks.evasion.BoundaryAttack",
                 attack_params={
                     "batch_size": 10,
                     "targeted": False,
@@ -273,7 +273,7 @@ def test_base_data_model_attack_end_to_end(
 def test_attack_scorer_with_data_and_model_context():
     data = _base_classification_data()
     model = ModelConfig(
-        model_type="sklearn.linear_model.LogisticRegression",
+        name="sklearn.linear_model.LogisticRegression",
         classifier=True,
         model_params={"max_iter": 25},
     )
@@ -321,7 +321,7 @@ def test_data_analysis_scorer_classification_with_reference_column():
 def test_data_analysis_scorer_regression_with_reference_column():
     data = _load_or_skip(
         DataConfig(
-            dataset_name="make_regression",
+            name="make_regression",
             data_params={
                 "n_samples": 40,
                 "n_features": 10,
@@ -357,14 +357,14 @@ def test_data_analysis_scorer_regression_with_reference_column():
 def test_defense_config_apply_to_trained_model():
     data = _base_classification_data()
     model = ModelConfig(
-        model_type="sklearn.linear_model.LogisticRegression",
+        name="sklearn.linear_model.LogisticRegression",
         classifier=True,
         model_params={"max_iter": 25},
     )
     model(data)
 
     defense = DefenseConfig(
-        model_type="sklearn.linear_model.LogisticRegression",
+        name="sklearn.linear_model.LogisticRegression",
         classifier=True,
         defense_name="art.defences.postprocessor.GaussianNoise",
         defense_params={"scale": 0.1},
@@ -379,7 +379,7 @@ def test_defense_config_apply_to_trained_model():
 def test_experiment_config_with_attack_end_to_end():
     experiment = ExperimentConfig(
         data=DataConfig(
-            dataset_name="make_classification",
+            name="make_classification",
             data_params={
                 "n_samples": 60,
                 "n_features": 10,
@@ -399,12 +399,12 @@ def test_experiment_config_with_attack_end_to_end():
             classifier=True,
         ),
         model=ModelConfig(
-            model_type="sklearn.linear_model.LogisticRegression",
+            name="sklearn.linear_model.LogisticRegression",
             classifier=True,
             model_params={"max_iter": 25},
         ),
         attack=AttackConfig(
-            attack_type="art.attacks.evasion.FastGradientMethod",
+            name="art.attacks.evasion.FastGradientMethod",
             attack_params={"eps": 0.1},
             attack_size=20,
         ),
@@ -424,7 +424,7 @@ def test_experiment_config_with_attack_end_to_end():
 def adult_base_data():
     return _load_or_skip(
         DataConfig(
-            dataset_name="adult",
+            name="adult",
             sampler={
                 "name": "split",
                 "train_size": 160,
@@ -440,7 +440,7 @@ def adult_base_data():
 def adult_base_model(adult_base_data):
     return _train_model_or_skip(
         ModelConfig(
-            model_type="sklearn.linear_model.LogisticRegression",
+            name="sklearn.linear_model.LogisticRegression",
             classifier=True,
             model_params={"max_iter": 25},
         ),
@@ -453,7 +453,7 @@ def adult_base_model(adult_base_data):
     [
         (
             lambda model: AttackConfig(
-                attack_type="art.attacks.evasion.BoundaryAttack",
+                name="art.attacks.evasion.BoundaryAttack",
                 attack_params={
                     "batch_size": 5,
                     "targeted": False,
@@ -472,7 +472,7 @@ def adult_base_model(adult_base_data):
         ),
         (
             lambda model: AttackConfig(
-                attack_type="art.attacks.inference.membership_inference.MembershipInferenceBlackBox",
+                name="art.attacks.inference.membership_inference.MembershipInferenceBlackBox",
                 attack_params={},
                 attack_size=30,
             ),
@@ -480,7 +480,7 @@ def adult_base_model(adult_base_data):
         ),
         (
             lambda model: AttackConfig(
-                attack_type="art.attacks.inference.attribute_inference.AttributeInferenceBlackBox",
+                name="art.attacks.inference.attribute_inference.AttributeInferenceBlackBox",
                 targeted_attribute=["age"],
                 attack_params={
                     "attack_model_type": "nn",
@@ -494,7 +494,7 @@ def adult_base_model(adult_base_data):
         ),
         (
             lambda model: AttackConfig(
-                attack_type="art.attacks.inference.reconstruction.DatabaseReconstruction",
+                name="art.attacks.inference.reconstruction.DatabaseReconstruction",
                 attack_params={"split": "train", "missing_index": 0},
                 attack_size=1,
             ),
@@ -502,7 +502,7 @@ def adult_base_model(adult_base_data):
         ),
     ],
 )
-def test_adult_all_attack_types_base(
+def test_adult_all_attack_families_base(
     attack_builder,
     expected_prefix,
     adult_base_data,
@@ -522,7 +522,7 @@ def test_adult_all_attack_types_base(
 
 def test_data_config_hash_stable_after_execution():
     cfg = DataConfig(
-        dataset_name="make_classification",
+        name="make_classification",
         data_params={
             "n_samples": 20,
             "n_features": 4,
@@ -548,7 +548,7 @@ def test_data_config_hash_stable_after_execution():
 def test_model_config_hash_stable_after_training():
     data = _base_classification_data()
     model = ModelConfig(
-        model_type="sklearn.linear_model.LogisticRegression",
+        name="sklearn.linear_model.LogisticRegression",
         classifier=True,
         model_params={"max_iter": 25},
     )
@@ -561,13 +561,13 @@ def test_model_config_hash_stable_after_training():
 def test_attack_config_hash_stable_after_execution():
     data = _base_classification_data()
     model = ModelConfig(
-        model_type="sklearn.linear_model.LogisticRegression",
+        name="sklearn.linear_model.LogisticRegression",
         classifier=True,
         model_params={"max_iter": 25},
     )
     model(data)
     attack = AttackConfig(
-        attack_type="art.attacks.evasion.FastGradientMethod",
+        name="art.attacks.evasion.FastGradientMethod",
         attack_params={"eps": 0.1},
         attack_size=10,
     )
@@ -579,7 +579,7 @@ def test_attack_config_hash_stable_after_execution():
 def test_experiment_config_hash_stable_after_execution():
     experiment = ExperimentConfig(
         data=DataConfig(
-            dataset_name="make_classification",
+            name="make_classification",
             data_params={
                 "n_samples": 40,
                 "n_features": 8,
@@ -599,7 +599,7 @@ def test_experiment_config_hash_stable_after_execution():
             classifier=True,
         ),
         model=ModelConfig(
-            model_type="sklearn.linear_model.LogisticRegression",
+            name="sklearn.linear_model.LogisticRegression",
             classifier=True,
             model_params={"max_iter": 25},
         ),
@@ -627,7 +627,7 @@ def test_data_config_scores_persist_and_reload():
 def test_model_config_scores_persist_and_reload():
     data = _base_classification_data()
     model = ModelConfig(
-        model_type="sklearn.linear_model.LogisticRegression",
+        name="sklearn.linear_model.LogisticRegression",
         classifier=True,
         model_params={"max_iter": 25},
     )
@@ -642,7 +642,7 @@ def test_model_config_scores_persist_and_reload():
 def test_model_config_object_pickle_roundtrip():
     data = _base_classification_data()
     model = ModelConfig(
-        model_type="sklearn.linear_model.LogisticRegression",
+        name="sklearn.linear_model.LogisticRegression",
         classifier=True,
         model_params={"max_iter": 25},
     )
@@ -660,7 +660,7 @@ def test_model_config_object_pickle_roundtrip():
 def test_experiment_config_scores_persist_and_reload():
     experiment = ExperimentConfig(
         data=DataConfig(
-            dataset_name="make_classification",
+            name="make_classification",
             data_params={
                 "n_samples": 40,
                 "n_features": 8,
@@ -680,7 +680,7 @@ def test_experiment_config_scores_persist_and_reload():
             classifier=True,
         ),
         model=ModelConfig(
-            model_type="sklearn.linear_model.LogisticRegression",
+            name="sklearn.linear_model.LogisticRegression",
             classifier=True,
             model_params={"max_iter": 25},
         ),
@@ -1027,10 +1027,10 @@ def test_cli_plot_composition_smoke():
 
 
 def test_artifact_loader_integration():
-    """Integration test for ArtifactLoaderConfig."""
-    from deckard.artifacts import ArtifactLoaderConfig
+    """Integration test for ArtifactLoaderMixin."""
+    from deckard.artifacts import ArtifactLoaderMixin
 
-    loader = ArtifactLoaderConfig(
+    loader = ArtifactLoaderMixin(
         id="integration-loader",
         path="artifacts/integration-artifact.json",
         payload_kind="data",

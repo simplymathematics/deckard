@@ -71,7 +71,7 @@ def test_post_init_rejects_unknown_kwargs_data_model_attack_detector_score_and_d
     with pytest.raises(TypeError, match="unexpected keyword argument"):
         _call_with_unknown_kwargs(
             DataConfig,
-            dataset_name="adult",
+            name="adult",
             __phase4_unknown__=1,
         )
 
@@ -85,7 +85,7 @@ def test_post_init_rejects_unknown_kwargs_data_model_attack_detector_score_and_d
     with pytest.raises(TypeError, match="unexpected keyword argument"):
         _call_with_unknown_kwargs(
             AttackConfig,
-            attack_type=None,
+            name="art.attacks.evasion.FastGradientMethod",
             attack_params={"_target_": "builtins.object"},
             __phase4_unknown__=1,
         )

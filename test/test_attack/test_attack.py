@@ -24,9 +24,9 @@ from deckard.score.attack import FairlearnAttackScorerConfig
 class TestAttackConfig:
     def setup_method(self):
         self.attack_params = {}
-        self.attack_type = "art.attacks.evasion.FastGradientMethod"
+        self.name= "art.attacks.evasion.FastGradientMethod"
         self.attack = AttackConfig(
-            attack_type=self.attack_type,
+            name=self.name,
             attack_params=self.attack_params,
         )
         self.tmpdir = tempfile.mkdtemp()
@@ -60,30 +60,35 @@ class TestAttackConfig:
         return AttackConfig(**config)
 
     def test_post_init(self):
-        assert hasattr(self.attack, "attack_type")
+        assert hasattr(self.attack, "name")
         assert hasattr(self.attack, "attack_params")
+
+    def test_attack_config_canonical_name_field(self):
+        cfg = AttackConfig(name="art.attacks.evasion.FastGradientMethod")
+        assert cfg.name == "art.attacks.evasion.FastGradientMethod"
+        assert cfg.name == "art.attacks.evasion.FastGradientMethod"
 
     def test_post_init_scorer_dict_and_poisoning_validation_paths(self):
         cfg = AttackConfig(
-            attack_type="art.attacks.inference.membership_inference.MembershipInferenceBlackBox",
+            name="art.attacks.inference.membership_inference.MembershipInferenceBlackBox",
             scorer={},
         )
         assert cfg.scorer is not None
 
         cfg_default = AttackConfig(
-            attack_type="art.attacks.inference.membership_inference.MembershipInferenceBlackBox",
+            name="art.attacks.inference.membership_inference.MembershipInferenceBlackBox",
             scorer="default",
         )
         assert cfg_default.scorer is not None
 
         cfg_auto = AttackConfig(
-            attack_type="art.attacks.inference.membership_inference.MembershipInferenceBlackBox",
+            name="art.attacks.inference.membership_inference.MembershipInferenceBlackBox",
             scorer="auto",
         )
         assert cfg_auto.scorer is not None
 
         cfg_target = AttackConfig(
-            attack_type="art.attacks.inference.membership_inference.MembershipInferenceBlackBox",
+            name="art.attacks.inference.membership_inference.MembershipInferenceBlackBox",
             scorer={
                 "_target_": "deckard.score.attack.FairlearnAttackScorerConfig",
             },
@@ -91,7 +96,7 @@ class TestAttackConfig:
         assert cfg_target.scorer.__class__.__name__ == "FairlearnAttackScorerConfig"
 
         cfg_name = AttackConfig(
-            attack_type="art.attacks.inference.membership_inference.MembershipInferenceBlackBox",
+            name="art.attacks.inference.membership_inference.MembershipInferenceBlackBox",
             scorer={
                 "name": "deckard.score.attack.FairlearnAttackScorerConfig",
             },
@@ -99,20 +104,20 @@ class TestAttackConfig:
         assert cfg_name.scorer.__class__.__name__ == "FairlearnAttackScorerConfig"
 
         cfg_path = AttackConfig(
-            attack_type="art.attacks.inference.membership_inference.MembershipInferenceBlackBox",
+            name="art.attacks.inference.membership_inference.MembershipInferenceBlackBox",
             scorer="deckard.score.attack.FairlearnAttackScorerConfig",
         )
         assert cfg_path.scorer.__class__.__name__ == "FairlearnAttackScorerConfig"
 
         with pytest.raises(TypeError, match="_score"):
             AttackConfig(
-                attack_type="art.attacks.inference.membership_inference.MembershipInferenceBlackBox",
+                name="art.attacks.inference.membership_inference.MembershipInferenceBlackBox",
                 scorer=123,
             )
 
         with pytest.raises(ValueError, match="Missing"):
             AttackConfig(
-                attack_type="art.attacks.poisoning.gradient_matching_attack.GradientMatchingAttack",
+                name="art.attacks.poisoning.gradient_matching_attack.GradientMatchingAttack",
                 attack_params={},
             )
 
@@ -121,16 +126,16 @@ class TestAttackConfig:
             match="class_source and class_target to differ",
         ):
             AttackConfig(
-                attack_type="art.attacks.poisoning.gradient_matching_attack.GradientMatchingAttack",
+                name="art.attacks.poisoning.gradient_matching_attack.GradientMatchingAttack",
                 attack_params={"class_source": 1, "class_target": 1},
             )
 
     def test_attack_path_properties_and_kind(self):
         attack = AttackConfig(
-            attack_type="art.attacks.inference.membership_inference.MembershipInferenceBlackBox",
+            name="art.attacks.inference.membership_inference.MembershipInferenceBlackBox",
         )
         assert attack.attack_family == "inference"
-        assert attack.attack_subtype == "membership_inference"
+        assert attack.attack_sub_family == "membership_inference"
         assert attack.attack_kind == "membership"
 
     def test_poisoning_svm_initialization_injects_train_and_val_arrays(self):
@@ -154,7 +159,7 @@ class TestAttackConfig:
         model = SVC(probability=True)
         model.fit(_TinyData.X_train, _TinyData.y_train)
         attack = AttackConfig(
-            attack_type="art.attacks.poisoning.PoisoningAttackSVM",
+            name="art.attacks.poisoning.PoisoningAttackSVM",
             attack_params={
                 "step": 0.1,
                 "eps": 0.2,
@@ -168,12 +173,12 @@ class TestAttackConfig:
             "deckard.attack.base.resolve_class",
             return_value=DummyPoisoningAttackSVM,
         ):
-            initialized_attack, _, attack_type, _ = attack._initialize_attack(
+            initialized_attack, _, attack_family, _ = attack._initialize_attack(
                 model,
                 _TinyData(),
             )
 
-        assert attack_type == "poisoning"
+        assert attack_family == "poisoning"
         assert getattr(initialized_attack.classifier, "clip_values", None) is not None
         assert "x_train" in initialized_attack.kwargs
         assert "y_train" in initialized_attack.kwargs
@@ -216,17 +221,17 @@ class TestAttackConfig:
         )
 
         data = type("D", (), {"classifier": True})()
-        attack = AttackConfig(attack_type="art.attacks.evasion.FastGradientMethod")
+        attack = AttackConfig(name="art.attacks.evasion.FastGradientMethod")
         with pytest.raises(ValueError, match="not supported for regression"):
             attack._validate_attack_task_compatibility(data, LinearRegression())
 
     def test_score_and_static_normalizers(self):
-        attack = AttackConfig(attack_type="art.attacks.evasion.FastGradientMethod")
+        attack = AttackConfig(name="art.attacks.evasion.FastGradientMethod")
         attack.scorer = None
         with pytest.raises(ValueError, match="must be configured"):
             attack._score("evasion", [0, 1], [0, 1])
 
-        attack = AttackConfig(attack_type="art.attacks.evasion.FastGradientMethod")
+        attack = AttackConfig(name="art.attacks.evasion.FastGradientMethod")
         assert not attack._is_regression_prediction_output(
             [0, 1],
             [[0.2, 0.8], [0.6, 0.4]],
@@ -274,7 +279,7 @@ class TestAttackConfig:
         assert scorer_cfg is not None
 
     def test_attack_mode_rejects_defense_stage_aliases(self):
-        attack = AttackConfig(attack_type="art.attacks.evasion.FastGradientMethod")
+        attack = AttackConfig(name="art.attacks.evasion.FastGradientMethod")
         with pytest.raises(ValueError, match="Unsupported attack mode"):
             attack.set_mode("post-defense")
 
@@ -286,7 +291,7 @@ class TestAttackConfig:
 
     def test_attack_mode_auto_defaults_by_subtype(self):
         membership = AttackConfig(
-            attack_type=(
+            name=(
                 "art.attacks.inference.membership_inference."
                 "MembershipInferenceBlackBox"
             ),
@@ -294,37 +299,37 @@ class TestAttackConfig:
         assert (
             membership.resolve_mode_for_attack_kind(
                 "membership",
-                attack_subtype="membership_inference",
+                attack_sub_family="membership_inference",
             )
             == "train"
         )
 
         reconstruction = AttackConfig(
-            attack_type=(
+            name=(
                 "art.attacks.inference.reconstruction.DatabaseReconstruction"
             ),
         )
         assert (
             reconstruction.resolve_mode_for_attack_kind(
                 "reconstruction",
-                attack_subtype="reconstruction",
+                attack_sub_family="reconstruction",
             )
             == "train"
         )
 
         inversion = AttackConfig(
-            attack_type="art.attacks.inference.model_inversion.MIFace",
+            name="art.attacks.inference.model_inversion.MIFace",
         )
         assert (
             inversion.resolve_mode_for_attack_kind(
                 "model_inversion",
-                attack_subtype="model_inversion",
+                attack_sub_family="model_inversion",
             )
             == "test"
         )
 
     def test_attack_runtime_contract_defaults_and_stage_metadata(self):
-        attack = AttackConfig(attack_type="art.attacks.evasion.FastGradientMethod")
+        attack = AttackConfig(name="art.attacks.evasion.FastGradientMethod")
         assert isinstance(attack.score_dict, dict)
         assert attack.attack_predictions is None
         assert attack.mode == "auto"
@@ -332,7 +337,7 @@ class TestAttackConfig:
         assert normalize_attack_stage("after_attack") == "post-attack"
 
         poisoning = AttackConfig(
-            attack_type=(
+            name=(
                 "art.attacks.poisoning.gradient_matching_attack."
                 "GradientMatchingAttack"
             ),
@@ -342,7 +347,7 @@ class TestAttackConfig:
 
     def test_attack_mode_split_override_precedence(self):
         attack = AttackConfig(
-            attack_type="art.attacks.evasion.FastGradientMethod",
+            name="art.attacks.evasion.FastGradientMethod",
             attack_params={"split": "train"},
         )
         attack.set_mode("val")
@@ -372,7 +377,7 @@ class TestAttackConfig:
                 self.last_kwargs = kwargs
                 return {"attack_score_time": 0.01, "evasion_success": 0.2}
 
-        attack = AttackConfig(attack_type="art.attacks.evasion.FastGradientMethod")
+        attack = AttackConfig(name="art.attacks.evasion.FastGradientMethod")
         dummy = _DummyScorer()
         attack.scorer = dummy
 
@@ -399,7 +404,7 @@ class TestAttackConfig:
         assert "stage" not in dummy.last_kwargs
 
     def test_target_to_class_labels_invalid_shape_raises(self):
-        attack = AttackConfig(attack_type="art.attacks.evasion.FastGradientMethod")
+        attack = AttackConfig(name="art.attacks.evasion.FastGradientMethod")
         with pytest.raises(ValueError, match="Unsupported target shape"):
             attack._target_to_class_labels(np.array(5))
 
@@ -407,22 +412,22 @@ class TestAttackConfig:
         from deckard.data import DataConfig
         from deckard.model import ModelConfig
 
-        data = DataConfig(dataset_name="adult")
+        data = DataConfig(name="adult")
         data()
-        model = ModelConfig(model_type="sklearn.linear_model.LogisticRegression")
+        model = ModelConfig(name="sklearn.linear_model.LogisticRegression")
         model(data=data)
         path = Path(self.attack_file)
         if path.exists():
             path.unlink()
         loaded_attack = AttackConfig(
-            attack_type=self.attack_type,
+            name=self.name,
             attack_params=self.attack_params,
         )
         loaded_attack(data=data, model=model, attack_file=self.attack_file)
         self.attack.save(self.attack_file)
         assert Path(self.attack_file).exists()
         loaded_attack.load(self.attack_file)
-        assert loaded_attack.attack_type == self.attack.attack_type
+        assert loaded_attack.name == self.attack.name
         assert loaded_attack.attack_params == self.attack.attack_params
 
     def test_attack_metrics(self):
@@ -440,7 +445,7 @@ class TestAttackConfig:
 
     def test_evade_includes_benign_scores(self):
         attack = AttackConfig(
-            attack_type="art.attacks.evasion.FastGradientMethod",
+            name="art.attacks.evasion.FastGradientMethod",
             attack_size=6,
         )
 
@@ -470,7 +475,7 @@ class TestAttackConfig:
                 x[:, 0] = 1.0 - x[:, 0]
                 return x
 
-        runtime = attack._with_attack_context(attack_type="evasion", attack_subtype="")
+        runtime = attack._with_attack_context(attack_family="evasion", attack_sub_family="")
         result = runtime.evade(
             data=_TinyData(),
             art_model=_FakeArtModel(),
@@ -485,7 +490,7 @@ class TestAttackConfig:
 
     def test_poison_attack_metrics(self):
         attack = AttackConfig(
-            attack_type="art.attacks.poisoning.gradient_matching_attack.GradientMatchingAttack",
+            name="art.attacks.poisoning.gradient_matching_attack.GradientMatchingAttack",
             attack_params={"class_source": 0, "class_target": 1},
             attack_size=6,
             mode="test",
@@ -598,7 +603,7 @@ class TestAttackConfig:
 
     def test_call_membership_inference(self):
         attack = AttackConfig(
-            attack_type="art.attacks.inference.membership_inference.MembershipInferenceBlackBox",
+            name="art.attacks.inference.membership_inference.MembershipInferenceBlackBox",
             attack_params={},
         )
 
@@ -638,7 +643,7 @@ class TestAttackConfig:
 
     def test_call_attribute_inference(self):
         attack = AttackConfig(
-            attack_type="art.attacks.inference.attribute_inference.AttributeInferenceBlackBox",
+            name="art.attacks.inference.attribute_inference.AttributeInferenceBlackBox",
             targeted_attribute="age",
             attack_params={},
         )
@@ -700,8 +705,8 @@ class TestAttackConfig:
                 return np.asarray(x, dtype=np.float32) + (0.05 * y)
 
         runtime = attack._with_attack_context(
-            attack_type="inference",
-            attack_subtype="model_inversion",
+            attack_family="inference",
+            attack_sub_family="model_inversion",
         )
         scores = runtime.infer_model_inversion(
             data=_TinyData(),
@@ -790,8 +795,8 @@ class TestAttackConfig:
                 return x_guess, y_guess
 
         runtime = attack._with_attack_context(
-            attack_type="inference",
-            attack_subtype="reconstruction",
+            attack_family="inference",
+            attack_sub_family="reconstruction",
         )
         scores = runtime.infer_database_reconstruction(
             data=_TinyData(),
@@ -858,7 +863,7 @@ class TestAttackConfig:
 
     def test_call_attribute_inference_requires_targeted_attribute(self):
         attack = AttackConfig(
-            attack_type="art.attacks.inference.attribute_inference.AttributeInferenceBlackBox",
+            name="art.attacks.inference.attribute_inference.AttributeInferenceBlackBox",
             targeted_attribute=None,
             attack_params={},
         )
@@ -877,7 +882,7 @@ class TestAttackConfig:
 
     def test_call_inference_unknown_subtype_raises(self):
         attack = AttackConfig(
-            attack_type="art.attacks.inference.membership_inference.MembershipInferenceBlackBox",
+            name="art.attacks.inference.membership_inference.MembershipInferenceBlackBox",
             attack_params={},
         )
         with patch.object(
@@ -891,13 +896,13 @@ class TestAttackConfig:
     def test_call_poisoning_requires_source_and_target_classes(self):
         with pytest.raises(ValueError):
             AttackConfig(
-                attack_type="art.attacks.poisoning.gradient_matching_attack.GradientMatchingAttack",
+                name="art.attacks.poisoning.gradient_matching_attack.GradientMatchingAttack",
                 attack_params={},
             )
 
     def test_call_extraction_requires_classification_task(self):
         attack = AttackConfig(
-            attack_type="art.attacks.extraction.CopycatCNN",
+            name="art.attacks.extraction.CopycatCNN",
             attack_params={},
         )
 
@@ -914,7 +919,7 @@ class TestAttackConfig:
 
     def test_call_extraction_requires_nn_classifier(self):
         attack = AttackConfig(
-            attack_type="art.attacks.extraction.CopycatCNN",
+            name="art.attacks.extraction.CopycatCNN",
             attack_params={},
         )
 
@@ -931,7 +936,7 @@ class TestAttackConfig:
 
     def test_call_extraction_scores_victim_and_extracted_classifiers(self):
         attack = AttackConfig(
-            attack_type="art.attacks.extraction.CopycatCNN",
+            name="art.attacks.extraction.CopycatCNN",
             attack_params={},
             attack_size=4,
             mode="test",
@@ -997,7 +1002,7 @@ class TestAttackConfig:
         data = TinyData()
         model = LinearRegression().fit([[0.0, 1.0], [1.0, 0.0]], [0.1, 0.9])
         attack = AttackConfig(
-            attack_type="art.attacks.evasion.FastGradientMethod",
+            name="art.attacks.evasion.FastGradientMethod",
             attack_params={"eps": 0.1},
         )
         with patch.object(
@@ -1012,7 +1017,7 @@ class TestAttackConfig:
 
     def test_initialize_attack_rejects_unsupported_type(self):
         attack = AttackConfig(
-            attack_type="art.attacks.foo.Bar",
+            name="art.attacks.foo.Bar",
             attack_params={},
         )
         model = RandomForestClassifier().fit([[0, 1], [1, 0]], [0, 1])
@@ -1048,7 +1053,7 @@ class TestAttackConfig:
 
         model = TinyLinear()
         attack = AttackConfig(
-            attack_type="art.attacks.evasion.FastGradientMethod",
+            name="art.attacks.evasion.FastGradientMethod",
             attack_params={"eps": 0.1},
             attack_size=8,
         )
@@ -1067,7 +1072,7 @@ class TestAttackConfig:
             data.y_train.values,
         )
         attack = AttackConfig(
-            attack_type="art.attacks.inference.membership_inference.MembershipInferenceBlackBox",
+            name="art.attacks.inference.membership_inference.MembershipInferenceBlackBox",
             attack_params={},
             attack_size=20,
         )
@@ -1085,7 +1090,7 @@ class TestAttackConfig:
             data.y_train.values,
         )
         attack = AttackConfig(
-            attack_type="art.attacks.inference.attribute_inference.AttributeInferenceBlackBox",
+            name="art.attacks.inference.attribute_inference.AttributeInferenceBlackBox",
             targeted_attribute=["sensitive"],
             attack_params={
                 "attack_model_type": "lr",
@@ -1148,7 +1153,7 @@ class TestAttackConfig:
             data.y_train.values,
         )
         attack = AttackConfig(
-            attack_type="art.attacks.inference.reconstruction.DatabaseReconstruction",
+            name="art.attacks.inference.reconstruction.DatabaseReconstruction",
             attack_params={"split": "train", "missing_index": 0},
             attack_size=1,
         )
@@ -1161,7 +1166,7 @@ class TestAttackConfig:
 
     def test_hash_stable_after_call_for_attack_config(self):
         attack = AttackConfig(
-            attack_type="art.attacks.evasion.FastGradientMethod",
+            name="art.attacks.evasion.FastGradientMethod",
             attack_params={},
         )
         data = TinyData()
@@ -1199,7 +1204,7 @@ class TestPytorchAttackConfig:
         from deckard.frameworks.pytorch.attack import PytorchAttackConfig
 
         cfg = PytorchAttackConfig(
-            attack_type="art.attacks.evasion.FastGradientMethod",
+            name="art.attacks.evasion.FastGradientMethod",
         )
         t = self.torch.randn(4, 3)
         result = cfg._prepare_features_for_attack(t)
@@ -1209,7 +1214,7 @@ class TestPytorchAttackConfig:
         from deckard.frameworks.pytorch.attack import PytorchAttackConfig
 
         cfg = PytorchAttackConfig(
-            attack_type="art.attacks.evasion.FastGradientMethod",
+            name="art.attacks.evasion.FastGradientMethod",
         )
         df = pd.DataFrame({"a": [1.0, 2.0], "b": [3.0, 4.0]})
         result = cfg._prepare_features_for_attack(df)
@@ -1219,7 +1224,7 @@ class TestPytorchAttackConfig:
         from deckard.frameworks.pytorch.attack import PytorchAttackConfig
 
         cfg = PytorchAttackConfig(
-            attack_type="art.attacks.evasion.FastGradientMethod",
+            name="art.attacks.evasion.FastGradientMethod",
         )
         s = pd.Series([1.0, 2.0, 3.0])
         result = cfg._prepare_features_for_attack(s)
@@ -1229,7 +1234,7 @@ class TestPytorchAttackConfig:
         from deckard.frameworks.pytorch.attack import PytorchAttackConfig
 
         cfg = PytorchAttackConfig(
-            attack_type="art.attacks.evasion.FastGradientMethod",
+            name="art.attacks.evasion.FastGradientMethod",
         )
         arr = np.array([1.0, 2.0])
         result = cfg._prepare_features_for_attack(arr)
@@ -1240,7 +1245,7 @@ class TestPytorchAttackConfig:
         from deckard.frameworks.pytorch.attack import PytorchAttackConfig
 
         cfg = PytorchAttackConfig(
-            attack_type="art.attacks.evasion.FastGradientMethod",
+            name="art.attacks.evasion.FastGradientMethod",
         )
         t = self.torch.tensor([0, 1, 1])
         result = cfg._prepare_labels_for_attack(t)
@@ -1250,7 +1255,7 @@ class TestPytorchAttackConfig:
         from deckard.frameworks.pytorch.attack import PytorchAttackConfig
 
         cfg = PytorchAttackConfig(
-            attack_type="art.attacks.evasion.FastGradientMethod",
+            name="art.attacks.evasion.FastGradientMethod",
         )
         df = pd.DataFrame({"label": [0, 1]})
         result = cfg._prepare_labels_for_attack(df)
@@ -1260,7 +1265,7 @@ class TestPytorchAttackConfig:
         from deckard.frameworks.pytorch.attack import PytorchAttackConfig
 
         cfg = PytorchAttackConfig(
-            attack_type="art.attacks.evasion.FastGradientMethod",
+            name="art.attacks.evasion.FastGradientMethod",
         )
         s = pd.Series([0, 1, 0])
         result = cfg._prepare_labels_for_attack(s)
@@ -1270,7 +1275,7 @@ class TestPytorchAttackConfig:
         from deckard.frameworks.pytorch.attack import PytorchAttackConfig
 
         cfg = PytorchAttackConfig(
-            attack_type="art.attacks.evasion.FastGradientMethod",
+            name="art.attacks.evasion.FastGradientMethod",
         )
         arr = np.array([0, 1])
         result = cfg._prepare_labels_for_attack(arr)
@@ -1281,7 +1286,7 @@ class TestPytorchAttackConfig:
         from deckard.frameworks.pytorch.attack import PytorchAttackConfig
 
         cfg = PytorchAttackConfig(
-            attack_type="art.attacks.evasion.FastGradientMethod",
+            name="art.attacks.evasion.FastGradientMethod",
         )
         t = self.torch.randn(4, 3)
         result = cfg._prepare_features_for_art(t)
@@ -1313,11 +1318,11 @@ class TestPytorchAttackConfig:
             _sensitive_test=None,
         )
         cfg = PytorchAttackConfig(
-            attack_type="art.attacks.evasion.FastGradientMethod",
+            name="art.attacks.evasion.FastGradientMethod",
             attack_size=8,
         )
 
-        runtime = cfg._with_attack_context(attack_type="evasion", attack_subtype="")
+        runtime = cfg._with_attack_context(attack_family="evasion", attack_sub_family="")
         scores = runtime.evade(data, _DummyArtModel(), _DummyAttack())
         assert "evasion_accuracy" in scores
         assert isinstance(runtime.attack, np.ndarray)
@@ -1753,7 +1758,7 @@ class TestPostInitBranches:
         from deckard.score.attack import AttackScorerConfig
 
         cfg = AttackConfig(
-            attack_type="art.attacks.evasion.FastGradientMethod",
+            name="art.attacks.evasion.FastGradientMethod",
             scorer=AttackScorerConfig,  # pass the class, not an instance
         )
         assert isinstance(cfg.scorer, AttackScorerConfig)
@@ -1765,7 +1770,7 @@ class TestPostInitBranches:
             {"_target_": "deckard.score.attack.AttackScorerConfig"},
         )
         cfg = AttackConfig(
-            attack_type="art.attacks.evasion.FastGradientMethod",
+            name="art.attacks.evasion.FastGradientMethod",
             scorer=dc,
         )
         # scorer should have been coerced to a dict then processed
@@ -1774,7 +1779,7 @@ class TestPostInitBranches:
     def test_scorer_null_string(self):
         # "null" should be treated as None -> default scorer
         cfg = AttackConfig(
-            attack_type="art.attacks.evasion.FastGradientMethod",
+            name="art.attacks.evasion.FastGradientMethod",
             scorer="null",
         )
         assert hasattr(cfg.scorer, "_score")
@@ -1783,7 +1788,7 @@ class TestPostInitBranches:
         from deckard.score.attack import AttackScorerConfig
 
         cfg = AttackConfig(
-            attack_type="art.attacks.evasion.FastGradientMethod",
+            name="art.attacks.evasion.FastGradientMethod",
             scorer={},  # empty dict, no _target_
         )
         assert isinstance(cfg.scorer, AttackScorerConfig)
@@ -1807,7 +1812,7 @@ class TestInitializeAttackBranches:
             self.data.y_train.values,
         )
         attack = AttackConfig(
-            attack_type="art.attacks.evasion.FastGradientMethod",
+            name="art.attacks.evasion.FastGradientMethod",
             attack_params={"eps": 0.1},
             attack_size=6,
         )
@@ -1821,7 +1826,7 @@ class TestInitializeAttackBranches:
     def test_unsupported_model_raises_value_error(self):
         """Cover the 'else: raise ValueError' branch for unknown model types."""
         attack = AttackConfig(
-            attack_type="art.attacks.evasion.FastGradientMethod",
+            name="art.attacks.evasion.FastGradientMethod",
             attack_params={},
         )
         with pytest.raises((ValueError, Exception)):
@@ -1830,7 +1835,7 @@ class TestInitializeAttackBranches:
     def test_targeted_attribute_string_current_behavior_does_not_raise(self):
         """Document current behavior: target_index field bypasses missing-column check."""
         attack = AttackConfig(
-            attack_type="art.attacks.inference.attribute_inference.AttributeInferenceBlackBox",
+            name="art.attacks.inference.attribute_inference.AttributeInferenceBlackBox",
             targeted_attribute="nonexistent_feature",
             attack_params={},
         )
@@ -1854,7 +1859,7 @@ class TestInitializeAttackBranches:
             self.data.y_train.values,
         )
         attack = AttackConfig(
-            attack_type="art.attacks.inference.membership_inference.MembershipInferenceBlackBox",
+            name="art.attacks.inference.membership_inference.MembershipInferenceBlackBox",
             attack_params={"attack_model": 12345},  # invalid type
         )
         with pytest.raises((ValueError, Exception)):
@@ -1880,7 +1885,7 @@ class TestInitializeAttackBranches:
         )
         self.data._sensitive_test = np.zeros(len(self.data.X_test))
         attack = AttackConfig(
-            attack_type="art.attacks.evasion.FastGradientMethod",
+            name="art.attacks.evasion.FastGradientMethod",
             attack_params={"eps": 0.1},
         )
         fake_fgm = MagicMock()
@@ -1896,7 +1901,7 @@ class TestInitializeAttackBranches:
 
         model = LogisticRegression(max_iter=200)
         attack = AttackConfig(
-            attack_type="art.attacks.evasion.FastGradientMethod",
+            name="art.attacks.evasion.FastGradientMethod",
             attack_params={"eps": 0.1},
         )
         fake_attack_cls = MagicMock(return_value=MagicMock())
@@ -1929,7 +1934,7 @@ class TestInitializeAttackBranches:
 
         model = _GenericCls()
         attack = AttackConfig(
-            attack_type="art.attacks.evasion.FastGradientMethod",
+            name="art.attacks.evasion.FastGradientMethod",
             attack_params={"eps": 0.1},
         )
         fake_attack_cls = MagicMock(return_value=MagicMock())
@@ -1962,7 +1967,7 @@ class TestInitializeAttackBranches:
         self.data._sensitive_test = None
         self.data._sensitive_train = np.zeros(len(self.data.X_train))
         attack = AttackConfig(
-            attack_type="art.attacks.evasion.FastGradientMethod",
+            name="art.attacks.evasion.FastGradientMethod",
             attack_params={"eps": 0.1},
         )
         fake_attack_cls = MagicMock(return_value=MagicMock())
@@ -1984,7 +1989,7 @@ class TestInitializeAttackBranches:
 
         model = _GenericReg().fit(self.data.X_train.values, self.data.y_train.values)
         attack = AttackConfig(
-            attack_type="art.attacks.evasion.FastGradientMethod",
+            name="art.attacks.evasion.FastGradientMethod",
             attack_params={"eps": 0.1},
         )
         fake_attack_cls = MagicMock(return_value=MagicMock())
@@ -1995,7 +2000,7 @@ class TestInitializeAttackBranches:
     def test_unsupported_model_type_reaches_value_error_branch(self):
         """Cover explicit unsupported model type ValueError branch (line 470)."""
         attack = AttackConfig(
-            attack_type="art.attacks.evasion.FastGradientMethod",
+            name="art.attacks.evasion.FastGradientMethod",
             attack_params={"eps": 0.1},
         )
 
@@ -2022,7 +2027,7 @@ class TestInitializeAttackBranches:
         )
         attack_model_dc = OmegaConf.create({"classifier": True})
         attack = AttackConfig(
-            attack_type="art.attacks.inference.membership_inference.MembershipInferenceBlackBox",
+            name="art.attacks.inference.membership_inference.MembershipInferenceBlackBox",
             attack_params={"attack_model": attack_model_dc},
         )
 
@@ -2054,7 +2059,7 @@ class TestInitializeAttackBranches:
         )
         fake_cfg = _PickleableFakeModelConfig()
         attack = AttackConfig(
-            attack_type="art.attacks.inference.membership_inference.MembershipInferenceBlackBox",
+            name="art.attacks.inference.membership_inference.MembershipInferenceBlackBox",
             attack_params={"attack_model": fake_cfg},
         )
 
@@ -2081,7 +2086,7 @@ class TestInitializeAttackBranches:
                 pickle.dump(_PickleableFakeModelConfig(), f)
 
             attack = AttackConfig(
-                attack_type="art.attacks.inference.membership_inference.MembershipInferenceBlackBox",
+                name="art.attacks.inference.membership_inference.MembershipInferenceBlackBox",
                 attack_params={"attack_model": attack_model_path},
             )
             fake_attack_cls = MagicMock(return_value=MagicMock())
@@ -2113,7 +2118,7 @@ class TestCallCachingPaths:
 
     def _base_attack(self):
         return AttackConfig(
-            attack_type="art.attacks.evasion.FastGradientMethod",
+            name="art.attacks.evasion.FastGradientMethod",
             attack_size=6,
         )
 
@@ -2261,7 +2266,7 @@ class TestCallCachingPaths:
 
 class TestGetAttackSubset:
     def test_raises_for_unsupported_type(self):
-        attack = AttackConfig(attack_type="art.attacks.evasion.FastGradientMethod")
+        attack = AttackConfig(name="art.attacks.evasion.FastGradientMethod")
         attack.attack_size = 4
 
         class _BadData:
@@ -2272,7 +2277,7 @@ class TestGetAttackSubset:
             attack.get_attack_subset(_BadData())
 
     def test_returns_subset_from_numpy(self):
-        attack = AttackConfig(attack_type="art.attacks.evasion.FastGradientMethod")
+        attack = AttackConfig(name="art.attacks.evasion.FastGradientMethod")
         attack.attack_size = 3
 
         class _Data:
@@ -2284,7 +2289,7 @@ class TestGetAttackSubset:
         assert len(x_sub) == 3
 
     def test_train_subset(self):
-        attack = AttackConfig(attack_type="art.attacks.evasion.FastGradientMethod")
+        attack = AttackConfig(name="art.attacks.evasion.FastGradientMethod")
         attack.attack_size = 3
 
         class _Data:
@@ -2314,7 +2319,7 @@ class TestGetBenignPreds:
 
     def test_train_true_uses_test_data(self):
         attack = AttackConfig(
-            attack_type="art.attacks.evasion.FastGradientMethod",
+            name="art.attacks.evasion.FastGradientMethod",
             attack_size=4,
         )
         data = self._make_numpy_data()
@@ -2325,7 +2330,7 @@ class TestGetBenignPreds:
 
     def test_train_false_uses_train_data(self):
         attack = AttackConfig(
-            attack_type="art.attacks.evasion.FastGradientMethod",
+            name="art.attacks.evasion.FastGradientMethod",
             attack_size=4,
         )
         data = self._make_numpy_data()
@@ -2347,7 +2352,7 @@ class TestEvadeBranches:
     def test_adversarial_patch_branch(self):
         """Cover the 'AdversarialPatch' special handling."""
         attack = AttackConfig(
-            attack_type="art.attacks.evasion.FastGradientMethod",
+            name="art.attacks.evasion.FastGradientMethod",
             attack_size=4,
         )
 
@@ -2377,7 +2382,7 @@ class TestEvadeBranches:
                 return probs
 
         fake_attack_obj = AdversarialPatch()
-        runtime = attack._with_attack_context(attack_type="evasion", attack_subtype="")
+        runtime = attack._with_attack_context(attack_family="evasion", attack_sub_family="")
         result = runtime.evade(
             data=_TinyData(),
             art_model=_FakeModel(),
@@ -2388,7 +2393,7 @@ class TestEvadeBranches:
     def test_evade_regression_path(self):
         """Cover the is_regression=True scoring path in _evade."""
         attack = AttackConfig(
-            attack_type="art.attacks.evasion.FastGradientMethod",
+            name="art.attacks.evasion.FastGradientMethod",
             attack_size=6,
         )
 
@@ -2406,7 +2411,7 @@ class TestEvadeBranches:
             def generate(self, x):
                 return np.asarray(x).copy() + 0.01
 
-        runtime = attack._with_attack_context(attack_type="evasion", attack_subtype="")
+        runtime = attack._with_attack_context(attack_family="evasion", attack_sub_family="")
         result = runtime.evade(
             data=_TinyData(),
             art_model=_RegressionArtModel(),
@@ -2424,7 +2429,7 @@ class TestInferAttributeBranches:
     def test_list_targeted_attribute_executes(self):
         data = _make_tiny_data()
         attack = AttackConfig(
-            attack_type="art.attacks.inference.attribute_inference.AttributeInferenceBlackBox",
+            name="art.attacks.inference.attribute_inference.AttributeInferenceBlackBox",
             targeted_attribute=["sensitive"],
             attack_params={
                 "attack_model_type": "lr",
@@ -2475,7 +2480,7 @@ class TestInferAttributeBranches:
     def test_attribute_column_missing_raises(self):
         data = _make_tiny_data()
         attack = AttackConfig(
-            attack_type="art.attacks.inference.attribute_inference.AttributeInferenceBlackBox",
+            name="art.attacks.inference.attribute_inference.AttributeInferenceBlackBox",
             targeted_attribute="nonexistent_col",
             attack_params={},
             attack_size=8,
@@ -2496,8 +2501,8 @@ class TestInferAttributeBranches:
                 return np.column_stack([np.zeros(len(X)), np.ones(len(X))])
 
         runtime = attack._with_attack_context(
-            attack_type="inference",
-            attack_subtype="attribute_inference",
+            attack_family="inference",
+            attack_sub_family="attribute_inference",
         )
         with pytest.raises((AssertionError, ValueError, KeyError)):
             runtime.infer_attribute(
@@ -2510,7 +2515,7 @@ class TestInferAttributeBranches:
     def test_attribute_list_column_missing_raises_value_error(self):
         data = _make_tiny_data()
         attack = AttackConfig(
-            attack_type="art.attacks.inference.attribute_inference.AttributeInferenceBlackBox",
+            name="art.attacks.inference.attribute_inference.AttributeInferenceBlackBox",
             targeted_attribute=["not_a_column"],
             attack_params={},
             attack_size=8,
@@ -2531,8 +2536,8 @@ class TestInferAttributeBranches:
                 return np.column_stack([np.zeros(len(X)), np.ones(len(X))])
 
         runtime = attack._with_attack_context(
-            attack_type="inference",
-            attack_subtype="attribute_inference",
+            attack_family="inference",
+            attack_sub_family="attribute_inference",
         )
         with pytest.raises((ValueError, AssertionError)):
             runtime.infer_attribute(
@@ -2553,7 +2558,7 @@ class TestInferMembershipBranches:
         """Cover the AxisError fallback in infer_membership."""
         data = _make_tiny_data()
         attack = AttackConfig(
-            attack_type="art.attacks.inference.membership_inference.MembershipInferenceBlackBox",
+            name="art.attacks.inference.membership_inference.MembershipInferenceBlackBox",
             attack_size=16,
         )
 
@@ -2570,8 +2575,8 @@ class TestInferMembershipBranches:
                 return np.zeros(len(x), dtype=int)
 
         runtime = attack._with_attack_context(
-            attack_type="inference",
-            attack_subtype="membership_inference",
+            attack_family="inference",
+            attack_sub_family="membership_inference",
         )
         result = runtime.infer_membership(data=data, attack=_FakeMIAttack())
         assert isinstance(result, dict)
@@ -2582,7 +2587,7 @@ class TestInferMembershipBranches:
         data._sensitive_train = np.zeros(len(data.X_train))
         data._sensitive_test = np.ones(len(data.X_test))
         attack = AttackConfig(
-            attack_type="art.attacks.inference.membership_inference.MembershipInferenceBlackBox",
+            name="art.attacks.inference.membership_inference.MembershipInferenceBlackBox",
             attack_size=16,
         )
 
@@ -2594,8 +2599,8 @@ class TestInferMembershipBranches:
                 return np.zeros(len(x), dtype=int)
 
         runtime = attack._with_attack_context(
-            attack_type="inference",
-            attack_subtype="membership_inference",
+            attack_family="inference",
+            attack_sub_family="membership_inference",
         )
         result = runtime.infer_membership(data=data, attack=_FakeMIAttack())
         assert isinstance(result, dict)
@@ -2609,7 +2614,7 @@ class TestInferMembershipBranches:
 class TestInferModelInversionModes:
     def _make_mi_attack_config(self, init_mode="zeros"):
         return AttackConfig(
-            attack_type="art.attacks.inference.model_inversion.mi_face.MIFace",
+            name="art.attacks.inference.model_inversion.mi_face.MIFace",
             attack_params={"split": "test", "initialization": init_mode},
             attack_size=2,
         )
@@ -2633,8 +2638,8 @@ class TestInferModelInversionModes:
     def test_zeros_init(self):
         cfg = self._make_mi_attack_config("zeros")
         runtime = cfg._with_attack_context(
-            attack_type="inference",
-            attack_subtype="model_inversion",
+            attack_family="inference",
+            attack_sub_family="model_inversion",
         )
         result = runtime.infer_model_inversion(
             data=self._make_data(),
@@ -2645,8 +2650,8 @@ class TestInferModelInversionModes:
     def test_ones_init(self):
         cfg = self._make_mi_attack_config("ones")
         runtime = cfg._with_attack_context(
-            attack_type="inference",
-            attack_subtype="model_inversion",
+            attack_family="inference",
+            attack_sub_family="model_inversion",
         )
         result = runtime.infer_model_inversion(
             data=self._make_data(),
@@ -2657,8 +2662,8 @@ class TestInferModelInversionModes:
     def test_random_init(self):
         cfg = self._make_mi_attack_config("random")
         runtime = cfg._with_attack_context(
-            attack_type="inference",
-            attack_subtype="model_inversion",
+            attack_family="inference",
+            attack_sub_family="model_inversion",
         )
         result = runtime.infer_model_inversion(
             data=self._make_data(),
@@ -2669,8 +2674,8 @@ class TestInferModelInversionModes:
     def test_average_init(self):
         cfg = self._make_mi_attack_config("average")
         runtime = cfg._with_attack_context(
-            attack_type="inference",
-            attack_subtype="model_inversion",
+            attack_family="inference",
+            attack_sub_family="model_inversion",
         )
         result = runtime.infer_model_inversion(
             data=self._make_data(),
@@ -2681,8 +2686,8 @@ class TestInferModelInversionModes:
     def test_invalid_init_mode_raises(self):
         cfg = self._make_mi_attack_config("invalid_mode")
         runtime = cfg._with_attack_context(
-            attack_type="inference",
-            attack_subtype="model_inversion",
+            attack_family="inference",
+            attack_sub_family="model_inversion",
         )
         with pytest.raises(ValueError):
             runtime.infer_model_inversion(
@@ -2692,13 +2697,13 @@ class TestInferModelInversionModes:
 
     def test_train_split_used(self):
         cfg = AttackConfig(
-            attack_type="art.attacks.inference.model_inversion.mi_face.MIFace",
+            name="art.attacks.inference.model_inversion.mi_face.MIFace",
             attack_params={"split": "train"},
             attack_size=2,
         )
         runtime = cfg._with_attack_context(
-            attack_type="inference",
-            attack_subtype="model_inversion",
+            attack_family="inference",
+            attack_sub_family="model_inversion",
         )
         result = runtime.infer_model_inversion(
             data=self._make_data(),
@@ -2708,13 +2713,13 @@ class TestInferModelInversionModes:
 
     def test_mi_invalid_split_raises(self):
         cfg = AttackConfig(
-            attack_type="art.attacks.inference.model_inversion.mi_face.MIFace",
+            name="art.attacks.inference.model_inversion.mi_face.MIFace",
             attack_params={"split": "validate"},
             attack_size=2,
         )
         runtime = cfg._with_attack_context(
-            attack_type="inference",
-            attack_subtype="model_inversion",
+            attack_family="inference",
+            attack_sub_family="model_inversion",
         )
         with pytest.raises(ValueError):
             runtime.infer_model_inversion(
@@ -2730,21 +2735,21 @@ class TestInferModelInversionModes:
         d.X_train = np.empty((0, 3), dtype=np.float32)
         d.y_train = np.array([], dtype=int)
         runtime = cfg._with_attack_context(
-            attack_type="inference",
-            attack_subtype="model_inversion",
+            attack_family="inference",
+            attack_sub_family="model_inversion",
         )
         with pytest.raises(ValueError):
             runtime.infer_model_inversion(data=d, attack=self._fake_attack())
 
     def test_explicit_targets_param(self):
         cfg = AttackConfig(
-            attack_type="art.attacks.inference.model_inversion.mi_face.MIFace",
+            name="art.attacks.inference.model_inversion.mi_face.MIFace",
             attack_params={"split": "test", "targets": [0, 1]},
             attack_size=2,
         )
         runtime = cfg._with_attack_context(
-            attack_type="inference",
-            attack_subtype="model_inversion",
+            attack_family="inference",
+            attack_sub_family="model_inversion",
         )
         result = runtime.infer_model_inversion(
             data=self._make_data(),
@@ -2756,7 +2761,7 @@ class TestInferModelInversionModes:
         d = self._make_data()
         x_init = np.zeros((2, 3), dtype=np.float32)
         cfg = AttackConfig(
-            attack_type="art.attacks.inference.model_inversion.mi_face.MIFace",
+            name="art.attacks.inference.model_inversion.mi_face.MIFace",
             attack_params={
                 "split": "test",
                 "x_init": x_init.tolist(),
@@ -2765,8 +2770,8 @@ class TestInferModelInversionModes:
             attack_size=2,
         )
         runtime = cfg._with_attack_context(
-            attack_type="inference",
-            attack_subtype="model_inversion",
+            attack_family="inference",
+            attack_sub_family="model_inversion",
         )
         result = runtime.infer_model_inversion(data=d, attack=self._fake_attack())
         assert "model_inversion_mse" in result
@@ -2775,7 +2780,7 @@ class TestInferModelInversionModes:
         d = self._make_data()
         x_init = np.zeros((5, 3), dtype=np.float32)  # 5 != 2 targets
         cfg = AttackConfig(
-            attack_type="art.attacks.inference.model_inversion.mi_face.MIFace",
+            name="art.attacks.inference.model_inversion.mi_face.MIFace",
             attack_params={
                 "split": "test",
                 "x_init": x_init.tolist(),
@@ -2784,8 +2789,8 @@ class TestInferModelInversionModes:
             attack_size=2,
         )
         runtime = cfg._with_attack_context(
-            attack_type="inference",
-            attack_subtype="model_inversion",
+            attack_family="inference",
+            attack_sub_family="model_inversion",
         )
         with pytest.raises(ValueError):
             runtime.infer_model_inversion(data=d, attack=self._fake_attack())
@@ -2803,8 +2808,8 @@ class TestInferModelInversionModes:
                 return np.zeros_like(x)
 
         runtime = cfg._with_attack_context(
-            attack_type="inference",
-            attack_subtype="model_inversion",
+            attack_family="inference",
+            attack_sub_family="model_inversion",
         )
         result = runtime.infer_model_inversion(data=self._make_data(), attack=_A())
         assert "model_inversion_mse" in result
@@ -2812,13 +2817,13 @@ class TestInferModelInversionModes:
     def test_empty_target_labels_raises(self):
         """Cover the path when target_labels is empty."""
         cfg = AttackConfig(
-            attack_type="art.attacks.inference.model_inversion.mi_face.MIFace",
+            name="art.attacks.inference.model_inversion.mi_face.MIFace",
             attack_params={"split": "test", "targets": []},
             attack_size=2,
         )
         runtime = cfg._with_attack_context(
-            attack_type="inference",
-            attack_subtype="model_inversion",
+            attack_family="inference",
+            attack_sub_family="model_inversion",
         )
         with pytest.raises(ValueError):
             runtime.infer_model_inversion(
@@ -2850,7 +2855,7 @@ class TestInferDatabaseReconstructionBranches:
 
     def test_test_split_used(self):
         attack = AttackConfig(
-            attack_type="art.attacks.inference.reconstruction.DatabaseReconstruction",
+            name="art.attacks.inference.reconstruction.DatabaseReconstruction",
             attack_params={"split": "test", "missing_index": 0},
             attack_size=1,
         )
@@ -2860,8 +2865,8 @@ class TestInferDatabaseReconstructionBranches:
                 return x[:1], np.array([0])
 
         runtime = attack._with_attack_context(
-            attack_type="inference",
-            attack_subtype="reconstruction",
+            attack_family="inference",
+            attack_sub_family="reconstruction",
         )
         result = runtime.infer_database_reconstruction(
             data=self._make_data(),
@@ -2871,7 +2876,7 @@ class TestInferDatabaseReconstructionBranches:
 
     def test_dr_invalid_split_raises(self):
         attack = AttackConfig(
-            attack_type="art.attacks.inference.reconstruction.DatabaseReconstruction",
+            name="art.attacks.inference.reconstruction.DatabaseReconstruction",
             attack_params={"split": "validate", "missing_index": 0},
             attack_size=1,
         )
@@ -2881,8 +2886,8 @@ class TestInferDatabaseReconstructionBranches:
                 return x[:1], np.array([0])
 
         runtime = attack._with_attack_context(
-            attack_type="inference",
-            attack_subtype="reconstruction",
+            attack_family="inference",
+            attack_sub_family="reconstruction",
         )
         with pytest.raises(ValueError):
             runtime.infer_database_reconstruction(
@@ -2892,7 +2897,7 @@ class TestInferDatabaseReconstructionBranches:
 
     def test_missing_index_out_of_bounds_raises(self):
         attack = AttackConfig(
-            attack_type="art.attacks.inference.reconstruction.DatabaseReconstruction",
+            name="art.attacks.inference.reconstruction.DatabaseReconstruction",
             attack_params={"split": "train", "missing_index": 100},
             attack_size=1,
         )
@@ -2902,8 +2907,8 @@ class TestInferDatabaseReconstructionBranches:
                 return x[:1], np.array([0])
 
         runtime = attack._with_attack_context(
-            attack_type="inference",
-            attack_subtype="reconstruction",
+            attack_family="inference",
+            attack_sub_family="reconstruction",
         )
         with pytest.raises(ValueError):
             runtime.infer_database_reconstruction(
@@ -2913,7 +2918,7 @@ class TestInferDatabaseReconstructionBranches:
 
     def test_too_few_rows_raises(self):
         attack = AttackConfig(
-            attack_type="art.attacks.inference.reconstruction.DatabaseReconstruction",
+            name="art.attacks.inference.reconstruction.DatabaseReconstruction",
             attack_params={"split": "train", "missing_index": 0},
             attack_size=1,
         )
@@ -2926,8 +2931,8 @@ class TestInferDatabaseReconstructionBranches:
         d.X_train = d.X_train[:1]  # only 1 row
         d.y_train = d.y_train[:1]
         runtime = attack._with_attack_context(
-            attack_type="inference",
-            attack_subtype="reconstruction",
+            attack_family="inference",
+            attack_sub_family="reconstruction",
         )
         with pytest.raises(ValueError):
             runtime.infer_database_reconstruction(data=d, attack=_FakeAttack())
@@ -2935,7 +2940,7 @@ class TestInferDatabaseReconstructionBranches:
     def test_y_reconstructed_none_skips_label_scoring(self):
         """Cover the path where reconstructed tuple has only x."""
         attack = AttackConfig(
-            attack_type="art.attacks.inference.reconstruction.DatabaseReconstruction",
+            name="art.attacks.inference.reconstruction.DatabaseReconstruction",
             attack_params={"split": "train", "missing_index": 0},
             attack_size=1,
         )
@@ -2946,8 +2951,8 @@ class TestInferDatabaseReconstructionBranches:
                 return x[:1]
 
         runtime = attack._with_attack_context(
-            attack_type="inference",
-            attack_subtype="reconstruction",
+            attack_family="inference",
+            attack_sub_family="reconstruction",
         )
         result = runtime.infer_database_reconstruction(
             data=self._make_data(),
@@ -2958,7 +2963,7 @@ class TestInferDatabaseReconstructionBranches:
     def test_regression_task_uses_mae_label(self):
         """Cover the regression label scoring branch."""
         attack = AttackConfig(
-            attack_type="art.attacks.inference.reconstruction.DatabaseReconstruction",
+            name="art.attacks.inference.reconstruction.DatabaseReconstruction",
             attack_params={"split": "train", "missing_index": 0},
             attack_size=1,
         )
@@ -2972,8 +2977,8 @@ class TestInferDatabaseReconstructionBranches:
         d.classifier = False
 
         runtime = attack._with_attack_context(
-            attack_type="inference",
-            attack_subtype="reconstruction",
+            attack_family="inference",
+            attack_sub_family="reconstruction",
         )
         result = runtime.infer_database_reconstruction(data=d, attack=_FakeAttack())
         assert "database_reconstruction_label_mae" in result
@@ -2981,7 +2986,7 @@ class TestInferDatabaseReconstructionBranches:
     def test_type_error_fallback_on_reconstruct(self):
         """Cover the TypeError fallback (positional reconstruct)."""
         attack = AttackConfig(
-            attack_type="art.attacks.inference.reconstruction.DatabaseReconstruction",
+            name="art.attacks.inference.reconstruction.DatabaseReconstruction",
             attack_params={"split": "train", "missing_index": 0},
             attack_size=1,
         )
@@ -2995,8 +3000,8 @@ class TestInferDatabaseReconstructionBranches:
                 return x[:1], np.array([0])
 
         runtime = attack._with_attack_context(
-            attack_type="inference",
-            attack_subtype="reconstruction",
+            attack_family="inference",
+            attack_sub_family="reconstruction",
         )
         result = runtime.infer_database_reconstruction(
             data=self._make_data(),
@@ -3007,7 +3012,7 @@ class TestInferDatabaseReconstructionBranches:
     def test_empty_y_reconstructed_skips_label(self):
         """Cover path where y_pred is empty after to_numpy_array."""
         attack = AttackConfig(
-            attack_type="art.attacks.inference.reconstruction.DatabaseReconstruction",
+            name="art.attacks.inference.reconstruction.DatabaseReconstruction",
             attack_params={"split": "train", "missing_index": 0},
             attack_size=1,
         )
@@ -3017,8 +3022,8 @@ class TestInferDatabaseReconstructionBranches:
                 return x[:1], np.array([])
 
         runtime = attack._with_attack_context(
-            attack_type="inference",
-            attack_subtype="reconstruction",
+            attack_family="inference",
+            attack_sub_family="reconstruction",
         )
         result = runtime.infer_database_reconstruction(
             data=self._make_data(),
@@ -3035,7 +3040,7 @@ class TestInferDatabaseReconstructionBranches:
 class TestResolveEvalSplit:
     def test_val_split_available_returns_val(self):
         attack = AttackConfig(
-            attack_type="art.attacks.poisoning.gradient_matching_attack.GradientMatchingAttack",
+            name="art.attacks.poisoning.gradient_matching_attack.GradientMatchingAttack",
             attack_params={"class_source": 0, "class_target": 1},
             mode="val",
         )
@@ -3047,15 +3052,15 @@ class TestResolveEvalSplit:
             y_test = np.array([0, 1, 0, 1])
 
         runtime = attack._with_attack_context(
-            attack_type="poisoning",
-            attack_subtype="gradient_matching_attack",
+            attack_family="poisoning",
+            attack_sub_family="gradient_matching_attack",
         )
         mode, x, y = runtime._resolve_eval_split(_Data())
         assert mode == "val"
 
     def test_val_split_unavailable_falls_back_to_test(self):
         attack = AttackConfig(
-            attack_type="art.attacks.poisoning.gradient_matching_attack.GradientMatchingAttack",
+            name="art.attacks.poisoning.gradient_matching_attack.GradientMatchingAttack",
             attack_params={"class_source": 0, "class_target": 1},
             mode="val",
         )
@@ -3065,15 +3070,15 @@ class TestResolveEvalSplit:
             y_test = np.array([0, 1, 0, 1])
 
         runtime = attack._with_attack_context(
-            attack_type="poisoning",
-            attack_subtype="gradient_matching_attack",
+            attack_family="poisoning",
+            attack_sub_family="gradient_matching_attack",
         )
         mode, x, y = runtime._resolve_eval_split(_Data())
         assert mode == "test"
 
     def test_invalid_mode_raises(self):
         attack = AttackConfig(
-            attack_type="art.attacks.poisoning.gradient_matching_attack.GradientMatchingAttack",
+            name="art.attacks.poisoning.gradient_matching_attack.GradientMatchingAttack",
             attack_params={"class_source": 0, "class_target": 1},
             mode="invalid",
         )
@@ -3083,15 +3088,15 @@ class TestResolveEvalSplit:
             y_test = np.array([0, 1, 0, 1])
 
         runtime = attack._with_attack_context(
-            attack_type="poisoning",
-            attack_subtype="gradient_matching_attack",
+            attack_family="poisoning",
+            attack_sub_family="gradient_matching_attack",
         )
         with pytest.raises(ValueError):
             runtime._resolve_eval_split(_Data())
 
     def test_test_mode_with_missing_data_raises(self):
         attack = AttackConfig(
-            attack_type="art.attacks.poisoning.gradient_matching_attack.GradientMatchingAttack",
+            name="art.attacks.poisoning.gradient_matching_attack.GradientMatchingAttack",
             attack_params={"class_source": 0, "class_target": 1},
             mode="test",
         )
@@ -3101,8 +3106,8 @@ class TestResolveEvalSplit:
             y_test = None
 
         runtime = attack._with_attack_context(
-            attack_type="poisoning",
-            attack_subtype="gradient_matching_attack",
+            attack_family="poisoning",
+            attack_sub_family="gradient_matching_attack",
         )
         with pytest.raises(ValueError):
             runtime._resolve_eval_split(_Data())
@@ -3133,7 +3138,7 @@ class TestPoisonBranches:
 
     def test_val_mode_used_when_available(self):
         attack = AttackConfig(
-            attack_type="art.attacks.poisoning.gradient_matching_attack.GradientMatchingAttack",
+            name="art.attacks.poisoning.gradient_matching_attack.GradientMatchingAttack",
             attack_params={"class_source": 0, "class_target": 1},
             attack_size=4,
             mode="val",
@@ -3156,8 +3161,8 @@ class TestPoisonBranches:
                 return np.asarray(x_train), np.asarray(y_train)
 
         runtime = attack._with_attack_context(
-            attack_type="poisoning",
-            attack_subtype="gradient_matching_attack",
+            attack_family="poisoning",
+            attack_sub_family="gradient_matching_attack",
         )
         result = runtime.poison(
             data=self._make_data(),
@@ -3169,7 +3174,7 @@ class TestPoisonBranches:
     def test_class_source_fallback_when_no_samples(self):
         """Cover the warning/fallback when class_source has no samples in eval."""
         attack = AttackConfig(
-            attack_type="art.attacks.poisoning.gradient_matching_attack.GradientMatchingAttack",
+            name="art.attacks.poisoning.gradient_matching_attack.GradientMatchingAttack",
             attack_params={"class_source": 99, "class_target": 1},
             attack_size=4,
             mode="test",
@@ -3192,8 +3197,8 @@ class TestPoisonBranches:
                 return np.asarray(x_train), np.asarray(y_train)
 
         runtime = attack._with_attack_context(
-            attack_type="poisoning",
-            attack_subtype="gradient_matching_attack",
+            attack_family="poisoning",
+            attack_sub_family="gradient_matching_attack",
         )
         result = runtime.poison(
             data=self._make_data(),
@@ -3205,7 +3210,7 @@ class TestPoisonBranches:
 
     def test_poisoning_svm_branch_scores_benign_and_poisoned_accuracy(self):
         attack = AttackConfig(
-            attack_type="art.attacks.poisoning.PoisoningAttackSVM",
+            name="art.attacks.poisoning.PoisoningAttackSVM",
             attack_params={"step": 0.1, "eps": 0.2, "max_iter": 2, "verbose": False},
             attack_size=2,
             mode="test",
@@ -3234,8 +3239,8 @@ class TestPoisonBranches:
                 return np.asarray(x), np.asarray(y)
 
         runtime = attack._with_attack_context(
-            attack_type="poisoning",
-            attack_subtype="PoisoningAttackSVM",
+            attack_family="poisoning",
+            attack_sub_family="PoisoningAttackSVM",
         )
         result = runtime.poison(
             data=self._make_data(),
@@ -3268,7 +3273,7 @@ class TestExtractBranches:
         X = torch.rand(16, 4)
         y = torch.randint(0, 2, (16,))
         data = PytorchDataConfig(
-            dataset_name="torch.utils.data.TensorDataset",
+            name="torch.utils.data.TensorDataset",
             sampler={
                 "name": "split",
                 "train_size": 12,
@@ -3281,7 +3286,7 @@ class TestExtractBranches:
         data()
 
         model = PytorchModelConfig(
-            model_type="torch.nn.Linear",
+            name="torch.nn.Linear",
             model_params={"in_features": 4, "out_features": 2},
             classifier=True,
             fit_params={"nb_epochs": 1, "batch_size": 4},
@@ -3291,7 +3296,7 @@ class TestExtractBranches:
         model(data)
 
         attack = AttackConfig(
-            attack_type="art.attacks.extraction.CopycatCNN",
+            name="art.attacks.extraction.CopycatCNN",
             attack_params={},
             attack_size=4,
         )
@@ -3300,25 +3305,25 @@ class TestExtractBranches:
             "deckard.attack.base.resolve_class",
             return_value=DummyCopycatCNN,
         ):
-            initialized_attack, art_model, attack_type, attack_subtype = (
+            initialized_attack, art_model, attack_family, attack_sub_family = (
                 attack._initialize_attack(
                     model,
                     data,
                 )
             )
 
-        assert attack_type == "extraction"
-        assert attack_subtype == "CopycatCNN"
+        assert attack_family == "extraction"
+        assert attack_sub_family == "CopycatCNN"
         runtime = attack._with_attack_context(
-            attack_type="extraction",
-            attack_subtype="CopycatCNN",
+            attack_family="extraction",
+            attack_sub_family="CopycatCNN",
         )
         assert runtime._is_nn_art_classifier(art_model)
         assert initialized_attack.classifier is art_model
 
     def test_extract_uses_val_split(self):
         attack = AttackConfig(
-            attack_type="art.attacks.extraction.CopycatCNN",
+            name="art.attacks.extraction.CopycatCNN",
             attack_params={},
             attack_size=4,
             mode="val",
@@ -3361,9 +3366,9 @@ class TestExtractBranches:
         assert result.get("extraction_mode") == "val"
 
     def test_extract_not_implemented_raises_for_non_type(self):
-        """Cover the not-implemented path for unsupported attack_type."""
+        """Cover the not-implemented path for unsupported attack family."""
         attack = AttackConfig(
-            attack_type="art.attacks.evasion.FastGradientMethod",
+            name="art.attacks.evasion.FastGradientMethod",
         )
         with patch.object(
             AttackConfig,
@@ -3454,10 +3459,10 @@ class TestStaticHelpers:
         assert scorer is not None
 
     def test_is_nn_art_classifier_returns_false_for_plain_object(self):
-        attack = AttackConfig(attack_type="art.attacks.extraction.CopycatCNN")
+        attack = AttackConfig(name="art.attacks.extraction.CopycatCNN")
         runtime = attack._with_attack_context(
-            attack_type="extraction",
-            attack_subtype="CopycatCNN",
+            attack_family="extraction",
+            attack_sub_family="CopycatCNN",
         )
         assert not runtime._is_nn_art_classifier(object())
 
@@ -3465,10 +3470,10 @@ class TestStaticHelpers:
         class PyTorchClassifier:
             _model = None
 
-        attack = AttackConfig(attack_type="art.attacks.extraction.CopycatCNN")
+        attack = AttackConfig(name="art.attacks.extraction.CopycatCNN")
         runtime = attack._with_attack_context(
-            attack_type="extraction",
-            attack_subtype="CopycatCNN",
+            attack_family="extraction",
+            attack_sub_family="CopycatCNN",
         )
         assert runtime._is_nn_art_classifier(PyTorchClassifier())
 
@@ -3517,7 +3522,7 @@ class TestFairlearnAttackScorer:
     def _make_data_with_sensitive(self):
         from deckard.plugins.fairlearn.data import FairlearnDataConfig
 
-        data = FairlearnDataConfig(dataset_name="adult", sensitive_columns="sex")
+        data = FairlearnDataConfig(name="adult", sensitive_columns="sex")
         data()
         return data
 
@@ -3594,7 +3599,7 @@ class TestFairlearnAttackScorer:
             data.y_train.values,
         )
         attack = AttackConfig(
-            attack_type="art.attacks.evasion.FastGradientMethod",
+            name="art.attacks.evasion.FastGradientMethod",
             attack_params={"eps": 0.1},
             attack_size=10,
             scorer=FairlearnAttackScorerConfig(),
@@ -3613,7 +3618,7 @@ class TestFairlearnAttackScorer:
             data.y_train.values,
         )
         attack = AttackConfig(
-            attack_type="art.attacks.inference.membership_inference.MembershipInferenceBlackBox",
+            name="art.attacks.inference.membership_inference.MembershipInferenceBlackBox",
             attack_params={},
             attack_size=20,
             scorer=FairlearnAttackScorerConfig(),

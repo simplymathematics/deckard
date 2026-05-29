@@ -52,7 +52,7 @@ def _compose_pytorch(config_name: str, overrides: list[str] | None = None):
         pytest.param(
             "model/logistic",
             {
-                "model_type": "sklearn.linear_model.LogisticRegression",
+                "name": "sklearn.linear_model.LogisticRegression",
                 "classifier": True,
                 "alias": "logistic",
             },
@@ -61,7 +61,7 @@ def _compose_pytorch(config_name: str, overrides: list[str] | None = None):
         pytest.param(
             "model/cox",
             {
-                "model_type": "lifelines.fitters.coxph_fitter.CoxPHFitter",
+                "name": "lifelines.fitters.coxph_fitter.CoxPHFitter",
                 "classifier": False,
                 "alias": "cox",
             },
@@ -84,7 +84,7 @@ def test_sklearn_model_config_composes(config_name: str, expected_fields: dict):
         pytest.param(
             "model/tinynet",
             {
-                "model_type": "deckard.frameworks.pytorch.model.TinyNet",
+                "name": "deckard.frameworks.pytorch.model.TinyNet",
                 "classifier": True,
                 "alias": "tinynet",
             },
@@ -106,6 +106,6 @@ def test_sklearn_default_can_override_model_profile():
     cfg = _compose_sklearn("default", overrides=["model=test-logistic"])
     model_cfg = OmegaConf.to_container(cfg.model, resolve=True)
 
-    assert model_cfg["model_type"] == "sklearn.linear_model.LogisticRegression"
+    assert model_cfg["name"] == "sklearn.linear_model.LogisticRegression"
     assert model_cfg["classifier"] is True
     assert model_cfg["alias"] == "test_logistic"

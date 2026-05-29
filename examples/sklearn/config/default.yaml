@@ -7,10 +7,12 @@ defaults:
 - sampler@data.sampler: default
 - data: adult
 - model: rf
+- trainer@model.trainer: sklearn
 - defense: class-labels
 - attack: hsj
 - score: classification
 - search/models: ${oc.select:model,rf}
+- search/trainers: sklearn
 - search/defenses: ${oc.select:defense,class-labels}
 - search/attacks: ${oc.select:attack,hsj}
 - files: null

@@ -45,7 +45,7 @@ class TestFairlearnModelConfig:
             index=self.y_test.index,
         )
 
-        self.model_type = "sklearn.ensemble.RandomForestClassifier"
+        self.name= "sklearn.ensemble.RandomForestClassifier"
         self.tmpdir = tempfile.mkdtemp()
 
     def teardown_method(self):
@@ -57,7 +57,7 @@ class TestFairlearnModelConfig:
         fairness_data._sensitive_test = self.sensitive_test
 
         model = FairlearnModelConfig(
-            model_type=self.model_type,
+            name=self.name,
             classifier=True,
             model_params={"n_estimators": 10},
             data=fairness_data,
@@ -69,7 +69,7 @@ class TestFairlearnModelConfig:
     def test_fairness_model_config_initialization_without_data(self):
         """Test FairlearnModelConfig can be initialized without fairness data."""
         model = FairlearnModelConfig(
-            model_type=self.model_type,
+            name=self.name,
             classifier=True,
             model_params={"n_estimators": 10},
             data=None,
@@ -81,7 +81,7 @@ class TestFairlearnModelConfig:
     def test_apply_defense_supports_mixed_defense_pipeline(self):
         """ART + fairlearn defenses are applied sequentially via DefensePipelineConfig."""
         model = FairlearnModelConfig(
-            model_type=self.model_type,
+            name=self.name,
             classifier=True,
             model_params={"n_estimators": 10},
             data=None,
@@ -89,14 +89,14 @@ class TestFairlearnModelConfig:
         model._model = Mock()
 
         art_defense = DefenseConfig(
-            model_type=self.model_type,
+            name=self.name,
             classifier=True,
             model_params={"n_estimators": 10},
             defense_name=None,
             defense_params={},
         )
         fair_defense = FairlearnDefenseConfig(
-            model_type=self.model_type,
+            name=self.name,
             classifier=True,
             model_params={"n_estimators": 10},
             defense_name="fairlearn.postprocessing.ThresholdOptimizer",
@@ -132,7 +132,7 @@ class TestFairlearnModelConfig:
     def test_apply_defense_rejects_legacy_defense_list(self):
         """Legacy list assignment is intentionally unsupported after pipeline migration."""
         model = FairlearnModelConfig(
-            model_type=self.model_type,
+            name=self.name,
             classifier=True,
             model_params={"n_estimators": 10},
             data=None,
@@ -141,7 +141,7 @@ class TestFairlearnModelConfig:
 
         model.defense = [
             DefenseConfig(
-                model_type=self.model_type,
+                name=self.name,
                 classifier=True,
                 model_params={"n_estimators": 10},
                 defense_name=None,
@@ -162,7 +162,7 @@ class TestFairlearnModelConfig:
         )
         fairness_data()
         model = FairlearnModelConfig(
-            model_type=self.model_type,
+            name=self.name,
             classifier=True,
             model_params={"n_estimators": 10},
             data=fairness_data,
@@ -191,7 +191,7 @@ class TestFairlearnModelConfig:
         fairness_data.sensitive_all = self.sensitive_test
 
         model = FairlearnModelConfig(
-            model_type=self.model_type,
+            name=self.name,
             classifier=True,
             model_params={"n_estimators": 10},
             data=fairness_data,
@@ -219,7 +219,7 @@ class TestFairlearnModelConfig:
         fairness_data.sensitive_all = None
 
         model = FairlearnModelConfig(
-            model_type=self.model_type,
+            name=self.name,
             classifier=True,
             model_params={"n_estimators": 10},
             data=fairness_data,
@@ -240,7 +240,7 @@ class TestFairlearnModelConfig:
         fairness_data.sensitive_all = self.sensitive_test
 
         model = FairlearnModelConfig(
-            model_type=self.model_type,
+            name=self.name,
             classifier=True,
             model_params={"n_estimators": 10},
             data=fairness_data,
@@ -263,7 +263,7 @@ class TestFairlearnDefenseConfigApplyDefense:
     def setup_method(self):
 
         self.FairlearnDefenseConfig = FairlearnDefenseConfig
-        self.model_type = "sklearn.linear_model.LogisticRegression"
+        self.name= "sklearn.linear_model.LogisticRegression"
 
         self.X_train = pd.DataFrame(
             {"f1": [0, 1, 2, 3, 4, 5], "f2": [1, 2, 3, 4, 5, 6]},
@@ -279,7 +279,7 @@ class TestFairlearnDefenseConfigApplyDefense:
 
     def _make_fitted_defense(self, defense_name, defense_params=None):
         cfg = self.FairlearnDefenseConfig(
-            model_type=self.model_type,
+            name=self.name,
             classifier=True,
             model_params={"max_iter": 200},
             defense_name=defense_name,

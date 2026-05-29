@@ -119,6 +119,25 @@ def test_filter_scores_marks_missing_optimizer_score_as_fallback_value():
     assert attrs["latency"] == 12.0
 
 
+def test_ensure_experiment_hash_prefers_fingerprint_property():
+    conf_obj = SimpleNamespace(
+        fingerprint="A" * 32,
+        name="not-used-when-fingerprint-exists",
+    )
+
+    assert optimize_module._ensure_experiment_hash(conf_obj) == ("a" * 32)
+
+
+def test_ensure_experiment_hash_hashes_non_hex_fingerprint_value():
+    conf_obj = SimpleNamespace(
+        fingerprint="runtime-fingerprint",
+    )
+
+    assert optimize_module._ensure_experiment_hash(conf_obj) == optimize_module.hash_conf_values(
+        conf_obj,
+    )
+
+
 def test_filter_scores_raises_for_invalid_direction():
     with pytest.raises(ValueError, match="Invalid direction"):
         optimize_module.filter_scores(
@@ -996,10 +1015,18 @@ def test_optimize_main_runs_hydra_configured_pytorch_experiment(monkeypatch):
     X = torch.randn(48, 4)
     y = torch.randint(0, 2, (48,))
     dataset = torch.utils.data.TensorDataset(X, y)
+    from deckard.frameworks.pytorch import data as pytorch_data_module
+
+    real_load_class = pytorch_data_module.load_class
+
+    def _load_dataset_only(target, *args, **kwargs):
+        if target == "torch.utils.data.TensorDataset":
+            return dataset
+        return real_load_class(target, *args, **kwargs)
 
     monkeypatch.setattr(
         "deckard.frameworks.pytorch.data.load_class",
-        lambda *_args, **_kwargs: dataset,
+        _load_dataset_only,
     )
 
     cfg = OmegaConf.create(
@@ -1009,7 +1036,7 @@ def test_optimize_main_runs_hydra_configured_pytorch_experiment(monkeypatch):
             "classifier": True,
             "data": {
                 "_target_": "deckard.frameworks.pytorch.data.PytorchDataConfig",
-                "dataset_name": "torch.utils.data.TensorDataset",
+                "name": "torch.utils.data.TensorDataset",
                 "data_params": {},
                 "sampler": {
                     "name": "split",
@@ -1020,7 +1047,7 @@ def test_optimize_main_runs_hydra_configured_pytorch_experiment(monkeypatch):
             },
             "model": {
                 "_target_": "deckard.frameworks.pytorch.model.PytorchModelConfig",
-                "model_type": "torch.nn.Linear",
+                "name": "torch.nn.Linear",
                 "model_params": {"in_features": 4, "out_features": 2},
                 "classifier": True,
                 "fit_params": {"nb_epochs": 1, "batch_size": 8},
@@ -1586,6 +1613,28 @@ def test_prepare_multirun_file_paths_without_to_dict(tmp_path):
     optimize_module.prepare_multirun_file_paths(hydra_cfg, conf)
     assert conf.post_init_calls == 1
     assert len(conf.experiment_name) == 32
+
+
+def test_prepare_multirun_file_paths_prefers_conf_fingerprint(tmp_path):
+    class FingerprintConf:
+        def __init__(self):
+            self.files = DummyFiles(tmp_path)
+            self.experiment_name = None
+            self.post_init_calls = 0
+            self.fingerprint = "B" * 32
+
+        def __post_init__(self):
+            self.post_init_calls += 1
+
+    conf = FingerprintConf()
+    hydra_cfg = SimpleNamespace(
+        job=SimpleNamespace(name="optimize"),
+        sweep=SimpleNamespace(dir=str(tmp_path), subdir="run_10"),
+    )
+
+    optimize_module.prepare_multirun_file_paths(hydra_cfg, conf)
+    assert conf.post_init_calls == 1
+    assert conf.experiment_name == ("b" * 32)
 
 
 def test_direction_and_objective_normalization_paths():

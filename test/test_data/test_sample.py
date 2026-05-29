@@ -220,7 +220,7 @@ class TestSplitSampler:
 
     def test_integration_with_dataconfig(self):
         cfg = DataConfig(
-            dataset_name="make_classification",
+            name="make_classification",
             data_params={
                 "n_samples": 200,
                 "n_features": 5,
@@ -247,7 +247,7 @@ class TestSplitSampler:
 
     def test_score_dict_contains_val_fields(self):
         cfg = DataConfig(
-            dataset_name="make_classification",
+            name="make_classification",
             data_params={
                 "n_samples": 200,
                 "n_features": 5,
@@ -269,7 +269,7 @@ class TestSplitSampler:
 
     def test_regression_val_score(self):
         cfg = DataConfig(
-            dataset_name="make_regression",
+            name="make_regression",
             data_params={
                 "n_samples": 100,
                 "n_features": 4,
@@ -291,7 +291,7 @@ class TestSplitSampler:
     def test_sample_dict_spec(self):
         """DataConfig should accept a dict sampler spec and instantiate it."""
         cfg = DataConfig(
-            dataset_name="make_classification",
+            name="make_classification",
             data_params={
                 "n_samples": 150,
                 "n_features": 5,
@@ -411,7 +411,7 @@ class TestKFoldSampler:
 
     def test_integration_with_dataconfig(self):
         cfg = DataConfig(
-            dataset_name="make_classification",
+            name="make_classification",
             data_params={
                 "n_samples": 200,
                 "n_features": 5,
@@ -461,7 +461,7 @@ class TestKFoldSampler:
         with patch.dict(os.environ, {"DECKARD_TEST_MAX_SAMPLES": ""}):
             for split in range(5):
                 cfg = DataConfig(
-                    dataset_name="make_classification",
+                    name="make_classification",
                     data_params={
                         "n_samples": 1200,
                         "n_features": 20,
@@ -491,7 +491,7 @@ class TestKFoldSampler:
     def test_integer_test_size_guardrail_raises(self):
         """test_size must be <= train_size // n_splits for integer sizing."""
         cfg = DataConfig(
-            dataset_name="make_classification",
+            name="make_classification",
             data_params={
                 "n_samples": 1200,
                 "n_features": 10,
@@ -592,7 +592,7 @@ class TestShuffleSampler:
 
     def test_integration_with_dataconfig(self):
         cfg = DataConfig(
-            dataset_name="make_classification",
+            name="make_classification",
             data_params={
                 "n_samples": 200,
                 "n_features": 5,
@@ -640,7 +640,7 @@ class TestShuffleSampler:
 class TestLegacySplitUnchanged:
     def test_no_val_set_when_no_val_size(self):
         cfg = DataConfig(
-            dataset_name="make_classification",
+            name="make_classification",
             data_params={
                 "n_samples": 100,
                 "n_features": 5,
@@ -660,7 +660,7 @@ class TestLegacySplitUnchanged:
 
     def test_score_dict_no_val_fields_without_val_size(self):
         cfg = DataConfig(
-            dataset_name="make_classification",
+            name="make_classification",
             data_params={
                 "n_samples": 100,
                 "n_features": 5,
@@ -679,7 +679,7 @@ class TestLegacySplitUnchanged:
     def test_val_size_none_gives_two_way_split(self):
         """sampler='split' with val_size=None should not create a val set."""
         cfg = DataConfig(
-            dataset_name="make_classification",
+            name="make_classification",
             data_params={
                 "n_samples": 100,
                 "n_features": 5,
@@ -708,7 +708,7 @@ class TestOmegaConfSampleSpec:
         from omegaconf import OmegaConf
 
         cfg = DataConfig(
-            dataset_name="make_classification",
+            name="make_classification",
             data_params={
                 "n_samples": 150,
                 "n_features": 5,

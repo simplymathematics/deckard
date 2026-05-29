@@ -19,7 +19,7 @@ initialize_optimizer = pytorch_module.initialize_optimizer
 
 def test_pytorch_model_config_save_and_load_roundtrip():
     cfg = PytorchModelConfig(
-        model_type="torch.nn.Linear",
+        name="torch.nn.Linear",
         model_params={"in_features": 4, "out_features": 2},
         classifier=True,
         fit_params={"nb_epochs": 1, "batch_size": 2},
@@ -34,14 +34,14 @@ def test_pytorch_model_config_save_and_load_roundtrip():
         cfg.save_model(cfg.get_model(), str(model_path))
 
         loaded = PytorchModelConfig(
-            model_type="torch.nn.Linear",
+            name="torch.nn.Linear",
             model_params={"in_features": 4, "out_features": 2},
             classifier=True,
         )
         loaded.load(str(config_path))
         loaded.load_model(str(model_path))
 
-        assert loaded.model_type == "torch.nn.Linear"
+        assert loaded.name== "torch.nn.Linear"
         assert loaded.model_params["in_features"] == 4
         assert loaded.model_params["out_features"] == 2
 
@@ -54,7 +54,7 @@ def test_pytorch_model_config_save_and_load_roundtrip():
 
 def test_pytorch_model_training_records_optimizer_loss_and_serializes_it():
     cfg = PytorchModelConfig(
-        model_type="torch.nn.Linear",
+        name="torch.nn.Linear",
         model_params={"in_features": 4, "out_features": 2},
         classifier=True,
         fit_params={"nb_epochs": 2, "batch_size": 2},
@@ -114,7 +114,7 @@ def test_initialize_criterion_and_optimizer_support_variants(monkeypatch):
 
 def test_pytorch_device_and_art_helpers():
     cfg = PytorchModelConfig(
-        model_type="torch.nn.Linear",
+        name="torch.nn.Linear",
         model_params={"in_features": 4, "out_features": 2},
         classifier=True,
     )
@@ -159,7 +159,7 @@ def test_pytorch_device_and_art_helpers():
 
 def test_checkpoint_config_and_data_validation_paths():
     cfg = PytorchModelConfig(
-        model_type="torch.nn.Linear",
+        name="torch.nn.Linear",
         model_params={"in_features": 4, "out_features": 2},
         classifier=True,
     )
@@ -190,7 +190,7 @@ def test_checkpoint_config_and_data_validation_paths():
 
 def test_predict_path_for_art_wrapper_and_empty_loader():
     cfg = PytorchModelConfig(
-        model_type="torch.nn.Linear",
+        name="torch.nn.Linear",
         model_params={"in_features": 4, "out_features": 2},
         classifier=True,
     )
@@ -222,7 +222,7 @@ def test_model_type_accepts_in_memory_class():
             return self.linear(x)
 
     cfg = PytorchModelConfig(
-        model_type=TinyLinear,
+        name=TinyLinear,
         model_params={"in_features": 4, "out_features": 2},
         classifier=True,
     )
@@ -234,7 +234,7 @@ def test_model_type_accepts_in_memory_class():
 def test_model_type_accepts_in_memory_instance():
     instance = torch.nn.Linear(4, 2)
     cfg = PytorchModelConfig(
-        model_type=instance,
+        name=instance,
         model_params={},
         classifier=True,
     )
@@ -248,7 +248,7 @@ def test_model_type_accepts_in_memory_instance():
 
 def test_model_type_instance_populates_model_params_from_init():
     cfg = PytorchModelConfig(
-        model_type=torch.nn.Linear(4, 2, bias=False),
+        name=torch.nn.Linear(4, 2, bias=False),
         classifier=True,
     )
 
@@ -259,7 +259,7 @@ def test_model_type_instance_populates_model_params_from_init():
 
 def test_model_type_instance_keeps_explicit_model_params_over_inferred():
     cfg = PytorchModelConfig(
-        model_type=torch.nn.Linear(4, 2, bias=False),
+        name=torch.nn.Linear(4, 2, bias=False),
         model_params={"bias": True},
         classifier=True,
     )
@@ -276,10 +276,10 @@ def test_model_type_rejects_non_torch_module_class():
 
     with pytest.raises(
         TypeError,
-        match="model_type class must inherit torch.nn.Module",
+        match="name class must inherit torch.nn.Module",
     ):
         PytorchModelConfig(
-            model_type=NotAModule,
+            name=NotAModule,
             model_params={},
             classifier=True,
         )
@@ -329,7 +329,7 @@ def test_pytorch_model_checkpointing_scores_and_caches_models():
         y_test=torch.randint(0, 2, (6,)),
     )
     cfg = PytorchModelConfig(
-        model_type="torch.nn.Linear",
+        name="torch.nn.Linear",
         model_params={"in_features": 4, "out_features": 2},
         classifier=True,
         fit_params={
@@ -374,7 +374,7 @@ def test_pytorch_model_checkpointing_preserves_post_fit_defense_stage():
         plugins=[_StagePlugin("post_fit_pre_predict")],
     )
     cfg = PytorchModelConfig(
-        model_type="torch.nn.Linear",
+        name="torch.nn.Linear",
         model_params={"in_features": 4, "out_features": 2},
         classifier=True,
         fit_params={
@@ -398,7 +398,7 @@ def test_pytorch_model_checkpointing_preserves_post_fit_defense_stage():
 
 def test_score_checkpoint_snapshot_predict_proba_fallback_classification():
     cfg = PytorchModelConfig(
-        model_type="torch.nn.Linear",
+        name="torch.nn.Linear",
         model_params={"in_features": 4, "out_features": 2},
         classifier=True,
     )
@@ -432,7 +432,7 @@ def test_score_checkpoint_snapshot_predict_proba_fallback_classification():
 
 def test_score_checkpoint_snapshot_predict_proba_fallback_regression():
     cfg = PytorchModelConfig(
-        model_type="torch.nn.Linear",
+        name="torch.nn.Linear",
         model_params={"in_features": 4, "out_features": 1},
         classifier=False,
     )
@@ -465,7 +465,7 @@ def test_score_checkpoint_snapshot_predict_proba_fallback_regression():
 
 def test_pytorch_score_helpers_classification_and_regression():
     cls_cfg = PytorchModelConfig(
-        model_type="torch.nn.Linear",
+        name="torch.nn.Linear",
         model_params={"in_features": 4, "out_features": 2},
         classifier=True,
     )
@@ -482,7 +482,7 @@ def test_pytorch_score_helpers_classification_and_regression():
     assert cls_scores_np["accuracy"] == pytest.approx(1.0)
 
     reg_cfg = PytorchModelConfig(
-        model_type="torch.nn.Linear",
+        name="torch.nn.Linear",
         model_params={"in_features": 4, "out_features": 1},
         classifier=False,
     )
@@ -495,7 +495,7 @@ def test_pytorch_score_helpers_classification_and_regression():
 def test_pytorch_model_with_adam_optimizer():
     """Test training with Adam optimizer instead of SGD."""
     cfg = PytorchModelConfig(
-        model_type="torch.nn.Linear",
+        name="torch.nn.Linear",
         model_params={"in_features": 4, "out_features": 2},
         classifier=True,
         fit_params={"nb_epochs": 2, "batch_size": 2},
@@ -516,7 +516,7 @@ def test_pytorch_model_with_adam_optimizer():
 def test_pytorch_model_with_mse_loss():
     """Test training with MSE loss for regression."""
     cfg = PytorchModelConfig(
-        model_type="torch.nn.Linear",
+        name="torch.nn.Linear",
         model_params={"in_features": 4, "out_features": 1},
         classifier=False,
         fit_params={"nb_epochs": 2, "batch_size": 2},
@@ -536,7 +536,7 @@ def test_pytorch_model_with_mse_loss():
 def test_pytorch_model_serialization_preserves_optimizer_config():
     """Test that optimizer config is preserved through serialization."""
     cfg = PytorchModelConfig(
-        model_type="torch.nn.Linear",
+        name="torch.nn.Linear",
         model_params={"in_features": 4, "out_features": 2},
         classifier=True,
         fit_params={"nb_epochs": 1, "batch_size": 2},
@@ -571,7 +571,7 @@ def test_pytorch_model_checkpoint_records_track_epochs():
         y_test=torch.randint(0, 2, (8,)),
     )
     cfg = PytorchModelConfig(
-        model_type="torch.nn.Linear",
+        name="torch.nn.Linear",
         model_params={"in_features": 4, "out_features": 2},
         classifier=True,
         fit_params={
@@ -610,7 +610,7 @@ def test_pytorch_checkpoint_filename_format_appends_epoch_before_extension():
         y_test=torch.randint(0, 2, (4,)),
     )
     cfg = PytorchModelConfig(
-        model_type="torch.nn.Linear",
+        name="torch.nn.Linear",
         model_params={"in_features": 4, "out_features": 2},
         classifier=True,
         fit_params={
@@ -659,7 +659,7 @@ def test_pytorch_epoch_attack_scoring_runs_each_epoch_and_keeps_convention():
         y_test=torch.randint(0, 2, (6,)),
     )
     cfg = PytorchModelConfig(
-        model_type="torch.nn.Linear",
+        name="torch.nn.Linear",
         model_params={"in_features": 4, "out_features": 2},
         classifier=True,
         fit_params={"nb_epochs": 3, "batch_size": 2},
@@ -690,7 +690,7 @@ def test_pytorch_mps_request_falls_back_to_cpu_when_unavailable(monkeypatch):
     monkeypatch.setattr(torch.backends.mps, "is_available", lambda: False)
 
     cfg = PytorchModelConfig(
-        model_type="torch.nn.Linear",
+        name="torch.nn.Linear",
         model_params={"in_features": 4, "out_features": 2},
         classifier=True,
         device="mps",
@@ -706,7 +706,7 @@ def test_pytorch_art_device_type_for_mps_is_cpu():
         pytest.skip("mps runtime unavailable")
 
     cfg = PytorchModelConfig(
-        model_type="torch.nn.Linear",
+        name="torch.nn.Linear",
         model_params={"in_features": 4, "out_features": 2},
         classifier=True,
         device="cpu",
@@ -720,7 +720,7 @@ def test_pytorch_art_device_type_for_mps_is_cpu():
 def test_pytorch_model_loss_decreases_during_training():
     """Test that optimizer loss generally decreases during training."""
     cfg = PytorchModelConfig(
-        model_type="torch.nn.Linear",
+        name="torch.nn.Linear",
         model_params={"in_features": 10, "out_features": 2},
         classifier=True,
         fit_params={"nb_epochs": 5, "batch_size": 4},
@@ -765,7 +765,7 @@ def test_pytorch_model_different_batch_sizes():
 
     for batch_size in batch_sizes:
         cfg = PytorchModelConfig(
-            model_type="torch.nn.Linear",
+            name="torch.nn.Linear",
             model_params={"in_features": 4, "out_features": 2},
             classifier=True,
             fit_params={"nb_epochs": 2, "batch_size": batch_size},
@@ -784,7 +784,7 @@ def test_pytorch_model_different_batch_sizes():
 def test_pytorch_model_serialization_with_different_input_sizes():
     """Test serialization with models that have different input dimensions."""
     cfg = PytorchModelConfig(
-        model_type="torch.nn.Linear",
+        name="torch.nn.Linear",
         model_params={"in_features": 100, "out_features": 2},
         classifier=True,
         fit_params={"nb_epochs": 1, "batch_size": 4},
@@ -805,7 +805,7 @@ def test_pytorch_model_serialization_with_different_input_sizes():
         cfg.save_model(cfg.get_model(), str(model_path))
 
         loaded = PytorchModelConfig(
-            model_type="torch.nn.Linear",
+            name="torch.nn.Linear",
             model_params={"in_features": 100, "out_features": 2},
             classifier=True,
         )
@@ -821,7 +821,7 @@ def test_pytorch_model_serialization_with_different_input_sizes():
 
 def test_pytorch_model_hash_stable_after_training_and_runtime_updates():
     cfg = PytorchModelConfig(
-        model_type="torch.nn.Linear",
+        name="torch.nn.Linear",
         model_params={"in_features": 4, "out_features": 2},
         classifier=True,
         fit_params={"nb_epochs": 1, "batch_size": 2},
@@ -842,7 +842,7 @@ def test_pytorch_model_hash_stable_after_training_and_runtime_updates():
 
 def test_pytorch_model_hash_stable_after_load_roundtrip_runtime_mutation():
     cfg = PytorchModelConfig(
-        model_type="torch.nn.Linear",
+        name="torch.nn.Linear",
         model_params={"in_features": 4, "out_features": 2},
         classifier=True,
         fit_params={"nb_epochs": 1, "batch_size": 2},
@@ -855,7 +855,7 @@ def test_pytorch_model_hash_stable_after_load_roundtrip_runtime_mutation():
         cfg.save(str(path))
 
         loaded = PytorchModelConfig(
-            model_type="torch.nn.Linear",
+            name="torch.nn.Linear",
             model_params={"in_features": 4, "out_features": 2},
             classifier=True,
         )
@@ -870,7 +870,7 @@ def test_pytorch_model_hash_stable_after_load_roundtrip_runtime_mutation():
 
 def test_pytorch_model_get_model_save_load_error_paths():
     cfg = PytorchModelConfig(
-        model_type="torch.nn.Linear",
+        name="torch.nn.Linear",
         model_params={"in_features": 4, "out_features": 2},
         classifier=True,
     )
@@ -897,7 +897,7 @@ def test_pytorch_model_get_model_save_load_error_paths():
 
 def test_pytorch_save_refuses_to_overwrite_existing_file():
     cfg = PytorchModelConfig(
-        model_type="torch.nn.Linear",
+        name="torch.nn.Linear",
         model_params={"in_features": 4, "out_features": 2},
         classifier=True,
     )
@@ -906,7 +906,7 @@ def test_pytorch_save_refuses_to_overwrite_existing_file():
 
 def test_pytorch_score_epoch_snapshot_with_none_data_returns_early():
     cfg = PytorchModelConfig(
-        model_type="torch.nn.Linear",
+        name="torch.nn.Linear",
         model_params={"in_features": 4, "out_features": 2},
         classifier=True,
     )
@@ -916,7 +916,7 @@ def test_pytorch_score_epoch_snapshot_with_none_data_returns_early():
 
 def test_pytorch_coerce_bool_and_checkpoint_non_positive_branch():
     cfg = PytorchModelConfig(
-        model_type="torch.nn.Linear",
+        name="torch.nn.Linear",
         model_params={"in_features": 4, "out_features": 2},
         classifier=True,
     )

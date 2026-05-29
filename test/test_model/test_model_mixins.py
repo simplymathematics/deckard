@@ -21,7 +21,7 @@ def test_model_config_exposes_prune_and_cache_mixins():
         pass
 
     cfg = PrunedCachedModelConfig(
-        model_type="sklearn.linear_model.LogisticRegression",
+        name="sklearn.linear_model.LogisticRegression",
         model_params={"max_iter": 10},
         classifier=True,
     )
@@ -35,7 +35,7 @@ def test_model_pruner_mixin_reports_and_decides():
         pass
 
     cfg = PrunedModelConfig(
-        model_type="sklearn.linear_model.LogisticRegression",
+        name="sklearn.linear_model.LogisticRegression",
         model_params={"max_iter": 10},
         classifier=True,
     )
@@ -49,7 +49,7 @@ def test_model_pruner_mixin_reports_and_decides():
 
 def test_model_training_mixin_called_by_train_sets_runtime_metrics():
     cfg = ModelConfig(
-        model_type="sklearn.linear_model.LogisticRegression",
+        name="sklearn.linear_model.LogisticRegression",
         model_params={"max_iter": 10},
         classifier=True,
     )

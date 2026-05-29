@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from deckard.artifacts import ArtifactLoaderConfig, ScoreDict
+from deckard.artifacts import ArtifactLoaderMixin, ScoreDict
 from deckard.experiment.canon import (
     build_experiment_stage_cache_key,
     build_experiment_stage_params_subset,
@@ -78,7 +78,7 @@ def test_optimize_notebook_stage_cache_keys_support_selective_invalidation() -> 
 
 def test_scoring_notebook_dotlist_projection_is_stable(tmp_path: Path) -> None:
     score_file = tmp_path / "scores.json"
-    loader = ArtifactLoaderConfig(payload_kind="score")
+    loader = ArtifactLoaderMixin(payload_kind="score")
 
     scores = ScoreDict.from_payload(
         {
