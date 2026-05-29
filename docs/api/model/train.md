@@ -2,9 +2,9 @@
 
 ## Contract References
 
-- Canonical API contract page: {doc}`train`
-- Developer authoring contract: {doc}`../developers/trainers`
-- Shared config/mixin/plugin contracts: {doc}`../developers/configs`, {doc}`../developers/mixins`, {doc}`../developers/plugins`
+- Canonical API contract page: {doc}`/api/model/train`
+- Developer authoring contract: {doc}`../../developers/trainers`
+- Shared config/mixin/plugin contracts: {doc}`/developers/design/configs`, {doc}`/developers/extensions/mixins`, {doc}`/developers/extensions/plugins`
 
 ## Introduction
 
@@ -26,7 +26,7 @@ Important distinction:
 - Trainer configuration objects in this page define how model fitting is
   orchestrated.
 - ART retrainer defenses are defense objects (configured under `model.defense`)
-  and are documented in {doc}`defend`.
+  and are documented in {doc}`/api/model/defend`.
 
 ## Parent Config and Mixin Map
 
@@ -66,7 +66,7 @@ Important distinction:
 ```yaml
 model:
   _target_: deckard.model.base.ModelConfig
-  model_type: sklearn.ensemble.RandomForestClassifier
+  name: sklearn.ensemble.RandomForestClassifier
   classifier: true
   fit_params:
     sample_weight: null
@@ -74,7 +74,7 @@ model:
 
 ## See also
 
-- {doc}`model`
-- {doc}`defend`
-- {doc}`score`
-- {doc}`../developers/trainers`
+- {doc}`index`
+- {doc}`/api/model/defend`
+- {doc}`../score`
+- {doc}`../../developers/trainers`

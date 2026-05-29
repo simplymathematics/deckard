@@ -2,11 +2,11 @@
 
 Plugin integration APIs are grouped here.
 
-- {doc}`anjana`
-- {doc}`fairlearn`
-- {doc}`lifelines`
-- {doc}`seaborn`
-- {doc}`yellowbrick`
+- {doc}`/api/plugins/anjana`
+- {doc}`/api/plugins/fairlearn`
+- {doc}`/api/plugins/lifelines`
+- {doc}`/api/plugins/seaborn`
+- {doc}`/api/plugins/yellowbrick`
 
 ```{toctree}
 :hidden:

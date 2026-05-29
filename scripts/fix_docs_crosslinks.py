@@ -20,6 +20,7 @@ ROOT = Path(__file__).resolve().parents[1]
 DOCS = ROOT / "docs"
 API_MODULES = DOCS / "api" / "modules"
 EXT_INDEX = DOCS / "overview" / "extensions" / "index"
+DEV_INDEX = DOCS / "developers" / "index"
 DECKARD = ROOT / "deckard"
 INLINE_CODE_PATTERN = re.compile(r"`([^`]+)`")
 BROKEN_LINK_TARGET = "TODO-BROKEN-LINK"
@@ -45,6 +46,17 @@ def _resolve_api_target(*slugs: str) -> Path:
     return API_MODULES
 
 
+def _resolve_developer_target(*slugs: str) -> Path:
+    for slug in slugs:
+        flat = DOCS / "developers" / f"{slug}.md"
+        nested = DOCS / "developers" / slug / "index.md"
+        if flat.exists():
+            return DOCS / "developers" / slug
+        if nested.exists():
+            return DOCS / "developers" / slug / "index"
+    return DEV_INDEX
+
+
 def _api_target_for_source(path: Path) -> Path:
     rel_parts = path.relative_to(DECKARD).with_suffix("").parts
     if not rel_parts:
@@ -57,8 +69,14 @@ def _api_target_for_source(path: Path) -> Path:
         return _resolve_api_target(second)
     if root == "model" and second in {"train", "defend"}:
         return _resolve_api_target(second)
+    if root == "frameworks":
+        if second and second != "__init__":
+            return _resolve_api_target(second, f"frameworks/{second}", "frameworks")
+        return _resolve_api_target("frameworks")
     if root == "plugins":
-        return _resolve_api_target(second, "plugins")
+        if second and second != "__init__":
+            return _resolve_api_target(f"plugins/{second}", second, "plugins")
+        return _resolve_api_target("plugins")
 
     return _resolve_api_target(root)
 
@@ -114,10 +132,29 @@ def _build_extension_link_targets(catalog) -> dict[str, Path]:
     ext_dir = DOCS / "overview" / "extensions"
     mapping: dict[str, Path] = {}
 
-    for token in (*catalog.framework_tokens, *catalog.plugin_tokens):
-        candidate = ext_dir / token
-        if (candidate.with_suffix(".md")).exists() or (candidate / "index.md").exists():
-            mapping[token] = candidate
+    for token in catalog.framework_tokens:
+        candidates = [
+            _resolve_api_target(token, f"frameworks/{token}"),
+            _resolve_developer_target(f"extensions/{token}", "extensions"),
+            ext_dir / token,
+            EXT_INDEX,
+        ]
+        for candidate in candidates:
+            if (candidate.with_suffix(".md")).exists() or (candidate / "index.md").exists() or candidate == EXT_INDEX:
+                mapping[token] = candidate
+                break
+
+    for token in catalog.plugin_tokens:
+        candidates = [
+            _resolve_api_target(f"plugins/{token}", "plugins"),
+            _resolve_developer_target(f"extensions/{token}", "extensions"),
+            ext_dir / token,
+            EXT_INDEX,
+        ]
+        for candidate in candidates:
+            if (candidate.with_suffix(".md")).exists() or (candidate / "index.md").exists() or candidate == EXT_INDEX:
+                mapping[token] = candidate
+                break
 
     return mapping
 

@@ -29,7 +29,7 @@ Key runtime capabilities:
 - Canonical runtime fields for split payloads and labels.
 - Canonical timing payload keys for load/sample/pipeline/score.
 
-See also: {doc}`../../api/data`.
+See also: {doc}`/api/data/index`.
 
 ## Model
 
@@ -52,7 +52,7 @@ Key runtime capabilities:
 - Canonical model runtime/timing fields.
 - Canonical score-mode normalization ([train](../../api/modules), `test`, `val`).
 
-See also: {doc}`../../api/model`, {doc}`../../api/train`, {doc}`../../api/defend`.
+See also: {doc}`/api/model/index`, {doc}`/api/model/train`, {doc}`/api/model/defend`.
 
 ## Attack
 
@@ -69,7 +69,7 @@ Key runtime capabilities:
 - Canonical split mode validation (`auto`, [train](../../api/modules), `test`, `val`).
 - Canonical attack timing keys.
 
-See also: {doc}`../../api/attack`.
+See also: {doc}`/api/attack/index`.
 
 ## Detector
 
@@ -85,7 +85,7 @@ Key runtime capabilities:
 - Canonical detector stage aliases (`pre-fit`, `post-fit`, `pre-detect`, `post-detect`).
 - Canonical detector runtime/timing fields.
 
-See also: {doc}`../../api/detector`.
+See also: {doc}`/api/detector/index`.
 
 ## Experiment
 
@@ -108,7 +108,7 @@ Key runtime capabilities:
 - Canonical run-mode aliases.
 - Canonical experiment runtime schema/version/hash support.
 
-See also: {doc}`../../api/experiment`, {doc}`../orchestration`.
+See also: {doc}`/api/experiment/index`, {doc}`/developers/design/orchestration`.
 
 ## Score
 
@@ -125,7 +125,7 @@ Key runtime capabilities:
 - Canonical stage token normalization.
 - Typed scorer runtime contract payload.
 
-See also: {doc}`../../api/score`, {doc}[score](../../api/modules).
+See also: {doc}`/api/score/index`, {doc}[score](../../api/modules).
 
 ## Plot
 
@@ -140,11 +140,18 @@ Key runtime capabilities:
 - Canonical backend normalization ([seaborn](../../overview/extensions/index), [yellowbrick](../../overview/extensions/index)).
 - Typed plot runtime contract for files/times/state.
 
-See also: {doc}`../../api/plot`.
+See also: {doc}`/api/plot/index`.
 
 ## Purpose and Rationale
 
 Define ownership boundaries, design intent, and tradeoffs for this domain.
+
+## Canonical Alignment Rules
+
+- Canon runtime stage/component mapping is unified to canonical component/sub-component ownership.
+- Runtime naming hard-cuts prefer canonical `name` over legacy alias fields in active consolidation paths.
+- Defense runtime dispatch is standardized on canonical lifecycle entrypoints.
+- Framework/plugin boundaries remain optional-dependency gated with deterministic registration behavior.
 
 ## Internal Architecture
 

@@ -159,8 +159,8 @@ as well as HuggingFace `datasets`, and `lint` for code-quality checks.
 
 Typical contributor loop:
 
-1. Identify the pipeline stage affected ([data](../api/data), [model](../api/model), [attack](../api/attack), [score](../api/score),
-     or [experiment](../api/experiment)).
+1. Identify the pipeline stage affected ([data](/api/data/index), [model](/api/model/index), [attack](/api/attack/index), [score](/api/score/index),
+     or [experiment](/api/experiment/index)).
 2. Update implementation and associated declarations/config wiring.
 3. Add or update tests for behavior changes.
 4. Update notebooks/docs when the user-facing behavior changes.
@@ -314,6 +314,7 @@ contributor/testing
 future/refactor_plan
 future/security-report
 future/prediction-history-implementation-checklist
+future/llms
 ```
 
 For user-facing documentation, see {doc}`../overview/index` and {doc}`../notebooks/index`.

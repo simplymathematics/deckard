@@ -15,8 +15,8 @@ splits for downstream model and scoring stages.
 
 ## Standards Followed
 
-- Documentation standards: {doc}`../documentation`
-- Data design: {doc}`../data`
+- Documentation standards: {doc}`/developers/contributor/documentation`
+- Data design: {doc}`/developers/data/data`
 
 ## Required Documentation
 
@@ -25,4 +25,4 @@ splits for downstream model and scoring stages.
 - Return shape contract for index payloads
 
 ## See Also
-- {doc}`../../api/sample`
+- {doc}`/api/data/sample`

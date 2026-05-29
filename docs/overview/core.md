@@ -27,9 +27,9 @@ Scoping detail:
 :end-before: <!-- core-data-scope-end -->
 ```
 
-- [Data](../api/data): dataset loading and runtime coordination.
-- [Sample](../api/sample): sampling helpers.
-- [Pipeline](../api/pipeline): preprocessing transforms.
+- [Data](/api/data/index): dataset loading and runtime coordination.
+- [Sample](/api/data/sample): sampling helpers.
+- [Pipeline](/api/data/pipeline): preprocessing transforms.
 
 ## Model API
 
@@ -57,9 +57,9 @@ Scoping detail for defense subtypes:
 :end-before: <!-- core-defense-subtypes-end -->
 ```
 
-- [Model](../api/model): model setup and runtime behavior.
-- [Training](../api/train): trainer helpers.
-- [Defense](../api/defend): defense behavior.
+- [Model](/api/model/index): model setup and runtime behavior.
+- [Training](/api/model/train): trainer helpers.
+- [Defense](/api/model/defend): defense behavior.
 
 ## Attack API
 
@@ -82,7 +82,7 @@ Scoping detail for attack subtypes:
 :end-before: <!-- core-attack-family-end -->
 ```
 
-- [Attack](../api/attack): attack execution and scoring.
+- [Attack](/api/attack/index): attack execution and scoring.
 
 ## Detector API
 
@@ -101,7 +101,7 @@ Scoping detail for detector train and filter modes:
 :end-before: <!-- core-detector-mode-end -->
 ```
 
-- [Detector](../api/detector): detector training and filter-mode behavior.
+- [Detector](/api/detector/index): detector training and filter-mode behavior.
 
 ## Score API
 
@@ -120,8 +120,8 @@ Scoping detail for data, model, attack, and group scorers:
 :end-before: <!-- core-score-composition-end -->
 ```
 
-- [Score](../api/score): scorer setup and score payload composition.
-- [Fairlearn](../api/fairlearn): group-aware scorers.
+- [Score](/api/score/index): scorer setup and score payload composition.
+- [Fairlearn](/api/plugins/fairlearn): group-aware scorers.
 
 ## Experiment API
 
@@ -137,9 +137,9 @@ apply attacks or detectors if needed, and then score the result.
 :end-before: <!-- core-experiment-overview-end -->
 ```
 
-- [Experiment](../api/experiment): end-to-end orchestration runtime.
-- [Score](../api/score): scorer setup and metric composition.
-- [Plot](../api/plot): plotting configuration for run outputs.
+- [Experiment](/api/experiment/index): end-to-end orchestration runtime.
+- [Score](/api/score/index): scorer setup and metric composition.
+- [Plot](/api/plot/index): plotting configuration for run outputs.
 
 
 ## Persistence API
@@ -156,6 +156,6 @@ compare it with other experiments.
 :end-before: <!-- core-persistence-overview-end -->
 ```
 
-- [File](../api/file): file paths, persistence helpers, and saved outputs.
-- [Artifacts](../api/artifacts): artifact handling and stored run data.
-- [Utils](../api/utils): shared helpers for file and runtime support.
+- [File](/api/file/index): file paths, persistence helpers, and saved outputs.
+- [Artifacts](/api/artifacts/index): artifact handling and stored run data.
+- [Utils](/api/utils/index): shared helpers for file and runtime support.

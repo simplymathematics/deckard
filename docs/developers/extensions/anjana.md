@@ -52,5 +52,5 @@ existing reports and optimization traces.
 
 ## See also
 
-- {doc}`../../api/anjana`
+- {doc}`/api/plugins/anjana`
 - {doc}`../index`

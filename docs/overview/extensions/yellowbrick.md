@@ -3,19 +3,19 @@
 This overview focuses on Yellowbrick plugin execution order.
 
 For comprehensive hook ownership and policy details, see
-[Plugin and Hook Execution Reference](../../developers/hooks).
+[Plugin and Hook Execution Reference](/developers/extensions/hooks).
 
 Related docs:
 
-- [Data API](../../api/data)
-- [Pipeline API](../../api/pipeline)
-- [Model API](../../api/model)
-- [Defense API](../../api/defend)
+- [Data API](/api/data/index)
+- [Pipeline API](/api/data/pipeline)
+- [Model API](/api/model/index)
+- [Defense API](/api/model/defend)
 - [Scoring Overview](../scoring)
-- [File API](../../api/file)
-- [Artifacts API](../../api/artifacts)
+- [File API](/api/file/index)
+- [Artifacts API](/api/artifacts/index)
 - [Experiment Guide](../experiment)
-- [Plot API](../../api/plot)
+- [Plot API](/api/plot/index)
 
 ## Execution Order
 

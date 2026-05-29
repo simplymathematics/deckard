@@ -157,7 +157,7 @@ model, attack, and extension stages.
 
 ## Standards Followed
 
-- Documentation standards: {doc}`../documentation`
+- Documentation standards: {doc}`/developers/contributor/documentation`
 - Score design: {doc}[score](../../api/modules)
 
 ## Required Documentation
@@ -223,4 +223,4 @@ resolve score keys.
 
 ## See also
 
-- {doc}`../../api/score`
+- {doc}`/api/score/index`

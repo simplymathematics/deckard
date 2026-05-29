@@ -2,9 +2,9 @@
 
 ## Contract References
 
-- Canonical API contract page: {doc}`defend`
-- Developer authoring contract: {doc}`../developers/defenses`
-- Shared config/mixin/plugin contracts: {doc}`../developers/configs`, {doc}`../developers/mixins`, {doc}`../developers/plugins`
+- Canonical API contract page: {doc}`/api/model/defend`
+- Developer authoring contract: {doc}`../../developers/defenses`
+- Shared config/mixin/plugin contracts: {doc}`/developers/design/configs`, {doc}`/developers/extensions/mixins`, {doc}`/developers/extensions/plugins`
 
 ## Introduction
 
@@ -23,7 +23,7 @@ runtime mixin dispatch.
 
 Important distinction:
 
-- Trainer runtime configuration objects are documented in {doc}`train`.
+- Trainer runtime configuration objects are documented in {doc}`/api/model/train`.
 - ART retrainer defenses are defense-family objects handled in this page under
   the `trainer` defense family.
 
@@ -84,7 +84,7 @@ model:
   defense:
     _target_: deckard.model.defense.base.DefensePipelineConfig
     defenses:
-      - defense_name: art.defences.preprocessor.FeatureSqueezing
+      - name: art.defences.preprocessor.FeatureSqueezing
         defense_params:
           bit_depth: 4
 ```
@@ -129,8 +129,8 @@ model:
 
 ## See also
 
-- {doc}`model`
-- {doc}`attack`
-- {doc}`score`
-- {doc}`train`
-- {doc}`../developers/defenses`
+- {doc}`index`
+- {doc}`../attack`
+- {doc}`../score`
+- {doc}`/api/model/train`
+- {doc}`../../developers/defenses`

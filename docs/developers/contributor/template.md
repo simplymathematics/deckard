@@ -28,6 +28,7 @@ choices exist. They define contracts, invariants, and extension rules.
 - `Migration and Compatibility`: compatibility and deprecation behavior.
 - `See also`: always include the API counterpart page.
 - Cross links to other `docs/*` folders should move to the bottom.
+- Write settled runtime behavior as canonical policy and avoid phase-scoped wording.
 
 ## Out of Scope For Developer Pages
 

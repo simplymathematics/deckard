@@ -16,9 +16,9 @@ framework adapters and plugin integrations.
 - Run detector fitting and inference with canonical stage aliases.
 - Produce detector metrics aligned with experiment score flows.
 - Persist detector artifacts for reproducible detector analysis.
-- Consume payloads from {doc}`attack` and contribute metrics to {doc}`score`.
+- Consume payloads from {doc}`/api/attack/index` and contribute metrics to {doc}`/api/score/index`.
 
-Implementation-level runtime contracts are documented in {doc}`../developers/detector`.
+Implementation-level runtime contracts are documented in {doc}`/developers/attack/detector`.
 
 ## Outputs
 
@@ -51,8 +51,8 @@ Canonical runtime contract:
 
 ## Integrations
 
-- Framework integration: {doc}`pytorch`
-- Plugin integrations: {doc}`fairlearn`, {doc}`lifelines`, {doc}`anjana`
+- Framework integration: {doc}`/api/pytorch/index`
+- Plugin integrations: {doc}`/api/plugins/fairlearn`, {doc}`/api/plugins/lifelines`, {doc}`/api/plugins/anjana`
 
 ## Examples
 
@@ -95,6 +95,6 @@ detector:
 
 ### See also
 
-- {doc}`experiment` — experiment orchestration
-- {doc}`attack` — attack generation and attack outputs
-- {doc}`score` — scoring framework including detector metrics
+- {doc}`/api/experiment/index` — experiment orchestration
+- {doc}`/api/attack/index` — attack generation and attack outputs
+- {doc}`/api/score/index` — scoring framework including detector metrics

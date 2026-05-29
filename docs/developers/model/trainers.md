@@ -20,7 +20,7 @@ Trainer configuration objects and ART retrainer defenses are separate layers:
 - Trainer configuration objects define fit orchestration and runtime trainer
 	behavior.
 - ART retrainer defenses are defense-family components configured under
-	`model.defense` and documented in {doc}`../defenses`.
+	`model.defense` and documented in {doc}`/developers/model/defenses`.
 
 Do not treat ART retrainer defenses as replacements for trainer configuration
 objects; both are required in documentation because they answer different
@@ -28,8 +28,8 @@ questions (fit orchestration vs robustness defense behavior).
 
 ## Standards Followed
 
-- Documentation standards: {doc}`../documentation`
-- Model design: {doc}[model](../../api/model)
+- Documentation standards: {doc}`/developers/contributor/documentation`
+- Model design: {doc}[model](/api/model/index)
 
 ## Required Documentation
 
@@ -97,8 +97,8 @@ retraining behavior.
 
 Legacy trainer-adjacent aliases should be normalized to canonical trainer
 runtime objects. Public trainer behavior must stay documented through
-[train](../../api/train) and [defend](../../api/defend) API pages without merging the two contracts.
+[train](/api/model/train) and [defend](/api/model/defend) API pages without merging the two contracts.
 
 ## See also
 
-- {doc}`../../api/train`
+- {doc}`/api/model/train`

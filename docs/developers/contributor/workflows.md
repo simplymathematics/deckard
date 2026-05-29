@@ -13,13 +13,20 @@ runs
 - [Adversarial Robustness Toolbox
   (ART)](https://adversarial-robustness-toolbox.org/) for attack/defense
   integrations
-- Plugin APIs: [Fairlearn](../../api/fairlearn), [Lifelines](../../api/lifelines),
-  [Seaborn](../../api/seaborn), [Yellowbrick](../../api/yellowbrick),
-  [Anjana](../../api/anjana)
+- Plugin APIs: [Fairlearn](/api/plugins/fairlearn), [Lifelines](/api/plugins/lifelines),
+  [Seaborn](/api/plugins/seaborn), [Yellowbrick](/api/plugins/yellowbrick),
+  [Anjana](/api/plugins/anjana)
 
 Security tracking reference:
 
 - {doc}`Developer Security Report <../future/security-report>`
+
+## Canonical Runtime Workflow Rules
+
+- Use canonical command surfaces: `deckard plugins` and `deckard frameworks`.
+- Treat `--list` mode as report-only (no install side effects).
+- Unknown plugin names must fail with exit code `2`.
+- Install operations must be idempotent and emit summary output.
 
 ## Workflow Categories
 

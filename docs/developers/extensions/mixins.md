@@ -15,9 +15,9 @@ logic without inheritance-heavy duplication.
 
 ## Standards Followed
 
-- Documentation standards: {doc}`../documentation`
-- Mixin rules: {doc}`../plugins`
-- Naming rules: {doc}`../naming`
+- Documentation standards: {doc}`/developers/contributor/documentation`
+- Mixin rules: {doc}`/developers/extensions/plugins`
+- Naming rules: {doc}`/developers/contributor/naming`
 
 ## Required Documentation
 
@@ -27,9 +27,9 @@ logic without inheritance-heavy duplication.
 
 ## See also
 
-- {doc}`../plugins`
-- {doc}`../hooks`
-- {doc}`../orchestration`
+- {doc}`/developers/extensions/plugins`
+- {doc}`/developers/extensions/hooks`
+- {doc}`/developers/design/orchestration`
 
 ## Purpose and Rationale
 

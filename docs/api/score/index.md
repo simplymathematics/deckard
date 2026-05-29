@@ -18,7 +18,7 @@ framework-adapter, and plugin-integrated runtimes.
 - Persist stage-scoped score outputs for downstream reporting.
 - Aggregate metric payloads produced by {doc}`../data/index`, {doc}`../model/index`, {doc}`../attack/index`, and {doc}`../detector/index`.
 
-Implementation-level scoring contracts are documented in {doc}`../../developers/experiment/score`.
+Implementation-level scoring contracts are documented in {doc}`/developers/experiment/score`.
 
 ## Outputs
 
@@ -32,7 +32,7 @@ This page describes score behavior from a user/API perspective: how scorers
 run, how to configure them, and what outputs they produce.
 
 Developer-level scoring contracts and internals are documented in
-{doc}`../../developers/experiment/score`.
+{doc}`/developers/experiment/score`.
 
 For introductory scoring concepts, default scorer families, and YAML catalog
 examples, see {doc}`../../overview/scoring`.

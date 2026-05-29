@@ -19,12 +19,12 @@ Core themes covered in this section:
 - optimization and reproducibility via [Hydra](https://hydra.cc) and [Optuna](https://optuna.org)
 - configuration-driven orchestration for full ML evaluation pipelines
 - repeatable execution with explicit run metadata
-- [PyTorch](../api/pytorch): framework-specific runtime and integration APIs.
-- [Anjana](../api/anjana): privacy and anonymization integration APIs.
-- [Fairlearn](../api/fairlearn): fairness metrics and evaluation integration APIs.
-- [Lifelines](../api/lifelines): survival-analysis integration APIs.
-- [Seaborn](../api/seaborn): plotting and visualization integration APIs.
-- [Yellowbrick](../api/yellowbrick): model diagnostics and visualization integration APIs.
+- [PyTorch](/api/pytorch/index): framework-specific runtime and integration APIs.
+- [Anjana](../api/plugins/anjana): privacy and anonymization integration APIs.
+- [Fairlearn](../api/plugins/fairlearn): fairness metrics and evaluation integration APIs.
+- [Lifelines](../api/plugins/lifelines): survival-analysis integration APIs.
+- [Seaborn](../api/plugins/seaborn): plotting and visualization integration APIs.
+- [Yellowbrick](../api/plugins/yellowbrick): model diagnostics and visualization integration APIs.
 
 ## Suggested Reading Paths
 
@@ -67,12 +67,12 @@ documentation.
 
 Direct API integration pages:
 
-- [PyTorch](../api/pytorch)
-- [Anjana](../api/anjana)
-- [Fairlearn](../api/fairlearn)
-- [Lifelines](../api/lifelines)
-- [Seaborn](../api/seaborn)
-- [Yellowbrick](../api/yellowbrick)
+- [PyTorch](/api/pytorch/index)
+- [Anjana](../api/plugins/anjana)
+- [Fairlearn](../api/plugins/fairlearn)
+- [Lifelines](../api/plugins/lifelines)
+- [Seaborn](../api/plugins/seaborn)
+- [Yellowbrick](../api/plugins/yellowbrick)
 
 ## Software Notes
 

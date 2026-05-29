@@ -2,9 +2,9 @@
 
 ## Contract References
 
-- Canonical API contract page: {doc}`sample`
-- Developer authoring contract: {doc}`../developers/samplers`
-- Shared config/mixin/plugin contracts: {doc}`../developers/configs`, {doc}`../developers/mixins`, {doc}`../developers/plugins`
+- Canonical API contract page: {doc}`/api/data/sample`
+- Developer authoring contract: {doc}`/developers/data/samplers`
+- Shared config/mixin/plugin contracts: {doc}`/developers/design/configs`, {doc}`/developers/extensions/mixins`, {doc}`/developers/extensions/plugins`
 
 ## Overview
 
@@ -54,7 +54,7 @@ sample:
 
 ## See also
 
-- {doc}`data`
-- {doc}`pipeline`
-- {doc}`experiment`
-- {doc}`../developers/samplers`
+- {doc}`/api/data/index`
+- {doc}`/api/data/pipeline`
+- {doc}`/api/experiment/index`
+- {doc}`/developers/data/samplers`

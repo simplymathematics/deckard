@@ -126,10 +126,10 @@ They should not reimplement the core train/load/defense orchestration.
 
 ## Related Docs
 
-- {doc}`../../api/model`
-- {doc}`../../api/pytorch`
-- {doc}`../../api/fairlearn`
-- {doc}`../../api/anjana`
+- {doc}`/api/model/index`
+- {doc}`/api/pytorch/index`
+- {doc}`/api/plugins/fairlearn`
+- {doc}`/api/plugins/anjana`
 - {doc}`../../overview/core`
-- {doc}`../plugins`
-- {doc}`../data`
+- {doc}`/developers/extensions/plugins`
+- {doc}`/developers/data/data`

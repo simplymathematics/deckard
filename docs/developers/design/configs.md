@@ -16,9 +16,17 @@ keeping execution deterministic.
 
 ## Standards Followed
 
-- Documentation standards: {doc}`../documentation`
-- Naming rules: {doc}`../naming`
-- Design boundaries: {doc}`../design`
+- Documentation standards: {doc}`/developers/contributor/documentation`
+- Naming rules: {doc}`/developers/contributor/naming`
+- Design boundaries: {doc}`/developers/design/design`
+
+## Canonical Contract Decisions
+
+- Canonical identity fields use `name`; legacy constructor aliases are removed in active hard-cut slices.
+- Defense runtime mappings use `name` and canonical runtime methods (`apply`, `apply_to`, `apply_defense`).
+- Unknown init kwargs remain warning-first where duck-typed integration is required.
+- Config finalization preserves explicit user values while deriving reproducibility-critical fields last.
+- Coercion/default precedence is child normalize -> validate -> apply defaults -> compose to parent -> parent finalization.
 
 ## Required Sections
 
@@ -61,4 +69,4 @@ Document migrations, aliases, and compatibility expectations.
 ## See also
 
 - {doc}`../../api/modules`
-- {doc}`../template`
+- {doc}`/developers/contributor/template`

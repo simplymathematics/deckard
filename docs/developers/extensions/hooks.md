@@ -67,7 +67,7 @@ Typical config:
 ```yaml
 model:
   _target_: deckard.model.base.ModelConfig
-  model_type: sklearn.ensemble.RandomForestClassifier
+  name: sklearn.ensemble.RandomForestClassifier
   trainer:
     _target_: deckard.model.trainer.base.SklearnTrainerConfig
   defense:
@@ -94,7 +94,7 @@ model:
   _target_: deckard.frameworks.pytorch.model.PytorchModelConfig
   trainer:
     _target_: deckard.model.trainer.base.PytorchTrainerConfig
-  model_type: my_file.py:MyModelClass
+  name: my_file.py:MyModelClass
   model_params:
     input_features : 3 
     output_classes : 10
@@ -117,7 +117,7 @@ Typical config:
 ```yaml
 model:
   _target_: deckard.frameworks.transformers.model.TransformersModelConfig
-  model_type: transformers.AutoModelForSequenceClassification
+  name: transformers.AutoModelForSequenceClassification
   tokenizer: transformers.AutoTokenizer
 ```
 
@@ -233,6 +233,6 @@ plot:
 
 ## See also
 
-- {doc}`../plugins`
-- {doc}`../mixins`
-- {doc}`../orchestration`
+- {doc}`/developers/extensions/plugins`
+- {doc}`/developers/extensions/mixins`
+- {doc}`/developers/design/orchestration`

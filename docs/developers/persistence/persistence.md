@@ -3,8 +3,10 @@
 This document defines the final persistence/runtime-state contract for Deckard.
 It is based on the current implementation surfaces in:
 
-- `deckard/artifacts.py` ({class}`deckard.artifacts.ArtifactLoaderConfig` serializer/loader dispatch)
+- `deckard/artifacts.py` ({class}`deckard.artifacts.ArtifactLoaderMixin` serializer/loader dispatch and {class}`deckard.artifacts.ScoreDict` serialization)
 - `deckard/file.py` ({class}`deckard.file.FileConfig`, {class}`deckard.file.AbstractFileHandler`, {class}`deckard.file.CanonFileHandler`)
+- `deckard/utils.py` (config coercion, instantiation, class resolution, and shared runtime helpers)
+- `deckard/orchestration.py` (score-stage normalization and hook dispatch)
 - canonical runtime helpers:
   - `deckard/data/canon.py`
   - `deckard/model/canon.py`
@@ -17,7 +19,7 @@ It is based on the current implementation surfaces in:
 
 - Support a YAML and/or PKL state machine for resumable runs.
 - Keep writes/reads declarative (what to persist, not how to serialize in every caller).
-- Use OmegaConf resolution for config restoration ([from_yaml](../../api/utils)).
+- Use OmegaConf resolution for config restoration ([from_yaml](/api/utils/index)).
 - Resume an experiment at any stage in the data/model/defense/attack/detector pipeline.
 - Support pretrained models, pre-split data, pre-transformed data, and pre-defended pipelines.
 - Provide one unified file parsing interface for key validation/placeholders/status.
@@ -31,14 +33,14 @@ It is based on the current implementation surfaces in:
 {class}`deckard.utils.BaseConfig` already provides the core control-plane behavior:
 
 - initialization-time frozen hash payload (`_hash_payload`) and hash value (`_hash_value`)
-- YAML round-trip ([to_yaml](../../api/utils), [from_yaml](../../api/utils)) with OmegaConf `resolve=True`
-- dictionary serialization ([to_dict](../../api/utils)) for nested configs
+- YAML round-trip ([to_yaml](/api/utils/index), [from_yaml](/api/utils/index)) with OmegaConf `resolve=True`
+- dictionary serialization ([to_dict](/api/utils/index)) for nested configs
 
 This means the configuration identity contract is already mostly in place.
 
 ### Artifact serialization
 
-{class}`deckard.artifacts.ArtifactLoaderConfig` already performs payload-kind + file-suffix dispatch:
+{class}`deckard.artifacts.ArtifactLoaderMixin` already performs payload-kind + file-suffix dispatch:
 
 - scores: `.csv`, `.json`, `.xlsx`
 - data tables: `.csv`, `.parquet`, `.pkl`, `.html`, `.json`, `.xlsx`
@@ -237,7 +239,7 @@ Persist in state metadata:
 
 ## OmegaConf and from_yaml Rules
 
-- All control-plane config restoration must use {meth}[deckard.utils.BaseConfig.from_yaml](../../api/utils).
+- All control-plane config restoration must use {meth}[deckard.utils.BaseConfig.from_yaml](/api/utils/index).
 - Always load with `OmegaConf.load(..., resolve=True)`.
 - Persist a fully-resolved config snapshot before first execution stage.
 

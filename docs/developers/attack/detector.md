@@ -67,7 +67,7 @@ Guardrails should verify:
 
 ## See also
 
-- {doc}`../../api/detector`
-- {doc}`../experiment`
-- {doc}`../hooks`
-- {doc}`../plugins`
+- {doc}`/api/detector/index`
+- {doc}`/developers/experiment/experiment`
+- {doc}`/developers/extensions/hooks`
+- {doc}`/developers/extensions/plugins`

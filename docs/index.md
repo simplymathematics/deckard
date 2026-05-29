@@ -18,9 +18,9 @@ Start here if you want the shortest path through the system:
 Trustworthiness concerns come next and are built into the same workflow:
 
 1. [ART / robustness](api/modules) through adversarial attack and defense components.
-2. [Anjana](api/anjana) for privacy-aware preprocessing and anonymization.
-3. [Fairlearn](api/fairlearn) for fairness-aware evaluation.
-4. [Lifelines](api/lifelines) for survival and failure modeling.
+2. [Anjana](api/plugins/anjana) for privacy-aware preprocessing and anonymization.
+3. [Fairlearn](api/plugins/fairlearn) for fairness-aware evaluation.
+4. [Lifelines](api/plugins/lifelines) for survival and failure modeling.
 
 Popular framework and plotting support is available through extensions:
 

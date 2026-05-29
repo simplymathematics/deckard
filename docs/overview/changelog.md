@@ -2,19 +2,17 @@
 
 ## .98.3
 
-- Documentation hardening, notebook refresh/lockfile sync, runtime/config consistency fixes, and CI/test stabilization across core workflows.
-- Scope highlights: improved API/extension coverage (including Fairlearn, Lifelines, Yellowbrick, and Anjana), refined sklearn/lifelines fixtures, and targeted cleanup in DVC experiment lint/test paths.
-- Phase 3 closure TODOs:
-  - [x] Add anjana matrix coverage.
-  - [x] Remove fairlearn compatibility aliases.
-  - [x] Add .deckard_rc env loading.
-  - [x] Add targeted attack metric labels.
-  - [x] Hash runtime artifact file names.
-  - [x] Sanitize params export configs.
-  - [x] Reduce file.py to canon types.
-  - [x] Expand pytorch data loader tests.
-  - [x] Run fail-fast targeted tests.
-  - [x] Update Phase 3 checklist statuses.
+- Improved documentation quality, cross-linking, licensing information, and developer workflow guidance.
+- Refreshed and stabilized notebooks, examples, and documentation build pipelines.
+- Expanded integration support and test coverage for Anjana, Fairlearn, Lifelines, and Yellowbrick.
+- Simplified configuration architecture by standardizing naming, reducing indirection, and consolidating ownership of runtime behavior.
+- Improved runtime composition across experiments, data pipelines, samplers, attacks, defenses, scoring, and framework integrations.
+- Strengthened reproducibility through cleaner configuration exports, deterministic fingerprinting, structured runtime manifests, and artifact hashing.
+- Added support for loading defaults from .deckard_rc files with documented precedence alongside environment variables and CLI arguments.
+- Improved attack and defense runtime consistency, including clearer targeted-attack metrics, flattened configuration surfaces, and compatibility cleanup.
+- Expanded automated validation with broader PyTorch coverage, regression testing, compose-contract testing, and fail-fast verification workflows.
+- Reduced technical debt through removal of legacy compatibility paths, module responsibility cleanup, runtime consistency fixes, and general codebase hardening.
+
 ## .98.2
 
 - Finalized repository enforcement pass for core scope checks and verified no baseline violations in `deckard/` via `scripts/repository_enforcement.py --scope deckard/`.
@@ -46,90 +44,34 @@ data/experiment utilities, and fairlearn scoring).
 
 ## Known TODOs
 
-### Phase 1: Quick Wins (Docs + Small Test/Notebook Fixes)
+Repository TODO audit completed from source, test, docs, scripts, workflow, and top-level project files.
 
-- [x] `docs/overview/extensions/anjana.md`: replace placeholder `TODO` section with concrete integration guidance.
-- [x] `docs/notebooks/pytorch.ipynb`: resolve `TODO: Fix torch default data scoring` (`scorer=None` placeholders in notebook examples) in the frameworks/pytorch/score.py file.
-- [x] `docs/notebooks/yellowbrick.ipynb`: resolve `TODO: Add default cluster-scoring` (`scorer=None` placeholder in notebook examples) in a new deckard/score/cluster.py file.
-- [x] `test/test_plot/test_init.py`: repair broken plot init test.
-- [x] `papers/compression_distance/find_best.py`: add optimization direction argument support. Ensure to include `diff` directions for inclusion in the paretoset according to paretoset python api (`diff` is not compatible with optuna). There should be no `diff` directions set by default.
-- [x] `deckard/__main__.py`: add comprehensive CLI help strings for the main and in layers/ main loop.
-- [x] fix or remove xpassed/xfailed tests
+Scan scope:
+- Included: `deckard`, `docs`, `examples`, `scripts`, `test`, `.github`, `README.md`, `pyproject.toml`
+- Excluded: `.git`, `.venv`, `.dvc`, `build`, `docs/build`, `outputs`, generated notebooks and HTML
 
-### Phase 2: Documentation Coverage + Repo Settings
+### Audited Open TODO List
 
-- [x] Audit individual files for missing cross-references (e.g., [AttackConfig](../api/modules) or [fairlearn](extensions/index) references should link to docs), create a way to track this per-file, and add it to repository enforcement so that we can systematically eliminate the lack of cross-references. Also audit for broken `:mod` and `:doc` syntax inside all docs/ *.md files and all docs/notebooks/*.ipynb files
-- [x] Ensure that all docs/ files cross-reference instead of merely wrap objects with ``.
-- [x] Fix broken :mod syntax
-- [x] Fix broken :doc syntax
-- [x] Ensure that notebook .md cells properly cross-link to the docs.
-- [x] Add dependency licenses and hyperlinks across all top-level docs and relevant index pages.
-- [x] Add links to plugins and their licenses.
-- [x] Create a new LICENSES file for this content and move the existing LICENSES section from docs/index.md there and link to it from the index.
-- [x] Document `matplotlibrc` behavior and provide extension examples.
-- [x] Update [lifelines](extensions/index), `art_attacks`, and `art_defenses` notebooks for clarity and scope.
-- [x] `docs/developers/workflows.md`: document Codecov (or equivalent) repository settings checklist.
-- [x] `docs/developers/workflows.md`: wire security scanning workflow/checklist updates in docs.
-- [x] `docs/developers/workflows.md`: document security scanning integration with repository enforcement and CI gates.
-- [x] `docs/developers/workflows.md`: document Dependabot repository settings and update flow.
-- [x] audit index files and toctrees to mirror the source code
-- [x] Ensure that the flow between base module mirrors the experiment flow
-- [ ] Ensure that the flow from base -> frameworks is obvious and parallel
-- [ ] Ensure that the flow from base -> plugins is obvious and parallel
+#### Runtime and core code
 
-### Phase 3: Targeted Code + Workflow Updates
+- [ ] `deckard/attack/base.py`: resolve targeted/non-targeted attack label TODO in runtime payload path.
+- [ ] `deckard/model/base.py`: replace inspect-based fallback TODO in `_sync_model_signature_from_estimator` with a stable constructor-parameter extraction strategy.
+- [ ] `deckard/experiment/canon.py`: complete component/sub-component manifest mapping TODO in experiment runtime manifest builder.
+- [ ] `deckard/__main__.py`: remove stale config discovery TODO comment now that `.deckard_rc` defaults are supported and tested.
 
-- [x] `.github/workflows/test-optional-dependencies.yml`: add [anjana](extensions/index) optional dependency test coverage in the existing matrix job.
-- [x] `deckard/plugins/fairlearn/score.py`: remove temporary compatibility logic (`TODO: Remove this`) at lines 40-43 and apply all required downstream call site, docs, tests, and config updates in the same effort.
-- [x] `deckard/__main__.py`: read from existing `.deckard_rc` when present to set environment defaults. Support both dotenv-style key/value and YAML. Precedence must be CLI args > environment variables > `.deckard_rc` defaults. Test and document.
-- [x] `deckard/attack/base.py`: set labels to distinguish targeted from non-targeted evasion and poisoning attacks with a shared Mixin. Use label pattern `<target>_evasion_<metric>`. Test and document.
+#### API documentation content debt
 
-- [x] files: reduce `deckard/file.py` to thin runtime helpers only and unify canon files with the TypeDict objects in favor of authoritative schemas in each module's `canon.py`.
-- [x] `test/test_frameworks/test_pytorch/test_pytorch_data.py`: add coverage for map-style dataset, iterable dataset, and pre-split dataloaders with unknown split tags.
-- [x] Ensure DVC params exports contain only initialization configuration data so runtime pipelines are fully reproducible from emitted config artifacts.
-- [x] Run targeted tests on touched files using fail-fast over core touched files.
+- [ ] `docs/api/layers/index.md`: complete all inline TODO walkthrough placeholders for optimize, compile-results, progress-bar, pareto, survival, and plotting sections.
 
-### Phase 4: Refactors + Runtime Composition
-papers/ folder is out of scope
-This is a hard-cut. Tests, docs, and configs must be updated.
+#### Test implementation debt
 
-Testing standards for this phase were moved to:
-- {doc}`../developers/contributor/testing`
+- [ ] `test/test_frameworks/test_pytorch/test_pytorch_data.py`: implement placeholder custom dataset/dataloader/tensorset mixin tests.
 
-- [ ] `deckard/*/base.py`: replace manual init parsing with `inspect`-based parsing and fast-failure during post_init.
-- [ ] `deckard/*/base.py`: dataset_name, model_type, attack_type init params/attributes with "name" for uniformity.
-- [ ] Unite coercion logic and default logic in BaseConfig.
-- [ ] Rename ArtifactLoaderConfig to --> ArtifactLoaderMixin
-- [ ] Reduce the number of other Mixins in core modules for simplicity, but keep run-time behavior the same.
-  - [ ] Which mixins are mandatory to keep for behavior parity (must-not-break list)?
-  - [ ] Which mixins can be merged into BaseConfig versus kept as thin runtime adapters?
-  - [ ] Which contract tests should be treated as gating coverage for each removed/merged mixin?
-- [ ] `deckard/experiment/canon.py`: correctly map components and subcomponents to existing `*Config` objects.
-- [ ] `deckard/experiment/base.py`: compose data behavior at run time from mixins.
-- [ ] `deckard/frameworks/pytorch/data.py`: compose data behavior at run time from mixins.
-- [ ] `deckard/frameworks/pytorch/experiment.py`: compose data behavior at run time from mixins.
-- [ ] Add a formal @fingerprint property to BaseConfig that contains the *Config initialization hash.
-- [ ] Add fingerprint property to {class}`deckard.utils.BaseConfig` for run-time access (This should correctly calculate hashes on subsets of composition objects: e.g. `_apply_fit` and `_apply_predict` integration, partial pipelines, partial defense chains, sampling, splitting, folding, partial attack chains, etc.).
-- [ ] Update all hashing flows to consume this public property.
-- [ ] Create plugin install script with stable re-exports and discovery for core module plugins.
-- [ ] Update tests accordingly. 
-- [ ] Generate a canonical folder-by-folder fail-fast test flow from the docs/api/index flow and set it as the source of truth for Phase 4 acceptance + CI parity.
+#### Tooling and docs-process cleanup
 
-Phase 4 decisions (resolved):
+- [ ] `scripts/fix_docs_crosslinks.py` + `docs/developers/contributor/documentation.md`: close remaining `TODO-BROKEN-LINK` remediation loop by tracking and resolving unresolved link placeholders in docs runs.
 
-- Unknown init kwargs: do not hard-fail yet; emit warnings and allow duck-typed passthrough where needed.
-- Legacy aliases (`dataset_name`, `model_type`, `attack_type`): remove in Phase 4 and standardize on `name`.
-- `ArtifactLoaderConfig` rename: cut directly to `ArtifactLoaderMixin` and update imports now (no compatibility shim).
-- `deckard/experiment/canon.py` mapping: unify aliases to one canonical component/subcomponent mapping.
-- `BaseConfig.fingerprint`: hash all components required for reproducibility and compute as the last post-init step (or the existing post-init-finalization hook).
-- Plugin install interface: add a general script under `deckard/layers` that supports all existing plugin folders.
+#### Backlog classification notes
 
-Open questions for Phase 4:
+- [ ] `docs/developers/future/refactor_plan.md`: maintain as forward backlog only; do not duplicate backlog items in changelog.
 
-- Coercion/default precedence in `BaseConfig`: should defaults resolve before child composition coercion, or after child coercion with parent override/finalization?
-
-### Phase 5: Stabilization + Contract Finalization
-
-- [ ] Remove backwards-compatible logic that is no longer required.
-- [ ] Audit code for redundancy and clarity after functionality stabilizes.
-- [ ] Finalize run-time contracts for consistent API across composition targets (WIP).

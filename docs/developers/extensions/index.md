@@ -27,8 +27,8 @@ framework or plugin-specific lifecycle.
 
 ## Contracts and Invariants
 
-- Keep shared extension rules in {doc}`../../developers/plugins` and
-	{doc}`../../developers/mixins`.
+- Keep shared extension rules in {doc}`/developers/extensions/plugins` and
+	{doc}`/developers/extensions/mixins`.
 - Keep framework/plugin-specific behavior in the owning developer page.
 - Avoid duplicating the same extension overview text in the root developer
 	index and in this hub page.

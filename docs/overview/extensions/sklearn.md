@@ -3,23 +3,23 @@
 This overview focuses on execution order for sklearn framework wrappers.
 
 For comprehensive hook ownership and policy details, see
-[Plugin and Hook Execution Reference](../../developers/hooks).
+[Plugin and Hook Execution Reference](/developers/extensions/hooks).
 
 Related docs:
 
-- [Data API](../../api/data)
-- [Pipeline API](../../api/pipeline)
-- [Model API](../../api/model)
-- [Training API](../../api/train)
-- [Defense API](../../api/defend)
-- [Attack API](../../api/attack)
-- [Detector API](../../api/detector)
+- [Data API](/api/data/index)
+- [Pipeline API](/api/data/pipeline)
+- [Model API](/api/model/index)
+- [Training API](/api/model/train)
+- [Defense API](/api/model/defend)
+- [Attack API](/api/attack/index)
+- [Detector API](/api/detector/index)
 - [Scoring Overview](../scoring)
-- [File API](../../api/file)
-- [Artifacts API](../../api/artifacts)
+- [File API](/api/file/index)
+- [Artifacts API](/api/artifacts/index)
 - [Experiment Guide](../experiment)
-- [Plot API](../../api/plot)
-- [Utils API](../../api/utils)
+- [Plot API](/api/plot/index)
+- [Utils API](/api/utils/index)
 
 ## Execution Order
 
@@ -46,7 +46,7 @@ data:
 
 model:
     _target_: deckard.model.base.ModelConfig
-    model_type: sklearn.ensemble.RandomForestClassifier
+    name: sklearn.ensemble.RandomForestClassifier
     trainer:
         _target_: deckard.model.trainer.base.SklearnTrainerConfig
 ```

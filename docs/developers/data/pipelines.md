@@ -15,8 +15,8 @@ and labels before model training and evaluation.
 
 ## Standards Followed
 
-- Documentation standards: {doc}`../documentation`
-- Data design: {doc}`../data`
+- Documentation standards: {doc}`/developers/contributor/documentation`
+- Data design: {doc}`/developers/data/data`
 
 ## Required Documentation
 
@@ -54,4 +54,4 @@ Document migrations, aliases, and compatibility expectations.
 
 ## See also
 
-- {doc}`../../api/pipeline`
+- {doc}`/api/data/pipeline`

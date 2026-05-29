@@ -16,9 +16,9 @@ framework-adapter or plugin-integrated backends.
 - Render configured visual outputs from experiment or data sources.
 - Apply backend-specific plotting behavior behind shared plot config APIs.
 - Persist plot artifacts and runtime plot state metadata.
-- Render outputs produced by upstream {doc}`experiment` and {doc}`data` workflows.
+- Render outputs produced by upstream {doc}`../experiment` and {doc}`../data` workflows.
 
-Implementation-level plotting contracts are documented in {doc}`../developers/plot`.
+Implementation-level plotting contracts are documented in {doc}`/developers/experiment/plot`.
 
 ## Outputs
 
@@ -59,7 +59,7 @@ Backend references:
 ## Survival Plot Extension
 
 Survival plotting configs are provided in a dedicated optional module.
-See also: {doc}[lifelines](../overview/extensions/lifelines).
+See also: {doc}[lifelines](../../overview/extensions/lifelines).
 
 ```{eval-rst}
 .. automodule:: deckard.plugins.lifelines.plot
@@ -75,8 +75,8 @@ See also: {doc}[lifelines](../overview/extensions/lifelines).
 
 ## Integrations
 
-- Framework integration: {doc}[pytorch](../overview/extensions/pytorch)
-- Plugin integrations: {doc}[seaborn](../overview/extensions/seaborn), {doc}[yellowbrick](../overview/extensions/yellowbrick), {doc}[lifelines](../overview/extensions/lifelines)
+- Framework integration: {doc}[pytorch](../../overview/extensions/pytorch)
+- Plugin integrations: {doc}[seaborn](../../overview/extensions/seaborn), {doc}[yellowbrick](../../overview/extensions/yellowbrick), {doc}[lifelines](../../overview/extensions/lifelines)
 
 ## Overview
 
@@ -88,7 +88,7 @@ Plot configs separate plotting intent from execution details. They support:
 - optional experiment-aware setup for plotting from prior outputs
 
 Hydra users can compose plot backends and parameters through config groups and
-overrides; see [Hydra](https://hydra.cc) and {doc}`experiment` for runtime
+overrides; see [Hydra](https://hydra.cc) and {doc}`../experiment` for runtime
 composition context.
 
 ## Examples
@@ -119,7 +119,7 @@ plot:
 ## Implementation Notes
 
 Backend ownership and internal runtime orchestration details are documented in
-{doc}`../developers/plot`.
+{doc}`/developers/experiment/plot`.
 
 ## Optuna-backed Seaborn recipes
 
@@ -151,7 +151,7 @@ plot:
    y: value
    data_config:
       _target_: deckard.data.base.DataConfig
-      dataset_name: optuna
+      name: optuna
       target: value
       data_params:
          optuna_storage: sqlite:///build/optuna.db
@@ -171,9 +171,9 @@ plot:
 
 ### See also
 
-- {doc}`experiment` — experiment orchestration and result generation
-- {doc}`../api/score` — scoring framework that produces plotting data
-- {doc}[seaborn](../overview/extensions/seaborn) — statistical visualization with Seaborn
-- {doc}[yellowbrick](../overview/extensions/yellowbrick) — model interpretability visualizations
-- {doc}[lifelines](../overview/extensions/lifelines) — survival model and plotting integration
-- {doc}`layers` — plot, survival, and pareto post-processing workflows
+- {doc}`../experiment` — experiment orchestration and result generation
+- {doc}`../score` — scoring framework that produces plotting data
+- {doc}[seaborn](../../overview/extensions/seaborn) — statistical visualization with Seaborn
+- {doc}[yellowbrick](../../overview/extensions/yellowbrick) — model interpretability visualizations
+- {doc}[lifelines](../../overview/extensions/lifelines) — survival model and plotting integration
+- {doc}`../layers` — plot, survival, and pareto post-processing workflows

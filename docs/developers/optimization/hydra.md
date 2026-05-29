@@ -126,6 +126,6 @@ At minimum, tests must validate:
 
 ## See also
 
-- {doc}`../optimization`
-- {doc}`../dvc`
-- {doc}`../orchestration`
+- {doc}`/developers/optimization/optimization`
+- {doc}`/developers/optimization/dvc`
+- {doc}`/developers/design/orchestration`

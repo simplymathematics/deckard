@@ -3,21 +3,21 @@
 This overview focuses on execution order for transformers framework wrappers.
 
 For comprehensive hook ownership and policy details, see
-[Plugin and Hook Execution Reference](../../developers/hooks).
+[Plugin and Hook Execution Reference](/developers/extensions/hooks).
 
 Related docs:
 
-- [Data API](../../api/data)
-- [Pipeline API](../../api/pipeline)
-- [Model API](../../api/model)
-- [Training API](../../api/train)
-- [Defense API](../../api/defend)
-- [Attack API](../../api/attack)
+- [Data API](/api/data/index)
+- [Pipeline API](/api/data/pipeline)
+- [Model API](/api/model/index)
+- [Training API](/api/model/train)
+- [Defense API](/api/model/defend)
+- [Attack API](/api/attack/index)
 - [Scoring Overview](../scoring)
-- [File API](../../api/file)
-- [Artifacts API](../../api/artifacts)
+- [File API](/api/file/index)
+- [Artifacts API](/api/artifacts/index)
 - [Experiment Guide](../experiment)
-- [Plot API](../../api/plot)
+- [Plot API](/api/plot/index)
 
 ## Execution Order
 
@@ -37,7 +37,7 @@ Related docs:
 ```yaml
 model:
     _target_: deckard.frameworks.transformers.model.TransformersModelConfig
-    model_type: transformers.AutoModelForSequenceClassification
+    name: transformers.AutoModelForSequenceClassification
     tokenizer: transformers.AutoTokenizer
 ```
 

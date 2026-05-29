@@ -168,7 +168,7 @@ fields at construction time:
 - `event_col`
 - `duration_col`
 
-In YAML configs, `model_type` should be a fully-qualified import path so
+In YAML configs, `name` should be a fully-qualified import path so
 custom user-provided regression fitters can be imported reliably.
 
 ## Examples

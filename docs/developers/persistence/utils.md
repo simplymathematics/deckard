@@ -63,4 +63,4 @@ must be updated together.
 
 ## See also
 
-- {doc}`../../api/utils`
+- {doc}`/api/utils/index`

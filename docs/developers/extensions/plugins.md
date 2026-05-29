@@ -41,7 +41,7 @@ embedding stage logic in classes.
 Guardrails include plugin hook-order tests, payload typing checks, and
 deterministic merge/dispatch tests.
 
-See hook contract validation patterns in {doc}`../hooks`.
+See hook contract validation patterns in {doc}`/developers/extensions/hooks`.
 
 ## Migration and Compatibility
 

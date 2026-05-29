@@ -99,7 +99,7 @@ metrics and study metadata into a single file for plotting and reporting.
 ### Full Walkthrough
 
 For end-to-end workflow context, including DVC and optimization integration, see
-[Developer Optimization: DVC](../../developers/optimization/dvc).
+[Developer Optimization: DVC](/developers/optimization/dvc).
 
 <!-- TODO: Add a schema-driven study-name parsing walkthrough with before/after output columns. -->
 <!-- TODO: Document recommended output formats (csv/parquet) per downstream layer. -->
@@ -110,7 +110,7 @@ For end-to-end workflow context, including DVC and optimization integration, see
    {func}`deckard.layers.compile_results.compile_results_main`.
 
    The compiled output is commonly consumed by
-   {doc}`../plot/index` and {doc}`pareto`.
+   {doc}`../plot/index` and the Pareto section below.
 
    For broader optimization workflow details, see
    [Overview: Optimization](../../overview/optimize).
@@ -162,7 +162,7 @@ trial counts inferred from DVC stage definitions.
 ### Full Walkthrough
 
 For DVC-stage and sweeper-storage setup details, see
-[Developer Optimization: DVC](../../developers/optimization/dvc).
+[Developer Optimization: DVC](/developers/optimization/dvc).
 
 <!-- TODO: Add an end-to-end monitoring walkthrough across multiple storages. -->
 <!-- TODO: Add notes on GridSampler trial-count inference and fallback behavior. -->
@@ -248,7 +248,7 @@ For optimization objective setup and selection workflows, see
    for downstream {doc}`../plot/index` workflows.
 
    For objective and direction conventions, see
-   {doc}`../../developers/optimization/optimization`.
+   {doc}`/developers/optimization/optimization`.
 ```
 
 ### Minimal YAML Example
@@ -315,7 +315,7 @@ For survival architecture and scoring context, see
    {doc}`../plugins/lifelines` and {doc}`../experiment/index`.
 
    Developer-level runtime details are in
-   {doc}`../../developers/experiment/experiment`.
+   {doc}`/developers/experiment/experiment`.
 ```
 
 ### Minimal YAML Example
@@ -324,7 +324,7 @@ For survival architecture and scoring context, see
 survival:
    data:
       _target_: deckard.data.base.DataConfig
-      dataset_name: lifelines_rossi
+      name: lifelines_rossi
       target: arrest
    model: cox
    target: arrest
@@ -365,7 +365,7 @@ plotting (Yellowbrick) with backend auto-selection.
 ### Full Walkthrough
 
 For plotting architecture and backend behavior, see
-[Developer Experiment: Plot](../../developers/experiment/plot).
+[Developer Experiment: Plot](/developers/experiment/plot).
 
 <!-- TODO: Add backend auto-selection decision table (auto/yellowbrick/seaborn). -->
 <!-- TODO: Add examples for experiment-backed yellowbrick vs file-backed seaborn runs. -->

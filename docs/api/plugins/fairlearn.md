@@ -225,5 +225,5 @@ attack-time fairness scoring.
 - {doc}`../score/index` — scoring framework including {mod}`deckard.plugins.fairlearn.score`
 - {doc}`../pytorch/index` — optional PyTorch integration with Fairlearn
 - {doc}`../modules` — overview of all extensions
-- {doc}`../../developers/data/data` — cross-family runtime contract
+- {doc}`/developers/data/data` — cross-family runtime contract
 - {doc}`../../developers/contributor/migration` — migration guardrails

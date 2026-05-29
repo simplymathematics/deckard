@@ -16,9 +16,9 @@ adapters and plugin integrations.
 - Generate attacked samples across supported attack families.
 - Produce attack prediction payloads for downstream evaluation.
 - Emit attack-scoped metrics and persist canonical attack artifacts.
-- Consume model outputs from {doc}`model` and emit metrics used by {doc}`score`.
+- Consume model outputs from {doc}`/api/model/index` and emit metrics used by {doc}`/api/score/index`.
 
-Implementation-level runtime contracts are documented in {doc}`../developers/attack`.
+Implementation-level runtime contracts are documented in {doc}`/developers/attack/attack`.
 
 ## Outputs
 
@@ -158,7 +158,7 @@ Scoring keys include:
 ## Common Attack and Defense Components
 
 Attack configuration in this module is typically composed with
-{doc}`model` defense pipelines and {doc}`score` attack scorer profiles.
+{doc}`/api/model/index` defense pipelines and {doc}`/api/score/index` attack scorer profiles.
 
 Common ART evasion attack classes used with deckard attack configs:
 
@@ -190,16 +190,16 @@ Common ART defenses that are paired with attack runs in deckard:
 
 Related Deckard docs:
 
-- {doc}`model` for configuring defense pipelines
-- {doc}`defend` for defense pipeline and defense mixin dispatch
-- {doc}`score` for attack-specific scorer profiles
-- {doc}`pytorch` for ART estimator integration in torch workflows
-- {doc}`fairlearn`, {doc}`lifelines`, and {doc}`anjana` for plugin-specific attack/scoring integrations
+- {doc}`/api/model/index` for configuring defense pipelines
+- {doc}`/api/model/defend` for defense pipeline and defense mixin dispatch
+- {doc}`/api/score/index` for attack-specific scorer profiles
+- {doc}`/api/pytorch/index` for ART estimator integration in torch workflows
+- {doc}`/api/plugins/fairlearn`, {doc}`/api/plugins/lifelines`, and {doc}`/api/plugins/anjana` for plugin-specific attack/scoring integrations
 
 ## Integrations
 
-- Framework integration: {doc}`pytorch`
-- Plugin integrations: {doc}`fairlearn`, {doc}`lifelines`, {doc}`anjana`
+- Framework integration: {doc}`/api/pytorch/index`
+- Plugin integrations: {doc}`/api/plugins/fairlearn`, {doc}`/api/plugins/lifelines`, {doc}`/api/plugins/anjana`
 
 ## Examples
 
@@ -262,7 +262,7 @@ attack:
    :show-inheritance:
 ```
 
-Framework-specific attack adapters are documented in {doc}`pytorch`.
+Framework-specific attack adapters are documented in {doc}`/api/pytorch/index`.
 
 ## Troubleshooting
 
@@ -272,9 +272,9 @@ Framework-specific attack adapters are documented in {doc}`pytorch`.
 
 ### See also
 
-- {doc}`experiment` — experiment orchestration
-- {doc}`model` — model configuration and execution
-- {doc}`defend` — defense pipeline configuration and mixin behavior
-- {doc}`data` — data loading and split handling
-- {doc}`sample` — sampling/split strategy definitions
-- {doc}`score` — attack scoring profiles
+- {doc}`/api/experiment/index` — experiment orchestration
+- {doc}`/api/model/index` — model configuration and execution
+- {doc}`/api/model/defend` — defense pipeline configuration and mixin behavior
+- {doc}`/api/data/index` — data loading and split handling
+- {doc}`/api/data/sample` — sampling/split strategy definitions
+- {doc}`/api/score/index` — attack scoring profiles

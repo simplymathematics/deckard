@@ -11,7 +11,7 @@ Optimization orchestration integrates:
 
 - {class}`deckard.layers.optimize.DefaultOptimizerCallback` lifecycle hooks
 
-For layer API reference, see [Layers](../api/layers).
+For layer API reference, see [Layers](/api/layers/index).
 
 ## Source Configuration
 

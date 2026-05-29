@@ -134,16 +134,16 @@ Optimization-first run flow:
 1. Define scorers/objectives (see [Scoring](scoring)).
 1. Compose configs with [Hydra](https://hydra.cc).
 1. Run optimization with [Optuna](https://optuna.org).
-1. Persist outputs through [File API](../api/file).
-1. Run post-hoc analysis through [Layers API](../api/layers).
+1. Persist outputs through [File API](/api/file/index).
+1. Run post-hoc analysis through [Layers API](/api/layers/index).
 
 Quick example:
 
 ```bash
 python -m deckard optimize --config-name experiment \
-    data.dataset_name=make_classification \
-    model.model_type=sklearn.ensemble.RandomForestClassifier \
-    attack.attack_type=art.attacks.evasion.FastGradientMethod \
+  data.name=make_classification \
+  model.name=sklearn.ensemble.RandomForestClassifier \
+    attack.name=art.attacks.evasion.FastGradientMethod \
     attack.attack_params.eps=0.1
 ```
 
@@ -151,7 +151,7 @@ Multi-attack example (single `attack` field with list syntax):
 
 ```bash
 python -m deckard optimize --config-name experiment \
-    '+attack=[{"attack_type":"art.attacks.evasion.FastGradientMethod","attack_params":{"eps":0.05},"attack_size":20,"alias":"fgm"},{"attack_type":"art.attacks.evasion.HopSkipJump","attack_params":{"max_iter":5},"attack_size":20,"alias":"hsj"}]'
+    '+attack=[{"name":"art.attacks.evasion.FastGradientMethod","attack_params":{"eps":0.05},"attack_size":20,"alias":"fgm"},{"name":"art.attacks.evasion.HopSkipJump","attack_params":{"max_iter":5},"attack_size":20,"alias":"hsj"}]'
 ```
 
 In multi-attack runs, aliases are required and colliding metric keys are

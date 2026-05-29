@@ -51,4 +51,4 @@ adding new artifact projections.
 
 ## See also
 
-- {doc}`../../api/artifacts`
+- {doc}`/api/artifacts/index`

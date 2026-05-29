@@ -38,12 +38,12 @@ If your goal is to run an experiment quickly:
 
 If your goal is multi-objective optimization:
 
-1. Compose objective scorers in {doc}`../api/score`.
+1. Compose objective scorers in {doc}`/api/score/index`.
 2. Read {doc}`hydra` for run and multirun orchestration.
 3. Read {doc}`optimize` for Optuna-backed optimization behavior.
 4. Read {doc}`dvc` for pipeline and artifact generation.
-5. Persist artifacts via {doc}`../api/file`.
-6. Run post-hoc Pareto and plotting analysis via {doc}`../api/layers`.
+5. Persist artifacts via {doc}`/api/file/index`.
+6. Run post-hoc Pareto and plotting analysis via {doc}`/api/layers/index`.
 
 If your goal is to extend deckard:
 
@@ -53,20 +53,20 @@ If your goal is to extend deckard:
 
 ## Core Extensions
 
-- [PyTorch](../api/pytorch)
-- [Fairlearn](../api/fairlearn)
-- [Anjana](../api/anjana)
-- [Lifelines](../api/lifelines)
-- [Seaborn](../api/seaborn)
-- [Yellowbrick](../api/yellowbrick)
+- [PyTorch](/api/pytorch/index)
+- [Fairlearn](/api/plugins/fairlearn)
+- [Anjana](/api/plugins/anjana)
+- [Lifelines](/api/plugins/lifelines)
+- [Seaborn](/api/plugins/seaborn)
+- [Yellowbrick](/api/plugins/yellowbrick)
 
 ## Programmatic Example
 
 ```python
 from deckard import DataConfig, ModelConfig, AttackConfig, ExperimentConfig
 
-data = DataConfig(dataset_name="adult", test_size=0.2)
-model = ModelConfig(model_type="sklearn.linear_model.LogisticRegression")
+data = DataConfig(name="adult", test_size=0.2)
+model = ModelConfig(name="sklearn.linear_model.LogisticRegression")
 attack = AttackConfig()
 experiment = ExperimentConfig(data=data, model=model, attack=attack)
 
@@ -122,11 +122,11 @@ This stage model keeps large parameter sweeps auditable and comparable.
 
 ## Optimization-First Workflow
 
-1. Define objective scorers in {doc}`../api/score`.
+1. Define objective scorers in {doc}`/api/score/index`.
 2. Compose experiment config with [Hydra](https://hydra.cc) groups.
 3. Run single or multi-objective optimization through [Optuna](https://optuna.org).
-4. Persist predictions, scores, and metadata through {doc}`../api/file`.
-5. Run post-hoc analysis via {doc}`../api/layers`.
+4. Persist predictions, scores, and metadata through {doc}`/api/file/index`.
+5. Run post-hoc analysis via {doc}`/api/layers/index`.
 
 ## Recommended Learning Paths
 
@@ -136,7 +136,7 @@ This stage model keeps large parameter sweeps auditable and comparable.
 - Run one notebook workflow ([sklearn](../notebooks/sklearn) or [pytorch](../notebooks/pytorch)).
 - Inspect scoring outputs and persisted artifacts.
 - Promote the most relevant metrics to multi-objective optimization targets.
-- Use [Layers](../api/layers) for post-hoc evaluations (Pareto filtering,
+- Use [Layers](/api/layers/index) for post-hoc evaluations (Pareto filtering,
   plotting, survival workflows).
 - Adapt one config for a new dataset, model, or metric.
 

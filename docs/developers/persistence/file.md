@@ -49,4 +49,4 @@ file mappings.
 
 ## See also
 
-- {doc}`../../api/file`
+- {doc}`/api/file/index`

@@ -70,12 +70,73 @@ bash scripts/coverage.sh test/test_layers
 The script captures errors without failing immediately, then exits non-zero if
 any step fails.
 
-## Phase 4 Testing Standards
+## Canonical Refactor Testing Standards
 
 - Test criteria per check mark: unit tests for touched files.
 - Final testing: fail fast over each folder, updating tests or code as needed.
-- Final acceptance criteria: `scripts/coverage.sh` passes -> `dvc repro --force`
-  in `docs/notebooks` -> docs build passes -> `build_docs` workflow passes.
+- Notebook gating is stage-scoped: run `dvc repro --force <stage>` one stage at
+  a time inside `docs/notebooks`, fix the failing notebook, then rerun that same
+  stage before moving to the next one.
+- Final acceptance criteria: `scripts/coverage.sh` passes -> notebook DVC stages
+  pass one at a time -> docs build passes with notebook execution disabled ->
+  final workflow validation passes.
+
+## Notebook Gating Canon
+
+Notebook validation is a local gate, not a bulk `dvc repro --force` sweep.
+
+Canonical workflow:
+
+```bash
+cd docs/notebooks
+dvc repro --force notebook_seaborn
+dvc repro --force notebook_yellowbrick
+dvc repro --force notebook_detector
+# ...continue one stage at a time until the touched / gated notebook stages pass
+```
+
+Rules:
+
+- Run one notebook stage at a time with `dvc repro --force <stage>`.
+- If a stage fails, stop, fix that notebook or its supporting runtime surface,
+  and rerun the same stage before advancing.
+- Do not treat `dvc repro --force` without a stage name as the canonical gating
+  path for notebook validation.
+- Prefer the stage names reported by `dvc stage list` in `docs/notebooks`.
+
+Common notebook stages include:
+
+- `notebook_seaborn`
+- `notebook_yellowbrick`
+- `notebook_detector`
+- `notebook_art_attacks`
+- `notebook_art_defenses`
+- `notebook_sklearn`
+- `notebook_pytorch`
+- `notebook_hydra`
+- `notebook_deckard`
+- `notebook_scoring`
+- `notebook_dvc`
+- `notebook_optuna`
+- `notebook_lifelines`
+- `notebook_artifacts`
+- `notebook_fairlearn`
+- `notebook_anjana`
+
+## Docs Build Canon
+
+After notebook gating passes, build docs with notebook execution disabled.
+The repository Makefile already exposes the canonical Sphinx override through
+`SPHINX_NB_OFF ?= -D nb_execution_mode=off`.
+
+Run from `docs/`:
+
+```bash
+make html SPHINX_NB_OFF='-D nb_execution_mode=off'
+```
+
+This is the required local docs-build check before the final workflow
+validation stage.
 
 ## Canon Fail-Fast Escalation Map
 

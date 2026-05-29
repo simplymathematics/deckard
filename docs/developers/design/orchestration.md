@@ -29,13 +29,21 @@ stage flow, while mixins and plugins extend behavior at explicit boundaries.
 - Keep mixins capability-focused and non-orchestrating.
 - Keep hook contracts explicit and stage-scoped.
 
+## Canonical Orchestration Decisions
+
+- Runtime orchestration keeps canonical component/sub-component ownership boundaries.
+- Legacy alias dispatch paths are removed from active refactor slices.
+- Plugin/framework command and summary contracts are canonicalized at the CLI surface.
+- Optional dependency boundaries remain explicit and are enforced by runtime gating.
+- Coercion/default precedence follows child-first normalization and parent finalization for derived values.
+
 ## See also
 
-- {doc}`../plugins`
-- {doc}`../mixins`
-- {doc}`../hooks`
-- {doc}`../model`
-- {doc}`../data`
+- {doc}`/developers/extensions/plugins`
+- {doc}`/developers/extensions/mixins`
+- {doc}`/developers/extensions/hooks`
+- {doc}`/developers/model/model`
+- {doc}`/developers/data/data`
 
 ## Purpose and Rationale
 

@@ -16,7 +16,7 @@ adapters and plugin integrations.
 - Train and evaluate classifiers/regressors on canonical split modes.
 - Apply defense stages in deterministic runtime order.
 - Persist config/state artifacts and expose reusable prediction payloads.
-- Integrate with {doc}`train` and {doc}`defend` runtime sub-objects.
+- Integrate with {doc}`/api/model/train` and {doc}`/api/model/defend` runtime sub-objects.
 
 ## Outputs
 
@@ -39,7 +39,7 @@ CLI execution,
 and integration with the {mod}`deckard.data` module.
 
 The canonical model runtime contract, trainer flow, and defense-stage behavior
-are documented in {doc}`../developers/model`.
+are documented in {doc}`/developers/model/model`.
 
 ```{eval-rst}
 .. automodule:: deckard.model
@@ -52,8 +52,8 @@ are documented in {doc}`../developers/model`.
 Integration-specific capabilities are documented in dedicated pages so this
 core API page remains focused on base model behavior:
 
-- Framework integration: {doc}`pytorch`
-- Plugin integrations: {doc}`fairlearn`, {doc}`lifelines`, {doc}`anjana`
+- Framework integration: {doc}`../pytorch`
+- Plugin integrations: {doc}`../fairlearn`, {doc}`../lifelines`, {doc}`../anjana`
 
 ## Overview
 
@@ -91,7 +91,7 @@ Currently supports:
 ### Defense pipeline integration
 
 Model configs can compose deckard defense pipelines used during robustness
-evaluation. See {doc}`attack` for paired attack orchestration and {doc}`score`
+evaluation. See {doc}`../attack` for paired attack orchestration and {doc}`../score`
 for attack-aware scorer profiles.
 
 Defense application is stage-aware and follows the canonical model stages:
@@ -130,7 +130,7 @@ Common ART defense components referenced by deckard model defenses:
 ```yaml
 model:
    _target_: deckard.model.base.ModelConfig
-   model_type: sklearn.linear_model.LogisticRegression
+  name: sklearn.linear_model.LogisticRegression
    classifier: true
    model_params:
       max_iter: 500
@@ -140,7 +140,7 @@ model:
 
 Detailed model runtime contracts (stage ordering, trainer/defense internals,
 and framework adapter boundaries) are documented in
-{doc}`../developers/model`.
+{doc}`/developers/model/model`.
 
 ## Troubleshooting
 
@@ -155,13 +155,13 @@ and framework adapter boundaries) are documented in
 
 ### See also
 
-- {doc}`data` — data configuration and loading
-- {doc}`train` — training runtime mixins and trainer-defense behavior
-- {doc}`defend` — defense pipeline and defense-family mixins
-- {doc}`experiment` — experiment orchestration
-- {doc}`attack` — attack configuration
-- {doc}`score` — scoring framework
-- {doc}`pytorch` — PyTorch model integration
-- {doc}`anjana` — anonymization-aware models
-- {doc}`lifelines` — survival model configuration
-- {doc}`utils` — utility functions
+- {doc}`../data` — data configuration and loading
+- {doc}`/api/model/train` — training runtime mixins and trainer-defense behavior
+- {doc}`/api/model/defend` — defense pipeline and defense-family mixins
+- {doc}`../experiment` — experiment orchestration
+- {doc}`../attack` — attack configuration
+- {doc}`../score` — scoring framework
+- {doc}`../pytorch` — PyTorch model integration
+- {doc}`../anjana` — anonymization-aware models
+- {doc}`../lifelines` — survival model configuration
+- {doc}`../utils` — utility functions

@@ -74,7 +74,7 @@ The current implementation is frozen around these invariants:
 
 {meth}`deckard.experiment.ExperimentConfig.compose_components` already supports runtime overrides for:
 
-- [data](../../api/data), [model](../../api/model), [attack](../../api/attack), [detector](../../api/detector), [score](../../api/score), [defense](../../api/defend), [files](../../api/file)
+- [data](/api/data/index), [model](/api/model/index), [attack](/api/attack/index), [detector](/api/detector/index), [score](/api/score/index), [defense](/api/model/defend), [files](/api/file/index)
 
 - `hook_plugins`, `hook_bundles`
 
@@ -108,7 +108,7 @@ This gives enough structure to derive stage boundaries for DVC without hard-code
 
 Experiment runtime already caches stage payloads for:
 
-- [sample](../../api/sample), [train](../../api/train), `defense`, [attack](../../api/attack), [score](../../api/score)
+- [sample](/api/data/sample), [train](/api/model/train), `defense`, [attack](/api/attack/index), [score](/api/score/index)
 
 Cache keys are deterministic and built from:
 
@@ -116,7 +116,7 @@ Cache keys are deterministic and built from:
 
 - stage identity (for example run/fold index)
 
-- params manifest fingerprints ([build_experiment_params_manifest](../../api/experiment))
+- params manifest fingerprints ([build_experiment_params_manifest](/api/experiment/index))
 
 ### Cache persistence and visibility
 
@@ -234,43 +234,43 @@ Behavioral contract:
 
 Map canonical experiment stages to DVC stages as follows.
 
-- [load](../../api/data)
+- [load](/api/data/index)
 
   - stage name: `data__load`
   - deps: source config and optional raw data files
   - outs: loaded/persisted data artifacts when configured
 
-- [sample](../../api/sample)
+- [sample](/api/data/sample)
 
   - stage name: `data__sample`
   - deps: load outputs + sampler params
   - outs: split/sampled data artifacts, sample cache payload
 
-- [train](../../api/train)
+- [train](/api/model/train)
 
   - stage name: `model__train`
   - deps: sample outputs + model/defense params
   - outs: model artifact, predictions, train cache payload
 
-- [defense](../../api/defend)
+- [defense](/api/model/defend)
 
   - stage name: `detector__defense` (or `model__defense` when model defense stages are selected)
   - deps: train outputs + detector/defense params
   - outs: defense/detector outputs + cache payload
 
-- [attack](../../api/attack)
+- [attack](/api/attack/index)
 
   - stage name: `attack__attack`
   - deps: model outputs + attack params
   - outs: attack artifacts/predictions + cache payload
 
-- [score](../../api/score)
+- [score](/api/score/index)
 
   - stage name: `experiment__score`
   - deps: upstream outputs + scorer params
   - outs: score artifacts + score cache payload
 
-- [persist](../../api/artifacts)
+- [persist](/api/artifacts/index)
 
   - stage name: `experiment__persist`
   - deps: all selected stage outputs
@@ -320,7 +320,7 @@ Write a DVC params file (YAML) containing:
 
 - key experiment manifest fields (`experiment_name`, `library`, `random_state`, score/eval mode)
 
-- component fingerprints from [build_experiment_params_manifest](../../api/experiment)
+- component fingerprints from [build_experiment_params_manifest](/api/experiment/index)
 
 Current payload shape includes:
 

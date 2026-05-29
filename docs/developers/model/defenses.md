@@ -19,15 +19,15 @@ The `trainer` defense family in this page refers to ART retrainer defenses.
 
 - ART retrainer defenses are defense objects executed in defense stages.
 - Trainer configuration objects define model-fit orchestration and are
-	documented separately in {doc}`../trainers`.
+	documented separately in {doc}`/developers/model/trainers`.
 
 Both must be documented and maintained independently because they have
 different ownership boundaries and runtime semantics.
 
 ## Standards Followed
 
-- Documentation standards: {doc}`../documentation`
-- Model and defense design: {doc}`../model`
+- Documentation standards: {doc}`/developers/contributor/documentation`
+- Model and defense design: {doc}`/developers/model/model`
 
 ## Required Documentation
 
@@ -94,4 +94,4 @@ normalized to canonical public defense APIs and family names.
 
 ## See also
 
-- {doc}`../../api/defend`
+- {doc}`/api/model/defend`

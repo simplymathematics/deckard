@@ -61,7 +61,7 @@ core plot config surface without compatibility aliases.
 
 ## See also
 
-- {doc}`../../api/plot`
-- {doc}`../orchestration`
-- {doc}`../persistence`
-- {doc}`../plugins`
+- {doc}`/api/plot/index`
+- {doc}`/developers/design/orchestration`
+- {doc}`/developers/persistence/persistence`
+- {doc}`/developers/extensions/plugins`

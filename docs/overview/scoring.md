@@ -4,7 +4,7 @@ This page is the user-facing guide to how scoring is configured in deckard.
 It summarizes scoring scope/stage behavior, default scorer families, and
 example YAML patterns before you dive into low-level API/runtime details.
 
-For full callable/runtime signature details, see {doc}`../api/score`.
+For full callable/runtime signature details, see {doc}`/api/score/index`.
 
 ## What Scoring Does
 
@@ -478,5 +478,5 @@ To ensure group scores are actually computed:
 
 ## Next Steps
 
-- Runtime API details and [__call__](../api/modules) signatures: {doc}`../api/score`
+- Runtime API details and [__call__](../api/modules) signatures: {doc}`/api/score/index`
 - Orchestration context: {doc}`experiment`

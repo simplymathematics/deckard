@@ -16,9 +16,9 @@ adapters and plugin integrations.
 - Execute split-aware sampling and optional preprocessing pipelines.
 - Run data-level scoring across canonical split modes and stage hooks.
 - Persist data artifacts, metadata, and timing records for experiment reuse.
-- Coordinate sub-object flows through {doc}`sample` and {doc}`pipeline`.
+- Coordinate sub-object flows through {doc}`/api/data/sample` and {doc}`/api/data/pipeline`.
 
-Implementation-level runtime contracts are documented in {doc}`../developers/data`.
+Implementation-level runtime contracts are documented in {doc}`/developers/data/data`.
 
 ## Outputs
 
@@ -49,7 +49,7 @@ The {mod}`deckard.data.sample` module provides pluggable sampling strategies via
 {class}`~deckard.data.sample.BaseSampler`
 for robust train/test/validation splits.
 
-See {doc}`sample` for the sampler API reference and runtime details.
+See {doc}`/api/data/sample` for the sampler API reference and runtime details.
 
 ## Data Preprocessing Pipelines
 
@@ -58,7 +58,7 @@ via a `pipeline` attribute that accepts a
 {class}`~deckard.data.pipeline.base.DataPipeline` object.
 
 Developer-level contract details for data orchestration are documented in
-{doc}`../developers/data`.
+{doc}`/developers/data/data`.
 
 Common transform components referenced in deckard pipeline configs:
 
@@ -67,7 +67,7 @@ Common transform components referenced in deckard pipeline configs:
 - [`sklearn.preprocessing.StandardScaler`](https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.StandardScaler.html)
 - [`sklearn.preprocessing.OneHotEncoder`](https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.OneHotEncoder.html)
 
-For torch-native transforms, see {doc}`pytorch` and:
+For torch-native transforms, see {doc}`/api/pytorch/index` and:
 
 - [`torchvision.transforms.Compose`](https://pytorch.org/vision/stable/generated/torchvision.transforms.Compose.html)
 
@@ -76,8 +76,8 @@ For torch-native transforms, see {doc}`pytorch` and:
 Integration capabilities are documented in dedicated pages so core API behavior
 remains focused:
 
-- Framework integration: {doc}`pytorch`
-- Plugin integrations: {doc}`fairlearn`, {doc}`lifelines`, {doc}`anjana`
+- Framework integration: {doc}`/api/pytorch/index`
+- Plugin integrations: {doc}`/api/plugins/fairlearn`, {doc}`/api/plugins/lifelines`, {doc}`/api/plugins/anjana`
 
 Core data runtime ownership and behavior remain in {mod}`deckard.data`.
 
@@ -192,9 +192,9 @@ Optuna storage without writing SQL.
 
 Use one of these source forms:
 
-- `dataset_name: optuna`
-- `dataset_name: /path/to/optuna.db`
-- `dataset_name: /path/to/optuna.sqlite3`
+- `name: optuna`
+- `name: /path/to/optuna.db`
+- `name: /path/to/optuna.sqlite3`
 - `data_params.optuna_storage: ...` (explicit storage URI/path/object)
 
 Supported query controls are forwarded to the shared runtime helper:
@@ -209,7 +209,7 @@ Supported query controls are forwarded to the shared runtime helper:
 ```yaml
 data:
    _target_: deckard.data.base.DataConfig
-   dataset_name: optuna
+   name: optuna
    target: value
    data_params:
       optuna_storage: sqlite:///build/optuna.db
@@ -228,7 +228,7 @@ data:
 ```yaml
 data:
    _target_: deckard.data.base.DataConfig
-   dataset_name: optuna
+   name: optuna
    target: value
    data_params:
       optuna_storage: sqlite:///build/optuna.db
@@ -249,7 +249,7 @@ data:
 ```yaml
 data:
    _target_: deckard.data.base.DataConfig
-   dataset_name: make_classification
+   name: make_classification
    classifier: true
    data_params:
       n_samples: 500
@@ -268,7 +268,7 @@ data:
 ```yaml
 data:
    _target_: deckard.data.base.DataConfig
-   dataset_name: diabetes
+   name: diabetes
    classifier: false
    sampler:
       name: split
@@ -281,7 +281,7 @@ data:
 ```yaml
 data:
    _target_: deckard.data.base.DataConfig
-   dataset_name: adult.openml
+   name: adult.openml
    classifier: true
    data_params:
       version: 2
@@ -295,7 +295,7 @@ data:
 ```yaml
 data:
    _target_: deckard.data.base.DataConfig
-   dataset_name: ./data/train.csv
+   name: ./data/train.csv
    target: label
    classifier: true
    drop:
@@ -311,7 +311,7 @@ data:
 ```yaml
 data:
    _target_: deckard.plugins.lifelines.data.LifelinesDataConfig
-   dataset_name: lifelines_rossi
+   name: lifelines_rossi
    mode: native
    duration_col: week
    event_col: arrest
@@ -326,7 +326,7 @@ data:
 ```yaml
 data:
    _target_: deckard.data.base.DataConfig
-   dataset_name: yellowbrick.concrete
+   name: yellowbrick.concrete
    classifier: false
    sampler:
       name: split
@@ -338,7 +338,7 @@ data:
 ```yaml
 data:
    _target_: deckard.frameworks.pytorch.data.PytorchDataConfig
-   dataset_name: torchvision.datasets.MNIST
+   name: torchvision.datasets.MNIST
    classifier: true
    data_params:
       train: true
@@ -355,7 +355,7 @@ data:
 ```yaml
 data:
    _target_: deckard.frameworks.pytorch.fairness_data.FairlearnPytorchDataConfig
-   dataset_name: deckard.frameworks.pytorch.fairness_data.TinyFairness
+   name: deckard.frameworks.pytorch.fairness_data.TinyFairness
    classifier: true
    sensitive_columns:
       - _sensitive
@@ -377,7 +377,7 @@ Sensitive feature parsing in fairness-aware torch configs follows two paths:
 ```yaml
 data:
    _target_: deckard.frameworks.pytorch.data.PytorchDataConfig
-   dataset_name: my_package.MyDataset
+   name: my_package.MyDataset
    classifier: true
    data_params:
       split: train
@@ -392,7 +392,7 @@ data:
 ```yaml
 data:
    _target_: deckard.frameworks.pytorch.data.PytorchDataConfig
-   dataset_name: my_file.py:MyDataset
+   name: my_file.py:MyDataset
    classifier: true
    data_params:
       root: ./data
@@ -446,20 +446,20 @@ Logging is performed at key steps.
 If you encounter issues with dataset loading, ensure that:
 
 - You have an active internet connection for datasets fetched from OpenML, etc.
-- The selected optional dataset provider is installed ([lifelines](../overview/extensions/index), [yellowbrick](../overview/extensions/index),
+- The selected optional dataset provider is installed ([lifelines](/overview/extensions/lifelines), [yellowbrick](/overview/extensions/yellowbrick),
   or `torch` extras when applicable).
 - The selected file path and `target` column are correct for file-backed data.
 - Otherwise, use one of the built-in dataset names from the catalog above.
 
 ### See also
 
-- {doc}`model` — model configuration and training
-- {doc}`sample` — pluggable train/test/val samplers
-- {doc}`pipeline` — runtime data pipeline object and compatibility config aliases
-- {doc}`experiment` — experiment orchestration
-- {doc}`attack` — attack configuration
-- {doc}`score` — scoring framework
-- {doc}`pytorch` — PyTorch data integration
-- {doc}`anjana` — anonymization-aware data
-- {doc}`lifelines` — survival analysis data configuration
-- {doc}`utils` — utility functions
+- {doc}`/api/model/index` — model configuration and training
+- {doc}`/api/data/sample` — pluggable train/test/val samplers
+- {doc}`/api/data/pipeline` — runtime data pipeline object and compatibility config aliases
+- {doc}`/api/experiment/index` — experiment orchestration
+- {doc}`/api/attack/index` — attack configuration
+- {doc}`/api/score/index` — scoring framework
+- {doc}`/api/pytorch/index` — PyTorch data integration
+- {doc}`/api/plugins/anjana` — anonymization-aware data
+- {doc}`/api/plugins/lifelines` — survival analysis data configuration
+- {doc}`/api/utils/index` — utility functions

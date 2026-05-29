@@ -42,6 +42,6 @@ This keeps cache/artifact identity stable across unrelated config edits.
 ## Related Docs
 
 - [Optimization](optimize)
-- [Hydra and Optuna Orchestration Contract](../developers/hydra)
-- [Optimization Runtime Contract](../developers/optimization)
-- [Pruning Runtime Contract](../developers/pruning)
+- [Hydra and Optuna Orchestration Contract](/developers/optimization/hydra)
+- [Optimization Runtime Contract](/developers/optimization/optimization)
+- [Pruning Runtime Contract](/developers/optimization/pruning)

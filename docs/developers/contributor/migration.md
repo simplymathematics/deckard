@@ -3,6 +3,14 @@
 This document defines migration constraints for plugin and framework data
 configuration APIs during canon refactors.
 
+## Canonical Migration Policy
+
+- Do not add new compatibility shims during migration slices.
+- Prefer direct hard cuts to canonical names and runtime owners.
+- Standardize runtime identity fields on `name`.
+- Keep optional-dependency boundaries explicit and dependency-gated.
+- Keep runtime lifecycle entrypoints canonical (`apply`, `apply_to`, `apply_defense`).
+
 ## Preserve Top-Level Config APIs
 
 Migration updates must preserve top-level config entry points used by user
@@ -23,18 +31,15 @@ Required public paths include:
 - {class}`deckard.frameworks.pytorch.data.PytorchDataConfig`
 - {class}`deckard.frameworks.pytorch.data.PytorchCustomDataConfig`
 
-Compatibility re-exports remain supported at {class}`deckard.data.AnjanaDataConfig` and
-{class}`deckard.data.FairlearnDataConfig`, but only when the matching optional plugin
-dependencies are installed. Plugin-family packages keep their top-level
-aliases stable and lazily resolve them from the owning module so that optional
-dependency checks control availability.
+Optional dependency exports at {class}`deckard.data.AnjanaDataConfig` and
+{class}`deckard.data.FairlearnDataConfig` are dependency-gated and resolve from
+their owning plugin modules.
 
 Do not migrate user-facing configs to plugin internals such as
 `deckard.plugins.<family>.data.<Class>`.
 
-The supported exception is compatibility-only alias imports listed above. Those
-aliases should continue to resolve to the canonical module definitions and are
-the only plugin-internal import paths that remain part of the migration guard.
+These import paths are the only plugin-internal exceptions permitted by this
+guard and must continue to resolve to canonical module definitions.
 
 ## Hook Bundle Composition
 

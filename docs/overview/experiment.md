@@ -6,7 +6,7 @@ results through canonical file aliases.
 
 Primary API reference:
 
-- {doc}`../api/experiment`
+- {doc}`/api/experiment/index`
 
 ## Overview Flow
 
@@ -37,13 +37,13 @@ Only fit-time defense can trigger retraining behavior.
 
 {class}`deckard.experiment.ExperimentConfig` composes these core module configs:
 
-- Data: {doc}`../api/data`
-- Model: {doc}`../api/model`
-- Attack: {doc}`../api/attack`
-- Detector: {doc}`../api/detector`
-- Score: {doc}`../api/score`
-- Artifacts and paths: {doc}`../api/file`
-- Plot and layers (post-hoc): {doc}`../api/plot`, {doc}`../api/layers`
+- Data: {doc}`/api/data/index`
+- Model: {doc}`/api/model/index`
+- Attack: {doc}`/api/attack/index`
+- Detector: {doc}`/api/detector/index`
+- Score: {doc}`/api/score/index`
+- Artifacts and paths: {doc}`/api/file/index`
+- Plot and layers (post-hoc): {doc}`/api/plot/index`, {doc}`/api/layers/index`
 
 ## Runtime Controls
 
@@ -59,4 +59,4 @@ See also:
 - {doc}`optimize`
 - {doc}`hydra`
 - {doc}`dvc`
-- {doc}`../developers/experiment`
+- {doc}`/developers/experiment/experiment`

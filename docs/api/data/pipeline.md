@@ -2,9 +2,9 @@
 
 ## Contract References
 
-- Canonical API contract page: {doc}`pipeline`
-- Developer authoring contract: {doc}`../developers/pipelines`
-- Shared config/mixin/plugin contracts: {doc}`../developers/configs`, {doc}`../developers/mixins`, {doc}`../developers/plugins`
+- Canonical API contract page: {doc}`/api/data/pipeline`
+- Developer authoring contract: {doc}`/developers/data/pipelines`
+- Shared config/mixin/plugin contracts: {doc}`/developers/design/configs`, {doc}`/developers/extensions/mixins`, {doc}`/developers/extensions/plugins`
 
 ## Introduction
 
@@ -58,7 +58,7 @@ optional `pipeline` runtime object.
 ```yaml
 data:
   _target_: deckard.data.base.DataConfig
-  dataset_name: make_classification
+  name: make_classification
   pipeline:
     scale:
       name: sklearn.preprocessing.StandardScaler
@@ -66,10 +66,10 @@ data:
 
 ## See also
 
-- {doc}`data`
-- {doc}`sample`
-- {doc}`fairlearn`
-- {doc}`pytorch`
-- {doc}`../developers/data`
-- {doc}`../developers/pipelines`
-- {doc}`../developers/migration`
+- {doc}`/api/data/index`
+- {doc}`/api/data/sample`
+- {doc}`/api/plugins/fairlearn`
+- {doc}`/api/pytorch/index`
+- {doc}`/developers/data/data`
+- {doc}`/developers/data/pipelines`
+- {doc}`/developers/contributor/migration`

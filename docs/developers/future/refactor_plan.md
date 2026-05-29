@@ -37,7 +37,7 @@ Status update (2026-05-22): DataConfig is now a legacy alias to DataConfig; runt
 
 - [x] Define one explicit runtime attribute contract for all data stages
 
-  (`_X/_y`, train/test/val splits, `times`, `scores`, `files`).
+  (_X/_y, train/test/val splits, times, scores, files).
 
 - [x] Replace legacy top-level persistence kwargs with files-only persistence orchestration in runtime call paths.
 
@@ -66,11 +66,11 @@ Status update (2026-05-22): DataConfig is now a legacy alias to DataConfig; runt
 
 - [x] Move remaining plugin/framework branching logic out of core runtime paths (`deckard/data/*`).
 
-### Phase 2: Framework data runtimes (`deckard/frameworks/**/data.py`)
+### Phase 2: Framework data runtimes ({doc}`frameworks <../../api/frameworks/index>`)
 
 - [x] Align framework data configs to the core DataConfig lifecycle method
 
-  contract (`load_dataset`, `sample`, `score`, `__call__` `fit`).
+  contract ({meth}`deckard.data.DataConfig.load_dataset`, {meth}`deckard.data.DataConfig.sample`, {meth}`deckard.data.DataConfig.score`, {meth}`deckard.data.DataConfig.__call__`, {meth}`deckard.data.DataConfig.fit`).
 
 - [x] Unify stage semantics with core canonical stage resolver and keep score
 
@@ -118,9 +118,9 @@ Status update (2026-05-22): DataConfig is now a legacy alias to DataConfig; runt
 
 - [x] Add Fairlearn score tail hook (`after_score`) and enforce fairlearn metrics merge last.
 
-- [x] Normalize plugin scoring calls to split-scoped `score_mode` (`train|test|val|all`) and remove stage-name-as-mode behavior.
+- [x] Normalize plugin scoring calls to split-scoped score_mode (train|test|val|all) and remove stage-name-as-mode behavior.
 
-- [x] Keep top-level config behavior stable (`AnjanaDataConfig`, `FairlearnDataConfig`, `LifelinesExperimentConfig`, etc.) via focused plugin suite validation.
+- [x] Keep top-level config behavior stable ({class}`deckard.plugins.anjana.data.AnjanaDataConfig`, {class}`deckard.plugins.fairlearn.data.FairlearnDataConfig`, {class}`deckard.plugins.lifelines.experiment.LifelinesExperimentConfig`, etc.) via focused plugin suite validation.
 
 - [x] test fairlearn.preprocessing.CorrelationRemover (check first for existing test and extend rather than make a new one)
 
@@ -134,11 +134,11 @@ Status update (2026-05-22): DataConfig is now a legacy alias to DataConfig; runt
 
 - [x] Add cross-family contract tests asserting unified attributes, methods, and
 
-  control-flow (`files`, `times`, `scores`, canonical stage/mode behavior).
+  control-flow (files, times, scores, canonical stage/mode behavior).
 
 - [x] Add stage and hook conformance tests for core/framework/plugin families.
 
-- [x] Update API docs (`data`, `pytorch`, `fairlearn`, `anjana` `pipeline`) to reflect canon.
+- [x] Update API docs ({doc}`data </api/data/index>`, {doc}`pytorch </api/pytorch/index>`, {doc}`fairlearn <../../api/plugins/fairlearn>`, {doc}`anjana <../../api/plugins/anjana>`, {doc}`pipeline </api/data/pipeline>`) to reflect canon.
 
 - [x] Update developer docs to explain the canon file.
 
@@ -204,11 +204,11 @@ Status update (2026-05-22): DataConfig is now a legacy alias to DataConfig; runt
 
 - [x] Add cross-family contract tests asserting unified attributes, methods, and
 
-  control-flow (`files`, `times`, `scores`, canonical stage/mode behavior).
+  control-flow (files, times, scores, canonical stage/mode behavior).
 
 - [x] Add stage and hook conformance tests for core/framework/plugin families.
 
-- [x] Update API docs (`model`, `pytorch`, `fairlearn`, `anjana` `pipeline`) to reflect canon.
+- [x] Update API docs ({doc}`model </api/model/index>`, {doc}`pytorch </api/pytorch/index>`, {doc}`fairlearn <../../api/plugins/fairlearn>`, {doc}`anjana <../../api/plugins/anjana>`, {doc}`pipeline </api/data/pipeline>`) to reflect canon.
 
 - [x] Add new doc files to indices. Add cross-links elsewhere.
 
@@ -226,7 +226,7 @@ Status update (2026-05-22): DataConfig is now a legacy alias to DataConfig; runt
 
 ## Attack Checklist
 
-- [x] Define a canonical attack runtime contract (`files`, `times`, `scores`, `stage`, `mode`).
+- [x] Define a canonical attack runtime contract (files, times, scores, stage, mode).
 
 - [x] Normalize attack-stage hooks and defense/attack ordering semantics across core and framework adapters.
 
@@ -350,11 +350,11 @@ Status update (2026-05-22): DataConfig is now a legacy alias to DataConfig; runt
 
 - [x] Canonize experiment state buckets:
 
-  - [x] `files` (artifact paths, cache keys, persistence aliases)
-  - [x] `times` (canonical timing keys plus extensible stage timings)
-  - [x] `scores` (mode/stage-aware score payloads)
-  - [x] `outputs` (cached intermediate runtime payloads)
-  - [x] `params` (resolved config + runtime kwargs manifest)
+  - [x] files (artifact paths, cache keys, persistence aliases)
+  - [x] times (canonical timing keys plus extensible stage timings)
+  - [x] scores (mode/stage-aware score payloads)
+  - [x] outputs (cached intermediate runtime payloads)
+  - [x] params (resolved config + runtime kwargs manifest)
 
 - [x] Add mode/stage normalization helpers for experiment-level orchestration (single run + multi-trial semantics).
 

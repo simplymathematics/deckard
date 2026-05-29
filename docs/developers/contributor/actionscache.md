@@ -5,6 +5,12 @@
 GitHub Actions and GitHub cache have been configured to efficiently manage
 notebook execution and artifacts across local development and CI builds.
 
+## Canonical Behavior Notes
+
+- Cache workflows should document settled runtime behavior without phase-specific wording.
+- Command references should use canonical CLI surfaces when discussing plugin/framework automation.
+- Caching changes must not introduce compatibility shims in runtime command paths.
+
 ## Changes Made
 
 ### 1. DVC Configuration (`.dvc/config`)

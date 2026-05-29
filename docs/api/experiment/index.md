@@ -16,7 +16,7 @@ persistence outputs across framework adapters and plugin integrations.
 - Route split/mode/stage context into component runtimes.
 - Compose reproducible runs via declarative config objects and overrides.
 - Persist aggregated run artifacts, timing, and score outputs.
-- Coordinate child components across {doc}`data`, {doc}`model`, {doc}`attack`, {doc}`detector`, and {doc}`score`.
+- Coordinate child components across {doc}`/api/data/index`, {doc}`/api/model/index`, {doc}`/api/attack/index`, {doc}`/api/detector/index`, and {doc}`/api/score/index`.
 
 ## Outputs
 
@@ -26,7 +26,7 @@ persistence outputs across framework adapters and plugin integrations.
 - Persisted artifact paths managed through file configuration objects.
 
 Implementation-level runtime contracts are documented in
-{doc}`../developers/experiment`.
+{doc}`/developers/experiment/experiment`.
 
 ## Introduction
 
@@ -48,7 +48,7 @@ entrypoints for end-to-end experiment execution.
 PyTorch-specific experiment orchestration is available via
 {class}`deckard.frameworks.pytorch.experiment.TorchExperimentConfig` in the
 optional {mod}`deckard.frameworks.pytorch.experiment` module.
-See also: {doc}`pytorch`.
+See also: {mod}`deckard.frameworks.pytorch`.
 
 Use this extension when you need PyTorch model/data orchestration while keeping
 the same high-level experiment lifecycle as {class}`deckard.experiment.ExperimentConfig`.
@@ -57,15 +57,15 @@ the same high-level experiment lifecycle as {class}`deckard.experiment.Experimen
 
 Survival-specific experiment orchestration is split into a dedicated optional
 module.
-See also: {doc}`lifelines`.
+See also: {doc}`/api/plugins/lifelines`.
 
 Integration-specific orchestration behavior is documented in integration pages
 to keep this page focused on core experiment flow.
 
 ## Integrations
 
-- Framework integration: {doc}`pytorch`
-- Plugin integrations: {doc}`lifelines`
+- Framework integration: {doc}`/api/pytorch/index`
+- Plugin integrations: {doc}`/api/plugins/lifelines`
 
 ## Overview
 
@@ -90,7 +90,7 @@ Experiment configs are typically composed with [Hydra](https://hydra.cc) and
 for data, model, attack, detector, score, and file targets.
 
 For config-group organization details, see
-{doc}`/developers/declarations`.
+{doc}`/developers/design/declarations`.
 
 Available experiment entrypoints:
 
@@ -131,7 +131,7 @@ experiment:
 ## Implementation Notes
 
 Detailed experiment internals (hook contracts, cache schema, and runtime
-serialization policy) are documented in {doc}`../developers/experiment`.
+serialization policy) are documented in {doc}`/developers/experiment/experiment`.
 
 ## Troubleshooting
 
@@ -141,13 +141,13 @@ serialization policy) are documented in {doc}`../developers/experiment`.
 
 ### See also
 
-- {doc}`data` — data configuration and loading
-- {doc}`model` — model configuration and training
-- {doc}`attack` — attack configuration
-- {doc}`file` — result serialization
-- {doc}`score` — scoring framework
-- {doc}`plot` — backend plotting configuration and outputs
-- {doc}`layers` — CLI orchestration layers (including pareto and survival)
-- {doc}`pytorch` — PyTorch experiment orchestration
-- {doc}`lifelines` — survival experiment orchestration
-- {doc}`utils` — utility functions
+- {doc}`/api/data/index` — data configuration and loading
+- {doc}`/api/model/index` — model configuration and training
+- {doc}`/api/attack/index` — attack configuration
+- {doc}`/api/file/index` — result serialization
+- {doc}`/api/score/index` — scoring framework
+- {doc}`/api/plot/index` — backend plotting configuration and outputs
+- {doc}`/api/layers/index` — CLI orchestration layers (including pareto and survival)
+- {doc}`/api/pytorch/index` — PyTorch experiment orchestration
+- {doc}`/api/plugins/lifelines` — survival experiment orchestration
+- {doc}`/api/utils/index` — utility functions

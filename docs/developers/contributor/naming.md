@@ -27,3 +27,10 @@ objects to ensure clarity and composability.
 
 - YAML: snake_case with dashes for aliases (e.g., `model/fairlearn-classifier.yaml`)
 - Python: PascalCase for all public classes
+
+## Canonical Identity and Command Naming
+
+- Use `name` as the canonical identity field in runtime-facing config payloads.
+- Do not introduce new constructor aliases for `dataset_name`, `model_type`, `attack_type`, or `defense_name`.
+- Use `deckard plugins` and `deckard frameworks` as the canonical CLI command surfaces.
+- Treat plugin and framework list mode (`--list`) as reporting-only behavior (no install side effects).

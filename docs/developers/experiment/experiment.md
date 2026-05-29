@@ -29,20 +29,20 @@ Canonical experiment runtime state is organized into five buckets:
 
 1. `files`: output and artifact aliases resolved through {class}`deckard.file.FileConfig`
 2. `times`: canonical timing keys with optional extension keys
-3. [scores](../../api/data): stage-aware and mode-aware score payloads
+3. [scores](/api/data/index): stage-aware and mode-aware score payloads
 4. `outputs`: cache metadata, hook trace, and stage intermediates
 5. `params`: manifest generated from composed runtime config
 
 The canonical stage order remains:
 
-1. [load](../../api/data)
-2. [sample](../../api/sample)
-3. [train](../../api/train)
+1. [load](/api/data/index)
+2. [sample](/api/data/sample)
+3. [train](/api/model/train)
 4. `apply_fit_defense`
 5. `apply_predict_defense`
-6. [attack](../../api/attack)
-7. [detect](../../api/detector)
-8. [score](../../api/score)
+6. [attack](/api/attack/index)
+7. [detect](/api/detector/index)
+8. [score](/api/score/index)
 9. `persist`
 
 Defense-stage training rule:
@@ -133,4 +133,4 @@ These tests cover:
 
 ## See also
 
-- {doc}`../../api/experiment`
+- {doc}`/api/experiment/index`

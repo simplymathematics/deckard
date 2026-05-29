@@ -25,6 +25,12 @@ Deckard documentation is split by audience and runtime ownership:
 
 ## Authoring Standards
 
+### Canonical Wording Policy
+
+- Write behavior and contracts as canonical guidance, not phase-scoped implementation notes.
+- Avoid milestone/phase references for settled runtime behavior.
+- Document canonical names and command surfaces directly (`name`, `deckard plugins`, `deckard frameworks`).
+
 ### API vs Developer Content Boundaries
 
 - API pages are user-facing and should focus on runtime behavior and configuration.

@@ -60,4 +60,4 @@ python scripts/generate_matplotlibrc.py \
    `seaborn.ipynb`, `yellowbrick.ipynb`, and one robustness notebook.
 3. Rebuild docs and confirm no rendering regressions in generated images.
 
-For workflow-level guidance, see {doc}`../workflows`.
+For workflow-level guidance, see {doc}`/developers/contributor/workflows`.

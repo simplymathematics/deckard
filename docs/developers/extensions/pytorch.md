@@ -57,5 +57,5 @@ targets and checkpoint conventions when possible.
 
 ## See also
 
-- {doc}`../../api/pytorch`
+- {doc}`/api/pytorch/index`
 - {doc}`../index`

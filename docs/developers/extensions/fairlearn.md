@@ -53,5 +53,5 @@ fairness metric naming where possible.
 
 ## See also
 
-- {doc}`../../api/fairlearn`
+- {doc}`/api/plugins/fairlearn`
 - {doc}`../index`
