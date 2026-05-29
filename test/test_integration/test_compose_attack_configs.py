@@ -59,3 +59,25 @@ def test_pytorch_torch_default_includes_attack_config():
     assert "attack" in cfg
     # Default attack is fgm
     assert cfg.attack.alias == "fgm"
+
+
+def test_pytorch_attack_group_override_composes():
+    """Test that attack=<attack> overrides compose through the public attack group."""
+    cfg = _compose_pytorch("torch_default", overrides=["attack=fgm"])
+
+    assert cfg is not None
+    assert "attack" in cfg
+    assert cfg.attack.alias == "fgm"
+
+
+def test_pytorch_model_defense_group_override_composes():
+    """Test that ++defense@model.defense=<defense> composes through the defense group."""
+    cfg = _compose_pytorch(
+        "torch_default",
+        overrides=["model=default", "+defense@model.defense=class_labels"],
+    )
+
+    assert cfg is not None
+    assert "model" in cfg
+    assert "defense" in cfg.model
+    assert cfg.model.defense.defense_name == "art.defences.postprocessor.ClassLabels"

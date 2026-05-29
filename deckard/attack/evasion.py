@@ -236,7 +236,7 @@ class EvasionAttackConfig(EvasionAttackMixin, AttackConfig):
     plugins: list = field(
         default_factory=lambda: [
             AttackTypePlugin(
-                mixin_type=EvasionAttackMixin,
+                mixin_type="deckard.attack.evasion.EvasionAttackConfig",
                 attack_family="evasion",
             ),
         ],

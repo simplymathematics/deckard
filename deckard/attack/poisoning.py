@@ -508,7 +508,7 @@ class PoisoningAttackConfig(PoisoningAttackMixin, AttackConfig):
     plugins: list = field(
         default_factory=lambda: [
             AttackTypePlugin(
-                mixin_type=PoisoningAttackMixin,
+                mixin_type="deckard.attack.poisoning.PoisoningAttackConfig",
                 attack_family="poisoning",
             ),
         ],

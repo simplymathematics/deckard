@@ -242,7 +242,7 @@ class ExtractionAttackConfig(ExtractionAttackMixin, AttackConfig):
     plugins: list = field(
         default_factory=lambda: [
             AttackTypePlugin(
-                mixin_type=ExtractionAttackMixin,
+                mixin_type="deckard.attack.extraction.ExtractionAttackConfig",
                 attack_family="extraction",
             ),
         ],

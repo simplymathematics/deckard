@@ -102,7 +102,7 @@ class ReconstructionAttackConfig(ReconstructionAttackMixin, AttackConfig):
     plugins: list = field(
         default_factory=lambda: [
             AttackTypePlugin(
-                mixin_type=ReconstructionAttackMixin,
+                mixin_type="deckard.attack.reconstruction.ReconstructionAttackConfig",
                 attack_family="inference",
                 attack_sub_family="reconstruction",
             ),

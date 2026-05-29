@@ -789,7 +789,7 @@ class InferenceAttackConfig(InferenceAttackMixin, AttackConfig):
     plugins: list = field(
         default_factory=lambda: [
             AttackTypePlugin(
-                mixin_type=InferenceAttackMixin,
+                mixin_type="deckard.attack.inference.InferenceAttackConfig",
                 attack_family="inference",
                 excluded_subtypes=("reconstruction",),
             ),

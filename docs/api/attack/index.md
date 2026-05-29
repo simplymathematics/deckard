@@ -218,7 +218,7 @@ Related Deckard docs:
 ```yaml
 attack:
    _target_: deckard.attack.base.AttackConfig
-   attack_type: art.attacks.evasion.FastGradientMethod
+   name: art.attacks.evasion.FastGradientMethod
    attack_params:
       eps: 0.1
    attack_size: 100

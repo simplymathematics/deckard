@@ -385,7 +385,10 @@ class AttackTypePlugin:
             Runtime attack score payload.
         """
         mixin = self._resolve_mixin_type()
-        handler = mixin(runtime)
+        if isinstance(mixin, type) and mixin in type(runtime).mro():
+            handler = runtime
+        else:
+            handler = mixin(runtime)
         return ScoreDict.from_payload(handler(*args, **kwargs))
 
 
@@ -765,7 +768,7 @@ class AttackConfig(BaseConfig):
             if isinstance(output, dict):
                 self.score_dict.update(ScoreDict.from_payload(output))
 
-    def _resolve_runtime_attack_mixins(
+    def _resolve_runtime_attack_config(
         self,
         attack_family: str,
         attack_sub_family: str,
@@ -775,26 +778,26 @@ class AttackConfig(BaseConfig):
         attack_sub_family_lower = (attack_sub_family or "").lower()
 
         if attack_family_lower == "evasion":
-            from .evasion import EvasionAttackMixin
+            from .evasion import EvasionAttackConfig
 
-            mixins.append(EvasionAttackMixin)
+            mixins.append(EvasionAttackConfig)
         elif attack_family_lower == "poisoning":
-            from .poisoning import PoisoningAttackMixin
+            from .poisoning import PoisoningAttackConfig
 
-            mixins.append(PoisoningAttackMixin)
+            mixins.append(PoisoningAttackConfig)
         elif attack_family_lower == "extraction":
-            from .extraction import ExtractionAttackMixin
+            from .extraction import ExtractionAttackConfig
 
-            mixins.append(ExtractionAttackMixin)
+            mixins.append(ExtractionAttackConfig)
         elif attack_family_lower == "inference":
             if attack_sub_family_lower == "reconstruction":
-                from .reconstruction import ReconstructionAttackMixin
+                from .reconstruction import ReconstructionAttackConfig
 
-                mixins.append(ReconstructionAttackMixin)
+                mixins.append(ReconstructionAttackConfig)
             else:
-                from .inference import InferenceAttackMixin
+                from .inference import InferenceAttackConfig
 
-                mixins.append(InferenceAttackMixin)
+                mixins.append(InferenceAttackConfig)
 
         plugin_outputs = self._run_plugin_hook(
             "resolve_attack_mixins",
@@ -821,12 +824,15 @@ class AttackConfig(BaseConfig):
         attack_family: str,
         attack_sub_family: str,
     ):
-        mixins = self._resolve_runtime_attack_mixins(
+        mixins = self._resolve_runtime_attack_config(
             attack_family,
             attack_sub_family,
         )
         default_handler = None
         for mixin in mixins:
+            if isinstance(mixin, type) and mixin in type(self).mro():
+                default_handler = self
+                break
             if isinstance(mixin, type) and issubclass(mixin, AttackMixin):
                 default_handler = mixin(self)
                 break
@@ -851,10 +857,11 @@ class AttackConfig(BaseConfig):
         attack_family: str,
         attack_sub_family: str,
     ):
-        mixins = self._resolve_runtime_attack_mixins(
+        mixins = self._resolve_runtime_attack_config(
             attack_family=attack_family,
             attack_sub_family=attack_sub_family,
         )
+        mixins = tuple(mixin for mixin in mixins if mixin not in type(self).mro())
         if len(mixins) == 0:
             return self
 
