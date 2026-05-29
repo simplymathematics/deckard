@@ -176,9 +176,9 @@ def test_fairness_defense_config_apply_to_trained_model(
     model(data)
 
     defense = FairlearnDefenseConfig(
-        name="sklearn.linear_model.LogisticRegression",
+        name="art.defences.postprocessor.GaussianNoise",
+        model_name="sklearn.linear_model.LogisticRegression",
         classifier=True,
-        defense_name="art.defences.postprocessor.GaussianNoise",
         defense_params={"scale": 0.1},
         data=data,
     )
@@ -219,9 +219,9 @@ def test_mixed_fairlearn_and_art_defenses_apply_with_type_checks(
     model.train(data.X_train, data.y_train)
 
     fair_defense = FairlearnDefenseConfig(
-        name="sklearn.linear_model.LogisticRegression",
+        name="fairlearn.reductions.ExponentiatedGradient",
+        model_name="sklearn.linear_model.LogisticRegression",
         classifier=True,
-        defense_name="fairlearn.reductions.ExponentiatedGradient",
         defense_params={
             "constraints": "fairlearn.reductions.DemographicParity",
             "eps": 0.05,
@@ -229,9 +229,9 @@ def test_mixed_fairlearn_and_art_defenses_apply_with_type_checks(
         data=data,
     )
     art_defense = DefenseConfig(
-        name="sklearn.linear_model.LogisticRegression",
+        name="art.defences.postprocessor.GaussianNoise",
+        model_name="sklearn.linear_model.LogisticRegression",
         classifier=True,
-        defense_name=None,
         defense_params={},
     )
     # Force generic ART wrapper so a fairlearn wrapped estimator can be nested.

@@ -364,9 +364,9 @@ def test_defense_config_apply_to_trained_model():
     model(data)
 
     defense = DefenseConfig(
-        name="sklearn.linear_model.LogisticRegression",
+        name="art.defences.postprocessor.GaussianNoise",
+        model_name="sklearn.linear_model.LogisticRegression",
         classifier=True,
-        defense_name="art.defences.postprocessor.GaussianNoise",
         defense_params={"scale": 0.1},
     )
 

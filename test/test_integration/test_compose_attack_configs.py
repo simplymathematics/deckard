@@ -80,4 +80,4 @@ def test_pytorch_model_defense_group_override_composes():
     assert cfg is not None
     assert "model" in cfg
     assert "defense" in cfg.model
-    assert cfg.model.defense.defense_name == "art.defences.postprocessor.ClassLabels"
+    assert cfg.model.defense.name == "art.defences.postprocessor.ClassLabels"

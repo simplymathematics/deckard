@@ -1,13 +1,13 @@
 from deckard.frameworks.pytorch import (
-    DefaultPytorchDefenseConfig,
+    DefenseConfig as PytorchDefenseConfig,
     PytorchModelConfig,
 )
 from deckard.frameworks.sklearn import (
-    DefaultSklearnDefenseConfig,
+    DefenseConfig as SklearnDefenseConfig,
 )
 
 
 def test_framework_namespace_aliases_are_importable():
     assert PytorchModelConfig is not None
-    assert DefaultSklearnDefenseConfig is not None
-    assert DefaultPytorchDefenseConfig is not None
+    assert SklearnDefenseConfig is not None
+    assert PytorchDefenseConfig is not None

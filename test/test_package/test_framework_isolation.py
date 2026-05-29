@@ -38,12 +38,12 @@ builtins.__import__ = _guarded_import
 def test_sklearn_framework_importable_without_pytorch_module():
     _run_import_with_block(
         blocked_prefix="deckard.frameworks.pytorch",
-        import_stmt="from deckard.frameworks.sklearn import DefaultSklearnDefenseConfig\nassert DefaultSklearnDefenseConfig is not None",
+        import_stmt="from deckard.frameworks.sklearn import DefenseConfig\nassert DefenseConfig is not None",
     )
 
 
 def test_pytorch_framework_importable_without_sklearn_module():
     _run_import_with_block(
         blocked_prefix="deckard.frameworks.sklearn",
-        import_stmt="from deckard.frameworks.pytorch import DefaultPytorchDefenseConfig\nassert DefaultPytorchDefenseConfig is not None",
+        import_stmt="from deckard.frameworks.pytorch import DefenseConfig\nassert DefenseConfig is not None",
     )

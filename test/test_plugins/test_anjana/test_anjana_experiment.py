@@ -284,10 +284,10 @@ def test_anjana_data_with_art_model_defense_chain(monkeypatch):
     defense_cfg = DefensePipelineConfig(
         defenses=[
             {
-                "defense_name": "art.defences.postprocessor.ClassLabels",
+                "name": "art.defences.postprocessor.ClassLabels",
                 "defense_params": {"apply_fit": False, "apply_predict": True},
                 "classifier": True,
-                "name": "sklearn.linear_model.LogisticRegression",
+                "model_name": "sklearn.linear_model.LogisticRegression",
             },
         ],
     )
@@ -338,10 +338,10 @@ def test_anjana_art_defense_is_applied_last(monkeypatch):
     pipeline = DefensePipelineConfig(
         defenses=[
             {
-                "defense_name": "art.defences.postprocessor.ClassLabels",
+                "name": "art.defences.postprocessor.ClassLabels",
                 "defense_params": {"apply_fit": False, "apply_predict": True},
                 "classifier": True,
-                "name": "sklearn.linear_model.LogisticRegression",
+                "model_name": "sklearn.linear_model.LogisticRegression",
             },
         ],
     )
@@ -360,12 +360,9 @@ def test_anjana_fairness_data_and_art_model_chain(monkeypatch):
     Anjana data configs are decoupled from fairlearn runtime caches; this test
     validates Anjana + ART interaction only.
     """
-    pytest.importorskip("fairlearn")
-
     from art.estimators.classification.scikitlearn import (
         ScikitlearnLogisticRegression,
     )
-
     from deckard.experiment import ExperimentConfig
     from deckard.file import FileConfig
     from deckard.model import DefensePipelineConfig, ModelConfig
@@ -415,13 +412,13 @@ def test_anjana_fairness_data_and_art_model_chain(monkeypatch):
         defense=DefensePipelineConfig(
             defenses=[
                 {
-                    "defense_name": "art.defences.postprocessor.ClassLabels",
+                    "name": "art.defences.postprocessor.ClassLabels",
                     "defense_params": {
                         "apply_fit": False,
                         "apply_predict": True,
                     },
                     "classifier": True,
-                    "name": "sklearn.linear_model.LogisticRegression",
+                    "model_name": "sklearn.linear_model.LogisticRegression",
                 },
             ],
         ),
@@ -520,10 +517,10 @@ def test_anjana_data_with_fairlearn_model_chain(monkeypatch):
     pipeline = DefensePipelineConfig(
         defenses=[
             {
-                "defense_name": "fairlearn.reductions.ExponentiatedGradient",
+                "name": "fairlearn.reductions.ExponentiatedGradient",
                 "defense_params": {"constraints": "DemographicParity"},
                 "classifier": True,
-                "name": "sklearn.linear_model.LogisticRegression",
+                "model_name": "sklearn.linear_model.LogisticRegression",
             },
         ],
     )
@@ -689,7 +686,11 @@ def test_anjana_experiment_scores_persist_to_json(monkeypatch, tmp_path):
     assert Path(score_file).exists()
     with open(score_file) as f:
         loaded = json.load(f)
-    assert "accuracy" in loaded
+    assert loaded["_schema"] == "deckard.score.v1"
+    assert loaded["payload"]["accuracy"] == pytest.approx(
+        loaded["flat"]["accuracy"],
+        abs=1e-12,
+    )
 
 
 # ---------------------------------------------------------------------------

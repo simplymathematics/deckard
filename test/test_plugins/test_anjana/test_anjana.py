@@ -43,7 +43,7 @@ def test_anjana_data_defense_applies_callable_and_updates_xy(monkeypatch):
         lambda _: _fake_anjana_defense,
     )
 
-    cfg._apply_anjana_defense()
+    cfg.apply_defense()
 
     assert len(cfg._X) == 3
     assert len(cfg._y) == 3
@@ -159,7 +159,7 @@ def test_anjana_data_defense_auto_injects_generated_hierarchies(monkeypatch):
         lambda _: _capture_hierarchy_kwargs,
     )
 
-    cfg._apply_anjana_defense()
+    cfg.apply_defense()
 
     assert "hierarchies" in seen
     assert list(seen["hierarchies"]["age"][1]) == [

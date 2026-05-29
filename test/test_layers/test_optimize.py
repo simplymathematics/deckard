@@ -293,7 +293,7 @@ def test_hydra_optuna_callback_sets_up_study(monkeypatch):
         lambda: SimpleNamespace(mode="RunMode.MULTIRUN", sweeper=None),
     )
 
-    callback = optimize_module.OptunaStudyCallback(
+    callback = optimize_module.DefaultOptimizerCallback(
         study_name="demo-study",
         storage="sqlite:///db.sqlite3",
         directions=["minimize", "diff", "maximize"],
@@ -401,7 +401,7 @@ def test_execute_runtime_object_executes_without_mercy_once(tmp_path):
             return {"loss": 0.25, "accuracy": 0.9}
 
     conf = RuntimeConf()
-    result = optimize_module.OptunaStudyCallback.execute_runtime_object(conf)
+    result = optimize_module.DefaultOptimizerCallback.execute_runtime_object(conf)
 
     assert result == {"loss": 0.25, "accuracy": 0.9}
     assert not (tmp_path / "scores.json").exists()
@@ -421,7 +421,7 @@ def test_execute_runtime_object_rejects_non_mapping_payload(tmp_path):
 
     conf = RuntimeConf()
     with pytest.raises(TypeError, match="must return a dict-like score payload"):
-        optimize_module.OptunaStudyCallback.execute_runtime_object(conf)
+        optimize_module.DefaultOptimizerCallback.execute_runtime_object(conf)
 
 
 def test_hydra_optuna_callback_on_compose_config_sets_experiment_and_files(
@@ -439,7 +439,7 @@ def test_hydra_optuna_callback_on_compose_config_sets_experiment_and_files(
     )
     monkeypatch.setattr(optimize_module.HydraConfig, "get", lambda: hydra_cfg)
 
-    callback = optimize_module.OptunaStudyCallback(
+    callback = optimize_module.DefaultOptimizerCallback(
         study_name="demo-study",
         storage="sqlite:///study.sqlite3",
         directions=["minimize"],
@@ -475,7 +475,7 @@ def test_hydra_optuna_callback_on_compose_config_writes_params_file(
     )
 
     params_file = str(tmp_path / "params.yaml")
-    callback = optimize_module.OptunaStudyCallback(
+    callback = optimize_module.DefaultOptimizerCallback(
         study_name="demo-study",
         storage="sqlite:///study.sqlite3",
         directions=["minimize"],
@@ -503,7 +503,7 @@ def test_hydra_optuna_callback_on_job_end_writes_score_file(
     hydra_cfg = SimpleNamespace(mode="RunMode.MULTIRUN")
     monkeypatch.setattr(optimize_module.HydraConfig, "get", lambda: hydra_cfg)
 
-    callback = optimize_module.OptunaStudyCallback(
+    callback = optimize_module.DefaultOptimizerCallback(
         study_name="demo-study",
         storage="sqlite:///study.sqlite3",
         directions=["minimize"],
@@ -549,7 +549,7 @@ def test_hydra_optuna_callback_on_job_end_syncs_trial_attributes(
         fake_sync,
     )
 
-    callback = optimize_module.OptunaStudyCallback(
+    callback = optimize_module.DefaultOptimizerCallback(
         study_name="demo-study",
         storage="sqlite:///study.sqlite3",
         directions=["minimize"],
@@ -591,7 +591,7 @@ def test_hydra_optuna_callback_on_job_end_returns_without_files(monkeypatch):
     hydra_cfg = SimpleNamespace(mode="RunMode.MULTIRUN")
     monkeypatch.setattr(optimize_module.HydraConfig, "get", lambda: hydra_cfg)
 
-    callback = optimize_module.OptunaStudyCallback(
+    callback = optimize_module.DefaultOptimizerCallback(
         study_name="demo-study",
         storage="sqlite:///study.sqlite3",
         directions=["minimize"],
@@ -606,7 +606,7 @@ def test_hydra_optuna_callback_on_job_end_returns_without_score_file(monkeypatch
     hydra_cfg = SimpleNamespace(mode="RunMode.MULTIRUN")
     monkeypatch.setattr(optimize_module.HydraConfig, "get", lambda: hydra_cfg)
 
-    callback = optimize_module.OptunaStudyCallback(
+    callback = optimize_module.DefaultOptimizerCallback(
         study_name="demo-study",
         storage="sqlite:///study.sqlite3",
         directions=["minimize"],
@@ -642,7 +642,7 @@ def test_hydra_optuna_callback_on_compose_config_uses_constructor_params_file(
     )
 
     params_file = str(tmp_path / "params.yaml")
-    callback = optimize_module.OptunaStudyCallback(
+    callback = optimize_module.DefaultOptimizerCallback(
         study_name="demo-study",
         storage="sqlite:///study.sqlite3",
         directions=["minimize"],
@@ -671,7 +671,7 @@ def test_hydra_optuna_callback_on_compose_config_resolves_single_run_paths_from_
     )
     monkeypatch.setattr(optimize_module.HydraConfig, "get", lambda: hydra_cfg)
 
-    callback = optimize_module.OptunaStudyCallback(
+    callback = optimize_module.DefaultOptimizerCallback(
         study_name="demo-study",
         storage="sqlite:///study.sqlite3",
         directions=["minimize"],
@@ -700,7 +700,7 @@ def test_hydra_optuna_callback_on_job_end_uses_constructor_score_file(
     )
     monkeypatch.setattr(optimize_module.HydraConfig, "get", lambda: hydra_cfg)
 
-    callback = optimize_module.OptunaStudyCallback(
+    callback = optimize_module.DefaultOptimizerCallback(
         study_name="demo-study",
         storage="sqlite:///study.sqlite3",
         directions=["minimize"],
@@ -1072,7 +1072,7 @@ def test_optimize_main_runs_hydra_configured_pytorch_experiment(monkeypatch):
 
 def test_callback_run_hooks_and_multirun_end_paths(monkeypatch):
     calls = []
-    callback = optimize_module.OptunaStudyCallback(
+    callback = optimize_module.DefaultOptimizerCallback(
         study_name="demo-study",
         storage="sqlite:///study.sqlite3",
         directions=["minimize"],
@@ -1267,7 +1267,7 @@ def test_callback_job_start_and_end_guard_paths(monkeypatch):
         "get",
         lambda: SimpleNamespace(mode="RunMode.MULTIRUN"),
     )
-    callback = optimize_module.OptunaStudyCallback(
+    callback = optimize_module.DefaultOptimizerCallback(
         study_name="demo-study",
         storage="sqlite:///study.sqlite3",
         directions=["minimize"],
@@ -1570,7 +1570,7 @@ def test_execute_runtime_object_keeps_file_resolution_callback_owned(monkeypatch
     conf.directions = ["minimize"]
     conf.execute_without_mercy = lambda: {"loss": 0.2, "accuracy": 0.9}
 
-    result = optimize_module.OptunaStudyCallback.execute_runtime_object(conf)
+    result = optimize_module.DefaultOptimizerCallback.execute_runtime_object(conf)
 
     assert result == {"loss": 0.2, "accuracy": 0.9}
 

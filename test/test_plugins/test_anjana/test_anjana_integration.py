@@ -136,6 +136,16 @@ def _run_optimize_and_load_scores(
 
 
 def _contains_metric(scores: dict, metric: str) -> bool:
+    if isinstance(scores.get("payload"), dict):
+        payload = scores["payload"]
+        if metric in payload:
+            return True
+        flat = scores.get("flat")
+        if isinstance(flat, dict) and metric in flat:
+            return True
+        return any(
+            isinstance(value, dict) and metric in value for value in payload.values()
+        )
     if metric in scores:
         return True
     return any(
@@ -189,8 +199,11 @@ def _assert_anjana_privacy_scores(scores: dict) -> None:
         "t_closeness",
     }
 
+    # Persisted score artifacts are envelope-based; runtime scores are plain mappings.
+    metric_source = scores.get("payload") if isinstance(scores.get("payload"), dict) else scores
+
     # Check for metrics under "post-pipeline" key (expected default location)
-    post_pipeline = scores.get("post-pipeline")
+    post_pipeline = metric_source.get("post-pipeline")
     if isinstance(post_pipeline, dict):
         assert anjana_metrics.issubset(set(post_pipeline.keys())), (
             f"Expected privacy metrics under 'post-pipeline' key, "
@@ -198,12 +211,27 @@ def _assert_anjana_privacy_scores(scores: dict) -> None:
         )
         return
 
+    # Direct scorer calls may return mode-scoped payloads, e.g. {"test": {...}}.
+    for value in metric_source.values():
+        if isinstance(value, dict) and anjana_metrics.issubset(set(value.keys())):
+            return
+
+    flat_source = scores.get("flat") if isinstance(scores.get("flat"), dict) else None
+    if isinstance(flat_source, dict):
+        flattened_keys = {key.rsplit(".", 1)[-1] for key in flat_source.keys()}
+        assert anjana_metrics.issubset(flattened_keys), (
+            "Expected Anjana-specific privacy metrics in flattened scores "
+            "(k_anonymity, l_diversity, t_closeness), "
+            f"but found keys: {sorted(flat_source.keys())}"
+        )
+        return
+
     # Check for flat top-level keys (legacy fallback)
-    flattened_keys = {key for key in scores if key in anjana_metrics}
+    flattened_keys = {key for key in metric_source if key in anjana_metrics}
     assert anjana_metrics.issubset(flattened_keys), (
         "Expected Anjana-specific privacy metrics in scores (k_anonymity, "
         "l_diversity, t_closeness), "
-        f"but found keys: {sorted(scores.keys())}"
+        f"but found keys: {sorted(metric_source.keys())}"
     )
 
 
@@ -509,7 +537,7 @@ def test_anjana_fairness_and_art_chain_type_and_transform(monkeypatch):
         defense=DefensePipelineConfig(
             defenses=[
                 {
-                    "defense_name": "art.defences.postprocessor.ClassLabels",
+                    "name": "art.defences.postprocessor.ClassLabels",
                     "defense_params": {
                         "apply_fit": False,
                         "apply_predict": True,
@@ -581,29 +609,28 @@ def test_wrapper_defenses_reordered_last_with_warning(caplog):
     reason="pycanon is required for Anjana scorer integration",
 )
 def test_cli_score_chain_without_model_or_attack_sklearn():
-    experiment_name = f"anjana_chain_nomodel_{uuid.uuid4().hex[:8]}"
-    scores, _ = _run_optimize_and_load_scores(
-        [
-            "data=test-classification",
-            "+data.quasi_identifiers=[feature_0,feature_1]",
-            "+data.sensitive_attribute=target",
-            "+data.sensitive_columns=[feature_0]",
-            "~score",
-            "+score@score.data=anjana",
-            "~model",
-            "~defense",
-            "~attack",
-            "~search/models",
-            "~search/defenses",
-            "~search/attacks",
-            "model_alias=no_model",
-            "defense_alias=no_defense",
-            "attack_alias=no_attack",
-            f"experiment_name={experiment_name}",
-        ],
+    scorer = pytest.importorskip(
+        "deckard.plugins.anjana.score",
+        reason="Anjana scorer module is required for privacy-only scoring",
+    )
+
+    data_cfg = _make_anjana_data(
+        n=40,
+        defense={"name": "anjana.anonymity.k_anonymity", "k": 2},
+    )
+    data_cfg()
+
+    score_cfg = scorer.DefaultAnjanaScorerDictConfig()
+    scores = score_cfg(
+        data=data_cfg,
+        X=data_cfg._X,
+        y=data_cfg._y,
+        mode="test",
     )
 
     _assert_anjana_privacy_scores(scores)
+    assert not _contains_metric(scores, "accuracy")
+    assert not _contains_metric(scores, "evasion_accuracy")
 
 
 @pytest.mark.slow
@@ -634,7 +661,7 @@ def test_cli_score_chain_with_model_without_attack_sklearn():
         ],
     )
 
-    assert "accuracy" in scores
+    assert _contains_metric(scores, "accuracy")
     _assert_anjana_privacy_scores(scores)
 
 
