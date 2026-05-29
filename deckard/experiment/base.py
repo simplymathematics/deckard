@@ -178,11 +178,31 @@ def _merge_resolver(*args):
 OmegaConf.register_new_resolver("merge", _merge_resolver, replace=True)
 
 
-class DataConfigResolutionMixin:
-    """Resolve ExperimentConfig.data into the appropriate DataConfig subtype.
+@dataclass(eq=False, kw_only=True)
+class ExperimentConfig(BaseConfig):
+    """Compose and execute a complete deckard experiment.
+
+    An experiment coordinates data loading, optional defense application, model
+    training or loading, adversarial attack execution, scoring, and artifact
+    persistence through ``FileConfig``.
+
+    Note:
+        ``evaluation_mode`` and ``score_mode`` are mutually exclusive to prevent
+        ambiguous routing. Use ``evaluation_mode`` for preset routing
+        (``standard``, ``tuning``, ``report``), or use ``score_mode`` for
+        explicit split routing (``train``, ``test``, ``val``, ``all``),
+        optionally as a list for multi-pass scoring.
 
     Attributes:
-        Runtime attributes are inherited or configured via class fields documented in this module.
+        data: Data configuration/runtime payload for the experiment.
+        model: Model configuration/runtime payload.
+        defense: Optional defense pipeline config.
+        attack: Optional attack configuration.
+        detector: Optional detector configuration.
+        files: File configuration for artifact persistence.
+        score: Experiment-level scorer configuration.
+        evaluation_mode: Preset routing mode for scoring/evaluation.
+        score_mode: Explicit split-mode override for scoring/evaluation.
     """
 
     _fairness_keys = {
@@ -244,8 +264,6 @@ class DataConfigResolutionMixin:
                         "FairlearnDataConfig requires optional fairness dependencies. Install deckard[fairlearn] to enable fairlearn data configs.",
                     ) from exc
             return resolved_fairlearn_cls
-        if "pipeline" in data_dict:
-            return DataConfig
         return DataConfig
 
     def _resolve_data_config(self):
@@ -278,34 +296,6 @@ class DataConfigResolutionMixin:
             f"Object of type: {type(data_obj)} is not a DataConfig object.",
         )
         return data_obj
-
-
-@dataclass(eq=False, kw_only=True)
-class ExperimentConfig(DataConfigResolutionMixin, BaseConfig):
-    """Compose and execute a complete deckard experiment.
-
-    An experiment coordinates data loading, optional defense application, model
-    training or loading, adversarial attack execution, scoring, and artifact
-    persistence through ``FileConfig``.
-
-    Note:
-        ``evaluation_mode`` and ``score_mode`` are mutually exclusive to prevent
-        ambiguous routing. Use ``evaluation_mode`` for preset routing
-        (``standard``, ``tuning``, ``report``), or use ``score_mode`` for
-        explicit split routing (``train``, ``test``, ``val``, ``all``),
-        optionally as a list for multi-pass scoring.
-
-    Attributes:
-        data: Data configuration/runtime payload for the experiment.
-        model: Model configuration/runtime payload.
-        defense: Optional defense pipeline config.
-        attack: Optional attack configuration.
-        detector: Optional detector configuration.
-        files: File configuration for artifact persistence.
-        score: Experiment-level scorer configuration.
-        evaluation_mode: Preset routing mode for scoring/evaluation.
-        score_mode: Explicit split-mode override for scoring/evaluation.
-    """
 
     data: DataConfig
     experiment_name: str = "{hash}"
@@ -1306,7 +1296,6 @@ class ExperimentConfig(DataConfigResolutionMixin, BaseConfig):
         self._attack_chain = self._normalize_attack_chain(self.attack)
         self._validate_multi_attack_aliases(self._attack_chain)
         if len(self._attack_chain) > 0:
-            # Preserve backward compatibility for single-attack call sites.
             self.attack = self._attack_chain[0]
         else:
             self.attack = None
@@ -1393,6 +1382,7 @@ class ExperimentConfig(DataConfigResolutionMixin, BaseConfig):
             setattr(self, key, value)
 
         ensure_experiment_runtime_contract(self)
+        self._validate_specialization_pre_init()
         self._initialize_data_and_classifier()
         self._validate_mode_configuration()
         self._initialize_defense()
@@ -1404,6 +1394,7 @@ class ExperimentConfig(DataConfigResolutionMixin, BaseConfig):
         self._initialize_component_scorers()
         self._validate_scorer_scope_configuration()
         self._initialize_hook_orchestration()
+        self._finalize_specialization()
         self.params = build_experiment_params_manifest(self)
         self._runtime_cache = self._load_runtime_cache()
         return self
@@ -1412,6 +1403,7 @@ class ExperimentConfig(DataConfigResolutionMixin, BaseConfig):
         ensure_experiment_runtime_contract(self)
         if not hasattr(self, "_target_") or self._target_ is None:
             self._target_ = "deckard.experiment.ExperimentConfig"
+        self._validate_specialization_pre_init()
         # Set random seed
         self.set_random_seed()
         self._initialize_data_and_classifier()
@@ -1443,10 +1435,19 @@ class ExperimentConfig(DataConfigResolutionMixin, BaseConfig):
             self.set_device(self.device if self.device is not None else "cpu")
 
         self._initialize_hook_orchestration()
+        self._finalize_specialization()
 
         # Store a serializable initialization-time manifest for persistence and caching.
         self.params = build_experiment_params_manifest(self)
         self._runtime_cache = self._load_runtime_cache()
+
+    def _validate_specialization_pre_init(self) -> None:
+        """Allow subclasses to fail fast before base composition runs."""
+        return
+
+    def _finalize_specialization(self) -> None:
+        """Allow subclasses to apply backend-specific checks after base composition."""
+        return
 
     def _validate_scorer_scope_configuration(self) -> None:
         """Validate scorer scope and requested score modes at initialization time."""

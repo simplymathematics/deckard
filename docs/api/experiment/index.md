@@ -118,14 +118,14 @@ experiment:
    _target_: deckard.experiment.base.ExperimentConfig
    data:
       _target_: deckard.data.base.DataConfig
-      dataset_name: make_classification
+      name: make_classification
    model:
       _target_: deckard.model.base.ModelConfig
-      model_type: sklearn.linear_model.LogisticRegression
+      name: sklearn.linear_model.LogisticRegression
       classifier: true
    attack:
       _target_: deckard.attack.base.AttackConfig
-      attack_type: art.attacks.evasion.FastGradientMethod
+      name: art.attacks.evasion.FastGradientMethod
 ```
 
 ## Implementation Notes

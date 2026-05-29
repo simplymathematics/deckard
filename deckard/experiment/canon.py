@@ -560,24 +560,39 @@ def build_experiment_params_manifest(
 ) -> dict[str, Any]:
     """Build a lightweight, serializable params manifest for experiment runtime."""
 
+    def _get_value(source: Any, key: str) -> Any:
+        if isinstance(source, Mapping):
+            return source.get(key)
+        return getattr(source, key, None)
+
     def _fingerprint_payload(payload: Any) -> str:
         encoded = json.dumps(payload, sort_keys=True, default=str)
         return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
 
     def _component_manifest(component: Any) -> dict[str, Any]:
+        component_type = None
+        component_alias = None
+        component_fingerprint = None
+        if isinstance(component, Mapping):
+            component_type = component.get("_target_") or component.get("type")
+            component_alias = component.get("alias")
+            component_fingerprint = component.get("fingerprint")
+        if component_fingerprint is None:
+            component_fingerprint = getattr(component, "fingerprint", None)
         base_payload: dict[str, Any] = {
-            "type": f"{component.__class__.__module__}.{component.__class__.__name__}",
-            "alias": getattr(component, "alias", None),
+            "type": component_type
+            or f"{component.__class__.__module__}.{component.__class__.__name__}",
+            "alias": component_alias if component_alias is not None else getattr(component, "alias", None),
         }
-        component_fingerprint = getattr(component, "fingerprint", None)
         if isinstance(component_fingerprint, str):
             token = component_fingerprint.strip()
             if token != "":
                 base_payload["fingerprint"] = token
                 return base_payload
-        if hasattr(component, "to_dict") and callable(getattr(component, "to_dict")):
+        to_dict = getattr(component, "to_dict", None)
+        if callable(to_dict):
             try:
-                payload = component.to_dict(for_hash=True)
+                payload = to_dict(for_hash=True)
                 base_payload["fingerprint"] = _fingerprint_payload(payload)
             except Exception:
                 base_payload["fingerprint"] = _fingerprint_payload(base_payload)
@@ -586,22 +601,22 @@ def build_experiment_params_manifest(
         return base_payload
 
     manifest: dict[str, Any] = {
-        "experiment_name": getattr(target, "experiment_name", None),
-        "library": getattr(target, "library", None),
-        "classifier": getattr(target, "classifier", None),
-        "evaluation_mode": getattr(target, "evaluation_mode", None),
-        "score_mode": getattr(target, "score_mode", None),
-        "random_state": getattr(target, "random_state", None),
+        "experiment_name": _get_value(target, "experiment_name"),
+        "library": _get_value(target, "library"),
+        "classifier": _get_value(target, "classifier"),
+        "evaluation_mode": _get_value(target, "evaluation_mode"),
+        "score_mode": _get_value(target, "score_mode"),
+        "random_state": _get_value(target, "random_state"),
     }
     # TODO: Correctly map components/sub components to existing *Config objects
     for component_name in ("data", "model", "defense", "attack", "detector", "score"):
-        component = getattr(target, component_name, None)
+        component = _get_value(target, component_name)
         if component is None:
             manifest[component_name] = None
             continue
         manifest[component_name] = _component_manifest(component)
 
-    attack_chain = getattr(target, "_attack_chain", None)
+    attack_chain = _get_value(target, "_attack_chain")
     if isinstance(attack_chain, (list, tuple)) and len(attack_chain) > 0:
         manifest["attack_chain"] = [
             _component_manifest(component)

@@ -240,20 +240,14 @@ class TorchExperimentConfig(ExperimentConfig):
                 "Use PytorchModelConfig for torch experiments.",
             )
 
-    # ------------------------------------------------------------------
-    # __post_init__
-    # ------------------------------------------------------------------
-
-    def __post_init__(self) -> None:
+    def _validate_specialization_pre_init(self) -> None:
         if self.library != "pytorch":
             raise ValueError(
                 f"TorchExperimentConfig must use library='pytorch', got {self.library!r}.",
             )
 
-        # Let base class wire together data / model / attack / files / score.
-        super().__post_init__()
-
-        # After base wiring, enforce torch types.
+    def _finalize_specialization(self) -> None:
+        """Apply torch-only type, device, and batch-size reconciliation."""
         self._enforce_torch_data()
         self._enforce_torch_model()
         self._reconcile_component_devices()

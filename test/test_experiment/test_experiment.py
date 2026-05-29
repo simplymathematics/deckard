@@ -24,7 +24,6 @@ from deckard.experiment.canon import (
     build_experiment_stage_cache_key,
 )
 from deckard.experiment.base import (
-    DataConfigResolutionMixin,
     _file_resolver,
     _merge_resolver,
 )
@@ -532,20 +531,12 @@ class TestMergeResolver:
         assert container["a"] == 42
 
 
-# ── DataConfigResolutionMixin ─────────────────────────────────────────────────
+# ── ExperimentConfig data resolution helpers ─────────────────────────────────
 
 
-class _TestMixin(DataConfigResolutionMixin):
-    """Concrete subclass to test the mixin methods."""
-
-    @property
-    def data(self):
-        return None
-
-
-class TestDataConfigResolutionMixin:
+class TestExperimentDataResolutionHelpers:
     def setup_method(self):
-        self.mixin = _TestMixin()
+        self.exp = ExperimentConfig.__new__(ExperimentConfig)
 
     def test_data_to_dict_with_dictconfig(self):
         dc = OmegaConf.create(
@@ -555,12 +546,12 @@ class TestDataConfigResolutionMixin:
                 "_target_": "deckard.data.DataConfig",
             },
         )
-        result = self.mixin._data_to_dict(dc)
+        result = self.exp._data_to_dict(dc)
         assert isinstance(result, dict)
 
     def test_data_to_dict_with_plain_dict(self):
         d = {"name": "make_regression", "classifier": False}
-        result = self.mixin._data_to_dict(d)
+        result = self.exp._data_to_dict(d)
         assert result == d
 
     def test_data_to_dict_with_yaml_path(self):
@@ -574,11 +565,11 @@ class TestDataConfigResolutionMixin:
             p = Path(td) / "data.yaml"
             p.write_text(yaml_text)
             with pytest.raises(Exception):
-                self.mixin._data_to_dict(str(p))
+                self.exp._data_to_dict(str(p))
 
     def test_data_to_dict_invalid_type_raises(self):
         with pytest.raises(ValueError):
-            self.mixin._data_to_dict(12345)
+            self.exp._data_to_dict(12345)
 
     def test_data_to_dict_not_dict_result_raises(self):
         # BaseConfig.to_dict() normally returns dict; if it returns non-dict we get TypeError
@@ -591,7 +582,7 @@ class TestDataConfigResolutionMixin:
 
         obj = BadBase()
         with pytest.raises(TypeError):
-            self.mixin._data_to_dict(obj)
+            self.exp._data_to_dict(obj)
 
     # @pytest.importorskip("anjana")
     # def test_select_data_cls_anjana_keys(self):
@@ -613,31 +604,23 @@ class TestDataConfigResolutionMixin:
         from deckard.data import DataConfig
 
         data_dict = {"pipeline": {}}
-        cls = self.mixin._select_data_cls(data_dict)
+        cls = self.exp._select_data_cls(data_dict)
         assert cls is DataConfig
 
     def test_select_data_cls_plain(self):
         data_dict = {"name": "make_classification", "classifier": True}
-        cls = self.mixin._select_data_cls(data_dict)
+        cls = self.exp._select_data_cls(data_dict)
         assert cls is DataConfig
 
     def test_resolve_data_config_with_data_config_passthrough(self):
-        class _Exp(DataConfigResolutionMixin, BaseConfig):
-            def __call__(self):
-                pass
-
         dc = DataConfig(name="make_classification", classifier=True)
-        exp = _Exp()
+        exp = ExperimentConfig.__new__(ExperimentConfig)
         exp.data = dc
         result = exp._resolve_data_config()
         assert result is dc
 
     def test_resolve_data_config_target_resolves_wrong_type_raises(self):
-        class _Exp(DataConfigResolutionMixin, BaseConfig):
-            def __call__(self):
-                pass
-
-        exp = _Exp()
+        exp = ExperimentConfig.__new__(ExperimentConfig)
         exp.data = OmegaConf.create({"_target_": "builtins.dict"})
         with pytest.raises(TypeError):
             exp._resolve_data_config()
@@ -905,7 +888,9 @@ class TestExperimentScoreFileHandling:
             exp()
             with open(score_path) as f:
                 merged = json.load(f)
-            assert "prior_metric" in merged
+            assert merged["_schema"] == "deckard.score.v1"
+            assert merged["payload"]["prior_metric"] == 99.9
+            assert merged["flat"]["prior_metric"] == 99.9
 
     def test_model_none_runs_data_only_pipeline(self):
         exp = ExperimentConfig(

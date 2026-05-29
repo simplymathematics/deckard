@@ -44,14 +44,14 @@ def _runtime_env() -> dict[str, str]:
 
 
 def _make_torch_data(unit_interval: bool = False):
-    X = torch.rand(60, 8) if unit_interval else torch.randn(60, 8)
-    y = torch.randint(0, 2, (60,))
+    X = torch.rand(24, 8) if unit_interval else torch.randn(24, 8)
+    y = torch.randint(0, 2, (24,))
     data = PytorchDataConfig(
         name="torch.utils.data.TensorDataset",
         sampler={
             "name": "split",
-            "train_size": 40,
-            "test_size": 20,
+            "train_size": 16,
+            "test_size": 8,
             "random_state": 42,
         },
         classifier=True,
@@ -62,11 +62,11 @@ def _make_torch_data(unit_interval: bool = False):
 
 
 def _make_unloaded_torch_data():
-    X = torch.randn(40, 8)
-    y = torch.randint(0, 2, (40,))
+    X = torch.randn(24, 8)
+    y = torch.randint(0, 2, (24,))
     return PytorchDataConfig(
         name="torch.utils.data.TensorDataset",
-        sampler={"name": "split", "train_size": 30, "test_size": 10},
+        sampler={"name": "split", "train_size": 16, "test_size": 8},
         classifier=True,
         data_params={"_args_": [X, y]},
     )
@@ -77,7 +77,7 @@ def _make_torch_model(defense=None):
         name="torch.nn.Linear",
         model_params={"in_features": 8, "out_features": 2},
         classifier=True,
-        fit_params={"nb_epochs": 1, "batch_size": 16},
+        fit_params={"nb_epochs": 1, "batch_size": 8},
         criterion="CrossEntropyLoss",
         optimizer={"name": "SGD", "lr": 0.01},
         defense=defense,
@@ -88,7 +88,7 @@ def _make_torch_fairlearn_defense_from_yaml(yaml_file: str):
     cfg_path = EXAMPLES_PYTORCH_DIR / "config" / "defense" / yaml_file
     cfg = yaml.safe_load(cfg_path.read_text(encoding="utf-8"))
     return {
-        "defense_name": cfg["defense_name"],
+        "name": cfg["name"],
         "defense_params": cfg["defense_params"],
         "classifier": True,
     }
@@ -102,7 +102,7 @@ def _make_torch_fairlearn_defense_from_yaml(yaml_file: str):
 def test_pytorch_model_config_initialises():
     model = _make_torch_model()
     assert model.classifier is True
-    assert model.name== "torch.nn.Linear"
+    assert model.name == "torch.nn.Linear"
 
 
 def test_pytorch_model_config_hash_stable_before_training():
@@ -122,7 +122,7 @@ def test_pytorch_defense_pipeline_initialises():
     pipeline = DefensePipelineConfig(
         defenses=[
             {
-                "defense_name": "art.defences.postprocessor.ClassLabels",
+                "name": "art.defences.postprocessor.ClassLabels",
                 "defense_params": {"apply_fit": False, "apply_predict": True},
                 "classifier": True,
             },
@@ -136,7 +136,7 @@ def test_pytorch_art_defense_is_detected_as_art_by_pipeline():
     pipeline = DefensePipelineConfig(
         defenses=[
             {
-                "defense_name": "art.defences.postprocessor.ClassLabels",
+                "name": "art.defences.postprocessor.ClassLabels",
                 "defense_params": {"apply_fit": False, "apply_predict": True},
                 "classifier": True,
             },
@@ -163,7 +163,7 @@ def test_pytorch_model_with_art_postprocessor_defense():
     defense_cfg = DefensePipelineConfig(
         defenses=[
             {
-                "defense_name": "art.defences.postprocessor.ClassLabels",
+                "name": "art.defences.postprocessor.ClassLabels",
                 "defense_params": {"apply_fit": False, "apply_predict": True},
                 "classifier": True,
             },
@@ -180,7 +180,7 @@ def test_pytorch_model_with_art_preprocessor_defense():
     defense_cfg = DefensePipelineConfig(
         defenses=[
             {
-                "defense_name": "art.defences.preprocessor.FeatureSqueezing",
+                "name": "art.defences.preprocessor.FeatureSqueezing",
                 "defense_params": {"clip_values": [0.0, 1.0], "bit_depth": 4},
                 "classifier": True,
             },
@@ -202,6 +202,22 @@ def test_pytorch_experiment_end_to_end():
     scores = exp()
     assert isinstance(scores, dict)
     assert "accuracy" in scores
+
+
+def test_torch_experiment_specialization_keeps_backend_settings_thin():
+    exp = TorchExperimentConfig(
+        data=_make_torch_data(),
+        model=_make_torch_model(),
+        attack=None,
+        files=FileConfig(),
+        classifier=True,
+    )
+
+    assert exp.library == "pytorch"
+    assert exp.data.__class__.__name__ == "PytorchDataConfig"
+    assert exp.model.__class__.__name__ == "PytorchModelConfig"
+    assert exp.data.data_params["batch_size"] == 8
+    assert exp.model.fit_params["batch_size"] == 8
 
 
 # ---------------------------------------------------------------------------
@@ -302,7 +318,7 @@ def test_art_last_ordering_no_warning_for_wrapper_only_chain(caplog):
         yaml_file="fairlearn-adversarial-classifier.yaml",
     )
     art_defense_dict = {
-        "defense_name": "art.defences.postprocessor.ClassLabels",
+        "name": "art.defences.postprocessor.ClassLabels",
         "defense_params": {"apply_fit": False, "apply_predict": True},
         "classifier": True,
     }
@@ -331,7 +347,7 @@ def test_art_last_ordering_no_warning_when_already_last(caplog):
     pipeline = DefensePipelineConfig(
         defenses=[
             {
-                "defense_name": "art.defences.postprocessor.ClassLabels",
+                "name": "art.defences.postprocessor.ClassLabels",
                 "defense_params": {"apply_fit": False, "apply_predict": True},
                 "classifier": True,
             },
@@ -579,7 +595,11 @@ def test_pytorch_experiment_scores_persist_via_file_config(tmp_path):
     assert Path(score_file).exists()
     with open(score_file) as f:
         loaded = json.load(f)
-    assert "accuracy" in loaded
+    assert loaded["_schema"] == "deckard.score.v1"
+    assert loaded["payload"]["accuracy"] == pytest.approx(
+        loaded["flat"]["accuracy"],
+        abs=1e-12,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -645,10 +665,10 @@ def test_deckard_optimize_torch_art_smoke_matrix():
         "files.model_file=null",
         "files.attack_file=null",
         "files.score_file=null",
-        "data.sampler.train_size=64",
-        "data.sampler.test_size=32",
+        "data.sampler.train_size=20",
+        "data.sampler.test_size=10",
         "model.fit_params.nb_epochs=1",
-        "model.fit_params.batch_size=64",
+        "model.fit_params.batch_size=8",
     ]
     result = subprocess.run(
         cmd,
@@ -656,7 +676,7 @@ def test_deckard_optimize_torch_art_smoke_matrix():
         env=_runtime_env(),
         capture_output=True,
         text=True,
-        timeout=240,
+        timeout=120,
         check=False,
     )
     assert (
@@ -686,13 +706,13 @@ def test_deckard_optimize_torch_poisoning_gradient_matching_smoke_matrix():
         "files.model_file=null",
         "files.attack_file=null",
         "files.score_file=null",
-        "data.sampler.train_size=64",
-        "data.sampler.test_size=32",
+        "data.sampler.train_size=20",
+        "data.sampler.test_size=10",
         "+data.data_params.num_workers=0",
         "+model.device=cpu",
         "+attack.device=cpu",
         "model.fit_params.nb_epochs=1",
-        "model.fit_params.batch_size=32",
+        "model.fit_params.batch_size=8",
         "attack.attack_params.percent_poison=0.05",
         "attack.attack_params.max_epochs=1",
         "attack.attack_params.max_trials=1",
@@ -706,7 +726,7 @@ def test_deckard_optimize_torch_poisoning_gradient_matching_smoke_matrix():
         env=_runtime_env(),
         capture_output=True,
         text=True,
-        timeout=300,
+        timeout=120,
         check=False,
     )
     assert result.returncode == 0
@@ -735,20 +755,20 @@ def test_deckard_optimize_torch_fairness_smoke_matrix():
         "files.model_file=null",
         "files.attack_file=null",
         "files.score_file=null",
-        "data.sampler.train_size=64",
-        "data.sampler.test_size=32",
+        "data.sampler.train_size=20",
+        "data.sampler.test_size=10",
         "data.name=torch_fairness_dataset.py:SyntheticTabularFairnessDataset",
-        "+data.data_params.num_samples=200",
+        "+data.data_params.num_samples=32",
         "+data.data_params.n_features=16",
         "model.name=torch.nn.Linear",
         "~model.model_params.num_channels",
         "~model.model_params.num_classes",
         "+model.model_params={in_features:16,out_features:2}",
         "model.fit_params.nb_epochs=1",
-        "model.fit_params.batch_size=32",
+        "model.fit_params.batch_size=8",
         "+model.device=cpu",
         "defense.defense_params.epochs=1",
-        "defense.defense_params.batch_size=16",
+        "defense.defense_params.batch_size=8",
     ]
 
     result = subprocess.run(
@@ -757,7 +777,7 @@ def test_deckard_optimize_torch_fairness_smoke_matrix():
         env=_runtime_env(),
         capture_output=True,
         text=True,
-        timeout=240,
+        timeout=120,
         check=False,
     )
     assert result.returncode == 0
