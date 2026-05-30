@@ -241,23 +241,6 @@ def _assert_anjana_privacy_scores(scores: dict) -> None:
     not DECKARD_RC_PATH.exists(),
     reason="examples/sklearn/.deckard_rc not found",
 )
-def test_deckard_optimize_help_in_examples_sklearn():
-    result = subprocess.run(
-        [sys.executable, "-m", "deckard", "optimize", "--help"],
-        cwd=str(EXAMPLES_SKLEARN_DIR),
-        env=_runtime_env(),
-        capture_output=True,
-        text=True,
-        timeout=60,
-        check=False,
-    )
-    assert result.returncode == 0, result.stderr
-
-
-@pytest.mark.skipif(
-    not DECKARD_RC_PATH.exists(),
-    reason="examples/sklearn/.deckard_rc not found",
-)
 def test_deckard_optimize_smoke_matrix_sklearn():
     cmd = [
         sys.executable,

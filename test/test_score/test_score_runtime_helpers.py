@@ -2,8 +2,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
+import deckard.score as score_module
 from deckard.score._runtime import resolve_yt_yp, series_like_to_float_dict
-from deckard.score.canon import normalize_scorer_mode
+from deckard.score.canon import normalize_scorer_mode, normalize_stage_tokens
 
 
 class _DummyData:
@@ -49,6 +50,21 @@ def test_series_like_to_float_dict_supports_nested_dict_payloads():
     assert out["count"] == pytest.approx(3.0)
 
 
+def test_series_like_to_float_dict_supports_tuple_index_dataframe_and_callable_values():
+    frame = pd.DataFrame(
+        {"score": [0.1, 0.2]},
+        index=pd.MultiIndex.from_tuples([("a", "x"), ("b", "y")]),
+    )
+    assert series_like_to_float_dict(frame) == {
+        "a_x_score": 0.1,
+        "b_y_score": 0.2,
+    }
+
+    callback = lambda: 1.0
+    out = series_like_to_float_dict({"hook": callback})
+    assert out["hook"] is callback
+
+
 def test_series_like_to_float_dict_rejects_non_scalar_arrays():
     with pytest.raises(TypeError, match="must be scalar"):
         series_like_to_float_dict(np.array([1.0, 2.0]))
@@ -59,6 +75,17 @@ def test_normalize_scorer_mode_uses_canonical_modes():
     assert normalize_scorer_mode(" Train ") == "train"
     with pytest.raises(KeyError, match="Unsupported scoring mode"):
         normalize_scorer_mode("post-defense")
+
+
+def test_normalize_stage_tokens_supports_strings_sequences_and_scalars():
+    assert normalize_stage_tokens("train, Test ,") == {"train", "test"}
+    assert normalize_stage_tokens(["attack", ["val", "attack-val"]]) == {
+        "attack",
+        "val",
+        "attack-val",
+    }
+    assert normalize_stage_tokens(None) == set()
+    assert normalize_stage_tokens(3) == {"3"}
 
 
 def test_resolve_yt_yp_uses_runtime_context_by_mode():
@@ -77,3 +104,78 @@ def test_resolve_yt_yp_uses_runtime_context_by_mode():
     y_true, y_pred = resolve_yt_yp("pre-sample", data, None, None, None, None)
     assert np.array_equal(y_true, data._y)
     assert np.array_equal(y_pred, data._X)
+
+
+def test_resolve_yt_yp_covers_train_val_attack_val_and_existing_predictions():
+    data = _DummyData()
+    model = _DummyModel()
+    attack = _DummyAttack()
+
+    y_true, y_pred = resolve_yt_yp("train", data, model, None, None, None)
+    assert np.array_equal(y_true, data.y_train)
+    assert np.array_equal(y_pred, model.training_predictions)
+
+    y_true, y_pred = resolve_yt_yp("val", data, model, None, None, None)
+    assert np.array_equal(y_true, data.y_val)
+    assert np.array_equal(y_pred, model.val_predictions)
+
+    y_true, y_pred = resolve_yt_yp("attack-val", data, None, attack, None, None)
+    assert np.array_equal(y_true, data.y_val)
+    assert np.array_equal(y_pred, attack.attack_predictions)
+
+    y_true, y_pred = resolve_yt_yp(
+        "test",
+        data,
+        model,
+        None,
+        np.array([9]),
+        np.array([8]),
+    )
+    assert np.array_equal(y_true, np.array([8]))
+    assert np.array_equal(y_pred, np.array([9]))
+
+
+@pytest.mark.parametrize(
+    ("wrapper_name", "loader_name", "symbol_name"),
+    [
+        (
+            "fairness_demographic_parity_difference",
+            "_load_fairlearn_score_symbol",
+            "fairness_demographic_parity_difference",
+        ),
+        ("anjana_k_anonymity_score", "_load_anjana_score_symbol", "anjana_k_anonymity_score"),
+        ("survival_concordance_score", "_load_lifelines_score_symbol", "survival_concordance_score"),
+    ],
+)
+def test_score_wrappers_delegate_to_lazy_symbol_loaders(
+    monkeypatch,
+    wrapper_name,
+    loader_name,
+    symbol_name,
+):
+    def _loader(requested_name):
+        assert requested_name == symbol_name
+
+        def _impl(*args, **kwargs):
+            return requested_name, args, kwargs
+
+        return _impl
+
+    monkeypatch.setattr(score_module, loader_name, _loader)
+    wrapper = getattr(score_module, wrapper_name)
+    result = wrapper(1, key=2)
+    assert result == (symbol_name, (1,), {"key": 2})
+
+
+def test_score_getattr_lazy_loads_optional_symbols(monkeypatch):
+    sentinel = object()
+
+    def _load_fairlearn():
+        setattr(score_module, "DefaultFairlearnScorerDictConfig", sentinel)
+        return True
+
+    monkeypatch.setattr(score_module, "_load_fairlearn_score_symbols", _load_fairlearn)
+    assert score_module.__getattr__("DefaultFairlearnScorerDictConfig") is sentinel
+
+    with pytest.raises(AttributeError):
+        score_module.__getattr__("definitely_missing_symbol")

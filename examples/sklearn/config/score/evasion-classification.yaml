@@ -1,1 +1,1 @@
-_target_: deckard.score.attack.DefaultEvasionAttackScorerConfig
+_target_: deckard.score.attack.DefaultEvasionAttackScorerDictConfig

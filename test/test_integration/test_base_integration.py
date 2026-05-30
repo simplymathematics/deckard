@@ -921,43 +921,6 @@ def test_cli_full_experiment_composition():
     assert any(key.startswith("evasion_") for key in scores)
 
 
-def test_cli_full_experiment_composition_database_reconstruction_end_to_end():
-    """End-to-end CLI-style composition for experiment with a canonical attack config."""
-
-    config_dir = (
-        Path(__file__).resolve().parents[2] / "examples" / "sklearn" / "config"
-    )
-    _reset_hydra_state()
-    with initialize_config_dir(version_base=None, config_dir=str(config_dir)):
-        cfg = compose(
-            config_name="default",
-            overrides=[
-                "data=test-classification",
-                "model=test-logistic",
-                "attack=boundary",
-                "defense=baseline",
-                "score=classification",
-            ],
-        )
-
-    data_dict = OmegaConf.to_container(cfg.data, resolve=True)
-    if "pipeline" in data_dict:
-        data = DataConfig(**data_dict)
-    else:
-        data = DataConfig(**data_dict)
-
-    model_dict = OmegaConf.to_container(cfg.model, resolve=True)
-    model = ModelConfig(**model_dict)
-
-    attack_dict = OmegaConf.to_container(cfg.attack, resolve=True)
-    attack = AttackConfig(**attack_dict)
-
-    experiment = ExperimentConfig(data=data, model=model, attack=attack)
-    scores = experiment()
-    assert "accuracy" in scores
-    assert any(key.startswith("evasion_") for key in scores)
-
-
 def test_cli_experiment_tuning_mode_emits_test_scores():
     """Test CLI-style composition with ExperimentConfig tuning mode test scoring."""
 

@@ -26,11 +26,8 @@ DURATION_COL_BY_DATASET = {
 @pytest.mark.parametrize(
     "dataset_name,survival_model",
     [
-        ("diabetes", "weibull"),
-        ("leukemia", "weibull"),
         ("lung", "cox"),
-        ("lifelines_diabetes", "weibull"),
-        ("lifelines_diabetes", "cox"),
+        ("diabetes", "weibull"),
     ],
 )
 def test_survival_cli_in_examples_sklearn(

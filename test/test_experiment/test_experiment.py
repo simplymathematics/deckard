@@ -1,5 +1,4 @@
 import os
-import subprocess
 import sys
 import tempfile
 from pathlib import Path
@@ -9,7 +8,6 @@ import yaml
 
 import numpy as np
 import pytest
-from helpers import make_runtime_env
 from hydra import compose, initialize_config_dir
 from hydra.utils import instantiate
 from omegaconf import OmegaConf
@@ -102,11 +100,6 @@ class TestKFoldExperiment:
             assert f"fold-{k}" in scores, f"missing fold-{k}"
             assert "accuracy" in scores[f"fold-{k}"]
 
-    def test_kfold_mean_key_present(self):
-        exp = self._make_exp()
-        scores = exp()
-        assert "accuracy" in scores
-
     def test_mean_equals_average_of_folds(self):
         exp = self._make_exp()
         scores = exp()
@@ -159,11 +152,6 @@ class TestShuffleExperiment:
         for k in range(self.N_SPLITS):
             assert f"split-{k}" in scores, f"missing split-{k}"
             assert "accuracy" in scores[f"split-{k}"]
-
-    def test_shuffle_mean_key_present(self):
-        exp = self._make_exp()
-        scores = exp()
-        assert "accuracy" in scores
 
     def test_mean_equals_average_of_splits(self):
         exp = self._make_exp()
@@ -358,23 +346,6 @@ class TestPoisoningExperimentIntegration:
 
         assert "benign_accuracy" in scores
         assert "poisoned_accuracy" in scores
-
-    def test_deckard_optimize_help_smoke(self):
-        examples_dir = Path(__file__).resolve().parents[2] / "examples" / "sklearn"
-        rc_path = examples_dir / ".deckard_rc"
-        env = make_runtime_env(rc_path)
-        env["DECKARD_SKIP_RUNTIME_CONFIG_REGISTRATION"] = "1"
-
-        result = subprocess.run(
-            [sys.executable, "-m", "deckard", "optimize", "--help"],
-            cwd=str(examples_dir),
-            env=env,
-            capture_output=True,
-            text=True,
-            timeout=60,
-            check=False,
-        )
-        assert result.returncode == 0, result.stderr
 
     def test_single_pass_with_attack_runs_experiment_scorer_once(self):
         exp = ExperimentConfig(

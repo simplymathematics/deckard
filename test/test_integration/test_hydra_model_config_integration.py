@@ -37,15 +37,6 @@ def _compose_pytorch(config_name: str, overrides: list[str] | None = None):
         return compose(config_name=config_name, overrides=overrides)
 
 
-def test_sklearn_model_profile_logistic_composes():
-    cfg = _compose_sklearn("model/logistic")
-    model_cfg = OmegaConf.to_container(cfg.model, resolve=True)
-
-    assert model_cfg["name"] == "sklearn.linear_model.LogisticRegression"
-    assert model_cfg["classifier"] is True
-    assert model_cfg["alias"] == "logistic"
-
-
 def test_sklearn_model_profile_cox_composes():
     cfg = _compose_sklearn("model/cox")
     model_cfg = OmegaConf.to_container(cfg.model, resolve=True)

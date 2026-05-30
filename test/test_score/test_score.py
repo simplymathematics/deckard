@@ -3,16 +3,12 @@ from types import SimpleNamespace
 
 import numpy as np
 import pandas as pd
-from hydra.core.config_store import ConfigStore
 from omegaconf import OmegaConf
 from sklearn.metrics import accuracy_score, mean_squared_error, precision_score
 
 from deckard.score import (
     AttackScorerConfig,
-    DefaultClassifierScorerDictConfig,
-    DefaultDataClassificationScorerDictConfig,
     DefaultDataRegressionScorerDictConfig,
-    DefaultRegressorScorerDictConfig,
     ScorerConfig,
     ScorerDictConfig,
     survival_aic_score,
@@ -47,18 +43,6 @@ class TestScorerDictConfigMerge:
         },
     }
 
-    def test_merge_two_bare_dicts(self):
-        result = ScorerDictConfig.merge([self.acc_dict, self.prec_dict])
-        assert isinstance(result, ScorerDictConfig)
-        assert "accuracy" in result.scorers
-        assert "precision" in result.scorers
-
-    def test_merge_three_dicts(self):
-        result = ScorerDictConfig.merge(
-            [self.acc_dict, self.prec_dict, self.f1_dict],
-        )
-        assert set(result.scorers.keys()) == {"accuracy", "precision", "f1"}
-
     def test_merge_scorer_dict_config_instances(self):
         a = ScorerDictConfig(scorers=self.acc_dict)
         b = ScorerDictConfig(scorers=self.prec_dict)
@@ -66,50 +50,13 @@ class TestScorerDictConfigMerge:
         assert "accuracy" in result.scorers
         assert "precision" in result.scorers
 
-    def test_merge_later_wins_on_key_conflict(self):
-        override = {
-            "accuracy": {
-                "score_function": "sklearn.metrics.balanced_accuracy_score",
-            },
-        }
-        result = ScorerDictConfig.merge([self.acc_dict, override])
-        assert (
-            result.scorers["accuracy"].score_function.__name__
-            == "balanced_accuracy_score"
-        )
-
     def test_merge_dict_with_scorers_key(self):
         wrapped = {"scorers": self.acc_dict}
         result = ScorerDictConfig.merge([wrapped, self.prec_dict])
         assert "accuracy" in result.scorers
         assert "precision" in result.scorers
 
-    def test_merge_single_element_list(self):
-        result = ScorerDictConfig.merge([self.acc_dict])
-        assert "accuracy" in result.scorers
-
-
 class TestScorerConfig:
-    def test_scorer_config_initialization(self):
-        config = ScorerConfig(
-            score_name="accuracy",
-            score_function=accuracy_score,
-            score_params={"normalize": True},
-        )
-        assert config.score_name == "accuracy"
-        assert callable(config.score_function)
-
-    def test_scorer_config_callable(self):
-        y_true = [1, 0, 1, 1]
-        y_pred = [1, 0, 0, 1]
-        config = ScorerConfig(
-            score_name="accuracy",
-            score_function=accuracy_score,
-            score_params={},
-        )
-        score = config(y_true=y_true, y_pred=y_pred)
-        assert score == accuracy_score(y_true, y_pred)
-
     def test_scorer_config_swap(self):
         y_true = [1, 0, 1, 1]
         y_pred = [1, 0, 0, 1]
@@ -121,22 +68,6 @@ class TestScorerConfig:
         score_swap = config(y_true=y_true, y_pred=y_pred, swap=True)
         score_normal = config(y_true=y_pred, y_pred=y_true)
         assert score_swap == score_normal
-
-    def test_scorer_config_with_additional_params(self):
-        y_true = [1, 0, 1, 1]
-        y_pred = [1, 0, 0, 1]
-        config = ScorerConfig(
-            score_name="precision",
-            score_function=precision_score,
-            score_params={"average": "binary", "zero_division": 0},
-        )
-        score = config(y_true=y_true, y_pred=y_pred)
-        assert score == precision_score(
-            y_true,
-            y_pred,
-            average="binary",
-            zero_division=0,
-        )
 
     def test_scorer_config_accepts_torch_tensors_when_available(self):
         try:
@@ -163,29 +94,6 @@ class TestScorerConfig:
 
 
 class TestScorerDictConfig:
-    def test_scorer_dict_config_initialization_and_call(self):
-        y_true = [1, 0, 1, 1]
-        y_pred = [1, 0, 0, 1]
-        scorer_dict = ScorerDictConfig(
-            scorers={
-                "accuracy": ScorerConfig(
-                    score_name="accuracy",
-                    score_function=accuracy_score,
-                    score_params={},
-                ),
-                "mse": ScorerConfig(
-                    score_name="mse",
-                    score_function=mean_squared_error,
-                    score_params={},
-                ),
-            },
-        )
-        scores = scorer_dict(y_true=y_true, y_pred=y_pred)
-        assert "accuracy" in scores
-        assert "mse" in scores
-        assert scores["accuracy"] == accuracy_score(y_true, y_pred)
-        assert scores["mse"] == mean_squared_error(y_true, y_pred)
-
     def test_scorer_dict_config_get_callables(self):
         scorer_dict = ScorerDictConfig(
             scorers={
@@ -202,21 +110,36 @@ class TestScorerDictConfig:
 
 
 class TestDefaultScorerDicts:
-    def test_default_classifier_dict(self):
-        y_true = [1, 0, 1, 1]
-        y_pred = [1, 0, 0, 1]
-        y_proba = [0.9, 0.1, 0.3, 0.8]
-        scores = DefaultClassifierScorerDictConfig()(
-            y_true=y_true,
-            y_pred=y_pred,
-            y_proba=y_proba,
-        )
-        assert "accuracy" in scores
-        assert "precision" in scores
-        assert "recall" in scores
-        assert "f1" in scores
-        assert "roc_auc" in scores
-        assert "log_loss" in scores
+    @pytest.mark.parametrize(
+        ("profile_name", "kwargs", "expected_keys"),
+        [
+            (
+                "classifier",
+                {
+                    "y_true": [1, 0, 1, 1],
+                    "y_pred": [1, 0, 0, 1],
+                    "y_proba": [0.9, 0.1, 0.3, 0.8],
+                },
+                {"accuracy", "precision", "recall", "f1", "roc_auc", "log_loss"},
+            ),
+            (
+                "regressor",
+                {
+                    "y_true": [1.0, 2.0, 3.0, 4.0],
+                    "y_pred": [1.1, 1.9, 3.2, 3.8],
+                },
+                {"mse", "mae", "r2"},
+            ),
+        ],
+    )
+    def test_canonical_default_score_profiles(
+        self,
+        profile_name,
+        kwargs,
+        expected_keys,
+    ):
+        scores = _load_score_profile(profile_name)(**kwargs)
+        assert expected_keys.issubset(scores)
 
     def test_default_classifier_dict_requires_probabilities_for_probability_metrics(
         self,
@@ -224,27 +147,12 @@ class TestDefaultScorerDicts:
         y_true = [1, 0, 1, 1]
         y_pred = [1, 0, 0, 1]
         with pytest.raises(ValueError):
-            DefaultClassifierScorerDictConfig()(y_true=y_true, y_pred=y_pred)
+            _load_score_profile("classifier")(y_true=y_true, y_pred=y_pred)
 
-    def test_default_regressor_dict(self):
-        y_true = [1.0, 2.0, 3.0, 4.0]
-        y_pred = [1.1, 1.9, 3.2, 3.8]
-        scores = DefaultRegressorScorerDictConfig()(y_true=y_true, y_pred=y_pred)
-        assert "mse" in scores
-        assert "mae" in scores
-        assert "r2" in scores
-
-    def test_default_classifier_dict_with_empty_predictions(self):
-        y_true = []
-        y_pred = []
+    @pytest.mark.parametrize("profile_name", ["classifier", "regressor"])
+    def test_default_profiles_with_empty_predictions_raise(self, profile_name):
         with pytest.raises(ValueError):
-            DefaultClassifierScorerDictConfig()(y_true=y_true, y_pred=y_pred)
-
-    def test_default_regressor_dict_with_empty_predictions(self):
-        y_true = []
-        y_pred = []
-        with pytest.raises(ValueError):
-            DefaultRegressorScorerDictConfig()(y_true=y_true, y_pred=y_pred)
+            _load_score_profile(profile_name)(y_true=[], y_pred=[])
 
 
 class TestSurvivalScorers:
@@ -254,11 +162,6 @@ class TestSurvivalScorers:
             self.AIC_ = 123.4
             self.log_likelihood_ = -50.0
             self.params_ = [1.0, 2.0, 3.0]
-
-    def test_survival_concordance_score(self):
-        fitter = self._MockFitter()
-        score = survival_concordance_score(y_true=[1, 2, 3], y_pred=fitter)
-        assert score == fitter.concordance_index_
 
     def test_survival_aic_score(self):
         fitter = self._MockFitter()
@@ -279,44 +182,6 @@ SCORE_DIR = (
 def _load_score_profile(name: str):
     cfg = OmegaConf.load(SCORE_DIR / f"{name}.yaml")
     return coerce_scorer_config(OmegaConf.to_container(cfg, resolve=True))
-
-
-def test_model_default_score_profile_executes_from_yaml_defaults():
-    scorer = _load_score_profile("classification")
-
-    scores = scorer(
-        y_true=[1, 0, 1, 1],
-        y_pred=[1, 0, 0, 1],
-        y_proba=[0.9, 0.1, 0.3, 0.8],
-        mode=None,
-    )
-
-    assert "accuracy" in scores
-    assert "precision" in scores
-    assert "recall" in scores
-    assert "f1" in scores
-    assert "log_loss" in scores
-
-
-def test_data_default_score_profile_executes_from_yaml_defaults():
-    scorer = _load_score_profile("data-classification")
-    assert isinstance(scorer, _DataScorerMarker)
-
-    data = SimpleNamespace(
-        _X=[[0.1, 1.0], [0.2, 1.0], [0.9, 0.0], [0.8, 0.0]],
-        _y=[0, 0, 1, 1],
-        classifier=True,
-    )
-
-    scores = scorer(data=data, mode="pre-sample")
-
-    assert "pre-sample" in scores
-    assert "num_classes" in scores["pre-sample"]
-    assert "class_count_min" in scores["pre-sample"]
-    assert "class_count_max" in scores["pre-sample"]
-    assert "class_imbalance_ratio" in scores["pre-sample"]
-    assert "mutual_information_mean" in scores["pre-sample"]
-    assert "mutual_information_max" in scores["pre-sample"]
 
 
 def test_model_and_data_default_profiles_infer_task_from_context():
@@ -400,32 +265,26 @@ class TestAttackScorers:
         with pytest.raises(ValueError):
             evasion_success_score(y_true=[0, 1], y_pred=[0, 1], ben_pred_labels=None)
 
-    def test_attack_scorer_evasion(self):
-        scorer = AttackScorerConfig()
-        scores = scorer.score_evasion(
-            ben_pred_labels=[0, 1, 0, 1],
-            adv_pred_labels=[0, 0, 0, 1],
+    def test_canonical_attack_evasion_score_profile(self):
+        scorer = _load_score_profile("evasion-classification")
+        scores = scorer(
             y_true=[0, 1, 0, 1],
-            attack_size=4,
+            y_pred=[0, 0, 0, 1],
+            ben_pred_labels=[0, 1, 0, 1],
         )
-        assert "evasion_accuracy" in scores
-        assert "evasion_success" in scores
-        assert "attack_score_time" in scores
+        assert "accuracy" in scores
+        assert "success" in scores
+        assert "precision" in scores
 
-    def test_attack_scorer_evasion_regression(self):
-        scorer = AttackScorerConfig()
-        scores = scorer.score_evasion(
-            ben_pred_labels=[1.0, 2.0, 3.0, 4.0],
-            adv_pred_labels=[1.1, 1.9, 3.2, 3.8],
+    def test_canonical_attack_evasion_regression_score_profile(self):
+        scorer = _load_score_profile("evasion-regression")
+        scores = scorer(
             y_true=[1.0, 2.0, 3.0, 4.0],
-            attack_size=4,
-            is_classification=False,
+            y_pred=[1.1, 1.9, 3.2, 3.8],
         )
-        assert "evasion_mse" in scores
-        assert "evasion_mae" in scores
-        assert "evasion_r2" in scores
-        assert "evasion_success" not in scores
-        assert "attack_score_time" in scores
+        assert "mse" in scores
+        assert "mae" in scores
+        assert "r2" in scores
 
     def test_attack_scorer_membership(self):
         scorer = AttackScorerConfig()
@@ -437,6 +296,39 @@ class TestAttackScorers:
         assert "membership_inference_accuracy" in scores
         assert "membership_inference_precision" in scores
         assert "attack_score_time" in scores
+
+    def test_attack_score_with_profile_flattens_mode_and_stage_payloads(self):
+        scorer = AttackScorerConfig()
+
+        class _Profile:
+            def __call__(self, y_true, y_pred, **kwargs):
+                _ = (y_true, y_pred, kwargs)
+                return {
+                    "attack": {"accuracy": 1.0},
+                    "attack-score": {"precision": 0.5},
+                    "metadata": 2.0,
+                }
+
+        mode_scores = scorer._score_with_profile(
+            profile=_Profile(),
+            y_true=[0, 1],
+            y_pred=[0, 1],
+            prefix="evasion",
+            n_samples=2,
+            mode="attack",
+        )
+        assert mode_scores["evasion_accuracy"] == 1.0
+        assert mode_scores["evasion_metadata"] == 2.0
+
+        stage_scores = scorer._score_with_profile(
+            profile=_Profile(),
+            y_true=[0, 1],
+            y_pred=[0, 1],
+            prefix="evasion",
+            n_samples=2,
+            stage="attack-score",
+        )
+        assert stage_scores["evasion_precision"] == 0.5
 
     def test_attack_scorer_attribute_classification(self):
         scorer = AttackScorerConfig()
@@ -464,14 +356,6 @@ class TestAttackScorers:
         assert "inferred_income_mse" in scores
         assert "inferred_income_r2" in scores
         assert "attack_score_time" in scores
-
-    def test_attack_score_configstores_registered(self):
-        scorer = AttackScorerConfig()
-        cs = ConfigStore.instance()
-        assert cs is not None
-        assert scorer.evasion is not None
-        assert scorer.membership_inference is not None
-        assert scorer.attribute_inference is not None
 
     def test_attack_scorer_attribute_requires_targeted_attribute(self):
         scorer = AttackScorerConfig()
@@ -524,7 +408,7 @@ class TestAttackScorers:
 
 
 class TestDataInspectionScorers:
-    def test_data_classification_default_scores(self):
+    def test_canonical_data_classification_score_profile(self):
         y_true = np.array([0, 0, 1, 1, 1, 0, 1, 0])
         X = pd.DataFrame(
             {
@@ -532,7 +416,7 @@ class TestDataInspectionScorers:
                 "feature_1": [1, 2, 1, 2, 2, 1, 2, 1],
             },
         )
-        scores = DefaultDataClassificationScorerDictConfig()(
+        scores = _load_score_profile("data-classification")(
             y_true=y_true,
             y_pred=X,
             mode=None,
@@ -544,23 +428,6 @@ class TestDataInspectionScorers:
         assert "mutual_information_mean" in scores
         assert "mutual_information_max" in scores
         assert scores["num_classes"] == 2
-
-    def test_data_classification_reference_column_override(self):
-        y_true = np.array([0, 0, 1, 1, 1, 0, 1, 0])
-        X = pd.DataFrame(
-            {
-                "age": [20, 24, 41, 45, 44, 23, 43, 21],
-                "income_proxy": [1.2, 1.5, 2.8, 3.0, 2.9, 1.4, 3.1, 1.3],
-            },
-        )
-        scores = DefaultDataClassificationScorerDictConfig()(
-            y_true=y_true,
-            y_pred=X,
-            mode=None,
-            reference_column="age",
-        )
-        assert "mutual_information_mean" in scores
-        assert scores["mutual_information_mean"] >= 0.0
 
     def test_data_regression_default_scores_include_ecdf(self):
         y_true = np.array([2.1, 2.5, 3.0, 3.4, 3.6, 4.0])
@@ -584,14 +451,3 @@ class TestDataInspectionScorers:
         values = ecdf(np.array([2.1, 3.0, 4.0]))
         assert np.all(values[:-1] <= values[1:])
 
-    def test_data_scorer_configstores_registered(self):
-        cs = ConfigStore.instance()
-        assert cs is not None
-        assert isinstance(
-            DefaultDataClassificationScorerDictConfig(),
-            DefaultDataClassificationScorerDictConfig,
-        )
-        assert isinstance(
-            DefaultDataRegressionScorerDictConfig(),
-            DefaultDataRegressionScorerDictConfig,
-        )

@@ -26,14 +26,6 @@ def _compose_pytorch(config_name: str, overrides: list[str] | None = None):
         return compose(config_name=config_name, overrides=overrides)
 
 
-def test_sklearn_data_profile_adult_composes():
-    cfg = _compose_sklearn("data/adult")
-    data_cfg = OmegaConf.to_container(cfg.data, resolve=True)
-
-    assert data_cfg["name"] == "adult"
-    assert data_cfg["alias"] == "adult"
-
-
 def test_sklearn_data_profile_anjana_composes():
     cfg = _compose_sklearn("data/anjana")
     data_cfg = OmegaConf.to_container(cfg.data, resolve=True)

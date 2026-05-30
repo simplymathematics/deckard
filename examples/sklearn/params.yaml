@@ -5,7 +5,7 @@ experiment:
   payload_kind: data
   metadata: {}
   data:
-    _target_: deckard.plugins.anjana.data.AnjanaDataConfig
+    _target_: deckard.data.base.DataConfig
     id: ''
     path: ''
     payload_kind: data
@@ -31,34 +31,18 @@ experiment:
     target: null
     drop: []
     keep: []
-    plugins:
-    - hook_name: before_sample
-      method_name: apply_defense
-      method_kwargs: {}
-      init_params:
-        library: anjana
-        type: data
-        class: pre_sample_anonymization
-        phase: pipeline
-    - hook_name: after_score_post_pipeline
-      method_name: _append_anjana_tail_scores
-      method_kwargs: {}
-      init_params:
-        library: anjana
-        type: data
-        class: tail_score
-        phase: scoring
+    plugins: []
     alias: test_classification
     scorer:
-      _target_: deckard.score.base.ScorerDictConfig
+      _target_: deckard.score.data.DefaultDataClassificationScorerDictConfig
       id: ''
       path: ''
       payload_kind: data
       metadata: {}
       scorers:
-        k_anonymity:
-          score_name: k_anonymity
-          score_function: deckard.plugins.anjana.score.anjana_k_anonymity_score
+        num_classes:
+          score_name: num_classes
+          score_function: deckard.score.data.data_num_classes_score
           score_params: {}
           metric_scope: auto
           stage: []
@@ -70,9 +54,9 @@ experiment:
           binary_positive_class_index: 1
           row_sum_atol: 0.01
           probability_clip_eps: 1.0e-12
-        l_diversity:
-          score_name: l_diversity
-          score_function: deckard.plugins.anjana.score.anjana_l_diversity_score
+        class_count_min:
+          score_name: class_count_min
+          score_function: deckard.score.data.data_class_count_min_score
           score_params: {}
           metric_scope: auto
           stage: []
@@ -84,9 +68,51 @@ experiment:
           binary_positive_class_index: 1
           row_sum_atol: 0.01
           probability_clip_eps: 1.0e-12
-        t_closeness:
-          score_name: t_closeness
-          score_function: deckard.plugins.anjana.score.anjana_t_closeness_score
+        class_count_max:
+          score_name: class_count_max
+          score_function: deckard.score.data.data_class_count_max_score
+          score_params: {}
+          metric_scope: auto
+          stage: []
+          greater_is_better: true
+          needs_labels: true
+          needs_proba: null
+          needs_logits: null
+          binary_expand_to_multiclass: null
+          binary_positive_class_index: 1
+          row_sum_atol: 0.01
+          probability_clip_eps: 1.0e-12
+        class_imbalance_ratio:
+          score_name: class_imbalance_ratio
+          score_function: deckard.score.data.data_class_imbalance_ratio_score
+          score_params: {}
+          metric_scope: auto
+          stage: []
+          greater_is_better: false
+          needs_labels: true
+          needs_proba: null
+          needs_logits: null
+          binary_expand_to_multiclass: null
+          binary_positive_class_index: 1
+          row_sum_atol: 0.01
+          probability_clip_eps: 1.0e-12
+        mutual_information_mean:
+          score_name: mutual_information_mean
+          score_function: deckard.score.data.data_mutual_information_mean_score
+          score_params: {}
+          metric_scope: auto
+          stage: []
+          greater_is_better: true
+          needs_labels: true
+          needs_proba: null
+          needs_logits: null
+          binary_expand_to_multiclass: null
+          binary_positive_class_index: 1
+          row_sum_atol: 0.01
+          probability_clip_eps: 1.0e-12
+        mutual_information_max:
+          score_name: mutual_information_max
+          score_function: deckard.score.data.data_mutual_information_max_score
           score_params: {}
           metric_scope: auto
           stage: []
@@ -99,6 +125,8 @@ experiment:
           row_sum_atol: 0.01
           probability_clip_eps: 1.0e-12
       stage: []
+      classifier: true
+      scoring_type: data
     score_mode: test
     score_stage: post-pipeline
     pipeline: null
@@ -120,19 +148,7 @@ experiment:
     train_n: null
     test_n: null
     val_n: null
-    sensitive_columns:
-    - feature_0
-    fairness_defense: null
-    anjana_defense: null
-    identifiers: null
-    quasi_identifiers:
-    - feature_0
-    - feature_1
-    sensitive_attribute: target
-    hierarchies: null
-    hierarchy_interval_sizes: null
-    hierarchy_fill_value: '*'
-  experiment_name: anjana_chain_fair_da00260d
+  experiment_name: 1b546a0650fe5b826b28db80e8425f87
   model:
     id: ''
     path: ''
@@ -180,7 +196,7 @@ experiment:
         defense_name: art.defences.postprocessor.ClassLabels
         defense_params:
           apply_fit: false
-          apply_predict: true
+          apply_predict: false
         alias: class-labels
         plugins: []
         _model: null
@@ -256,29 +272,32 @@ experiment:
           binary_positive_class_index: 1
           row_sum_atol: 0.01
           probability_clip_eps: 1.0e-12
-        demographic_parity_difference:
-          score_name: demographic_parity_difference
-          score_function: deckard.plugins.fairlearn.score.fairness_demographic_parity_difference
-          score_params: {}
+        roc_auc:
+          score_name: roc_auc
+          score_function: sklearn.metrics._ranking.roc_auc_score
+          score_params:
+            average: weighted
+            multi_class: ovr
           metric_scope: auto
           stage: []
           greater_is_better: true
-          needs_labels: true
-          needs_proba: null
-          needs_logits: null
+          needs_labels: false
+          needs_proba: true
+          needs_logits: true
           binary_expand_to_multiclass: null
           binary_positive_class_index: 1
           row_sum_atol: 0.01
           probability_clip_eps: 1.0e-12
-        equalized_odds_difference:
-          score_name: equalized_odds_difference
-          score_function: deckard.plugins.fairlearn.score.fairness_equalized_odds_difference
-          score_params: {}
+        log_loss:
+          score_name: log_loss
+          score_function: sklearn.metrics._classification.log_loss
+          score_params:
+            labels: null
           metric_scope: auto
           stage: []
           greater_is_better: true
-          needs_labels: true
-          needs_proba: null
+          needs_labels: false
+          needs_proba: true
           needs_logits: null
           binary_expand_to_multiclass: null
           binary_positive_class_index: 1
@@ -314,7 +333,7 @@ experiment:
       defense_name: art.defences.postprocessor.ClassLabels
       defense_params:
         apply_fit: false
-        apply_predict: true
+        apply_predict: false
       alias: class-labels
       plugins: []
       _model: null
@@ -326,17 +345,14 @@ experiment:
     path: ''
     payload_kind: data
     metadata: {}
-    name: art.attacks.evasion.BoundaryAttack
+    name: art.attacks.evasion.HopSkipJump
     attack_params:
-      batch_size: 10
+      max_iter: 76
+      init_eval: 16
+      max_eval: 619
+      init_size: 2
+      norm: 2
       targeted: false
-      delta: 0.01
-      epsilon: 0.01
-      max_iter: 10
-      num_trial: 25
-      sample_size: 10
-      init_size: 10
-      min_epsilon: 0.0
       verbose: false
     attack_size: 10
     targeted_attribute: ''
@@ -347,7 +363,7 @@ experiment:
       payload_kind: data
       metadata: {}
       evasion:
-        _target_: deckard.score.base.ScorerDictConfig
+        _target_: deckard.score.attack.DefaultEvasionAttackScorerDictConfig
         id: ''
         path: ''
         payload_kind: data
@@ -430,6 +446,7 @@ experiment:
             row_sum_atol: 0.01
             probability_clip_eps: 1.0e-12
         stage: []
+        classifier: true
       evasion_regression:
         _target_: deckard.score.attack.DefaultEvasionRegressionAttackScorerDictConfig
         id: ''
@@ -674,7 +691,7 @@ experiment:
             probability_clip_eps: 1.0e-12
         stage: []
         classifier: false
-    alias: boundary
+    alias: hsj
     plugins: []
     device: mps
     mode: auto
@@ -686,8 +703,7 @@ experiment:
   detector: null
   files:
     replace: {}
-    handler: <deckard.file.CanonFileHandler object at 0x322cdf1f0>
-    score_file: outputs/logs/anjana_chain_fair_da00260d/scores.json
+    handler: <deckard.file.CanonFileHandler object at 0x17f5c9b70>
   score: null
   random_state: 42
   library: sklearn
@@ -766,34 +782,34 @@ experiment:
       position: first
       executed: true
   params:
-    experiment_name: anjana_chain_fair_da00260d
+    experiment_name: 1b546a0650fe5b826b28db80e8425f87
     library: sklearn
     classifier: true
     evaluation_mode: standard
     score_mode: []
     random_state: 42
     data:
-      type: deckard.plugins.anjana.data.AnjanaDataConfig
+      type: deckard.data.base.DataConfig
       alias: test_classification
-      fingerprint: 220fd30f0dd868e470b1d047f566b94a
+      fingerprint: e4914b20fa33164997a5e6afd5b93461
     model:
       type: deckard.model.base.ModelConfig
       alias: test_logistic
-      fingerprint: b3bf318179b236931de52007f0a29c96
+      fingerprint: b609ac0e72b7f9fec4e3b4948458d435
     defense:
       type: deckard.model.defense.base.DefensePipelineConfig
       alias: ''
-      fingerprint: 4414a77ae3f4c2a088e185b56939b8d9
+      fingerprint: 6f960636ec10b6630e62885efe7dee84
     attack:
       type: deckard.attack.base.AttackConfig
-      alias: boundary
-      fingerprint: d14d2aaa6a97715fc16c11e54b7bf2d3
+      alias: hsj
+      fingerprint: 93bf73ad0d27bfc13073d70683de9522
     detector: null
     score: null
     attack_chain:
     - type: deckard.attack.base.AttackConfig
-      alias: boundary
-      fingerprint: d14d2aaa6a97715fc16c11e54b7bf2d3
+      alias: hsj
+      fingerprint: 93bf73ad0d27bfc13073d70683de9522
     schema_version: deckard.experiment.runtime.v1
   hook_plugins: []
   hook_bundles: []
@@ -821,34 +837,34 @@ _dvc:
   stage_selection: load
   run_mode: single
   params_manifest:
-    experiment_name: anjana_chain_fair_da00260d
+    experiment_name: 1b546a0650fe5b826b28db80e8425f87
     library: sklearn
     classifier: true
     evaluation_mode: standard
     score_mode: []
     random_state: 42
     data:
-      type: deckard.plugins.anjana.data.AnjanaDataConfig
+      type: deckard.data.base.DataConfig
       alias: test_classification
-      fingerprint: 220fd30f0dd868e470b1d047f566b94a
+      fingerprint: e4914b20fa33164997a5e6afd5b93461
     model:
       type: deckard.model.base.ModelConfig
       alias: test_logistic
-      fingerprint: b3bf318179b236931de52007f0a29c96
+      fingerprint: b609ac0e72b7f9fec4e3b4948458d435
     defense:
       type: deckard.model.defense.base.DefensePipelineConfig
       alias: ''
-      fingerprint: 4414a77ae3f4c2a088e185b56939b8d9
+      fingerprint: 6f960636ec10b6630e62885efe7dee84
     attack:
       type: deckard.attack.base.AttackConfig
-      alias: boundary
-      fingerprint: d14d2aaa6a97715fc16c11e54b7bf2d3
+      alias: hsj
+      fingerprint: 93bf73ad0d27bfc13073d70683de9522
     detector: null
     score: null
     attack_chain:
     - type: deckard.attack.base.AttackConfig
-      alias: boundary
-      fingerprint: d14d2aaa6a97715fc16c11e54b7bf2d3
+      alias: hsj
+      fingerprint: 93bf73ad0d27bfc13073d70683de9522
     schema_version: deckard.experiment.runtime.v1
   dvclive:
     enabled: true
