@@ -69,7 +69,7 @@ selection unambiguous at the component/sub-component boundary.
 
 - Runtime dispatch: attacks, defenses, frameworks, plugins.
 - Declaration groups: `examples/sklearn/config/` and `examples/pytorch/config/`.
-- Runtime registration: `deckard/declarations.py` and `safe_store` usage.
+- Runtime registration: deckard/declarations.py and safe_store usage.
 
 ### Non-Goals
 
@@ -88,12 +88,12 @@ and make component/sub-component selection explicit.
 
 Use a one-owner/one-tree model:
 
-- Attack runtime owner: `AttackConfig` with canonical `attack/...` tree paths.
-- Defense runtime owner: `DefenseConfig` and `DefensePipelineConfig` with one
-  canonical `defense/...` tree.
+- Attack runtime owner: AttackConfig with canonical attack/... tree paths.
+- Defense runtime owner: DefenseConfig and DefensePipelineConfig with one
+  canonical defense/... tree.
 - Framework runtime owner: framework-specific model/data components grouped
   under canonical `frameworks/...` trees.
-- Plugin runtime owner: `HookPlugin` and plugin package declaration groups with
+- Plugin runtime owner: HookPlugin and plugin package declaration groups with
   one canonical plugin namespace per plugin family.
 
 Config trees should be discoverable by component and sub-component, not by

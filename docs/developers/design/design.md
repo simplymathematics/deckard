@@ -23,14 +23,14 @@ These decisions are now treated as stable runtime and contributor policy:
 - Unknown init kwargs remain warning-first (duck-typed passthrough allowed where needed).
 - Legacy aliases (`dataset_name`, `model_type`, `attack_type`) are removed in favor of `name`.
 - Defense runtime naming is standardized on `name` (not `defense_name`) for active consolidation paths.
-- `ArtifactLoaderConfig` is replaced by `ArtifactLoaderMixin` without compatibility shims.
+- ArtifactLoaderConfig is replaced by ArtifactLoaderMixin without compatibility shims.
 - Experiment stage-component mapping is unified to canonical component/sub-component ownership.
-- `BaseConfig.fingerprint` includes all reproducibility-critical components and runs at post-init finalization.
+- BaseConfig.fingerprint includes all reproducibility-critical components and runs at post-init finalization.
 - Canonical command names are `deckard plugins` and `deckard frameworks`.
 - Plugin/framework list mode is non-installing and reports environment-dependent availability.
 - Unknown plugin names hard-fail with exit code `2`.
 - Install behavior is idempotent/no-op when already installed and emits summary output.
-- Optional dependency policy does not auto-install ANJANA and requires both `anjana` and `pycanon`.
+- Optional dependency policy does not auto-install ANJANA and requires both anjana and pycanon.
 - Plugin/framework summaries support both human-readable and JSON output.
 - Coercion/default order is child normalize -> validate -> apply defaults -> compose to parent -> parent finalization.
 

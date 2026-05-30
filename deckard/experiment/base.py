@@ -79,23 +79,49 @@ except ImportError:  # pragma: no cover
     AnjanaDataConfig = None
 
 
-try:
-    from ..model import FairlearnModelConfig
-except ImportError:  # pragma: no cover
-    FairlearnModelConfig = None
+FairlearnModelConfig = None
+FairlearnPytorchModelConfig = None
+PytorchModelConfig = None
 
-try:
-    from ..model import FairlearnPytorchModelConfig
-except ImportError:  # pragma: no cover
-    try:
-        from ..plugins.fairlearn.model import FairlearnPytorchModelConfig
-    except ImportError:  # pragma: no cover
-        FairlearnPytorchModelConfig = None
 
-try:
-    from ..model import PytorchModelConfig
-except ImportError:  # pragma: no cover
-    PytorchModelConfig = None
+def _load_optional_model_specializations() -> tuple[Any, Any, Any]:
+    """Load optional fairness/torch model classes only when needed.
+
+    Importing these symbols at module import time can transitively import the
+    torch stack during unrelated test collection. Delay that resolution until
+    fairness specialization actually runs.
+    """
+
+    global FairlearnModelConfig, FairlearnPytorchModelConfig, PytorchModelConfig
+
+    if PytorchModelConfig is None:
+        try:
+            from ..frameworks.pytorch.model import (
+                PytorchModelConfig as _PytorchModelConfig,
+            )
+        except Exception:  # pragma: no cover
+            _PytorchModelConfig = None
+        PytorchModelConfig = _PytorchModelConfig
+
+    if FairlearnModelConfig is None:
+        try:
+            from ..plugins.fairlearn.model import (
+                FairlearnModelConfig as _FairlearnModelConfig,
+            )
+        except Exception:  # pragma: no cover
+            _FairlearnModelConfig = None
+        FairlearnModelConfig = _FairlearnModelConfig
+
+    if FairlearnPytorchModelConfig is None:
+        try:
+            from ..plugins.fairlearn.model import (
+                FairlearnPytorchModelConfig as _FairlearnPytorchModelConfig,
+            )
+        except Exception:  # pragma: no cover
+            _FairlearnPytorchModelConfig = None
+        FairlearnPytorchModelConfig = _FairlearnPytorchModelConfig
+
+    return PytorchModelConfig, FairlearnModelConfig, FairlearnPytorchModelConfig
 
 
 logger = logging.getLogger(__name__)
@@ -1241,12 +1267,17 @@ class ExperimentConfig(BaseConfig):
             self.data,
             FairlearnDataConfig,
         ):
-            is_torch_model = PytorchModelConfig is not None and isinstance(
+            (
+                resolved_pytorch_model_cls,
+                resolved_fairlearn_model_cls,
+                resolved_fairlearn_pytorch_model_cls,
+            ) = _load_optional_model_specializations()
+            is_torch_model = resolved_pytorch_model_cls is not None and isinstance(
                 self.model,
-                PytorchModelConfig,
+                resolved_pytorch_model_cls,
             )
             if is_torch_model:
-                if FairlearnPytorchModelConfig is None:
+                if resolved_fairlearn_pytorch_model_cls is None:
                     # Some environments can instantiate the plugin class directly
                     # while this module-level optional import remains unavailable.
                     if self.model.__class__.__name__ == "FairlearnPytorchModelConfig":
@@ -1256,13 +1287,13 @@ class ExperimentConfig(BaseConfig):
                         "FairlearnPytorchModelConfig requires optional fairness and torch dependencies. "
                         "Install deckard[fairlearn,torch] to enable fairness-aware pytorch model configs.",
                     )
-                target_model_cls = FairlearnPytorchModelConfig
+                target_model_cls = resolved_fairlearn_pytorch_model_cls
             else:
-                if FairlearnModelConfig is None:
+                if resolved_fairlearn_model_cls is None:
                     raise ImportError(
                         "FairlearnModelConfig requires optional fairness dependencies. Install deckard[fairlearn] to enable fairlearn model configs.",
                     )
-                target_model_cls = FairlearnModelConfig
+                target_model_cls = resolved_fairlearn_model_cls
 
             if target_model_cls is None:
                 raise ImportError(
@@ -1272,7 +1303,10 @@ class ExperimentConfig(BaseConfig):
 
             fairness_types = tuple(
                 cfg
-                for cfg in (FairlearnModelConfig, FairlearnPytorchModelConfig)
+                for cfg in (
+                    resolved_fairlearn_model_cls,
+                    resolved_fairlearn_pytorch_model_cls,
+                )
                 if cfg is not None
             )
 

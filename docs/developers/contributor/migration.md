@@ -9,7 +9,7 @@ configuration APIs during canon refactors.
 - Prefer direct hard cuts to canonical names and runtime owners.
 - Standardize runtime identity fields on `name`.
 - Keep optional-dependency boundaries explicit and dependency-gated.
-- Keep runtime lifecycle entrypoints canonical (`apply`, `apply_to`, `apply_defense`).
+- Keep runtime lifecycle entrypoints canonical (apply, apply_to, apply_defense).
 
 ## Preserve Top-Level Config APIs
 
@@ -36,7 +36,7 @@ Optional dependency exports at {class}`deckard.data.AnjanaDataConfig` and
 their owning plugin modules.
 
 Do not migrate user-facing configs to plugin internals such as
-`deckard.plugins.<family>.data.<Class>`.
+deckard.plugins.<family>.data.<Class>.
 
 These import paths are the only plugin-internal exceptions permitted by this
 guard and must continue to resolve to canonical module definitions.
