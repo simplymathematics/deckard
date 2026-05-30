@@ -1,0 +1,27 @@
+defaults:
+  - _self_
+  - defense: null
+
+name: deckard.frameworks.transformers.declarations.GenericFlexibleTransformer
+model_params:
+  model_name: microsoft/codebert-base
+  model_revision: main
+  pretrained: true
+  out_features: 64
+  num_classes: 3
+  return_features: false
+
+classifier: true
+_target_: deckard.frameworks.transformers.model.HuggingFacePytorchModelConfig
+fit_params:
+  nb_epochs: 1
+  batch_size: 16
+  verbose: false
+library: pytorch
+criterion: CrossEntropyLoss
+optimizer:
+  name: SGD
+  lr: 0.01
+  momentum: 0.9
+clip_values: [0, 1]
+alias: hf_codebert_python

@@ -1,0 +1,23 @@
+name: demi_math_analysis
+_target_: deckard.frameworks.pytorch.data.PytorchCustomDataConfig
+classifier: true
+alias: demi_math_analysis
+
+dataset: demi_math_dataset.py:DemiMathAnalysisDataset
+
+dataset_params:
+  repo: ziye2chen/DEMI-MathAnalysis
+  model_name: distilbert-base-uncased
+  max_length: 96
+
+sampler:
+  name: deckard.frameworks.pytorch.sample.PytorchSplitSampler
+  train_size: 96
+  test_size: 32
+  random_state: 42
+  stratify: false
+
+data_params:
+  batch_size: 16
+  num_workers: 0
+  pin_memory: false

@@ -1,0 +1,34 @@
+stages:
+  set_config_paths:
+    cmd: >
+      echo "export DECKARD_CONFIG_DIR=./config" > .deckard_rc &&
+      echo "export DECKARD_DEFAULT_CONFIG_FILE=default.yaml" >> .deckard_rc &&
+      source .deckard_rc
+    outs:
+      - .deckard_rc
+    deps:
+      - ./config/
+
+  hsj_example:
+    cmd: >
+      deckard
+      optimize 
+      data=demi_math_analysis
+      model=hf_generic_transformer
+      attack=hsj
+      experiment_name=transformers_hsj_demi_math
+    deps:
+      - .deckard_rc
+      - ../../deckard
+      - ./config/default.yaml
+      - ./demi_math_dataset.py
+    outs:
+      - output/models/transformers_hsj_demi_math.pkl
+      - output/attacks/transformers_hsj_demi_math.pkl
+    metrics:
+      - output/scores/transformers_hsj_demi_math.json
+    params:
+      - ./config/default.yaml:
+      - ./config/data/demi_math_analysis.yaml:
+      - ./config/model/hf_generic_transformer.yaml:
+      - ./config/attack/hsj.yaml:

@@ -1,0 +1,6 @@
+name: "art.attacks.inference.membership_inference.MembershipInferenceBlackBox"
+attack_size: 100
+attack_params:
+  attack_model: ${model}
+_target_: deckard.attack.AttackConfig
+alias: membership

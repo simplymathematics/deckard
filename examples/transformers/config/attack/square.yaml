@@ -1,0 +1,12 @@
+name: "art.attacks.evasion.SquareAttack"
+attack_params:
+  norm: inf
+  max_iter: 20
+  eps: 0.1
+  p_init: 0.8
+  nb_restarts: 1
+  batch_size: ${model.fit_params.batch_size}
+  verbose: false
+attack_size: 8
+_target_: deckard.attack.AttackConfig
+alias: square

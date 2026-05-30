@@ -1,0 +1,12 @@
+name: "art.attacks.evasion.SimBA"
+attack_params:
+  attack: px
+  max_iter: 20
+  order: random
+  epsilon: 0.1
+  targeted: false
+  batch_size: 1
+  verbose: false
+attack_size: 4
+_target_: deckard.attack.AttackConfig
+alias: simba

@@ -1,0 +1,127 @@
+schema: '2.0'
+stages:
+  set_config_paths:
+    cmd: "echo \"export DECKARD_CONFIG_DIR=./config\" > .deckard_rc && echo \"export
+      DECKARD_DEFAULT_CONFIG_FILE=default.yaml\" >> .deckard_rc && source .deckard_rc\n"
+    deps:
+    - path: ./config/
+      hash: md5
+      md5: ef70fa074a9afbd977456fdb73f3aeb5.dir
+      size: 12225
+      nfiles: 40
+    outs:
+    - path: .deckard_rc
+      hash: md5
+      md5: 19021154ecc61513bd7a0f05b88e1a95
+      size: 83
+  hsj_example:
+    cmd: "deckard optimize  data=demi_math_analysis model=hf_generic_transformer attack=hsj
+      experiment_name=transformers_hsj_demi_math\n"
+    deps:
+    - path: ../../deckard
+      hash: md5
+      md5: 1b08343990b512cd2cb6b71b5456e767.dir
+      size: 3796269
+      nfiles: 358
+    - path: ./config/default.yaml
+      hash: md5
+      md5: 8129834be20387bd43787ea6c3454638
+      size: 243
+    - path: ./demi_math_dataset.py
+      hash: md5
+      md5: 1a95cfeb7cd8caa45fa0e7b3b82dd01a
+      size: 4230
+    - path: .deckard_rc
+      hash: md5
+      md5: 19021154ecc61513bd7a0f05b88e1a95
+      size: 83
+    params:
+      config/attack/hsj.yaml:
+        _target_: deckard.attack.AttackConfig
+        alias: hsj
+        attack_params:
+          max_iter: 3
+          init_eval: 1
+          max_eval: 1
+          init_size: 10
+          norm: 2
+          targeted: false
+          verbose: false
+          batch_size: ${model.fit_params.batch_size}
+        attack_size: 10
+        name: art.attacks.evasion.HopSkipJump
+      config/data/demi_math_analysis.yaml:
+        _target_: deckard.frameworks.pytorch.data.PytorchCustomDataConfig
+        alias: demi_math_analysis
+        classifier: true
+        data_params:
+          batch_size: 16
+          num_workers: 0
+          pin_memory: false
+        dataset: demi_math_dataset.py:DemiMathAnalysisDataset
+        dataset_params:
+          repo: ziye2chen/DEMI-MathAnalysis
+          model_name: distilbert-base-uncased
+          max_length: 96
+        name: demi_math_analysis
+        sampler:
+          name: deckard.frameworks.pytorch.sample.PytorchSplitSampler
+          train_size: 96
+          test_size: 32
+          random_state: 42
+          stratify: false
+      config/default.yaml:
+        defaults:
+        - _self_
+        - data: demi_math_analysis
+        - model: hf_generic_transformer
+        - trainer@model.trainer: pytorch
+        - attack: hsj
+        - files: default
+        experiment_name: transformers_hsj_demi_math
+        hydra:
+          run:
+            dir: output/logs/${experiment_name}
+      config/model/hf_generic_transformer.yaml:
+        _target_: 
+          deckard.frameworks.transformers.model.HuggingFacePytorchModelConfig
+        alias: hf_generic_transformer
+        classifier: true
+        clip_values:
+        - 0
+        - 1
+        criterion: CrossEntropyLoss
+        defaults:
+        - _self_
+        - defense:
+        fit_params:
+          nb_epochs: 1
+          batch_size: 16
+          verbose: false
+        library: pytorch
+        model_params:
+          model_name: distilbert-base-uncased
+          model_revision: main
+          pretrained: true
+          out_features: 64
+          num_classes: 8
+          return_features: false
+        name: 
+          deckard.frameworks.transformers.declarations.GenericFlexibleTransformer
+        optimizer:
+          name: SGD
+          lr: 0.01
+          momentum: 0.9
+    outs:
+    - path: output/attacks/transformers_hsj_demi_math.pkl
+      hash: md5
+      md5: 0983213014608ae4804c4ae4dd3e9818
+      size: 9471
+    - path: output/models/transformers_hsj_demi_math.pkl
+      hash: md5
+      md5: cb9e3ccdaac8dc1402783220ae4c1087
+      size: 265691720
+    - path: output/scores/transformers_hsj_demi_math.json
+      hash: md5
+      md5: cb88e5cb1c5d83ab45bd3580a10407fc
+      size: 26864

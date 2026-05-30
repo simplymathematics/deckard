@@ -1,0 +1,26 @@
+name: medmnist_pathmnist
+_target_: deckard.frameworks.pytorch.data.PytorchCustomDataConfig
+classifier: true
+alias: medmnist_pathmnist
+
+dataset: hf_task_datasets.py:MedicalImagingPathMNISTDataset
+
+dataset_params:
+  dataset_name: flwrlabs/medmnist
+  dataset_config: pathmnist
+  model_name: google/vit-base-patch16-224
+  image_field: image
+  label_field: label
+  limit: 12000
+
+sampler:
+  name: deckard.frameworks.pytorch.sample.PytorchSplitSampler
+  train_size: 1024
+  test_size: 256
+  random_state: 42
+  stratify: false
+
+data_params:
+  batch_size: 16
+  num_workers: 0
+  pin_memory: false

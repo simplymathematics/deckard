@@ -1,0 +1,15 @@
+name: "art.attacks.evasion.SignOPTAttack"
+attack_params:
+  targeted: false
+  epsilon: 0.001
+  num_trial: 10
+  max_iter: 20
+  query_limit: 200
+  k: 20
+  alpha: 0.2
+  beta: 0.001
+  batch_size: ${model.fit_params.batch_size}
+  verbose: false
+attack_size: 10
+_target_: deckard.attack.AttackConfig
+alias: signopt

@@ -1,0 +1,9 @@
+name: "art.attacks.extraction.CopycatCNN"
+attack_params:
+  batch_size_fit: 2
+  batch_size_query: 1
+  nb_epochs: 1
+  nb_stolen: 1
+attack_size: 4
+_target_: deckard.attack.AttackConfig
+alias: extraction_copycat

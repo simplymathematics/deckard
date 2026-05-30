@@ -1,0 +1,14 @@
+defaults:
+- _self_
+- data: demi_math_analysis
+- model: hf_generic_transformer
+- trainer@model.trainer: pytorch
+- attack: hsj
+- files: default
+
+experiment_name: transformers_hsj_demi_math
+
+
+hydra:
+  run:
+    dir: output/logs/${experiment_name}

@@ -1,0 +1,13 @@
+name: "art.attacks.extraction.KnockoffNets"
+attack_params:
+  batch_size_fit: 2
+  batch_size_query: 1
+  nb_epochs: 1
+  nb_stolen: 1
+  sampling_strategy: random
+  reward: all
+  verbose: false
+  use_probability: false
+attack_size: 4
+_target_: deckard.attack.AttackConfig
+alias: extraction_knockoff

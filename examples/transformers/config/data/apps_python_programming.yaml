@@ -1,0 +1,27 @@
+name: apps_python_programming
+_target_: deckard.frameworks.pytorch.data.PytorchCustomDataConfig
+classifier: true
+alias: apps_python_programming
+
+dataset: hf_task_datasets.py:PythonProgrammingAppsDataset
+
+dataset_params:
+  dataset_name: codeparrot/apps
+  dataset_config: null
+  model_name: microsoft/codebert-base
+  text_field: question
+  label_field: difficulty
+  max_length: 192
+  limit: 3000
+
+sampler:
+  name: deckard.frameworks.pytorch.sample.PytorchSplitSampler
+  train_size: 512
+  test_size: 128
+  random_state: 42
+  stratify: false
+
+data_params:
+  batch_size: 16
+  num_workers: 0
+  pin_memory: false

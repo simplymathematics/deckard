@@ -1,0 +1,11 @@
+name: "art.attacks.inference.attribute_inference.AttributeInferenceBlackBox"
+targeted_attribute:
+  - "age"
+attack_params:
+  attack_model_type: nn
+  scale_range: (0, 89)
+  is_continuous: true
+  nn_model_epochs: 1
+attack_size: 1000
+_target_: deckard.attack.AttackConfig
+alias: attribute_bb

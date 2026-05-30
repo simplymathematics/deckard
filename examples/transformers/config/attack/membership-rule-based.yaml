@@ -1,0 +1,5 @@
+name: "art.attacks.inference.membership_inference.MembershipInferenceBlackBoxRuleBased"
+attack_size: 100
+attack_params: {}
+_target_: deckard.attack.AttackConfig
+alias: membership_rule_based

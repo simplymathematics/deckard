@@ -1,0 +1,28 @@
+name: opus_en_fr_translation
+_target_: deckard.frameworks.pytorch.data.PytorchCustomDataConfig
+classifier: true
+alias: opus_en_fr_translation
+
+dataset: hf_task_datasets.py:FrenchEnglishTranslationDirectionDataset
+
+dataset_params:
+  dataset_name: opus_books
+  dataset_config: en-fr
+  model_name: distilbert-base-multilingual-cased
+  source_lang: en
+  target_lang: fr
+  translation_field: translation
+  max_length: 160
+  limit: 5000
+
+sampler:
+  name: deckard.frameworks.pytorch.sample.PytorchSplitSampler
+  train_size: 512
+  test_size: 128
+  random_state: 42
+  stratify: false
+
+data_params:
+  batch_size: 16
+  num_workers: 0
+  pin_memory: false

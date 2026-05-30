@@ -1,0 +1,13 @@
+name: "art.attacks.evasion.GeoDA"
+attack_params:
+  batch_size: ${model.fit_params.batch_size}
+  norm: 2
+  sub_dim: 4
+  max_iter: 100
+  bin_search_tol: 0.1
+  lambda_param: 0.6
+  sigma: 0.0002
+  verbose: false
+attack_size: 10
+_target_: deckard.attack.AttackConfig
+alias: geoda

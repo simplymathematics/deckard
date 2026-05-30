@@ -1,0 +1,13 @@
+defaults:
+- _self_
+- data: opus_en_fr_translation
+- model: hf_mbart_en_fr
+- trainer@model.trainer: pytorch
+- attack: hsj
+- files: default
+
+experiment_name: transformers_hsj_en_fr_translation
+
+hydra:
+  run:
+    dir: output/logs/${experiment_name}

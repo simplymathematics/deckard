@@ -1,0 +1,68 @@
+experiment_name: transformers_hsj_demi_math
+data:
+  name: demi_math_analysis
+  _target_: deckard.frameworks.pytorch.data.PytorchCustomDataConfig
+  classifier: true
+  alias: demi_math_analysis
+  dataset: demi_math_dataset.py:DemiMathAnalysisDataset
+  dataset_params:
+    repo: ziye2chen/DEMI-MathAnalysis
+    model_name: distilbert-base-uncased
+    max_length: 96
+  sampler:
+    name: deckard.frameworks.pytorch.sample.PytorchSplitSampler
+    train_size: 96
+    test_size: 32
+    random_state: 42
+    stratify: false
+  data_params:
+    batch_size: 16
+    num_workers: 0
+    pin_memory: false
+model:
+  name: deckard.frameworks.transformers.declarations.GenericFlexibleTransformer
+  model_params:
+    model_name: distilbert-base-uncased
+    model_revision: main
+    pretrained: true
+    out_features: 64
+    num_classes: 8
+    return_features: false
+  classifier: true
+  _target_: deckard.frameworks.transformers.model.HuggingFacePytorchModelConfig
+  fit_params:
+    nb_epochs: 1
+    batch_size: 16
+    verbose: false
+  library: pytorch
+  criterion: CrossEntropyLoss
+  optimizer:
+    name: SGD
+    lr: 0.01
+    momentum: 0.9
+  clip_values:
+  - 0
+  - 1
+  alias: hf_generic_transformer
+  trainer:
+    _target_: deckard.model.trainers.PytorchTrainer
+attack:
+  name: art.attacks.evasion.HopSkipJump
+  attack_params:
+    max_iter: 3
+    init_eval: 1
+    max_eval: 1
+    init_size: 10
+    norm: 2
+    targeted: false
+    verbose: false
+    batch_size: ${model.fit_params.batch_size}
+  attack_size: 10
+  _target_: deckard.attack.AttackConfig
+  alias: hsj
+files:
+  data_file: output/data/${experiment_name}.pkl
+  model_file: output/models/${experiment_name}.pkl
+  score_file: output/scores/${experiment_name}.json
+  attack_file: output/attacks/${experiment_name}.pkl
+  _target_: deckard.file.FileConfig

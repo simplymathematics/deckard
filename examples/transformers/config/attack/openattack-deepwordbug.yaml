@@ -1,0 +1,5 @@
+name: "deckard.plugins.openattack.attacks.evasion.DeepWordBugAttacker"
+attack_params: {}
+attack_size: 8
+_target_: deckard.attack.AttackConfig
+alias: openattack_deepwordbug
