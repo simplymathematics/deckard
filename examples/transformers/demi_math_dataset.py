@@ -93,17 +93,19 @@ class DemiMathAnalysisDataset(Dataset):
     @staticmethod
     def _resolve_text_column(frame: pd.DataFrame) -> str:
         candidates = ["problem", "question", "text", "prompt"]
+        normalized = {str(col).strip().lower(): col for col in frame.columns}
         for col in candidates:
-            if col in frame.columns:
-                return col
+            if col in normalized:
+                return normalized[col]
         return frame.columns[0]
 
     @staticmethod
     def _resolve_label_column(frame: pd.DataFrame) -> str:
-        candidates = ["problem_type", "topic", "label", "category"]
+        candidates = ["problem_type", "problemtype", "topic", "label", "category"]
+        normalized = {str(col).strip().lower(): col for col in frame.columns}
         for col in candidates:
-            if col in frame.columns:
-                return col
+            if col in normalized:
+                return normalized[col]
         return frame.columns[-1]
 
     def __len__(self) -> int:

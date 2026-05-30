@@ -36,7 +36,7 @@ Related docs:
 
 ```yaml
 model:
-    _target_: deckard.frameworks.transformers.model.TransformersModelConfig
+    _target_: deckard.frameworks.transformers.model.HuggingFacePytorchModelConfig
     name: transformers.AutoModelForSequenceClassification
     tokenizer: transformers.AutoTokenizer
 ```

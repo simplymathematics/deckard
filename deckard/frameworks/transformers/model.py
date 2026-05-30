@@ -10,9 +10,11 @@ This avoids the float32 cast that :class:`~art.estimators.classification.PyTorch
 applies to all inputs, which would corrupt integer ``input_ids`` required by
 HuggingFace embedding layers.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 try:
     import torch
@@ -35,6 +37,9 @@ from ..pytorch.model import (
 )
 
 __all__ = ["HuggingFacePytorchModelConfig"]
+
+if TYPE_CHECKING:
+    from ...data import DataConfig
 
 
 if HuggingFaceClassifierPyTorch is not None:
@@ -76,7 +81,9 @@ if HuggingFaceClassifierPyTorch is not None:
                             x = self._model.forward(x)
                             result.append(x)
                         else:  # pragma: no cover
-                            raise TypeError("The input model must inherit from `nn.Module`.")
+                            raise TypeError(
+                                "The input model must inherit from `nn.Module`."
+                            )
 
                         return result
 
@@ -94,7 +101,9 @@ if HuggingFaceClassifierPyTorch is not None:
 
                         for name, module in self._model.named_modules():
                             if name != "" and len(list(module.named_modules())) == 1:
-                                handles.append(module.register_forward_hook(forward_hook))
+                                handles.append(
+                                    module.register_forward_hook(forward_hook)
+                                )
                                 result_dict[id(module)] = name
 
                         model(input_for_hook)
@@ -142,11 +151,7 @@ class HuggingFacePytorchModelConfig(PytorchModelConfig):
 
         from .declarations import HuggingFaceArtModelWrapper
 
-        clip_values = (
-            tuple(self.clip_values)
-            if self.clip_values
-            else (0.0, 1.0)
-        )
+        clip_values = tuple(self.clip_values) if self.clip_values else (0.0, 1.0)
 
         batch_size = getattr(data, "batch_size", None) or self.fit_params.get(
             "batch_size", 32
@@ -169,6 +174,9 @@ class HuggingFacePytorchModelConfig(PytorchModelConfig):
             input_shape = tuple(data.X_train.shape[1:])
 
         nb_classes = int(len(torch.unique(data.y_train)))
+        if nb_classes < 2:
+            configured_classes = int(getattr(self, "num_classes", 0) or 0)
+            nb_classes = configured_classes if configured_classes >= 2 else 2
         art_device_type = self._resolve_art_device_type()
 
         wrapped = HuggingFaceArtModelWrapper(self._model)

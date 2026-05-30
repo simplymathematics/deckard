@@ -3,11 +3,12 @@ from pathlib import Path
 
 try:
     from torch import nn
-    from transformers import AutoConfig, AutoModel
+    from transformers import AutoConfig, AutoModel, AutoModelForSequenceClassification
 except ImportError:
     nn = None
     AutoModel = None
     AutoConfig = None
+    AutoModelForSequenceClassification = None
 
 
 class GenericFlexibleTransformer(nn.Module if nn else object):
@@ -131,9 +132,13 @@ class GenericFlexibleTransformer(nn.Module if nn else object):
         # Support both trainer-style positional tensors and keyword HF inputs.
         if args:
             if len(args) != 1:
-                raise ValueError("GenericFlexibleTransformer accepts at most one positional input tensor")
+                raise ValueError(
+                    "GenericFlexibleTransformer accepts at most one positional input tensor"
+                )
             if "input_ids" in kwargs:
-                raise ValueError("Pass either positional tensor or input_ids, not both")
+                raise ValueError(
+                    "Pass either positional tensor or input_ids, not both"
+                )
             kwargs["input_ids"] = args[0]
 
         for key in ("input_ids", "attention_mask", "token_type_ids", "position_ids"):
@@ -169,6 +174,84 @@ class GenericFlexibleTransformer(nn.Module if nn else object):
             }
 
         # Default to logits for compatibility with generic torch trainers.
+        return logits
+
+
+class PretrainedSequenceClassificationTransformer(nn.Module if nn else object):
+    """Loads a Hugging Face sequence-classification model with its tuned head."""
+
+    def __init__(
+        self,
+        model_name="distilbert/distilbert-base-uncased-finetuned-sst-2-english",
+        model_revision: str | None = "main",
+        pretrained=True,
+        return_features: bool = False,
+        **kwargs,
+    ):
+        _ = kwargs
+        if nn is None or AutoModelForSequenceClassification is None:
+            raise ImportError(
+                "PretrainedSequenceClassificationTransformer requires 'torch' and 'transformers'.",
+            )
+        super().__init__()
+
+        is_local_model = Path(str(model_name)).exists()
+        if not is_local_model and model_revision is None:
+            raise ValueError(
+                "model_revision must be provided for non-local Hugging Face model_name",
+            )
+
+        if pretrained:
+            self.backbone = AutoModelForSequenceClassification.from_pretrained(
+                model_name,
+                revision=model_revision,
+            )
+        else:
+            config = AutoConfig.from_pretrained(model_name, revision=model_revision)
+            self.backbone = AutoModelForSequenceClassification.from_config(config)
+
+        self.return_features = bool(return_features)
+        self.pad_token_id = getattr(self.backbone.config, "pad_token_id", 0)
+
+    @staticmethod
+    def _coerce_index_tensor(value):
+        if not torch.is_tensor(value):
+            return value
+        if torch.is_floating_point(value):
+            return value.long()
+        return value
+
+    def forward(self, *args, **kwargs):
+        if args:
+            if len(args) != 1:
+                raise ValueError(
+                    "PretrainedSequenceClassificationTransformer accepts at most one positional input tensor",
+                )
+            if "input_ids" in kwargs:
+                raise ValueError(
+                    "Pass either positional tensor or input_ids, not both"
+                )
+            kwargs["input_ids"] = args[0]
+
+        for key in ("input_ids", "attention_mask", "token_type_ids", "position_ids"):
+            if key in kwargs:
+                kwargs[key] = self._coerce_index_tensor(kwargs[key])
+
+        if "attention_mask" not in kwargs and "input_ids" in kwargs:
+            input_ids = kwargs["input_ids"]
+            if torch.is_tensor(input_ids):
+                kwargs["attention_mask"] = (input_ids != self.pad_token_id).long()
+
+        outputs = self.backbone(**kwargs)
+        logits = outputs.logits
+
+        if self.return_features:
+            hidden_states = getattr(outputs, "hidden_states", None)
+            features = None
+            if hidden_states is not None and len(hidden_states) > 0:
+                features = hidden_states[-1][:, 0, :]
+            return {"features": features, "logits": logits}
+
         return logits
 
 

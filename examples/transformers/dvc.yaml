@@ -13,22 +13,70 @@ stages:
     cmd: >
       deckard
       optimize 
-      data=demi_math_analysis
-      model=hf_generic_transformer
+      data=sst2_sentiment
+      model=hf_distilbert_sst2_tuned
       attack=hsj
-      experiment_name=transformers_hsj_demi_math
+      experiment_name=transformers_hsj_sst2_tuned
     deps:
       - .deckard_rc
       - ../../deckard
       - ./config/default.yaml
-      - ./demi_math_dataset.py
+      - ./hf_task_datasets.py
     outs:
-      - output/models/transformers_hsj_demi_math.pkl
-      - output/attacks/transformers_hsj_demi_math.pkl
+      - output/models/transformers_hsj_sst2_tuned.pkl
+      - output/attacks/transformers_hsj_sst2_tuned.pkl
     metrics:
-      - output/scores/transformers_hsj_demi_math.json
+      - output/scores/transformers_hsj_sst2_tuned.json
     params:
       - ./config/default.yaml:
-      - ./config/data/demi_math_analysis.yaml:
-      - ./config/model/hf_generic_transformer.yaml:
+      - ./config/data/sst2_sentiment.yaml:
+      - ./config/model/hf_distilbert_sst2_tuned.yaml:
       - ./config/attack/hsj.yaml:
+
+  textattack_example:
+    cmd: >
+      deckard
+      optimize
+      data=sst2_sentiment
+      model=hf_distilbert_sst2_tuned
+      attack=textattack-bae
+      experiment_name=transformers_textattack_sst2_tuned
+    deps:
+      - .deckard_rc
+      - ../../deckard
+      - ./config/default.yaml
+      - ./hf_task_datasets.py
+    outs:
+      - output/models/transformers_textattack_sst2_tuned.pkl
+      - output/attacks/transformers_textattack_sst2_tuned.pkl
+    metrics:
+      - output/scores/transformers_textattack_sst2_tuned.json
+    params:
+      - ./config/default.yaml:
+      - ./config/data/sst2_sentiment.yaml:
+      - ./config/model/hf_distilbert_sst2_tuned.yaml:
+      - ./config/attack/textattack-bae.yaml:
+
+  openattack_example:
+    cmd: >
+      deckard
+      optimize
+      data=sst2_sentiment
+      model=hf_distilbert_sst2_tuned
+      attack=openattack-deepwordbug
+      experiment_name=transformers_openattack_sst2_tuned
+    deps:
+      - .deckard_rc
+      - ../../deckard
+      - ./config/default.yaml
+      - ./hf_task_datasets.py
+    outs:
+      - output/models/transformers_openattack_sst2_tuned.pkl
+      - output/attacks/transformers_openattack_sst2_tuned.pkl
+    metrics:
+      - output/scores/transformers_openattack_sst2_tuned.json
+    params:
+      - ./config/default.yaml:
+      - ./config/data/sst2_sentiment.yaml:
+      - ./config/model/hf_distilbert_sst2_tuned.yaml:
+      - ./config/attack/openattack-deepwordbug.yaml:

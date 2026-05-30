@@ -2,19 +2,18 @@ defaults:
   - _self_
   - defense: null
 
-name: deckard.frameworks.transformers.declarations.GenericFlexibleTransformer
+name: deckard.frameworks.transformers.declarations.PretrainedSequenceClassificationTransformer
 model_params:
-  model_name: distilbert-base-uncased
+  model_name: textattack/bert-base-uncased-ag-news
   model_revision: main
   pretrained: true
-  out_features: 64
-  num_classes: 37
+  num_classes: 4
   return_features: false
 
 classifier: true
 _target_: deckard.frameworks.transformers.model.HuggingFacePytorchModelConfig
 fit_params:
-  nb_epochs: 1
+  nb_epochs: 0
   batch_size: 16
   verbose: false
 library: pytorch
@@ -24,4 +23,4 @@ optimizer:
   lr: 0.01
   momentum: 0.9
 clip_values: [0, 1]
-alias: hf_distilbert_arithmetic
+alias: hf_bert_agnews_tuned

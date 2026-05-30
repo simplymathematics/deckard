@@ -187,17 +187,41 @@ class ArithmeticMathQADataset(Dataset):
             ) from exc
 
         hf_split = _normalize_split(split)
-        if dataset_config:
-            ds = load_dataset(dataset_name, dataset_config, split=hf_split)
-        else:
-            ds = load_dataset(dataset_name, split=hf_split)
+        try:
+            if dataset_config:
+                ds = load_dataset(dataset_name, dataset_config, split=hf_split)
+            else:
+                ds = load_dataset(dataset_name, split=hf_split)
+        except ValueError as exc:
+            # Some Hub datasets only expose a train split. Fall back so custom
+            # data pipelines can still construct train/test subsets downstream.
+            if "Unknown split" not in str(exc) or hf_split == "train":
+                raise
+            if dataset_config:
+                ds = load_dataset(dataset_name, dataset_config, split="train")
+            else:
+                ds = load_dataset(dataset_name, split="train")
 
         if limit is not None:
             ds = ds.select(range(min(int(limit), len(ds))))
 
+        # Build a split-stable class index so train/test labels are aligned.
+        try:
+            if dataset_config:
+                ref_ds = load_dataset(dataset_name, dataset_config, split="train")
+            else:
+                ref_ds = load_dataset(dataset_name, split="train")
+            ref_labels = [str(v) for v in ref_ds[label_field]]
+        except Exception:
+            ref_labels = [str(v) for v in ds[label_field]]
+
+        mapping = {name: idx for idx, name in enumerate(sorted(set(ref_labels)))}
+
         self.texts = [str(v) for v in ds[text_field]]
         raw_labels = [str(v) for v in ds[label_field]]
-        mapping = {name: idx for idx, name in enumerate(sorted(set(raw_labels)))}
+        for value in raw_labels:
+            if value not in mapping:
+                mapping[value] = len(mapping)
         self.targets = [mapping[v] for v in raw_labels]
 
         tokenizer = AutoTokenizer.from_pretrained(model_name)

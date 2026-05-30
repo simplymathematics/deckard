@@ -1,12 +1,12 @@
 defaults:
 - _self_
-- data: demi_math_analysis
-- model: hf_generic_transformer
+- data: sst2_sentiment
+- model: hf_distilbert_sst2_tuned
 - trainer@model.trainer: pytorch
 - attack: hsj
 - files: default
 
-experiment_name: transformers_hsj_demi_math
+experiment_name: transformers_hsj_sst2_tuned
 
 
 hydra:

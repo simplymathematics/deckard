@@ -1,0 +1,27 @@
+name: sst2_sentiment
+_target_: deckard.frameworks.pytorch.data.PytorchCustomDataConfig
+classifier: true
+alias: sst2_sentiment
+
+dataset: hf_task_datasets.py:ArithmeticMathQADataset
+
+dataset_params:
+  dataset_name: stanfordnlp/sst2
+  dataset_config: null
+  model_name: distilbert/distilbert-base-uncased-finetuned-sst-2-english
+  text_field: sentence
+  label_field: label
+  max_length: 128
+  limit: 4096
+
+sampler:
+  name: deckard.frameworks.pytorch.sample.PytorchSplitSampler
+  train_size: 768
+  test_size: 192
+  random_state: 42
+  stratify: true
+
+data_params:
+  batch_size: 16
+  num_workers: 0
+  pin_memory: false

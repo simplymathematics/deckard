@@ -1,25 +1,25 @@
-name: mathqa_arithmetic
+name: ag_news_topic
 _target_: deckard.frameworks.pytorch.data.PytorchCustomDataConfig
 classifier: true
-alias: mathqa_arithmetic
+alias: ag_news_topic
 
 dataset: hf_task_datasets.py:ArithmeticMathQADataset
 
 dataset_params:
-  dataset_name: math_qa
+  dataset_name: fancyzhx/ag_news
   dataset_config: null
-  model_name: distilbert-base-uncased
-  text_field: Problem
-  label_field: category
-  max_length: 192
-  limit: 6000
+  model_name: textattack/bert-base-uncased-ag-news
+  text_field: text
+  label_field: label
+  max_length: 128
+  limit: 20000
 
 sampler:
   name: deckard.frameworks.pytorch.sample.PytorchSplitSampler
-  train_size: 768
-  test_size: 192
+  train_size: 1024
+  test_size: 256
   random_state: 42
-  stratify: false
+  stratify: true
 
 data_params:
   batch_size: 16

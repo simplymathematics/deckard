@@ -1,0 +1,27 @@
+name: imdb_sentiment
+_target_: deckard.frameworks.pytorch.data.PytorchCustomDataConfig
+classifier: true
+alias: imdb_sentiment
+
+dataset: hf_task_datasets.py:ArithmeticMathQADataset
+
+dataset_params:
+  dataset_name: imdb
+  dataset_config: null
+  model_name: textattack/bert-base-uncased-imdb
+  text_field: text
+  label_field: label
+  max_length: 128
+  limit: 12000
+
+sampler:
+  name: deckard.frameworks.pytorch.sample.PytorchSplitSampler
+  train_size: 1024
+  test_size: 256
+  random_state: 42
+  stratify: true
+
+data_params:
+  batch_size: 16
+  num_workers: 0
+  pin_memory: false

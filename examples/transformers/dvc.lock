@@ -6,9 +6,9 @@ stages:
     deps:
     - path: ./config/
       hash: md5
-      md5: ef70fa074a9afbd977456fdb73f3aeb5.dir
-      size: 12225
-      nfiles: 40
+      md5: 1eaa5829873391c71607f99d2461ecc7.dir
+      size: 12806
+      nfiles: 42
     outs:
     - path: .deckard_rc
       hash: md5
@@ -20,17 +20,17 @@ stages:
     deps:
     - path: ../../deckard
       hash: md5
-      md5: 1b08343990b512cd2cb6b71b5456e767.dir
-      size: 3796269
-      nfiles: 358
+      md5: f6c123af7b73a35409ba92d9247c4fa9.dir
+      size: 3809047
+      nfiles: 360
     - path: ./config/default.yaml
       hash: md5
       md5: 8129834be20387bd43787ea6c3454638
       size: 243
     - path: ./demi_math_dataset.py
       hash: md5
-      md5: 1a95cfeb7cd8caa45fa0e7b3b82dd01a
-      size: 4230
+      md5: 34342aa6209d06cd7382ec768c8a36cd
+      size: 4419
     - path: .deckard_rc
       hash: md5
       md5: 19021154ecc61513bd7a0f05b88e1a95
@@ -115,13 +115,225 @@ stages:
     outs:
     - path: output/attacks/transformers_hsj_demi_math.pkl
       hash: md5
-      md5: 0983213014608ae4804c4ae4dd3e9818
+      md5: c29af512d2e6de2287ac8d5b6c92728f
       size: 9471
     - path: output/models/transformers_hsj_demi_math.pkl
       hash: md5
-      md5: cb9e3ccdaac8dc1402783220ae4c1087
-      size: 265691720
+      md5: fc104edd36a4f9b0957b629564b2f394
+      size: 265691532
     - path: output/scores/transformers_hsj_demi_math.json
       hash: md5
-      md5: cb88e5cb1c5d83ab45bd3580a10407fc
-      size: 26864
+      md5: be4c8bee50e66b6ab4c2d0067ad4e00e
+      size: 26789
+  textattack_example:
+    cmd: "deckard optimize data=sst2_sentiment model=hf_distilbert_sst2_tuned attack=textattack-bae
+      experiment_name=transformers_textattack_sst2_tuned\n"
+    deps:
+    - path: ../../deckard
+      hash: md5
+      md5: 4a0ffe5ae3237ef4974bf7af7aa14e9b.dir
+      size: 3824350
+      nfiles: 360
+    - path: ./config/default.yaml
+      hash: md5
+      md5: c0b94f4c6933e36249949e17a4c72309
+      size: 242
+    - path: ./hf_task_datasets.py
+      hash: md5
+      md5: c082a8b23914c4588425f7033987b09c
+      size: 10466
+    - path: .deckard_rc
+      hash: md5
+      md5: 19021154ecc61513bd7a0f05b88e1a95
+      size: 83
+    params:
+      config/attack/textattack-bae.yaml:
+        _target_: deckard.attack.AttackConfig
+        alias: textattack_bae
+        attack_params: {}
+        attack_size: 8
+        name: deckard.plugins.textattack.attacks.evasion.BAEGarg2019
+      config/data/sst2_sentiment.yaml:
+        _target_: deckard.frameworks.pytorch.data.PytorchCustomDataConfig
+        alias: sst2_sentiment
+        classifier: true
+        data_params:
+          batch_size: 16
+          num_workers: 0
+          pin_memory: false
+        dataset: hf_task_datasets.py:ArithmeticMathQADataset
+        dataset_params:
+          dataset_name: stanfordnlp/sst2
+          dataset_config:
+          model_name: distilbert/distilbert-base-uncased-finetuned-sst-2-english
+          text_field: sentence
+          label_field: label
+          max_length: 128
+          limit: 4096
+        name: sst2_sentiment
+        sampler:
+          name: deckard.frameworks.pytorch.sample.PytorchSplitSampler
+          train_size: 768
+          test_size: 192
+          random_state: 42
+          stratify: true
+      config/default.yaml:
+        defaults:
+        - _self_
+        - data: sst2_sentiment
+        - model: hf_distilbert_sst2_tuned
+        - trainer@model.trainer: pytorch
+        - attack: hsj
+        - files: default
+        experiment_name: transformers_hsj_sst2_tuned
+        hydra:
+          run:
+            dir: output/logs/${experiment_name}
+      config/model/hf_distilbert_sst2_tuned.yaml:
+        _target_: 
+          deckard.frameworks.transformers.model.HuggingFacePytorchModelConfig
+        alias: hf_distilbert_sst2_tuned
+        classifier: true
+        clip_values:
+        - 0
+        - 1
+        criterion: CrossEntropyLoss
+        defaults:
+        - _self_
+        - defense:
+        fit_params:
+          nb_epochs: 0
+          batch_size: 16
+          verbose: false
+        library: pytorch
+        model_params:
+          model_name: distilbert/distilbert-base-uncased-finetuned-sst-2-english
+          model_revision: main
+          pretrained: true
+          num_classes: 2
+          return_features: false
+        name: 
+          deckard.frameworks.transformers.declarations.PretrainedSequenceClassificationTransformer
+        optimizer:
+          name: SGD
+          lr: 0.01
+          momentum: 0.9
+    outs:
+    - path: output/attacks/transformers_textattack_sst2_tuned.pkl
+      hash: md5
+      md5: 47c23189cfa99551980cf851418a4258
+      size: 8270
+    - path: output/models/transformers_textattack_sst2_tuned.pkl
+      hash: md5
+      md5: 827f6c0244f27890ce5a4e62116d4a96
+      size: 267863381
+    - path: output/scores/transformers_textattack_sst2_tuned.json
+      hash: md5
+      md5: d0a31d005916c2431b0df3bf258fbf38
+      size: 12678
+  openattack_example:
+    cmd: "deckard optimize data=sst2_sentiment model=hf_distilbert_sst2_tuned attack=openattack-deepwordbug
+      experiment_name=transformers_openattack_sst2_tuned\n"
+    deps:
+    - path: ../../deckard
+      hash: md5
+      md5: 4a0ffe5ae3237ef4974bf7af7aa14e9b.dir
+      size: 3824350
+      nfiles: 360
+    - path: ./config/default.yaml
+      hash: md5
+      md5: c0b94f4c6933e36249949e17a4c72309
+      size: 242
+    - path: ./hf_task_datasets.py
+      hash: md5
+      md5: c082a8b23914c4588425f7033987b09c
+      size: 10466
+    - path: .deckard_rc
+      hash: md5
+      md5: 19021154ecc61513bd7a0f05b88e1a95
+      size: 83
+    params:
+      config/attack/openattack-deepwordbug.yaml:
+        _target_: deckard.attack.AttackConfig
+        alias: openattack_deepwordbug
+        attack_params: {}
+        attack_size: 8
+        name: deckard.plugins.openattack.attacks.evasion.DeepWordBugAttacker
+      config/data/sst2_sentiment.yaml:
+        _target_: deckard.frameworks.pytorch.data.PytorchCustomDataConfig
+        alias: sst2_sentiment
+        classifier: true
+        data_params:
+          batch_size: 16
+          num_workers: 0
+          pin_memory: false
+        dataset: hf_task_datasets.py:ArithmeticMathQADataset
+        dataset_params:
+          dataset_name: stanfordnlp/sst2
+          dataset_config:
+          model_name: distilbert/distilbert-base-uncased-finetuned-sst-2-english
+          text_field: sentence
+          label_field: label
+          max_length: 128
+          limit: 4096
+        name: sst2_sentiment
+        sampler:
+          name: deckard.frameworks.pytorch.sample.PytorchSplitSampler
+          train_size: 768
+          test_size: 192
+          random_state: 42
+          stratify: true
+      config/default.yaml:
+        defaults:
+        - _self_
+        - data: sst2_sentiment
+        - model: hf_distilbert_sst2_tuned
+        - trainer@model.trainer: pytorch
+        - attack: hsj
+        - files: default
+        experiment_name: transformers_hsj_sst2_tuned
+        hydra:
+          run:
+            dir: output/logs/${experiment_name}
+      config/model/hf_distilbert_sst2_tuned.yaml:
+        _target_: 
+          deckard.frameworks.transformers.model.HuggingFacePytorchModelConfig
+        alias: hf_distilbert_sst2_tuned
+        classifier: true
+        clip_values:
+        - 0
+        - 1
+        criterion: CrossEntropyLoss
+        defaults:
+        - _self_
+        - defense:
+        fit_params:
+          nb_epochs: 0
+          batch_size: 16
+          verbose: false
+        library: pytorch
+        model_params:
+          model_name: distilbert/distilbert-base-uncased-finetuned-sst-2-english
+          model_revision: main
+          pretrained: true
+          num_classes: 2
+          return_features: false
+        name: 
+          deckard.frameworks.transformers.declarations.PretrainedSequenceClassificationTransformer
+        optimizer:
+          name: SGD
+          lr: 0.01
+          momentum: 0.9
+    outs:
+    - path: output/attacks/transformers_openattack_sst2_tuned.pkl
+      hash: md5
+      md5: 25605e8794614e8d860d360267eb1df9
+      size: 7595
+    - path: output/models/transformers_openattack_sst2_tuned.pkl
+      hash: md5
+      md5: 847551baf654d7a6fa9a70915ab46fa5
+      size: 267863297
+    - path: output/scores/transformers_openattack_sst2_tuned.json
+      hash: md5
+      md5: e07a107d4701adfd948ed4686b9eef37
+      size: 9111
