@@ -13,15 +13,24 @@ import numpy as np
 from sklearn.model_selection import KFold, StratifiedKFold, train_test_split
 
 # PyTorch
-import torch
-from torch import Tensor
-from torch.utils.data import (
-    DataLoader,
-    Dataset,
-    IterableDataset,
-    Subset,
-    TensorDataset,
-)
+try:
+    import torch
+    from torch import Tensor
+    from torch.utils.data import (
+        DataLoader,
+        Dataset,
+        IterableDataset,
+        Subset,
+        TensorDataset,
+    )
+except Exception:
+    torch = None
+    Tensor = None
+    DataLoader = None
+    Dataset = object
+    IterableDataset = object
+    Subset = object
+    TensorDataset = object
 from tqdm.auto import tqdm
 
 from ...data.base import DataConfig

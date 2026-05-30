@@ -20,12 +20,12 @@ from ...utils import (
 
 try:
     from .data import PytorchDataConfig
-except ImportError:  # pragma: no cover
+except Exception:  # pragma: no cover
     PytorchDataConfig = None
 
 try:
     from .model import PytorchModelConfig
-except ImportError:  # pragma: no cover
+except Exception:  # pragma: no cover
     PytorchModelConfig = None
 
 logger = logging.getLogger(__name__)

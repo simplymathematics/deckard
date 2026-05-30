@@ -4,11 +4,16 @@ from dataclasses import dataclass
 from typing import Any, cast
 
 import numpy as np
-import torch
-from torch.utils.data import (
-    Dataset,
-    Subset,  # Ensure Subset is always in scope
-)
+try:
+    import torch
+    from torch.utils.data import (
+        Dataset,
+        Subset,  # Ensure Subset is always in scope
+    )
+except Exception:
+    torch = None
+    Dataset = object
+    Subset = object
 
 from ...artifacts import ScoreDict
 from ...data.base import DataConfig

@@ -19,7 +19,7 @@ try:
     import torch
     import torch.nn as nn
     from torch.utils.data import DataLoader as TorchDataLoader
-except ImportError:
+except Exception:
     torch = None
     nn = None
     TorchDataLoader = None
