@@ -22,6 +22,16 @@ stage flow, while mixins and plugins extend behavior at explicit boundaries.
 - Plugins: extension entrypoints that compose mixins and dispatch behavior.
 - Hooks: stage-level integration surface for before/after runtime boundaries.
 
+## Choosing the Right Abstraction
+
+- Choose a `*Config` when the feature owns lifecycle routing, public runtime identity, or persistence contracts.
+- Choose a mixin when the feature is reusable capability logic across multiple owners.
+- Choose a plugin when the feature is optional and should attach through explicit hook boundaries.
+- Choose a subobject when the feature is a bounded component inside a config-owned flow.
+
+Do not move stage ordering ownership into plugins or subobjects. Keep orchestration
+order normalization in core config owners and shared orchestration mixins.
+
 ## Design Boundaries
 
 - Keep orchestration ownership in core config runtimes.

@@ -27,6 +27,19 @@ hooks (`before_<stage>`, `after_<stage>`).
 - Execution ordering must be explicit and deterministic.
 - Plugins must avoid hidden mutation of caller-owned runtime payloads.
 
+## Boundary Rules
+
+Plugins are extension points, not orchestration owners.
+
+- `*Config` owns canonical stage and mode routing.
+- Mixins provide reusable capability units for configs/plugins.
+- Plugins bind optional behavior to explicit hook names.
+- Subobjects (trainer/scorer/sampler/defense step) are consumed by config owners and do not replace owner flow.
+
+When behavior starts needing stable constructor semantics, persistence contracts,
+or top-level runtime identity, promote it to a `*Config` instead of keeping it
+as plugin-only logic.
+
 ## Extension Points
 
 - New plugin classes should reuse mixins and shared base behaviors.

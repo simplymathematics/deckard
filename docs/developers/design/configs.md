@@ -28,6 +28,53 @@ keeping execution deterministic.
 - Config finalization preserves explicit user values while deriving reproducibility-critical fields last.
 - Coercion/default precedence is child normalize -> validate -> apply defaults -> compose to parent -> parent finalization.
 
+## Config vs Mixin vs Plugin vs Subobject
+
+Use these boundaries when introducing new runtime behavior.
+
+### Use a `*Config` when
+
+- Behavior needs a stable public constructor surface (`name`, params, files, scorer, mode/stage knobs).
+- Behavior owns orchestration or lifecycle sequencing across stages.
+- Behavior must be reproducibly serializable through YAML/Hydra and persisted runtime state.
+
+Examples:
+
+- `DataConfig`, `ModelConfig`, `AttackConfig`, `DetectorConfig`, `ExperimentConfig`.
+
+### Use a mixin when
+
+- The logic is shared across multiple owners and does not need its own user-facing config schema.
+- The capability is composable and narrow (normalization, state propagation, hook wiring).
+- The mixin does not become the runtime owner of stage flow.
+
+Examples:
+
+- score/hook orchestration helpers reused by multiple config runtimes.
+
+### Use a plugin when
+
+- The behavior is optional, environment-dependent, or external-integration specific.
+- You need explicit hook extension points without changing base config contracts.
+- Feature gating or optional dependency boundaries must stay explicit.
+
+Examples:
+
+- text and fairness integrations that attach through declared hook surfaces.
+
+### Use a subobject when
+
+- The object is a bounded part of a parent config runtime (trainer, scorer, defense pipeline step, sampler).
+- The object should not own global orchestration ordering.
+- The parent config still controls stage/mode routing and persistence contracts.
+
+### Quick decision rule
+
+If it owns lifecycle and public runtime identity, make it a `*Config`.
+If it shares capability across owners, make it a mixin.
+If it extends behavior at optional boundaries, make it a plugin.
+If it is a component inside a config-owned flow, make it a subobject.
+
 ## Required Sections
 
 Use MyST-native Google-style sections:
