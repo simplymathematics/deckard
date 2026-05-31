@@ -3,7 +3,7 @@
 import copy
 import logging
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 import numpy as np
 from sklearn.base import BaseEstimator
@@ -224,7 +224,6 @@ class ExtractionAttackConfig(PoisoningAttackConfig):
                 "extraction_mode": mode_used,
             },
         )
-
 
     # Note:
     #     Expected family is ``extraction``.

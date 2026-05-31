@@ -22,8 +22,7 @@ except Exception:  # pragma: no cover
 
 
 def is_library_attack_name(attack_name: str, library_name: str) -> bool:
-    """Return whether an attack declaration resolves to a library namespace.
-    """
+    """Return whether an attack declaration resolves to a library namespace."""
     normalized_name = str(attack_name or "").strip().lower()
     normalized_library = str(library_name or "").strip().lower()
     if normalized_library == "":
@@ -120,7 +119,10 @@ def _dataset_texts_targets(dataset: Any) -> tuple[list[str], np.ndarray, Any]:
         )
 
     selected_texts = [str(texts[index]) for index in indices]
-    selected_targets = np.asarray([int(targets[index]) for index in indices], dtype=int)
+    selected_targets = np.asarray(
+        [int(targets[index]) for index in indices],
+        dtype=int,
+    )
     return selected_texts, selected_targets, tokenizer
 
 
@@ -153,7 +155,11 @@ class TransformerTextAdapter:
             return np.empty((0, 0), dtype=np.float32)
 
         all_logits: list[np.ndarray] = []
-        max_length = self.max_length or getattr(self.tokenizer, "model_max_length", 128)
+        max_length = self.max_length or getattr(
+            self.tokenizer,
+            "model_max_length",
+            128,
+        )
         if max_length is None or int(max_length) <= 0:
             max_length = 128
 

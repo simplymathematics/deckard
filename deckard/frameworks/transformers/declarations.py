@@ -133,11 +133,11 @@ class GenericFlexibleTransformer(nn.Module if nn else object):
         if args:
             if len(args) != 1:
                 raise ValueError(
-                    "GenericFlexibleTransformer accepts at most one positional input tensor"
+                    "GenericFlexibleTransformer accepts at most one positional input tensor",
                 )
             if "input_ids" in kwargs:
                 raise ValueError(
-                    "Pass either positional tensor or input_ids, not both"
+                    "Pass either positional tensor or input_ids, not both",
                 )
             kwargs["input_ids"] = args[0]
 
@@ -229,7 +229,7 @@ class PretrainedSequenceClassificationTransformer(nn.Module if nn else object):
                 )
             if "input_ids" in kwargs:
                 raise ValueError(
-                    "Pass either positional tensor or input_ids, not both"
+                    "Pass either positional tensor or input_ids, not both",
                 )
             kwargs["input_ids"] = args[0]
 

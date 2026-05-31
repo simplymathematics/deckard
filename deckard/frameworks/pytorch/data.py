@@ -48,7 +48,9 @@ from ...utils import load_class, resolve_torch_device
 logger = logging.getLogger(__name__)
 
 
-def _persist_pickle_cache(save_fn: Callable[[], None], cache_path: str, label: str) -> None:
+def _persist_pickle_cache(
+    save_fn: Callable[[], None], cache_path: str, label: str
+) -> None:
     """Persist an optional pickle cache without failing the enclosing pipeline."""
     try:
         save_fn()

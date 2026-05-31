@@ -52,7 +52,7 @@ def _resolve_attacker_name(attack_config: AttackConfig) -> str:
     attack_name = str(attack_config.resolve_name(default="") or "").strip()
     if attack_name == "":
         raise ValueError(
-            "AttackConfig must include an attacker class path for OpenAttack."
+            "AttackConfig must include an attacker class path for OpenAttack.",
         )
     return attack_name.split(".")[-1]
 
@@ -165,7 +165,7 @@ class OpenAttackConfig(AttackConfig):
                     "attack_name",
                     runtime.resolve_name(default="openattack"),
                 )
-                or "openattack"
+                or "openattack",
             )
         except Exception as exc:  # pragma: no cover
             if fail_on_error:

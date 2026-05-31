@@ -154,7 +154,9 @@ class DetectorConfig(ScoreOrchestratorMixin, BaseConfig):
     detector_detection_time: Union[float, None] = field(default=None, init=False)
     _target_: Union[str, None] = None
     _plugin_objects: Union[list, None] = field(default=None, repr=False, compare=False)
-    score_stage_aliases: ClassVar[dict[str, str]] = CANONICAL_DETECTOR_SCORE_STAGE_ALIASES
+    score_stage_aliases: ClassVar[dict[str, str]] = (
+        CANONICAL_DETECTOR_SCORE_STAGE_ALIASES
+    )
     score_stage_order: ClassVar[tuple[str, ...]] = tuple(
         stage
         for stage in CANONICAL_DETECTOR_SCORE_STAGES

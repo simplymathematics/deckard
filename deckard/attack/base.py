@@ -30,7 +30,7 @@ from omegaconf import DictConfig, OmegaConf
 from ..artifacts import ScoreDict
 from ..data import DataConfig
 from ..model import ModelConfig
-from ..frameworks.types import ArrayLike, AttackLike, EstimatorLike, MatrixLike
+from ..frameworks.types import ArrayLike, EstimatorLike, MatrixLike
 from ..model.defense.base import _get_art_symbols
 from ..utils import (
     BaseConfig,

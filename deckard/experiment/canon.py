@@ -16,7 +16,10 @@ from ..attack.canon import ATTACK_RUNTIME_STAGE_ALIASES, AttackFiles
 from ..data.canon import CANONICAL_DATA_STAGES, DataFiles
 from ..detector.canon import DETECTOR_RUNTIME_STAGE_ALIASES, DetectorFiles
 from ..frameworks import __path__ as FRAMEWORKS_PACKAGE_PATHS
-from ..orchestration import CANONICAL_RUNTIME_METHODS, MODE_ALIASES as _DEFAULT_MODE_ALIASES
+from ..orchestration import (
+    CANONICAL_RUNTIME_METHODS,
+    MODE_ALIASES as _DEFAULT_MODE_ALIASES,
+)
 from ..model.canon import (
     CANONICAL_MODEL_DEFENSE_STAGES,
     CANONICAL_MODEL_TRAINER_ALIASES,

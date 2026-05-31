@@ -2,7 +2,7 @@
 
 import logging
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, Mapping, Protocol, cast
 
 import numpy as np
@@ -139,7 +139,9 @@ class PoisoningAttackConfig(AttackConfig):
         return self.poison(data=data, art_model=art_model, attack=attack)
 
     def _resolve_poison_context(self, data: DataConfig):
-        class_source, class_target, trigger_index, poison_fit_params = self._resolve_poison_params()
+        class_source, class_target, trigger_index, poison_fit_params = (
+            self._resolve_poison_params()
+        )
         mode_used, x_eval_raw, y_eval_raw = self._resolve_eval_split(data)
         x_train = self._to_numpy_array(
             self._prepare_features_for_attack(getattr(data, "X_train")),
@@ -193,7 +195,13 @@ class PoisoningAttackConfig(AttackConfig):
         trigger_idx = int(source_indices[trigger_pos])
         nb_classes = int(np.max(y_eval_class)) + 1
         y_trigger = self._one_hot_encode([class_target], nb_classes=int(nb_classes))
-        return class_source, x_eval[trigger_idx : trigger_idx + 1], y_trigger, trigger_idx, nb_classes
+        return (
+            class_source,
+            x_eval[trigger_idx : trigger_idx + 1],
+            y_trigger,
+            trigger_idx,
+            nb_classes,
+        )
 
     def _score_poison_predictions(
         self,
@@ -205,7 +213,10 @@ class PoisoningAttackConfig(AttackConfig):
         extra_scores: dict[str, Any],
     ) -> ScoreDict:
         benign_labels = self._prediction_to_labels(benign_pred, is_regression=False)
-        poisoned_labels = self._prediction_to_labels(poisoned_pred, is_regression=False)
+        poisoned_labels = self._prediction_to_labels(
+            poisoned_pred,
+            is_regression=False,
+        )
         benign_scores = self._score_comparison(
             y_true=y_eval,
             y_pred=benign_labels,
@@ -240,12 +251,13 @@ class PoisoningAttackConfig(AttackConfig):
         return class_source, class_target, trigger_index, poison_fit_params
 
     @staticmethod
-    def _prepare_gradient_matching_attack(attack_name: str, art_model: _PoisoningArtModel) -> None:
+    def _prepare_gradient_matching_attack(
+        attack_name: str,
+        art_model: _PoisoningArtModel,
+    ) -> None:
         if "gradientmatchingattack" not in attack_name:
             return
         try:
-            import torch
-
             runtime_art_model = cast(Any, art_model)
             art_device = getattr(runtime_art_model, "_device", None)
             if getattr(art_device, "type", None) == "mps":
@@ -253,7 +265,11 @@ class PoisoningAttackConfig(AttackConfig):
                     runtime_art_model._model,
                     "to",
                 ):
-                    object.__setattr__(runtime_art_model, "_model", runtime_art_model._model.to("cpu"))
+                    object.__setattr__(
+                        runtime_art_model,
+                        "_model",
+                        runtime_art_model._model.to("cpu"),
+                    )
                 if hasattr(runtime_art_model, "_device"):
                     object.__setattr__(runtime_art_model, "_device", "cpu")
         except ImportError:
@@ -365,7 +381,10 @@ class PoisoningAttackConfig(AttackConfig):
             y_eval_class=y_eval_class,
         )
 
-        y_train_for_poison = self._build_poison_training_labels(y_train_raw, nb_classes)
+        y_train_for_poison = self._build_poison_training_labels(
+            y_train_raw,
+            nb_classes,
+        )
 
         start_time = time.perf_counter()
         x_poison, y_poison = self._run_poison_attack(
@@ -570,7 +589,6 @@ class PoisoningAttackConfig(AttackConfig):
                 "Extraction attacks require test features/labels (or val when mode='val').",
             )
         return "test", X_test, y_test
-
 
     # Note:
     #     Expected family is ``poisoning``.

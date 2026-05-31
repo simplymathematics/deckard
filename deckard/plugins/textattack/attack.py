@@ -43,7 +43,7 @@ def _resolve_recipe_name(attack_config: AttackConfig) -> str:
     attack_name = str(attack_config.resolve_name(default="") or "").strip()
     if attack_name == "":
         raise ValueError(
-            "AttackConfig must include a recipe class path for TextAttack."
+            "AttackConfig must include a recipe class path for TextAttack.",
         )
     return attack_name.split(".")[-1]
 
@@ -203,7 +203,7 @@ def _collect_attack_records(
                 "original_prediction": original_pred,
                 "adversarial_prediction": adversarial_pred,
                 "success": bool(
-                    adversarial_text != text and adversarial_pred != original_pred
+                    adversarial_text != text and adversarial_pred != original_pred,
                 ),
                 "result_type": type(result_item).__name__,
             },
@@ -233,6 +233,7 @@ def _build_failure_metadata(
         str(runtime.resolve_name(default="textattack")),
         str(exc),
     )
+
 
 __all__ = [
     "run_textattack_attack_config",

@@ -82,7 +82,7 @@ if HuggingFaceClassifierPyTorch is not None:
                             result.append(x)
                         else:  # pragma: no cover
                             raise TypeError(
-                                "The input model must inherit from `nn.Module`."
+                                "The input model must inherit from `nn.Module`.",
                             )
 
                         return result
@@ -102,7 +102,7 @@ if HuggingFaceClassifierPyTorch is not None:
                         for name, module in self._model.named_modules():
                             if name != "" and len(list(module.named_modules())) == 1:
                                 handles.append(
-                                    module.register_forward_hook(forward_hook)
+                                    module.register_forward_hook(forward_hook),
                                 )
                                 result_dict[id(module)] = name
 
@@ -146,7 +146,7 @@ class HuggingFacePytorchModelConfig(PytorchModelConfig):
         if DeckardHuggingFaceClassifierPyTorch is None:
             raise ImportError(
                 "HuggingFacePytorchModelConfig requires "
-                "adversarial-robustness-toolbox >= 1.18 with HuggingFace support."
+                "adversarial-robustness-toolbox >= 1.18 with HuggingFace support.",
             )
 
         from .declarations import HuggingFaceArtModelWrapper
@@ -154,7 +154,8 @@ class HuggingFacePytorchModelConfig(PytorchModelConfig):
         clip_values = tuple(self.clip_values) if self.clip_values else (0.0, 1.0)
 
         batch_size = getattr(data, "batch_size", None) or self.fit_params.get(
-            "batch_size", 32
+            "batch_size",
+            32,
         )
 
         if isinstance(data.X_train, torch.utils.data.DataLoader):

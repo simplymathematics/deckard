@@ -2,7 +2,7 @@
 
 import logging
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 import numpy as np
 import pandas as pd
@@ -763,5 +763,3 @@ class InferenceAttackConfig(AttackConfig):
                 "attack_score_time": float(self.attack_score_time),
             },
         )
-
-

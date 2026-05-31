@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import Any, cast
 
 import numpy as np
+
 try:
     import torch
     from torch.utils.data import (

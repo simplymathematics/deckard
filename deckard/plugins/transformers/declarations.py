@@ -44,7 +44,9 @@ class FlexibleHuggingFaceDataset(DataConfig):
             raise ValueError("target must be provided")
 
         super().__post_init__()
-        self._target_ = "deckard.plugins.transformers.declarations.FlexibleHuggingFaceDataset"
+        self._target_ = (
+            "deckard.plugins.transformers.declarations.FlexibleHuggingFaceDataset"
+        )
 
     def _load_huggingface_dataset(self) -> None:
         if load_dataset is None:

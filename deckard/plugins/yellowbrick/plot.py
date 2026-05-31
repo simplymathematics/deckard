@@ -458,7 +458,10 @@ class _YellowbrickModelAdapter(BaseEstimator, ClassifierMixin):
                     original_device = getattr(self.model_config, "device", None)
                     try:
                         cpu_candidate = prepared
-                        if torch is not None and isinstance(cpu_candidate, torch.Tensor):
+                        if torch is not None and isinstance(
+                            cpu_candidate,
+                            torch.Tensor,
+                        ):
                             cpu_candidate = cpu_candidate.detach().cpu()
 
                         if original_device is not None:
@@ -472,7 +475,7 @@ class _YellowbrickModelAdapter(BaseEstimator, ClassifierMixin):
                             self.model_config.device = original_device
 
         raise RuntimeError(
-            "Yellowbrick adapter failed to obtain predictions from model config"
+            "Yellowbrick adapter failed to obtain predictions from model config",
         ) from last_error
 
     def predict_proba(self, X) -> np.ndarray:

@@ -3,7 +3,7 @@
 import logging
 import time
 from dataclasses import dataclass
-from typing import Any, Union
+from typing import Any
 
 import numpy as np
 from art.config import ART_NUMPY_DTYPE
@@ -11,7 +11,7 @@ from sklearn.base import BaseEstimator
 
 from ..artifacts import ScoreDict
 from ..data import DataConfig
-from ..frameworks.types import ArrayLike,  EstimatorLike
+from ..frameworks.types import EstimatorLike
 from ..model import ModelConfig
 from ..frameworks.pytorch.torch_utils import (
     is_tensor,
@@ -98,7 +98,12 @@ class EvasionAttackConfig(AttackConfig):
             )
         return ben_preds, ben_pred_labels, is_regression
 
-    def _generate_evasion_examples(self, attack: Any, x_subset_art: Any, ben_pred_labels: Any):
+    def _generate_evasion_examples(
+        self,
+        attack: Any,
+        x_subset_art: Any,
+        ben_pred_labels: Any,
+    ):
         if "AdversarialPatch" in str(type(attack)):
             patches = attack.generate(x=x_subset_art, y=ben_pred_labels)
             input_shape = x_subset_art[0].shape[1:]
@@ -199,7 +204,11 @@ class EvasionAttackConfig(AttackConfig):
             x_subset_art,
             y_subset,
         )
-        X_test_adv = self._generate_evasion_examples(attack, x_subset_art, ben_pred_labels)
+        X_test_adv = self._generate_evasion_examples(
+            attack,
+            x_subset_art,
+            ben_pred_labels,
+        )
         end_time = time.perf_counter()
         self.attack_time = end_time - start_time
         logger.info(
@@ -239,7 +248,6 @@ class EvasionAttackConfig(AttackConfig):
             score_y_pred=adv_pred_labels,
             score_y_proba=adv_pred,
         )
-
 
     # Note:
     #     Expected family is ``evasion``.
