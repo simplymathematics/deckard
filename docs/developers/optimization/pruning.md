@@ -17,8 +17,8 @@ semantics.
 
 Pruning uses a trial-like runtime object with these operations:
 
-- {meth}`deckard.model._mixins.PruneTrialProtocol.report`
-- {meth}`deckard.model._mixins.PruneTrialProtocol.should_prune`
+- {meth}[deckard.model._mixins.PruneTrialProtocol.report](../../api/model/index)
+- {meth}[deckard.model._mixins.PruneTrialProtocol.should_prune](../../api/model/index)
 - {meth}`optuna.trial.Trial.should_prune`
 
 Trainer/runtime integration calls these operations during training checkpoints.
@@ -30,9 +30,9 @@ Trainer/runtime integration calls these operations during training checkpoints.
 {class}`deckard.model._mixins.PruneTrialProtocol` defines the minimal
 trial contract consumed by pruning runtime logic:
 
-- {meth}`deckard.model._mixins.PruneTrialProtocol.report` for intermediate
+- {meth}[deckard.model._mixins.PruneTrialProtocol.report](../../api/model/index) for intermediate
   metric reporting
-- {meth}`deckard.model._mixins.PruneTrialProtocol.should_prune` for prune
+- {meth}[deckard.model._mixins.PruneTrialProtocol.should_prune](../../api/model/index) for prune
   decision checks
 
 This protocol keeps trainer and mixin logic compatible with Optuna Trial
@@ -41,16 +41,16 @@ objects and trial-like adapters.
 ### Core Pruning Mixin
 
 {class}`deckard.model._mixins.ModelPrunerMixin` centralizes pruning decision
-behavior in {meth}`deckard.model._mixins.ModelPrunerMixin.check_prune`.
+behavior in {meth}[deckard.model._mixins.ModelPrunerMixin.check_prune](../../api/model/index).
 
-{meth}`deckard.model._mixins.ModelPrunerMixin.check_prune` behavior contract:
+{meth}[deckard.model._mixins.ModelPrunerMixin.check_prune](../../api/model/index) behavior contract:
 
 1. If `trial` is `None`, return `False` (no prune decision).
 2. If a metric value is provided and trial supports reporting, call
-	{meth}`deckard.model._mixins.PruneTrialProtocol.report` with
+	{meth}[deckard.model._mixins.PruneTrialProtocol.report](../../api/model/index) with
 	default step `0` when `step` is omitted.
 3. If trial exposes a callable
-	{meth}`deckard.model._mixins.PruneTrialProtocol.should_prune`, return its
+	{meth}[deckard.model._mixins.PruneTrialProtocol.should_prune](../../api/model/index), return its
 	boolean result.
 4. If no callable prune method exists, return `False`.
 
@@ -73,9 +73,9 @@ Both expose:
 Integration rule:
 
 - Trainers call
-  {meth}`deckard.model._mixins.ModelPrunerMixin.check_prune` only when
+  {meth}[deckard.model._mixins.ModelPrunerMixin.check_prune](../../api/model/index) only when
 	trial is present and the runtime config exposes
-	{meth}`deckard.model._mixins.ModelPrunerMixin.check_prune`.
+	{meth}[deckard.model._mixins.ModelPrunerMixin.check_prune](../../api/model/index).
 - When pruning is requested, trainers mark `output["pruned"] = True`.
 
 ## End-to-End Pruning Control Flow
@@ -107,7 +107,7 @@ This avoids requiring direct Trial object transport through CLI signatures.
 Pruning-capable trainers must:
 
 1. compute or select prune metric value
-2. call {meth}`deckard.model._mixins.ModelPrunerMixin.check_prune`
+2. call {meth}[deckard.model._mixins.ModelPrunerMixin.check_prune](../../api/model/index)
 3. mark prune intent in runtime output for diagnostics
 4. raise `optuna.TrialPruned` when prune decision is true
 
@@ -123,9 +123,9 @@ Practical note:
 Pruning inputs must be explicit:
 
 - prune_metric: runtime key used for
-	{meth}`deckard.model._mixins.PruneTrialProtocol.report`
+	{meth}[deckard.model._mixins.PruneTrialProtocol.report](../../api/model/index)
 - prune_step: step index used for
-	{meth}`deckard.model._mixins.PruneTrialProtocol.report`
+	{meth}[deckard.model._mixins.PruneTrialProtocol.report](../../api/model/index)
 
 If metric is missing, behavior must be deterministic and logged.
 
@@ -158,12 +158,12 @@ Detailed failure semantics:
 
 - Missing trial: pruning path is a no-op (False), training continues.
 - Missing trial
-	{meth}`deckard.model._mixins.PruneTrialProtocol.should_prune`: treated as
+	{meth}[deckard.model._mixins.PruneTrialProtocol.should_prune](../../api/model/index): treated as
 	non-pruning backend (False).
 - Missing metric key: prune check still executes with deterministic behavior,
 	and runtime logging should capture missing key context.
 - Backend errors during
-	{meth}`deckard.model._mixins.PruneTrialProtocol.report`: fail explicitly; do
+	{meth}[deckard.model._mixins.PruneTrialProtocol.report](../../api/model/index): fail explicitly; do
 	not silently convert to success status.
 
 ## Cross-Document Dependencies
@@ -184,9 +184,9 @@ At minimum, tests must cover:
 
 Recommended mixin-focused tests:
 
-- {meth}`deckard.model._mixins.ModelPrunerMixin.check_prune` with:
+- {meth}[deckard.model._mixins.ModelPrunerMixin.check_prune](../../api/model/index) with:
 	- trial=None
-	- missing {meth}`deckard.model._mixins.PruneTrialProtocol.should_prune`
+	- missing {meth}[deckard.model._mixins.PruneTrialProtocol.should_prune](../../api/model/index)
 	- explicit value and step
 	- omitted step (defaults to 0)
 - {class}`deckard.model.trainers.PruningTrainer` and

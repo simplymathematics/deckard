@@ -68,13 +68,13 @@ Supported attack families:
 - [`evasion`](#evasion-attacks)
 - [`poisoning`](#poisoning-attacks)
 - [`extraction`](#extraction-attacks)
-- [`inference`](#inference-attacks)
+- [[inference](index)](#inference-attacks)
 
 Supported inference subtypes:
 
-- [`membership_inference`](#membership-inference-attacks)
-- [`attribute_inference`](#attribute-inference-attacks)
-- [`model_inversion`](#model-inversion-attacks)
+- [[membership_inference](index)](#membership-inference-attacks)
+- [[attribute_inference](index)](#attribute-inference-attacks)
+- [[model_inversion](index)](#model-inversion-attacks)
 - [`reconstruction`](#reconstruction-attacks)
 
 (evasion-attacks)=

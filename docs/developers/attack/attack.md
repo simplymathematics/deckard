@@ -40,7 +40,7 @@ adapter extensions.
 2. Canonical attack stages normalize to lifecycle boundaries and are observable in outputs/hooks.
 3. Files-only persistence paths are used for attack outputs and downstream scoring artifacts.
 4. Attack scoring outputs remain compatible with experiment-level merge and persistence layers.
-5. Runtime dispatch resolves direct `*AttackConfig` handlers (`EvasionAttackConfig`, `PoisoningAttackConfig`, `InferenceAttackConfig`, `ExtractionAttackConfig`, and plugin `TextAttackConfig`/`OpenAttackConfig`).
+5. Runtime dispatch resolves direct `*AttackConfig` handlers ({class}`deckard.score.attack.EvasionAttackConfig`, {class}`deckard.score.attack.PoisoningAttackConfig`, {class}`deckard.score.attack.InferenceAttackConfig`, {class}`deckard.score.attack.ExtractionAttackConfig`, and plugin {class}`deckard.plugins.textattack.attack.TextAttackConfig`/{class}`deckard.plugins.openattack.attack.OpenAttackConfig`).
 6. Built-in configs are the default runtime path; plugins remain optional extension points.
 
 ## Guardrail Tests

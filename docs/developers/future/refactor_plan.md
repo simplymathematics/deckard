@@ -653,9 +653,9 @@ Design specs: [Optimization Runtime Contract](../optimization/optimization) | [H
 
 - [ ] Add/verify external config root discovery through `DECKARD_CONFIG_DIRS`.
 
-- [x] Consolidate per-module declarations (`data`, `model`, `attack`, `defense`,
+- [x] Consolidate per-module declarations (`data`, [model](../../api/model/index), `attack`, `defense`,
 
-  `plot`, `experiment`) into canonical YAML groups.
+  [plot](../../api/plugins/lifelines), `experiment`) into canonical YAML groups.
 
 - [ ] Refactor tests to compose canonical configs via Hydra (compose-first,
 

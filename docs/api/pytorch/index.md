@@ -102,9 +102,9 @@ composition.
 
 ### Persistence Contract
 
-- {meth}`deckard.frameworks.pytorch.model.PytorchModelConfig.save`/{meth}`deckard.frameworks.pytorch.model.PytorchModelConfig.load` on {class}`~deckard.frameworks.pytorch.model.PytorchModelConfig`
+- {meth}[deckard.frameworks.pytorch.model.PytorchModelConfig.save](index)/{meth}[deckard.frameworks.pytorch.model.PytorchModelConfig.load](index) on {class}`~deckard.frameworks.pytorch.model.PytorchModelConfig`
   persist config state as YAML.
-- {meth}`deckard.frameworks.pytorch.model.PytorchModelConfig.save_model`/{meth}`deckard.frameworks.pytorch.model.PytorchModelConfig.load_model` persist runtime torch model state artifacts.
+- {meth}[deckard.frameworks.pytorch.model.PytorchModelConfig.save_model](index)/{meth}[deckard.frameworks.pytorch.model.PytorchModelConfig.load_model](index) persist runtime torch model state artifacts.
 - Runtime torch artifacts use `.pt` (and optionally pickle-compatible payloads
   where supported by the runtime loader).
 - During checkpointing, YAML config records include references to runtime

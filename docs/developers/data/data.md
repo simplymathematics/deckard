@@ -22,7 +22,7 @@ Every DataConfig family runtime must preserve these fields and lifecycle methods
 
 - Runtime attributes: `_X`, `_y`, `X_train`, `X_test`, `X_val`, `y_train`,
   `y_test`, `y_val`, `files`, `times`, `score_dict`
-- Lifecycle methods: {meth}`deckard.data.base.DataConfig.load_dataset`, {meth}`deckard.data.base.DataConfig.fit`, {meth}`deckard.data.base.DataConfig.sample`, {meth}`deckard.data.base.DataConfig.score`, {meth}`deckard.data.base.DataConfig.__call__`
+- Lifecycle methods: {meth}`~deckard.data.base.DataConfig.load_dataset`, {meth}`~deckard.data.base.DataConfig.fit`, {meth}`~deckard.data.base.DataConfig.sample`, {meth}`~deckard.data.base.DataConfig.score`, {meth}`~deckard.data.base.DataConfig.__call__`
 - Canonical timing keys in `times`: `data_load_time`, `data_sample_time`,
   `data_pipeline_time`, `data_score_time`
 

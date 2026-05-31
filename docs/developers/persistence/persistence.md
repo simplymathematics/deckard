@@ -191,10 +191,10 @@ Required write invariants:
 
 Required operations:
 
-- {meth}`deckard.file.AbstractFileHandler.validate_keys`
-- {meth}`deckard.file.AbstractFileHandler.disk_status`
-- {meth}`deckard.file.AbstractFileHandler.parse_placeholders`
-- {meth}`deckard.file.AbstractFileHandler.replace_placeholders`
+- {meth}[deckard.file.AbstractFileHandler.validate_keys](../../api/file/index)
+- {meth}[deckard.file.AbstractFileHandler.disk_status](../../api/file/index)
+- {meth}[deckard.file.AbstractFileHandler.parse_placeholders](../../api/file/index)
+- {meth}[deckard.file.AbstractFileHandler.replace_placeholders](../../api/file/index)
 
 {class}`deckard.file.FileConfig` remains the public typed registry and should delegate parsing/
 validation to handler implementations.

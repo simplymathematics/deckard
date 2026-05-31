@@ -13,9 +13,9 @@ index stay focused on the higher-level runtime families.
 
 The extension docs are organized by implementation family:
 
-- Framework-specific runtime docs: {doc}`pytorch`
-- Framework-specific runtime docs: {doc}`transformers`
-- Plugin-specific runtime docs: {doc}`anjana`, {doc}`fairlearn`
+- Framework-specific runtime docs: {doc}[pytorch](../../api/pytorch/index)
+- Framework-specific runtime docs: {doc}[transformers](../../api/plugins/index)
+- Plugin-specific runtime docs: {doc}[anjana](../../api/plugins/anjana), {doc}[fairlearn](../../api/plugins/fairlearn)
 
 Each page covers the internal contract for its subsystem and links back to the
 shared rules that govern mixins and plugins.
@@ -36,10 +36,10 @@ framework or plugin-specific lifecycle.
 
 ## Extension Points
 
-- {doc}`pytorch`
-- {doc}`transformers`
-- {doc}`anjana`
-- {doc}`fairlearn`
+- {doc}[pytorch](../../api/pytorch/index)
+- {doc}[transformers](../../api/plugins/index)
+- {doc}[anjana](../../api/plugins/anjana)
+- {doc}[fairlearn](../../api/plugins/fairlearn)
 
 ## Validation and Guardrails
 

@@ -40,7 +40,7 @@ Use these boundaries when introducing new runtime behavior.
 
 Examples:
 
-- `DataConfig`, `ModelConfig`, `AttackConfig`, `DetectorConfig`, `ExperimentConfig`.
+- [DataConfig](../../api/data/index), [ModelConfig](../../api/model/index), [AttackConfig](../../api/attack/index), [DetectorConfig](../../api/detector/index), [ExperimentConfig](../../api/experiment/index).
 
 ### Use a mixin when
 

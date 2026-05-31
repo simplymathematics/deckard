@@ -22,8 +22,7 @@ hooks (`before_<stage>`, `after_<stage>`).
 
 ## Contracts and Invariants
 
-- Plugins must expose public execution methods (including `__call__` where
-	required by plugin type).
+- Plugins must expose public execution methods (including `__call__` where required by plugin type).
 - Execution ordering must be explicit and deterministic.
 - Plugins must avoid hidden mutation of caller-owned runtime payloads.
 

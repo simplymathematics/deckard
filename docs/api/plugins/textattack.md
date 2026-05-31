@@ -7,9 +7,9 @@ execution for Deckard runtime workflows.
 
 Parent core pages:
 
-- {doc}`../attack/index`
-- {doc}`../model/index`
-- {doc}`../score/index`
+- {doc}`/api/attack/index`
+- {doc}`/api/model/index`
+- {doc}`/api/score/index`
 
 Behavior deltas in this integration:
 
@@ -32,8 +32,11 @@ surface.
 Current family scope:
 
 - TextAttack names map to the `evasion` family.
-- `inference`, `poisoning`, `extraction`, and `reconstruction` families are not
-   currently provided by TextAttack runtime handlers.
+- [inference](/api/attack/index#inference-attacks),
+  [poisoning](/api/attack/index#poisoning-attacks),
+  [extraction](/api/attack/index#extraction-attacks), and
+  [reconstruction](/api/attack/index#reconstruction-attacks) families are not
+  currently provided by TextAttack runtime handlers.
 
 External references:
 
@@ -60,7 +63,7 @@ attack:
 
 ## Troubleshooting
 
-- Ensure the optional `textattack` dependency is installed.
+- Ensure the optional [textattack](/api/plugins/textattack) dependency is installed.
 - Ensure the recipe token in `attack.name` maps to an available TextAttack recipe.
 - Ensure model/tokenizer inputs are text-compatible for the configured split.
 

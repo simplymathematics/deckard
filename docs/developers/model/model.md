@@ -46,9 +46,9 @@ The runtime is expected to be able to load, train, score, and persist without re
 
 Framework and plugin wrappers must expose the same public runtime verbs as base configs.
 
-- Model runtime: {meth}`deckard.model.base.ModelConfig.train`, {meth}`deckard.model.base.ModelConfig.predict`, {meth}`deckard.model.base.ModelConfig.predict_proba`, {meth}`deckard.model.base.ModelConfig.score`, {meth}`deckard.model.base.ModelConfig.apply_defense`
-- Detector runtime: {meth}`deckard.detector.base.DetectorConfig.filter` for filter-mode execution
-- Defense runtime mixins: verb-form handlers such as {meth}`deckard.model.defense.base.DefenseMixin.defend`, {meth}`deckard.model.defense.preprocessor.PreprocessorDefenseMixin.preprocess`, {meth}`deckard.model.defense.postprocessor.PostprocessorDefenseMixin.postprocess`, {meth}`deckard.model.defense.regularizer.RegularizerDefenseMixin.regularize`, {meth}`deckard.model.defense.trainer.TrainerDefenseMixin.train_defense`
+- Model runtime: {meth}[deckard.model.base.ModelConfig.train](../../api/model/index), {meth}[deckard.model.base.ModelConfig.predict](../../api/model/index), {meth}[deckard.model.base.ModelConfig.predict_proba](../../api/model/index), {meth}[deckard.model.base.ModelConfig.score](../../api/model/index), {meth}[deckard.model.base.ModelConfig.apply_defense](../../api/model/index)
+- Detector runtime: {meth}[deckard.detector.base.DetectorConfig.filter](../../api/detector/index) for filter-mode execution
+- Defense runtime mixins: verb-form handlers such as {meth}[deckard.model.defense.base.DefenseMixin.defend](../../api/model/index), {meth}[deckard.model.defense.preprocessor.PreprocessorDefenseMixin.preprocess](../../api/model/index), {meth}[deckard.model.defense.postprocessor.PostprocessorDefenseMixin.postprocess](../../api/model/index), {meth}[deckard.model.defense.regularizer.RegularizerDefenseMixin.regularize](../../api/model/index), {meth}[deckard.model.defense.trainer.TrainerDefenseMixin.train_defense](../../api/model/index)
 - Defense-type mapping is normalized by {meth}`deckard.model.canon.resolve_model_defense_stage` (for example `anjana.*`, `fairlearn.reductions`, `fairlearn.adversarial`, `fairlearn.postprocessing`).
 
 Underscored method variants are considered internal implementation details and

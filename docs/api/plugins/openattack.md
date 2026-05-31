@@ -32,8 +32,11 @@ surface.
 Current family scope:
 
 - OpenAttack names map to the `evasion` family.
-- `inference`, `poisoning`, `extraction`, and `reconstruction` families are not
-   currently provided by OpenAttack runtime handlers.
+- [inference](../attack/index#inference-attacks),
+  [poisoning](../attack/index#poisoning-attacks),
+  [extraction](../attack/index#extraction-attacks), and
+  [reconstruction](../attack/index#reconstruction-attacks) families are not
+  currently provided by OpenAttack runtime handlers.
 
 External references:
 
@@ -58,7 +61,7 @@ attack:
 
 ## Troubleshooting
 
-- Ensure the optional `OpenAttack` dependency is installed.
+- Ensure the optional [OpenAttack](openattack) dependency is installed.
 - Ensure the attacker token in `attack.name` maps to an available OpenAttack attacker.
 - Ensure model/tokenizer inputs are text-compatible for the configured split.
 
