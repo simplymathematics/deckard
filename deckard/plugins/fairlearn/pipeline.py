@@ -43,7 +43,16 @@ class FairlearnPipelineHooksMixin:
     """
 
     def apply_defense(self) -> None:
-        """Canonical public entrypoint for fairlearn pipeline defense injection."""
+        """Inject the configured fairlearn defense into the runtime pipeline.
+
+        The method validates that ``fairness_defense`` is a concrete mapping,
+        requires ``sensitive_columns``, and only operates when ``_X`` is an
+        in-memory ``pandas.DataFrame``. It derives the current sensitive feature
+        column ids, prepends or updates a ``fairness_correlation_remover`` step,
+        and keeps an existing pipeline object synchronized when the runtime
+        already owns one. If the defense is disabled or the backing frame is not
+        loaded, the method returns without mutating the pipeline.
+        """
         if self.fairness_defense in [None, False]:
             return
         if self.fairness_defense is True:

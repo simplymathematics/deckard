@@ -43,7 +43,24 @@ class HookBundle:
 
 
 def compose_hook_plugins(*parts: Any) -> list[HookPlugin]:
-    """Compose named bundles and standalone hooks into an ordered plugin list."""
+    """Compose hook bundles and plugins into a deduplicated runtime list.
+
+    The function accepts ``HookBundle`` instances, individual ``HookPlugin``
+    objects, or nested lists/tuples containing either form. Nested bundles are
+    flattened, plugin instances are cloned before return so call sites do not
+    share mutable plugin state, and duplicates are removed by the
+    ``(hook_name, method_name)`` pair while preserving first-seen order.
+
+    Args:
+        *parts: Hook bundles, plugins, or nested iterables of those values.
+
+    Returns:
+        Ordered hook plugin list with duplicates removed.
+
+    Raises:
+        TypeError: If any nested value is not a ``HookBundle`` or
+            ``HookPlugin``.
+    """
     plugins: list[HookPlugin] = []
     seen: set[tuple[str, str]] = set()
 

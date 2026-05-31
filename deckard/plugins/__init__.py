@@ -121,7 +121,10 @@ _PLUGIN_MAP = {
     "anjana": "deckard.plugins.anjana",
     "fairlearn": "deckard.plugins.fairlearn",
     "lifelines": "deckard.plugins.lifelines",
+    "openattack": "deckard.plugins.openattack",
+    "transformers": "deckard.plugins.transformers",
     "seaborn": "deckard.plugins.seaborn",
+    "textattack": "deckard.plugins.textattack",
     "yellowbrick": "deckard.plugins.yellowbrick",
 }
 
@@ -129,7 +132,10 @@ _PLUGIN_DEPENDENCIES = {
     "anjana": ("anjana", "pycanon"),
     "fairlearn": ("fairlearn",),
     "lifelines": ("lifelines",),
+    "openattack": ("OpenAttack",),
+    "transformers": ("datasets",),
     "seaborn": ("seaborn",),
+    "textattack": ("textattack",),
     "yellowbrick": ("yellowbrick",),
 }
 
@@ -190,6 +196,9 @@ __all__ = [
     "anjana",
     "fairlearn",
     "lifelines",
+    "openattack",
+    "transformers",
     "seaborn",
+    "textattack",
     "yellowbrick",
 ]

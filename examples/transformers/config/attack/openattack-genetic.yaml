@@ -1,4 +1,4 @@
-name: "deckard.plugins.openattack.attacks.evasion.GeneticAttacker"
+name: "OpenAttack.attackers.GeneticAttacker"
 attack_params: {}
 attack_size: 8
 _target_: deckard.attack.AttackConfig

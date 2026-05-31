@@ -93,7 +93,17 @@ class FlexibleHuggingFaceDataset(DataConfig):
             self._y = pd.Series(self._y, name=self.target)
 
     def load_dataset(self) -> "FlexibleHuggingFaceDataset":
-        """Load the configured Hugging Face dataset into ``_X``/``_y``."""
+        """Load the configured Hugging Face dataset into ``_X`` and ``_y``.
+
+        The method requires the optional ``datasets`` dependency, forwards
+        ``name``, ``dataset_config_name``, ``dataset_split``, and ``data_params``
+        to :func:`datasets.load_dataset`, truncates the frame with ``limit``
+        before validating columns, and then materializes ``_X`` from ``keep``
+        and ``_y`` from ``target``. Missing required columns raise ``KeyError``.
+
+        Returns:
+            The current dataset config after loading runtime state.
+        """
         start_time = time.process_time()
         self._load_dataset_with_hooks(self._load_huggingface_dataset)
         end_time = time.process_time()

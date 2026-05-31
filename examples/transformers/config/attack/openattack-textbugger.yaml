@@ -1,4 +1,4 @@
-name: "deckard.plugins.openattack.attacks.evasion.TextBuggerAttacker"
+name: "OpenAttack.attackers.TextBuggerAttacker"
 attack_params: {}
 attack_size: 8
 _target_: deckard.attack.AttackConfig

@@ -1,4 +1,4 @@
-name: "deckard.plugins.textattack.attacks.evasion.PWWSRen2019"
+name: "textattack.attack_recipes.pwws_ren_2019.PWWSRen2019"
 attack_params: {}
 attack_size: 8
 _target_: deckard.attack.AttackConfig
