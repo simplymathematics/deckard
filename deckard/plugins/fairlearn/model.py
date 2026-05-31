@@ -21,7 +21,7 @@ from .data import FairlearnDataConfig
 try:
     import torch as torch_module
     import torch.nn as nn_module
-except ImportError:
+except Exception:  # pragma: no cover - optional dependency import may fail at runtime
     torch_module = None
     nn_module = None
 

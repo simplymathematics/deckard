@@ -44,6 +44,10 @@ def _extra_from_groups(name: str, aliases: tuple[str, ...] = ()) -> str | None:
     return None
 
 
+def _extras_from_groups(*names: str) -> list[str]:
+    return [name for name in names if name in OPTIONAL_DEP_GROUPS]
+
+
 PluginRegistry = {
     "anjana": {
         "required_imports": ["anjana", "pycanon"],
@@ -79,7 +83,8 @@ FrameworkRegistry = {
     },
     "transformers": {
         "required_imports": ["transformers"],
-        "extra": _extra_from_groups("transformers"),
+        # transformers is required; related optional extras are surfaced explicitly.
+        "extra": _extras_from_groups("datasets", "openattack", "textattack"),
     },
 }
 

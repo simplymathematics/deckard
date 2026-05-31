@@ -1,10 +1,13 @@
-import torch
+from __future__ import annotations
+
 from pathlib import Path
 
 try:
+    import torch
     from torch import nn
     from transformers import AutoConfig, AutoModel, AutoModelForSequenceClassification
-except ImportError:
+except Exception:  # pragma: no cover - optional dependency import may fail at runtime
+    torch = None
     nn = None
     AutoModel = None
     AutoConfig = None

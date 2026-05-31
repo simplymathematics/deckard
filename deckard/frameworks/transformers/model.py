@@ -19,7 +19,7 @@ from typing import TYPE_CHECKING
 try:
     import torch
     from torch.utils.data import DataLoader, Dataset, Subset
-except ImportError:  # pragma: no cover
+except Exception:  # pragma: no cover - optional dependency import may fail at runtime
     torch = None
     DataLoader = None
     Dataset = None
