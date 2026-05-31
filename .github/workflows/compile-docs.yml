@@ -11,6 +11,11 @@ on:
         required: false
         type: boolean
         default: false
+      skip_dvc:
+        description: "Skip DVC notebook repro and build docs only"
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -23,6 +28,7 @@ jobs:
     timeout-minutes: 60
     env:
       DVC_REPRO_ARGS: ${{ github.event_name == 'workflow_dispatch' && inputs.force_repro && '--force' || '' }}
+      SKIP_DVC: ${{ github.event_name == 'workflow_dispatch' && inputs.skip_dvc && '1' || '0' }}
       HF_HOME: ~/.cache/huggingface
       HUGGINGFACE_HUB_CACHE: ~/.cache/huggingface/hub
       TRANSFORMERS_CACHE: ~/.cache/huggingface/transformers
@@ -56,8 +62,9 @@ jobs:
     - name : build docs
       run: |
         cd docs
-        make html DVC_REPRO_ARGS="${DVC_REPRO_ARGS}"
+        make html DVC_REPRO_ARGS="${DVC_REPRO_ARGS}" SKIP_DVC="${SKIP_DVC}"
     - name: Push DVC cache
+      if: ${{ env.SKIP_DVC != '1' }}
       run: |
         cd docs/notebooks
         dvc push || echo "DVC push: remote not configured; artifacts managed via GitHub Actions cache"

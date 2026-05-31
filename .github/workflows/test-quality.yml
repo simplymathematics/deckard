@@ -1,0 +1,94 @@
+name: Test Quality
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "deckard/**"
+      - "test/**"
+      - "scripts/compute_uniqueness.py"
+      - "pyproject.toml"
+      - ".github/workflows/test-quality.yml"
+  push:
+    branches: [main]
+    paths:
+      - "deckard/**"
+      - "test/**"
+      - "scripts/compute_uniqueness.py"
+      - "pyproject.toml"
+      - ".github/workflows/test-quality.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test-quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e .[test,test-quality]
+          python -m pip install pytest-xdist
+
+      - name: Stage 1 lint gate (deckard-linter)
+        run: |
+          mkdir -p build/quality_controller
+          pre-commit run --all-files | tee build/quality_controller/lint_gate_output.txt
+
+      - name: Stage 2 telemetry (deckard-code-quality-agent)
+        run: |
+          pytest -q test/test_score -ra --maxfail=1 \
+            -n auto \
+            --cov=deckard.score \
+            --cov-branch \
+            --cov-context=test \
+            --cov-report=term-missing:skip-covered \
+            --durations=25 > build/quality_controller/telemetry_raw.txt 2>&1
+          python -m coverage json -o build/quality_controller/coverage_context.json --show-contexts --pretty-print
+          python scripts/compute_uniqueness.py
+
+      - name: Write workflow quality summary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          uq_path = Path("build/quality_controller/uniqueness_summary.json")
+          uq = json.loads(uq_path.read_text(encoding="utf-8")) if uq_path.exists() else {}
+          summary_lines = [
+              "# Test Quality Workflow Summary",
+              "",
+              "- Workflow: test-quality",
+              "- Lint gate output: build/quality_controller/lint_gate_output.txt",
+              "- Telemetry output: build/quality_controller/telemetry_raw.txt",
+              "- Coverage contexts: build/quality_controller/coverage_context.json",
+              "- Uniqueness output: build/quality_controller/uniqueness_summary.json",
+              f"- Context count: {uq.get('context_count', 'n/a')}",
+              f"- Zero-unique contexts: {len(uq.get('zero_unique_contexts', [])) if isinstance(uq.get('zero_unique_contexts', []), list) else 'n/a'}",
+          ]
+          Path("build/quality_controller/test_quality_summary.md").write_text("\n".join(summary_lines) + "\n", encoding="utf-8")
+          PY
+
+      - name: Upload test quality artifacts
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-quality-reports
+          path: |
+            build/quality_controller/lint_gate_output.txt
+            build/quality_controller/telemetry_raw.txt
+            build/quality_controller/coverage_context.json
+            build/quality_controller/uniqueness_summary.json
+            build/quality_controller/test_quality_summary.md
+          retention-days: 30

@@ -1,0 +1,96 @@
+name: Docs Quality
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "docs/**"
+      - "scripts/docs_coverage_gate.py"
+      - "scripts/repository_enforcement.py"
+      - "test/test_package/test_docs_coverage_gate.py"
+      - "test/test_integration/test_docs_coverage_gate_integration.py"
+      - "pyproject.toml"
+      - ".github/workflows/docs-quality.yml"
+  push:
+    branches: [main]
+    paths:
+      - "docs/**"
+      - "scripts/docs_coverage_gate.py"
+      - "scripts/repository_enforcement.py"
+      - "test/test_package/test_docs_coverage_gate.py"
+      - "test/test_integration/test_docs_coverage_gate_integration.py"
+      - "pyproject.toml"
+      - ".github/workflows/docs-quality.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  docs-quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e .[docs-quality]
+          python -m pip install pytest pytest-xdist doc8
+
+      - name: Run docs coverage quality gate
+        run: |
+          python scripts/docs_coverage_gate.py \
+            --docs-scope docs \
+            --threshold 95 \
+            --output-json build/quality_controller/docs_coverage_audit.json \
+            --output-md build/quality_controller/docs_coverage_summary.md
+
+      - name: Run docs coverage tests
+        run: |
+          pytest -n auto test/test_package/test_docs_coverage_gate.py test/test_integration/test_docs_coverage_gate_integration.py
+
+      - name: Run doc8 validation
+        run: |
+          doc8 docs
+
+      - name: Write docs workflow summary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          audit_path = Path("build/quality_controller/docs_coverage_audit.json")
+          payload = json.loads(audit_path.read_text(encoding="utf-8")) if audit_path.exists() else {}
+          summary = payload.get("summary", {}) if isinstance(payload, dict) else {}
+          lines = [
+              "# Docs Quality Workflow Summary",
+              "",
+              "- Workflow: docs-quality",
+              "- Docs coverage audit: build/quality_controller/docs_coverage_audit.json",
+              "- Docs coverage summary: build/quality_controller/docs_coverage_summary.md",
+              "- Docs coverage tests: test/test_package/test_docs_coverage_gate.py, test/test_integration/test_docs_coverage_gate_integration.py",
+              "- Doc8 scope: docs",
+              f"- Files checked: {summary.get('files_checked', 'n/a')}",
+              f"- Docs coverage percent: {summary.get('docs_coverage_percent', 'n/a')}",
+          ]
+          Path("build/quality_controller/docs_quality_summary.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+          PY
+
+      - name: Upload docs quality artifacts
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: docs-quality-reports
+          path: |
+            build/quality_controller/docs_coverage_audit.json
+            build/quality_controller/docs_coverage_summary.md
+            build/quality_controller/docs_quality_summary.md
+          retention-days: 30
