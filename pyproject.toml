@@ -42,6 +42,10 @@ lifelines = [
     "lifelines",
 ]
 
+openattack = [
+    "OpenAttack",
+]
+
 fairlearn = [
     "fairlearn",
 ]
@@ -65,6 +69,20 @@ torch = [
     "torchaudio>=2.0.0",
     "cma",
 ]
+
+transformers = [
+    "transformers>=4.40.0",
+    "huggingface_hub>=0.23.0",
+]
+
+textattack = [
+    "textattack",
+]
+
+# Transformers companion extras are intentionally split by capability.
+# - datasets: Hugging Face dataset loaders
+# - openattack: OpenAttack-based NLP attacks
+# - textattack: TextAttack-based NLP attacks
 
 # -------------------------
 # Documentation stack
@@ -91,6 +109,13 @@ docs = [
     # This ensures torch, anjana, fairlearn, yellowbrick, seaborn, and all ML/plotting libraries are available for notebook execution.
 ]
 
+docs-quality = [
+    "vale",
+    "doc8",
+    "linkify-it-py",
+    "sphinxcontrib-spelling",
+]
+
 # -------------------------
 # Development / testing
 # -------------------------
@@ -113,8 +138,20 @@ test = [
     "pycanon",
     "yellowbrick",
     "seaborn",
+    "torch>=2.0.0",
+    "torchvision>=0.15.0",
     "torchaudio>=2.0.0",
     "cma",
+    "transformers>=4.40.0",
+    "datasets>=2.19.0",
+    "huggingface_hub>=0.23.0",
+]
+
+test-quality = [
+    "pytest-cov",
+    "mutmut",
+    "hypothesis",
+    "pytest-deadfixtures",
 ]
 
 # -------------------------
@@ -176,6 +213,9 @@ all = [
     "torch>=2.0.0",
     "torchvision>=0.15.0",
     "torchaudio>=2.0.0",
+    "transformers>=4.40.0",
+    "datasets>=2.19.0",
+    "huggingface_hub>=0.23.0",
 ]
 [tool.black]
 line-length = 87

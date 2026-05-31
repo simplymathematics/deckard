@@ -39,12 +39,18 @@ def _parse_docs_scopes(raw_scope: str) -> list[str]:
 
 
 def _extract_entries(payload: Any) -> list[dict[str, Any]]:
-    if isinstance(payload, dict) and "files" in payload and isinstance(payload["files"], list):
+    if (
+        isinstance(payload, dict)
+        and "files" in payload
+        and isinstance(payload["files"], list)
+    ):
         entries = payload["files"]
     elif isinstance(payload, list):
         entries = payload
     else:
-        raise ValueError("Audit JSON must be either a list of entries or a payload with a 'files' list.")
+        raise ValueError(
+            "Audit JSON must be either a list of entries or a payload with a 'files' list."
+        )
 
     normalized: list[dict[str, Any]] = []
     for item in entries:
@@ -174,7 +180,9 @@ def main() -> int:
     docs_scopes = _parse_docs_scopes(args.docs_scope)
 
     if args.audit_json_input:
-        payload = json.loads(_resolve_path(args.audit_json_input).read_text(encoding="utf-8"))
+        payload = json.loads(
+            _resolve_path(args.audit_json_input).read_text(encoding="utf-8")
+        )
         entries = _extract_entries(payload)
     else:
         entries = []
@@ -200,10 +208,16 @@ def main() -> int:
     output_json = _resolve_path(args.output_json)
     output_md = _resolve_path(args.output_md)
     _write_json_report(output_json, report_payload)
-    _write_markdown_report(output_md, summary, float(args.threshold), top_offenders, docs_scopes)
+    _write_markdown_report(
+        output_md, summary, float(args.threshold), top_offenders, docs_scopes
+    )
 
-    print(f"Docs coverage: {summary['docs_coverage_percent']:.2f}% (threshold: {args.threshold:.2f}%)")
-    print(f"Files checked: {summary['files_checked']}, clean files: {summary['clean_files']}")
+    print(
+        f"Docs coverage: {summary['docs_coverage_percent']:.2f}% (threshold: {args.threshold:.2f}%)"
+    )
+    print(
+        f"Files checked: {summary['files_checked']}, clean files: {summary['clean_files']}"
+    )
     print(f"Wrote JSON report: {output_json}")
     print(f"Wrote markdown report: {output_md}")
 

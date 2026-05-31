@@ -1020,6 +1020,41 @@ class ARTDefenseBehaviorMixin(DefenseHookRuntimeMixin):
     plugins: list
     _plugin_objects: Union[list, None]
 
+    _BUILTIN_DEFENSE_HANDLER_TYPES: Final[dict[str, str]] = {
+        "detector": "deckard.model.defense.detector.DetectorDefenseConfig",
+        "preprocessor": "deckard.model.defense.preprocessor.PreprocessorDefenseConfig",
+        "postprocessor": "deckard.model.defense.postprocessor.PostprocessorDefenseConfig",
+        "trainer": "deckard.model.defense.trainer.TrainerDefenseConfig",
+        "transformer": "deckard.model.defense.transformer.TransformerDefenseConfig",
+        "regularizer": "deckard.model.defense.regularizer.RegularizerDefenseConfig",
+    }
+
+    def _instantiate_runtime_handler(self, handler_type: type):
+        """Instantiate a handler config class with runtime context copied from self."""
+        handler = handler_type()
+        shared_runtime_attrs = (
+            "name",
+            "model_name",
+            "classifier",
+            "model_params",
+            "probability",
+            "clip_values",
+            "defense_name",
+            "defense_params",
+            "alias",
+            "plugins",
+            "_model",
+            "model_config",
+            "_target_",
+            "_plugin_objects",
+            "score_dict",
+            "_apply_fit",
+        )
+        for attr in shared_runtime_attrs:
+            if hasattr(self, attr):
+                setattr(handler, attr, getattr(self, attr))
+        return handler
+
     def _resolve_runtime_defense_mixins(
         self,
         defense_type: StringifiedClass | None,
@@ -1028,31 +1063,11 @@ class ARTDefenseBehaviorMixin(DefenseHookRuntimeMixin):
         mixins: list[type] = []
         dtype = (defense_type or "").lower() if defense_type is not None else None
         if dtype is None:
-            mixins.append(PassthroughDefenseMixin)
-        elif dtype == "detector":
-            from .detector import DetectorDefenseConfig
-
-            mixins.append(DetectorDefenseConfig)
-        elif dtype == "preprocessor":
-            from .preprocessor import PreprocessorDefenseConfig
-
-            mixins.append(PreprocessorDefenseConfig)
-        elif dtype == "postprocessor":
-            from .postprocessor import PostprocessorDefenseConfig
-
-            mixins.append(PostprocessorDefenseConfig)
-        elif dtype == "trainer":
-            from .trainer import TrainerDefenseConfig
-
-            mixins.append(TrainerDefenseConfig)
-        elif dtype == "transformer":
-            from .transformer import TransformerDefenseConfig
-
-            mixins.append(TransformerDefenseConfig)
-        elif dtype == "regularizer":
-            from .regularizer import RegularizerDefenseConfig
-
-            mixins.append(RegularizerDefenseConfig)
+            mixins.append(type(self))
+        elif dtype in self._BUILTIN_DEFENSE_HANDLER_TYPES:
+            handler_type = resolve_class(self._BUILTIN_DEFENSE_HANDLER_TYPES[dtype])
+            if isinstance(handler_type, type):
+                mixins.append(handler_type)
 
         plugin_outputs = self._run_plugin_hook(
             "resolve_defense_mixins",
@@ -1085,6 +1100,9 @@ class ARTDefenseBehaviorMixin(DefenseHookRuntimeMixin):
             if isinstance(mixin, type) and mixin in type(self).mro():
                 default_handler = self
                 break
+            if isinstance(mixin, type) and issubclass(mixin, BaseConfig):
+                default_handler = self._instantiate_runtime_handler(mixin)
+                break
             if isinstance(mixin, type) and issubclass(mixin, DefenseMixin):
                 default_handler = mixin(runtime=self)
                 break
@@ -1099,6 +1117,8 @@ class ARTDefenseBehaviorMixin(DefenseHookRuntimeMixin):
         for output in hook_outputs:
             if callable(output):
                 return output
+            if isinstance(output, type) and issubclass(output, BaseConfig):
+                return self._instantiate_runtime_handler(output)
             if isinstance(output, type) and issubclass(output, DefenseMixin):
                 return output(runtime=self)
 
@@ -1734,7 +1754,7 @@ class DefenseConfig(ARTDefenseBehaviorMixin, BaseConfig):
     def __hash__(self) -> int:
         return super().__hash__()
 
-    def __call__(self, *args: Any, **kwargs: Any) -> None:
+    def __call__(self, *args: Any, **kwargs: Any) -> Any:
         """Disallow direct runtime execution for defense config objects.
 
         Args:
@@ -1742,7 +1762,7 @@ class DefenseConfig(ARTDefenseBehaviorMixin, BaseConfig):
                 **kwargs: Keyword runtime arguments.
 
         Raises:
-                NotImplementedError: Always, because defense configs are applied via pipeline/model runtime owners.
+            NotImplementedError: Always for bare defense configs used outside runtime handler dispatch.
         """
         _ = args
         _ = kwargs

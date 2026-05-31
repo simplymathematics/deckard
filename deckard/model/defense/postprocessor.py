@@ -1,17 +1,19 @@
 """Configuration for postprocessor defenses (output transformation)."""
 
-from dataclasses import dataclass, field
-
-from deckard.plugins.defense import DefenseTypePlugin
+from dataclasses import dataclass
 
 from ...data import DataConfig
 from ...frameworks.types import ArtEsimtator, EstimatorLike, StringifiedClass
 from ...utils import BaseConfig, safe_store
-from .base import DefenseInitParamValue, DefensePipelineConfig, DefenseMixin
+from .base import DefenseConfig, DefenseInitParamValue
 
 
-class PostprocessorDefenseMixin(DefenseMixin):
-    """Reusable postprocessor defense behavior.
+@dataclass(eq=False, kw_only=True)
+class PostprocessorDefenseConfig(DefenseConfig):
+    """Configuration for postprocessor-based defenses.
+
+    Registers postprocessor defense behavior and plugin metadata used during
+    defense runtime dispatch.
 
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
@@ -56,22 +58,7 @@ class PostprocessorDefenseMixin(DefenseMixin):
         existing_preprocessors: list,
         existing_postprocessors: list,
     ) -> tuple[BaseConfig | None, EstimatorLike]:
-        """Attach postprocessor defense and return defense with defended estimator.
-
-        Args:
-            data: Data runtime payload.
-            defense_type: Parsed defense family token.
-            defense_subtype: Parsed defense subtype token.
-            defense_class: Concrete defense class resolved from defense name.
-            art_class: ART estimator wrapper class selected for model type.
-            init_params: Runtime ART estimator initialization kwargs.
-            base_estimator: Unwrapped model estimator used as defense target.
-            existing_preprocessors: Existing preprocessor defenses already attached.
-            existing_postprocessors: Existing postprocessor defenses already attached.
-
-        Returns:
-            Postprocessor defense object and defended estimator.
-        """
+        """Attach postprocessor defense and return defense with defended estimator."""
         _ = (data, defense_type, defense_subtype)
         assert defense_class is not None
         defense = defense_class(**(self.defense_params or {}))
@@ -83,27 +70,6 @@ class PostprocessorDefenseMixin(DefenseMixin):
             postprocessing_defences=existing_postprocessors + [defense],
         )
         return defense, defended_estimator
-
-
-@dataclass(eq=False, kw_only=True)
-class PostprocessorDefenseConfig(PostprocessorDefenseMixin, DefensePipelineConfig):
-    """Configuration for postprocessor-based defenses.
-
-    Registers postprocessor defense behavior and plugin metadata used during
-    defense runtime dispatch.
-
-    Attributes:
-        Runtime attributes are inherited or configured via class fields documented in this module.
-    """
-
-    plugins: list = field(
-        default_factory=lambda: [
-            DefenseTypePlugin(
-                mixin_type="deckard.model.defense.postprocessor.PostprocessorDefenseConfig",
-                defense_type="postprocessor",
-            ),
-        ],
-    )
 
 
 safe_store(

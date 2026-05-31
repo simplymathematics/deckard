@@ -1,17 +1,19 @@
 """Configuration for regularizer defenses (training-time regularization)."""
 
-from dataclasses import dataclass, field
-
-from deckard.plugins.defense import DefenseTypePlugin
+from dataclasses import dataclass
 
 from ...data import DataConfig
 from ...frameworks.types import ArtEsimtator, EstimatorLike, StringifiedClass
 from ...utils import BaseConfig, safe_store
-from .base import DefenseInitParamValue, DefensePipelineConfig, DefenseMixin
+from .base import DefenseConfig, DefenseInitParamValue
 
 
-class RegularizerDefenseMixin(DefenseMixin):
-    """Reusable regularizer defense behavior.
+@dataclass(eq=False, kw_only=True)
+class RegularizerDefenseConfig(DefenseConfig):
+    """Configuration for regularizer-based defenses.
+
+    Registers regularizer defense behavior and plugin metadata used during
+    defense runtime dispatch.
 
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
@@ -56,25 +58,7 @@ class RegularizerDefenseMixin(DefenseMixin):
         existing_preprocessors: list,
         existing_postprocessors: list,
     ) -> tuple[BaseConfig | None, EstimatorLike]:
-        """Raise for unimplemented regularizer defense runtime path.
-
-        Args:
-            data: Data runtime payload.
-            defense_type: Parsed defense family token.
-            defense_subtype: Parsed defense subtype token.
-            defense_class: Concrete defense class resolved from defense name.
-            art_class: ART estimator wrapper class selected for model type.
-            init_params: Runtime ART estimator initialization kwargs.
-            base_estimator: Unwrapped model estimator used as defense target.
-            existing_preprocessors: Existing preprocessor defenses already attached.
-            existing_postprocessors: Existing postprocessor defenses already attached.
-
-        Returns:
-            Placeholder regularizer defense payload and estimator.
-
-        Raises:
-            NotImplementedError: Always raised until regularizer defense runtime is implemented.
-        """
+        """Raise for unimplemented regularizer defense runtime path."""
         _ = (
             data,
             defense_type,
@@ -89,27 +73,6 @@ class RegularizerDefenseMixin(DefenseMixin):
         raise NotImplementedError(
             "Regularizer defenses are not implemented yet.",
         )
-
-
-@dataclass(eq=False, kw_only=True)
-class RegularizerDefenseConfig(RegularizerDefenseMixin, DefensePipelineConfig):
-    """Configuration for regularizer-based defenses.
-
-    Registers regularizer defense behavior and plugin metadata used during
-    defense runtime dispatch.
-
-    Attributes:
-        Runtime attributes are inherited or configured via class fields documented in this module.
-    """
-
-    plugins: list = field(
-        default_factory=lambda: [
-            DefenseTypePlugin(
-                mixin_type="deckard.model.defense.regularizer.RegularizerDefenseConfig",
-                defense_type="regularizer",
-            ),
-        ],
-    )
 
 
 safe_store(

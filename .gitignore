@@ -136,3 +136,4 @@ build/.jupyter_cache/
 
 # Test Data
 outputs/
+docs/jupyter_execute/*

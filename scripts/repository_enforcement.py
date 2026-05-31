@@ -139,6 +139,16 @@ DOCS_INLINE_LITERAL_EXCEPTIONS = frozenset(
         "component",
         "event",
         "run",
+        "load",
+        "score",
+        "train",
+        "test",
+        "val",
+        "all",
+        "attack",
+        "attack-val",
+        "pre-sample",
+        "__call__",
     },
 )
 

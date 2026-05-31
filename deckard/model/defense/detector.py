@@ -1,23 +1,24 @@
 """Configuration for detector defenses (adversarial detector)."""
 
-from dataclasses import dataclass, field
-
-from deckard.plugins.defense import DefenseTypePlugin
+from dataclasses import dataclass
 
 from ...data import DataConfig
 from ...frameworks.types import ArtEsimtator, EstimatorLike, StringifiedClass
 from ...utils import BaseConfig, safe_store
 from .base import (
+    DefenseConfig,
     DefenseInitParamValue,
-    DefensePipelineConfig,
-    DefenseMixin,
     _is_art_torch_wrapper,
     _is_torch_model_instance,
 )
 
 
-class DetectorDefenseMixin(DefenseMixin):
-    """Reusable detector defense behavior.
+@dataclass(eq=False)
+class DetectorDefenseConfig(DefenseConfig):
+    """Configuration for detector-based defenses.
+
+    This wraps detector-family defense behavior and registers detector-specific
+    defense type plugins for runtime dispatch.
 
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
@@ -59,22 +60,7 @@ class DetectorDefenseMixin(DefenseMixin):
         existing_preprocessors: list,
         existing_postprocessors: list,
     ) -> tuple[BaseConfig | None, EstimatorLike]:
-        """Execute detector evasion defense path.
-
-        Args:
-            defense_class: Concrete detector defense class.
-            art_class: ART estimator wrapper class selected for model type.
-            init_params: Runtime ART estimator initialization kwargs.
-            base_estimator: Unwrapped model estimator used as defense target.
-            existing_preprocessors: Existing preprocessor defenses already attached.
-            existing_postprocessors: Existing postprocessor defenses already attached.
-
-        Returns:
-            Detector defense object and defended estimator.
-
-        Raises:
-            ValueError: If model type is unsupported for detector evasion defenses.
-        """
+        """Execute detector evasion defense path."""
         if not _is_torch_model_instance(base_estimator) and not _is_art_torch_wrapper(
             self._model,
         ):
@@ -135,15 +121,7 @@ class DetectorDefenseMixin(DefenseMixin):
         defense_class: type,
         init_params: dict[str, DefenseInitParamValue],
     ) -> tuple[BaseConfig | None, EstimatorLike]:
-        """Execute detector poison defense path.
-
-        Args:
-            defense_class: Concrete detector defense class.
-            init_params: Runtime estimator initialization kwargs.
-
-        Returns:
-            Detector defense object and defended estimator.
-        """
+        """Execute detector poison defense path."""
         defense = defense_class(**(self.defense_params or {}))
         defended_estimator = defense(
             self.get_model(),
@@ -164,26 +142,7 @@ class DetectorDefenseMixin(DefenseMixin):
         existing_preprocessors: list,
         existing_postprocessors: list,
     ) -> tuple[BaseConfig | None, EstimatorLike]:
-        """Build detector defense wrapper and return defense with defended estimator.
-
-        Args:
-            data: Data runtime payload.
-            defense_type: Parsed defense family token.
-            defense_subtype: Parsed defense subtype token.
-            defense_class: Concrete defense class resolved from defense name.
-            art_class: ART estimator wrapper class selected for model type.
-            init_params: Runtime ART estimator initialization kwargs.
-            base_estimator: Unwrapped model estimator used as defense target.
-            existing_preprocessors: Existing preprocessor defenses already attached.
-            existing_postprocessors: Existing postprocessor defenses already attached.
-
-        Returns:
-            Detector defense object and defended estimator.
-
-        Raises:
-            ValueError: If subtype/model combination is unsupported.
-            NotImplementedError: If detector subtype runtime is not implemented.
-        """
+        """Build detector defense wrapper and return defense with defended estimator."""
         _ = (data, defense_type)
         assert defense_class is not None
         subtype = (defense_subtype or "").lower()
@@ -206,27 +165,6 @@ class DetectorDefenseMixin(DefenseMixin):
         raise NotImplementedError(
             f"Detector subtype '{defense_subtype}' is not implemented yet.",
         )
-
-
-@dataclass(eq=False)
-class DetectorDefenseConfig(DetectorDefenseMixin, DefensePipelineConfig):
-    """Configuration for detector-based defenses.
-
-    This wraps detector-family defense behavior and registers detector-specific
-    defense type plugins for runtime dispatch.
-
-    Attributes:
-        Runtime attributes are inherited or configured via class fields documented in this module.
-    """
-
-    plugins: list = field(
-        default_factory=lambda: [
-            DefenseTypePlugin(
-                mixin_type="deckard.model.defense.detector.DetectorDefenseConfig",
-                defense_type="detector",
-            ),
-        ],
-    )
 
 
 safe_store(

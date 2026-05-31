@@ -1,23 +1,24 @@
 """Configuration for transformer defenses (feature transformation)."""
 
-from dataclasses import dataclass, field
-
-from deckard.plugins.defense import DefenseTypePlugin
+from dataclasses import dataclass
 
 from ...data import DataConfig
 from ...frameworks.types import ArtEsimtator, EstimatorLike, StringifiedClass
 from ...utils import BaseConfig, safe_store
 from .base import (
+    DefenseConfig,
     DefenseInitParamValue,
-    DefensePipelineConfig,
-    DefenseMixin,
     _is_art_torch_wrapper,
     _is_torch_model_instance,
 )
 
 
-class TransformerDefenseMixin(DefenseMixin):
-    """Reusable transformer defense behavior.
+@dataclass(eq=False, kw_only=True)
+class TransformerDefenseConfig(DefenseConfig):
+    """Configuration for transformer-based defenses.
+
+    Registers transformer defense behavior and plugin metadata used during
+    defense runtime dispatch.
 
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
@@ -36,25 +37,7 @@ class TransformerDefenseMixin(DefenseMixin):
         existing_preprocessors: list,
         existing_postprocessors: list,
     ) -> tuple[BaseConfig | None, EstimatorLike]:
-        """Build transformer defense wrapper and return defended estimator.
-
-        Args:
-            data: Data runtime payload.
-            defense_type: Parsed defense family token.
-            defense_subtype: Parsed defense subtype token.
-            defense_class: Concrete defense class resolved from defense name.
-            art_class: ART estimator wrapper class selected for model type.
-            init_params: Runtime ART estimator initialization kwargs.
-            base_estimator: Unwrapped model estimator used as defense target.
-            existing_preprocessors: Existing preprocessor defenses already attached.
-            existing_postprocessors: Existing postprocessor defenses already attached.
-
-        Returns:
-            Instantiated transformer defense object and defended estimator.
-
-        Raises:
-            ValueError: If subtype is unknown or estimator type is unsupported.
-        """
+        """Build transformer defense wrapper and return defended estimator."""
         _ = (data, defense_type)
         assert defense_class is not None
         transformer_params = dict(self.defense_params or {})
@@ -107,27 +90,6 @@ class TransformerDefenseMixin(DefenseMixin):
         else:
             defended_estimator = transformer_classifier
         return defense, defended_estimator
-
-
-@dataclass(eq=False, kw_only=True)
-class TransformerDefenseConfig(TransformerDefenseMixin, DefensePipelineConfig):
-    """Configuration for transformer-based defenses.
-
-    Registers transformer defense behavior and plugin metadata used during
-    defense runtime dispatch.
-
-    Attributes:
-        Runtime attributes are inherited or configured via class fields documented in this module.
-    """
-
-    plugins: list = field(
-        default_factory=lambda: [
-            DefenseTypePlugin(
-                mixin_type="deckard.model.defense.transformer.TransformerDefenseConfig",
-                defense_type="transformer",
-            ),
-        ],
-    )
 
 
 safe_store(

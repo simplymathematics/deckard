@@ -11,7 +11,7 @@ def main() -> None:
     conn.row_factory = sqlite3.Row
 
     context_rows = conn.execute(
-        "select id, context from context where context like 'test/%'"
+        "select id, context from context where context like 'test/%'",
     ).fetchall()
 
     line_sets: dict[str, set[tuple[str, int]]] = defaultdict(set)
@@ -75,7 +75,7 @@ def main() -> None:
                 "arcs": len(arc_sets[context_name]),
                 "unique_arcs": unique_arcs,
                 "unique_total": unique_lines + unique_arcs,
-            }
+            },
         )
 
     result = {
@@ -83,10 +83,12 @@ def main() -> None:
         "covered_line_items": len(line_owners),
         "covered_arc_items": len(arc_owners),
         "top_by_unique_total": sorted(
-            rows, key=lambda row: (-row["unique_total"], row["context"])
+            rows,
+            key=lambda row: (-row["unique_total"], row["context"]),
         )[:15],
         "bottom_by_unique_total": sorted(
-            rows, key=lambda row: (row["unique_total"], row["context"])
+            rows,
+            key=lambda row: (row["unique_total"], row["context"]),
         )[:15],
         "zero_unique_contexts": [
             row["context"] for row in rows if row["unique_total"] == 0
@@ -94,7 +96,7 @@ def main() -> None:
     }
 
     Path("build/quality_controller/uniqueness_summary.json").write_text(
-        json.dumps(result, indent=2) + "\n"
+        json.dumps(result, indent=2) + "\n",
     )
 
 

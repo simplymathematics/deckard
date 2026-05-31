@@ -1,23 +1,24 @@
 """Configuration for trainer defenses (adversarial training)."""
 
-from dataclasses import dataclass, field
-
-from deckard.plugins.defense import DefenseTypePlugin
+from dataclasses import dataclass
 
 from ...data import DataConfig
 from ...frameworks.types import ArtEsimtator, EstimatorLike, StringifiedClass
 from ...utils import BaseConfig, safe_store
 from .base import (
+    DefenseConfig,
     DefenseInitParamValue,
-    DefensePipelineConfig,
-    DefenseMixin,
     _is_art_torch_wrapper,
     _is_torch_model_instance,
 )
 
 
-class TrainerDefenseMixin(DefenseMixin):
-    """Reusable trainer defense behavior (adversarial training).
+@dataclass(eq=False, kw_only=True)
+class TrainerDefenseConfig(DefenseConfig):
+    """Configuration for trainer-based defenses.
+
+    Registers trainer defense behavior and plugin metadata used during defense
+    runtime dispatch.
 
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
@@ -36,22 +37,7 @@ class TrainerDefenseMixin(DefenseMixin):
         existing_preprocessors: list,
         existing_postprocessors: list,
     ) -> tuple[BaseConfig | None, EstimatorLike]:
-        """Public verb-form alias for trainer defense execution.
-
-        Args:
-            data: Data runtime payload.
-            defense_type: Parsed defense family token.
-            defense_subtype: Parsed defense subtype token.
-            defense_class: Concrete defense class resolved from defense name.
-            art_class: ART estimator wrapper class selected for model type.
-            init_params: Runtime ART estimator initialization kwargs.
-            base_estimator: Unwrapped model estimator used as defense target.
-            existing_preprocessors: Existing preprocessor defenses already attached.
-            existing_postprocessors: Existing postprocessor defenses already attached.
-
-        Returns:
-            Instantiated trainer defense object and defended estimator.
-        """
+        """Public verb-form alias for trainer defense execution."""
         return self(
             data=data,
             defense_type=defense_type,
@@ -77,25 +63,7 @@ class TrainerDefenseMixin(DefenseMixin):
         existing_preprocessors: list,
         existing_postprocessors: list,
     ) -> tuple[BaseConfig | None, EstimatorLike]:
-        """Build trainer defense wrapper and return defended estimator.
-
-        Args:
-            data: Data runtime payload.
-            defense_type: Parsed defense family token.
-            defense_subtype: Parsed defense subtype token.
-            defense_class: Concrete defense class resolved from defense name.
-            art_class: ART estimator wrapper class selected for model type.
-            init_params: Runtime ART estimator initialization kwargs.
-            base_estimator: Unwrapped model estimator used as defense target.
-            existing_preprocessors: Existing preprocessor defenses already attached.
-            existing_postprocessors: Existing postprocessor defenses already attached.
-
-        Returns:
-            Instantiated trainer defense object and defended estimator.
-
-        Raises:
-            ValueError: If estimator type is unsupported for trainer defenses.
-        """
+        """Build trainer defense wrapper and return defended estimator."""
         _ = (data, defense_type, defense_subtype)
         assert defense_class is not None
         trainer_params = dict(self.defense_params or {})
@@ -128,27 +96,6 @@ class TrainerDefenseMixin(DefenseMixin):
         else:
             defended_estimator = trainer_classifier
         return defense, defended_estimator
-
-
-@dataclass(eq=False, kw_only=True)
-class TrainerDefenseConfig(TrainerDefenseMixin, DefensePipelineConfig):
-    """Configuration for trainer-based defenses.
-
-    Registers trainer defense behavior and plugin metadata used during defense
-    runtime dispatch.
-
-    Attributes:
-        Runtime attributes are inherited or configured via class fields documented in this module.
-    """
-
-    plugins: list = field(
-        default_factory=lambda: [
-            DefenseTypePlugin(
-                mixin_type="deckard.model.defense.trainer.TrainerDefenseConfig",
-                defense_type="trainer",
-            ),
-        ],
-    )
 
 
 safe_store(
