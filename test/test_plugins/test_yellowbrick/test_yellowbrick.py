@@ -5,7 +5,6 @@ from unittest.mock import patch
 
 import pytest
 from omegaconf import OmegaConf
-from sklearn.datasets import make_classification
 from sklearn.model_selection import KFold, StratifiedKFold
 
 try:
@@ -275,34 +274,16 @@ class TestYellowbrickPlots:
         )
 
     def test_single_plot_applies_rc_config(self):
-        # Setup minimal classification data and model
-        Xc, yc = make_classification(
-            n_samples=100,
-            n_features=5,
-            n_classes=2,
-            random_state=42,
-        )
-        data = OmegaConf.create(
-            {
-                "X_train": Xc.tolist(),
-                "y_train": yc.tolist(),
-                "X_test": Xc.tolist(),
-                "y_test": yc.tolist(),
-            },
-        )
-        from deckard.model import ModelConfig
-
-        model = ModelConfig(
-            name="sklearn.linear_model.LogisticRegression",
-        )
+        classification_data = OmegaConf.load(self.classification_data_config)
+        classification_model = OmegaConf.load(self.classification_model_config)
         files = FileConfig(
             data_file=f"{self.temp_dir}/data/rc_single.pkl",
             model_file=f"{self.temp_dir}/models/rc_single.pkl",
         )
         plot_cfg = YellowbrickPlotConfig(
             experiment=ExperimentConfig(
-                data=data,
-                model=model,
+                data=classification_data,
+                model=classification_model,
                 files=files,
             ),
             plot_type="roc_auc",

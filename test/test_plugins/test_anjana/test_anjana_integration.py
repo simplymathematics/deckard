@@ -242,10 +242,6 @@ def _assert_anjana_privacy_scores(scores: dict) -> None:
     not DECKARD_RC_PATH.exists(),
     reason="examples/sklearn/.deckard_rc not found",
 )
-@pytest.mark.skipif(
-    not DVCLIVE_AVAILABLE,
-    reason="dvclive is required for optimize runtime hooks in this CLI smoke test",
-)
 def test_deckard_optimize_smoke_matrix_sklearn():
     cmd = [
         sys.executable,
