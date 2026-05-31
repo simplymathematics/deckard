@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import pickle
 import tempfile
 
 # Imports
@@ -47,6 +48,20 @@ from ...utils import load_class, resolve_torch_device
 logger = logging.getLogger(__name__)
 
 
+def _persist_pickle_cache(save_fn: Callable[[], None], cache_path: str, label: str) -> None:
+    """Persist an optional pickle cache without failing the enclosing pipeline."""
+    try:
+        save_fn()
+    except (pickle.PicklingError, AttributeError, TypeError) as exc:
+        logger.warning(
+            "Failed to cache %s %s (%s). Continuing without cache.",
+            label,
+            cache_path,
+            exc,
+        )
+        Path(cache_path).unlink(missing_ok=True)
+
+
 @dataclass(eq=False, kw_only=True)
 class PytorchDataConfig(DataConfig):
     """Configuration for PyTorch datasets.
@@ -72,6 +87,10 @@ class PytorchDataConfig(DataConfig):
     sampler_params: dict[str, Any] = field(default_factory=dict)
     dataset_type: Union[str, None] = None
     n_splits: int = 5
+
+    def _supports_pickle_cache(self) -> bool:
+        """Return whether this data config should attempt pickle-backed caching."""
+        return True
 
     def _sampler_value(self, key: str, default: Any) -> Any:
         getter = getattr(self, "_get_sampler_option", None)
@@ -582,7 +601,11 @@ class PytorchDataConfig(DataConfig):
         self.files = merge_data_files(self.files, files)
         data_file = self.files.get("data_file")
         score_file = self.files.get("score_file")
-        should_save_data = data_file is not None and not Path(data_file).exists()
+        should_save_data = (
+            data_file is not None
+            and not Path(data_file).exists()
+            and self._supports_pickle_cache()
+        )
 
         if data_file is not None and not Path(data_file).exists():
             Path(data_file).parent.mkdir(parents=True, exist_ok=True)
@@ -608,7 +631,11 @@ class PytorchDataConfig(DataConfig):
         if score_file is not None:
             self.save_scores(all_scores, score_file)
         if should_save_data and data_file is not None:
-            self.save_object(self, data_file)
+            _persist_pickle_cache(
+                lambda: self.save_object(self, data_file),
+                data_file,
+                "data object",
+            )
         return self.score_dict
 
 
@@ -636,6 +663,12 @@ class PytorchCustomDataConfig(PytorchDataConfig):
 
     def __hash__(self):
         return super().__hash__()
+
+    def _supports_pickle_cache(self) -> bool:
+        dataset = self.dataset
+        if isinstance(dataset, str) and ".py:" in dataset:
+            return False
+        return super()._supports_pickle_cache()
 
     def __post_init__(self):
         super().__post_init__()
@@ -942,9 +975,26 @@ class PytorchCustomDataConfig(PytorchDataConfig):
             cached_scores = self.load_scores(score_file)
             if isinstance(cached_scores, dict):
                 self.score_dict = dict(cached_scores)
+                # Custom dataset backends (for example .py: dataset loaders) often
+                # cannot persist a pickle-backed data object, so a score-cache hit
+                # must still hydrate runtime datasets to keep _X/X_train/X_test valid.
+                runtime_X = getattr(self, "_X", None)
+                has_runtime_split = (
+                    isinstance(runtime_X, (tuple, list))
+                    and len(runtime_X) == 2
+                    and runtime_X[0] is not None
+                    and runtime_X[1] is not None
+                )
+                if not has_runtime_split:
+                    self.load_dataset()
+                    self.fit(run_hooks=False)
                 self.save_scores(self.score_dict, filepath=score_file)
-                if data_file is not None:
-                    self.save_object(self, data_file)
+                if data_file is not None and self._supports_pickle_cache():
+                    _persist_pickle_cache(
+                        lambda: self.save_object(self, data_file),
+                        data_file,
+                        "data object",
+                    )
                 return self.score_dict
 
         if mode is not None and "mode" not in kwargs:

@@ -41,7 +41,10 @@ class PytorchAttackConfig(AttackConfig):
     def _prepare_features_for_art(self, value):
         """Torch-aware conversion used only at ART model/attack call boundaries."""
         if is_tensor(value):
-            return tensor_to_numpy(value, dtype=ART_NUMPY_DTYPE)
+            array = tensor_to_numpy(value)
+            if np.issubdtype(array.dtype, np.floating):
+                return array.astype(ART_NUMPY_DTYPE, copy=False)
+            return array
         if isinstance(value, pd.DataFrame):
             return value.values.astype(ART_NUMPY_DTYPE)
         if isinstance(value, pd.Series):
