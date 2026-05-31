@@ -15,7 +15,7 @@ from sklearn.linear_model import LinearRegression, LogisticRegression
 
 from deckard.attack import AttackConfig
 from deckard.attack.base import SensitiveFeaturesWrapper, _sensitive_slice
-from deckard.attack.extraction import ExtractionAttackMixin
+from deckard.attack.extraction import ExtractionAttackConfig
 from deckard.score.attack import FairlearnAttackScorerConfig
 
 pytest.importorskip("torch")
@@ -70,7 +70,7 @@ class TestAttackConfig:
         assert hasattr(self.attack, "attack_params")
 
     def test_select_extraction_scorer_falls_back_for_logits(self):
-        scorer, use_proba = ExtractionAttackMixin._select_extraction_scorer(
+        scorer, use_proba = ExtractionAttackConfig._select_extraction_scorer(
             benign_pred=np.array([[0.8, 0.2], [0.1, 0.9]]),
             extracted_pred=np.array([[1.5, -0.2], [-0.4, 2.1]]),
         )
@@ -1515,7 +1515,10 @@ class TestGetBenignPreds:
         )
         data = self._make_numpy_data()
         art_model = _FakeArtModel()
-        n, labels, x_sub, y_sub = attack._get_benign_preds(data, art_model, train=True)
+        n, x_sub, y_sub = attack.get_attack_subset(data, test=True)
+        labels = AttackConfig._labels_from_classifier_predictions(
+            art_model.predict(attack._prepare_features_for_art(x_sub)),
+        )
         assert n == 4
         assert isinstance(labels, np.ndarray)
 
@@ -1526,10 +1529,9 @@ class TestGetBenignPreds:
         )
         data = self._make_numpy_data()
         art_model = _FakeArtModel()
-        n, labels, x_sub, y_sub = attack._get_benign_preds(
-            data,
-            art_model,
-            train=False,
+        n, x_sub, y_sub = attack.get_attack_subset(data, test=False)
+        labels = AttackConfig._labels_from_classifier_predictions(
+            art_model.predict(attack._prepare_features_for_art(x_sub)),
         )
         assert n == 4
 
@@ -2647,7 +2649,7 @@ class TestStaticHelpers:
     def test_select_extraction_scorer_with_probabilities(self):
         benign = np.array([[0.3, 0.7], [0.6, 0.4]])
         extracted = np.array([[0.4, 0.6], [0.5, 0.5]])
-        scorer, has_proba = ExtractionAttackMixin._select_extraction_scorer(
+        scorer, has_proba = ExtractionAttackConfig._select_extraction_scorer(
             benign,
             extracted,
         )

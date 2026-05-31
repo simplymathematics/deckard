@@ -2,6 +2,7 @@ import shutil
 import tempfile
 from pathlib import Path
 from unittest.mock import patch
+import pickle
 
 import pytest
 from torch.utils.data import Dataset, IterableDataset
@@ -803,6 +804,71 @@ class TestPytorchCustomDataConfig:
         save_scores.assert_called_once()
         save_object.assert_called_once()
         assert scores == {"cached": 1}
+
+    def test_custom_call_continues_when_data_cache_pickle_fails(self, caplog):
+        from deckard.frameworks.pytorch.data import PytorchCustomDataConfig
+
+        data_path = Path(self.temp_dir) / "uncacheable_custom_data.pkl"
+        score_path = Path(self.temp_dir) / "uncacheable_custom_scores.json"
+
+        cfg = PytorchCustomDataConfig(
+            name="torch.utils.data.TensorDataset",
+            dataset="dummy",
+            data_dir=str(self.temp_dir),
+            sampler={"name": "split", "train_size": 4, "test_size": 2},
+            data_params={},
+        )
+        cfg.data_load_time = 0.0
+        cfg.data_sample_time = 0.0
+        cfg.score_dict = {}
+
+        with patch.object(cfg, "score", return_value={"ok": 1}):
+            with patch.object(
+                cfg,
+                "save_object",
+                side_effect=pickle.PicklingError("cannot pickle custom data"),
+            ) as save_object:
+                scores = cfg(
+                    files={
+                        "data_file": str(data_path),
+                        "score_file": str(score_path),
+                    },
+                )
+
+        save_object.assert_called_once()
+        assert scores["ok"] == 1
+        assert not data_path.exists()
+        assert "Failed to cache data object" in caplog.text
+
+    def test_file_backed_custom_dataset_skips_pickle_cache(self):
+        from deckard.frameworks.pytorch.data import PytorchCustomDataConfig
+
+        data_path = Path(self.temp_dir) / "file_backed_custom_data.pkl"
+        score_path = Path(self.temp_dir) / "file_backed_custom_scores.json"
+
+        cfg = PytorchCustomDataConfig(
+            name="torch.utils.data.TensorDataset",
+            dataset="custom_dataset.py:ExampleDataset",
+            data_dir=str(self.temp_dir),
+            sampler={"name": "split", "train_size": 4, "test_size": 2},
+            data_params={},
+        )
+        cfg.data_load_time = 0.0
+        cfg.data_sample_time = 0.0
+        cfg.score_dict = {}
+
+        with patch.object(cfg, "score", return_value={"ok": 1}):
+            with patch.object(cfg, "save_object") as save_object:
+                scores = cfg(
+                    files={
+                        "data_file": str(data_path),
+                        "score_file": str(score_path),
+                    },
+                )
+
+        save_object.assert_not_called()
+        assert scores["ok"] == 1
+        assert not data_path.exists()
 
 
 class TestPytorchCustomDatasetConfig:

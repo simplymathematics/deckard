@@ -623,5 +623,3 @@ def test_deckard_optimize_subcommand_help_in_pytorch_dir():
         env=env,
     )
     assert result.returncode == 0, f"deckard optimize --help failed:\n{result.stderr}"
-
-

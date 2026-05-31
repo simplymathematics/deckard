@@ -72,4 +72,8 @@ def test_registry_extras_come_from_pyproject_groups_except_anjana():
     # framework extras use alias mapping where needed (pytorch -> torch).
     assert mod.FrameworkRegistry["pytorch"]["extra"] == "torch"
     assert mod.FrameworkRegistry["sklearn"]["extra"] is None
-    assert mod.FrameworkRegistry["transformers"]["extra"] is None
+    assert mod.FrameworkRegistry["transformers"]["extra"] == [
+        "datasets",
+        "openattack",
+        "textattack",
+    ]

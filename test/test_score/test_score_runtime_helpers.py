@@ -143,8 +143,16 @@ def test_resolve_yt_yp_covers_train_val_attack_val_and_existing_predictions():
             "_load_fairlearn_score_symbol",
             "fairness_demographic_parity_difference",
         ),
-        ("anjana_k_anonymity_score", "_load_anjana_score_symbol", "anjana_k_anonymity_score"),
-        ("survival_concordance_score", "_load_lifelines_score_symbol", "survival_concordance_score"),
+        (
+            "anjana_k_anonymity_score",
+            "_load_anjana_score_symbol",
+            "anjana_k_anonymity_score",
+        ),
+        (
+            "survival_concordance_score",
+            "_load_lifelines_score_symbol",
+            "survival_concordance_score",
+        ),
     ],
 )
 def test_score_wrappers_delegate_to_lazy_symbol_loaders(

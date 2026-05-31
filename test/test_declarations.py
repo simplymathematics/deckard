@@ -39,7 +39,7 @@ class TestDiscoverConfigRoots:
         root_strs = [str(r) for r in roots]
         # At least one of the built-in roots should be found
         assert any(
-            "sklearn" in r or "pytorch" in r for r in root_strs
+            "sklearn" in r or "pytorch" in r or "transformers" in r for r in root_strs
         ), "Expected at least one built-in config root"
 
     def test_external_roots_from_env(self):
@@ -293,6 +293,24 @@ class TestShouldRegisterConfig:
     def test_framework_sklearn_config_without_sklearn(self):
         """Framework sklearn configs should be skipped when sklearn is unavailable."""
         path = Path("/tmp/frameworks/sklearn/default_defense.yaml")
+        with mock.patch(
+            "deckard.declarations.is_package_available",
+            return_value=False,
+        ):
+            assert not _should_register_config(path)
+
+    def test_transformers_config_with_transformers(self):
+        """Transformers config is registered when transformers is available."""
+        path = Path("/tmp/frameworks/transformers/default_defense.yaml")
+        with mock.patch(
+            "deckard.declarations.is_package_available",
+            return_value=True,
+        ):
+            assert _should_register_config(path)
+
+    def test_transformers_config_without_transformers(self):
+        """Transformers config is skipped when transformers is unavailable."""
+        path = Path("/tmp/frameworks/transformers/default_defense.yaml")
         with mock.patch(
             "deckard.declarations.is_package_available",
             return_value=False,

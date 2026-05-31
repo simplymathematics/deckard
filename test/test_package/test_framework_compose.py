@@ -40,3 +40,17 @@ def test_pytorch_framework_defense_yaml_composes_in_isolation():
 
     cfg = _compose_from_dir(config_dir, "default_defense")
     assert isinstance(instantiate(cfg), DefenseConfig)
+
+
+def test_transformers_framework_defense_yaml_composes_in_isolation():
+    config_dir = (
+        Path(__file__).resolve().parents[2]
+        / "examples"
+        / "transformers"
+        / "config"
+        / "frameworks"
+        / "transformers"
+    )
+
+    cfg = _compose_from_dir(config_dir, "default_defense")
+    assert isinstance(instantiate(cfg), DefenseConfig)

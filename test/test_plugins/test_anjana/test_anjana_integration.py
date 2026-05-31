@@ -20,6 +20,7 @@ from deckard.model import DefensePipelineConfig, ModelConfig
 ROOT = Path(__file__).resolve().parents[3]
 EXAMPLES_SKLEARN_DIR = ROOT / "examples" / "sklearn"
 DECKARD_RC_PATH = EXAMPLES_SKLEARN_DIR / ".deckard_rc"
+DVCLIVE_AVAILABLE = importlib.util.find_spec("dvclive") is not None
 
 
 def _runtime_env() -> dict[str, str]:
@@ -240,6 +241,10 @@ def _assert_anjana_privacy_scores(scores: dict) -> None:
 @pytest.mark.skipif(
     not DECKARD_RC_PATH.exists(),
     reason="examples/sklearn/.deckard_rc not found",
+)
+@pytest.mark.skipif(
+    not DVCLIVE_AVAILABLE,
+    reason="dvclive is required for optimize runtime hooks in this CLI smoke test",
 )
 def test_deckard_optimize_smoke_matrix_sklearn():
     cmd = [

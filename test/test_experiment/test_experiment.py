@@ -1486,7 +1486,7 @@ class TestRunSinglePipelineBranchesExtra:
                 experiment_name="load-object-branch",
             )
 
-            exp.load_object = lambda _p: loaded_data
+            exp.load_object = lambda _p, **_kwargs: loaded_data
             scores = exp()
 
             assert isinstance(scores, dict)
@@ -1548,7 +1548,7 @@ class TestRunSinglePipelineBranchesExtra:
                 experiment_name="val-mode-resample-loaded-data",
             )
 
-            exp.load_object = lambda _p: loaded_data
+            exp.load_object = lambda _p, **_kwargs: loaded_data
             scores = exp()
 
             assert exp.data.X_val is not None

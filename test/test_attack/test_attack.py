@@ -18,7 +18,7 @@ from sklearn.svm import SVC
 from deckard.attack import AttackConfig
 from deckard.attack.base import SensitiveFeaturesWrapper, _sensitive_slice
 from deckard.attack.canon import normalize_attack_stage
-from deckard.attack.extraction import ExtractionAttackMixin
+from deckard.attack.extraction import ExtractionAttackConfig
 from deckard.score.attack import FairlearnAttackScorerConfig
 
 
@@ -139,6 +139,68 @@ class TestAttackConfig:
         assert attack.attack_sub_family == "membership_inference"
         assert attack.attack_kind == "membership"
 
+    def test_plugin_attack_path_properties_resolve_to_evasion_family(self):
+        textattack_cfg = AttackConfig(
+            name="textattack.attack_recipes.textfooler_jin_2019.TextFoolerJin2019",
+        )
+        openattack_cfg = AttackConfig(
+            name="OpenAttack.attackers.PWWSAttacker",
+        )
+
+        assert textattack_cfg.attack_family == "evasion"
+        assert textattack_cfg.attack_sub_family == "textattack"
+        assert textattack_cfg.attack_kind == "evasion"
+
+        assert openattack_cfg.attack_family == "evasion"
+        assert openattack_cfg.attack_sub_family == "openattack"
+        assert openattack_cfg.attack_kind == "evasion"
+
+    def test_plugin_runtime_config_resolution_uses_dedicated_handlers(self):
+        textattack_cfg = AttackConfig(
+            name="textattack.attack_recipes.textfooler_jin_2019.TextFoolerJin2019",
+        )
+        openattack_cfg = AttackConfig(
+            name="OpenAttack.attackers.PWWSAttacker",
+        )
+
+        text_mixins = textattack_cfg.resolve_runtime_attack_config(
+            attack_family=textattack_cfg.attack_family or "",
+            attack_sub_family=textattack_cfg.attack_sub_family or "",
+        )
+        open_mixins = openattack_cfg.resolve_runtime_attack_config(
+            attack_family=openattack_cfg.attack_family or "",
+            attack_sub_family=openattack_cfg.attack_sub_family or "",
+        )
+
+        assert [m.__name__ for m in text_mixins] == ["TextAttackConfig"]
+        assert [m.__name__ for m in open_mixins] == ["OpenAttackConfig"]
+
+    def test_initialize_attack_plugin_fast_path_skips_art_resolution(self):
+        cfg = AttackConfig(
+            name="textattack.attack_recipes.textfooler_jin_2019.TextFoolerJin2019",
+        )
+
+        with patch(
+            "deckard.attack.base.check_is_fitted",
+            side_effect=AssertionError(
+                "check_is_fitted should not run for plugin attacks",
+            ),
+        ):
+            with patch(
+                "deckard.attack.base.resolve_class",
+                side_effect=AssertionError(
+                    "resolve_class should not run for plugin attacks",
+                ),
+            ):
+                initialized_attack, art_model, attack_family, attack_sub_family = (
+                    cfg._initialize_attack(model=object(), data=object())
+                )
+
+        assert initialized_attack is None
+        assert art_model is None
+        assert attack_family == "evasion"
+        assert attack_sub_family == "textattack"
+
     def test_poisoning_svm_initialization_injects_train_and_val_arrays(self):
         class DummyPoisoningAttackSVM:
             def __init__(self, classifier, **kwargs):
@@ -200,7 +262,7 @@ class TestAttackConfig:
         )
 
     def test_select_extraction_scorer_falls_back_for_logits(self):
-        scorer, use_proba = ExtractionAttackMixin._select_extraction_scorer(
+        scorer, use_proba = ExtractionAttackConfig._select_extraction_scorer(
             benign_pred=np.array([[0.8, 0.2], [0.1, 0.9]]),
             extracted_pred=np.array([[1.5, -0.2], [-0.4, 2.1]]),
         )
@@ -272,7 +334,7 @@ class TestAttackConfig:
         )
         assert norm.shape[1] == 2
 
-        scorer_cfg, has_proba = ExtractionAttackMixin._select_extraction_scorer(
+        scorer_cfg, has_proba = ExtractionAttackConfig._select_extraction_scorer(
             np.array([0, 1]),
             np.array([0, 1]),
         )
@@ -434,10 +496,12 @@ class TestAttackConfig:
         ben_pred_labels = [0, 1, 0]
         adv_pred_labels = [0, 0, 0]
         y_test_numeric = [0, 1, 0]
-        self.attack._score_attack(
-            ben_pred_labels,
-            adv_pred_labels,
-            y_test_numeric,
+        self.attack.score_dict = self.attack._score(
+            attack_kind="evasion",
+            y_true=y_test_numeric,
+            y_pred=adv_pred_labels,
+            ben_pred_labels=ben_pred_labels,
+            stage="post-attack",
         )
         metrics = self.attack.score_dict
         assert "evasion_success" in metrics
@@ -2329,7 +2393,10 @@ class TestGetBenignPreds:
         )
         data = self._make_numpy_data()
         art_model = _FakeArtModel()
-        n, labels, x_sub, y_sub = attack._get_benign_preds(data, art_model, train=True)
+        n, x_sub, y_sub = attack.get_attack_subset(data, test=True)
+        labels = AttackConfig._labels_from_classifier_predictions(
+            art_model.predict(attack._prepare_features_for_art(x_sub)),
+        )
         assert n == 4
         assert isinstance(labels, np.ndarray)
 
@@ -2340,12 +2407,12 @@ class TestGetBenignPreds:
         )
         data = self._make_numpy_data()
         art_model = _FakeArtModel()
-        n, labels, x_sub, y_sub = attack._get_benign_preds(
-            data,
-            art_model,
-            train=False,
+        n, x_sub, y_sub = attack.get_attack_subset(data, test=False)
+        labels = AttackConfig._labels_from_classifier_predictions(
+            art_model.predict(attack._prepare_features_for_art(x_sub)),
         )
         assert n == 4
+        assert isinstance(labels, np.ndarray)
 
 
 # ---------------------------------------------------------------------------
@@ -3462,7 +3529,7 @@ class TestStaticHelpers:
     def test_select_extraction_scorer_with_probabilities(self):
         benign = np.array([[0.3, 0.7], [0.6, 0.4]])
         extracted = np.array([[0.4, 0.6], [0.5, 0.5]])
-        scorer, has_proba = ExtractionAttackMixin._select_extraction_scorer(
+        scorer, has_proba = ExtractionAttackConfig._select_extraction_scorer(
             benign,
             extracted,
         )

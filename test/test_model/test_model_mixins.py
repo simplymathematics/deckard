@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 
 from deckard.model.base import ModelConfig
 from deckard.model._mixins import ModelPrunerMixin, PretrainedModelMixin
@@ -45,6 +46,86 @@ def test_model_pruner_mixin_reports_and_decides():
 
     assert should_stop is True
     assert trial.reports == [(0.42, 3)]
+
+
+def test_model_pruner_mixin_defaults_step_to_zero():
+    class PrunedModelConfig(ModelConfig, ModelPrunerMixin):
+        pass
+
+    cfg = PrunedModelConfig(
+        name="sklearn.linear_model.LogisticRegression",
+        model_params={"max_iter": 10},
+        classifier=True,
+    )
+    trial = _DummyTrial(should_prune=False)
+
+    should_stop = cfg.check_prune(trial, value=0.9)
+
+    assert should_stop is False
+    assert trial.reports == [(0.9, 0)]
+
+
+def test_model_pruner_mixin_handles_none_trial():
+    class PrunedModelConfig(ModelConfig, ModelPrunerMixin):
+        pass
+
+    cfg = PrunedModelConfig(
+        name="sklearn.linear_model.LogisticRegression",
+        model_params={"max_iter": 10},
+        classifier=True,
+    )
+
+    assert cfg.check_prune(None, value=0.3, step=2) is False
+
+
+class _DummyLoadedModel:
+    def __init__(self):
+        self.loaded_paths = []
+
+    def load(self, path):
+        self.loaded_paths.append(path)
+        return {"source": "model", "path": path}
+
+
+class _ConfigWithLoad(PretrainedModelMixin):
+    def __init__(self):
+        self._model = _DummyLoadedModel()
+
+    def load(self, path):
+        return {"source": "config", "path": path}
+
+
+class _ConfigWithoutLoad(PretrainedModelMixin):
+    def __init__(self):
+        self._model = _DummyLoadedModel()
+
+
+def test_pretrained_mixin_prefers_config_loader_over_model_loader():
+    cfg = _ConfigWithLoad()
+
+    loaded = cfg.load_cached("artifact.pkl")
+
+    assert loaded == {"source": "config", "path": "artifact.pkl"}
+    assert cfg._model.loaded_paths == []
+
+
+def test_pretrained_mixin_falls_back_to_model_loader():
+    cfg = _ConfigWithoutLoad()
+
+    loaded = cfg.load_cached("artifact.pkl")
+
+    assert loaded == {"source": "model", "path": "artifact.pkl"}
+    assert cfg._model.loaded_paths == ["artifact.pkl"]
+
+
+def test_pretrained_mixin_raises_without_any_loader():
+    class _ConfigNoLoaders(PretrainedModelMixin):
+        pass
+
+    cfg = _ConfigNoLoaders()
+
+    with pytest.raises(NotImplementedError, match="requires a load\(path\) method"):
+        cfg.load_cached("missing.pkl")
 
 
 def test_model_training_mixin_called_by_train_sets_runtime_metrics():

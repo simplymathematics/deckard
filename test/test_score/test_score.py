@@ -56,6 +56,7 @@ class TestScorerDictConfigMerge:
         assert "accuracy" in result.scorers
         assert "precision" in result.scorers
 
+
 class TestScorerConfig:
     def test_scorer_config_swap(self):
         y_true = [1, 0, 1, 1]
@@ -450,4 +451,3 @@ class TestDataInspectionScorers:
         ecdf = scores["empirical_cdf"]
         values = ecdf(np.array([2.1, 3.0, 4.0]))
         assert np.all(values[:-1] <= values[1:])
-

@@ -12,7 +12,9 @@ def _run_import_with_plugin_block(module_name: str) -> None:
         "deckard.plugins.anjana",
         "deckard.plugins.fairlearn",
         "deckard.plugins.lifelines",
+        "deckard.plugins.openattack",
         "deckard.plugins.seaborn",
+        "deckard.plugins.textattack",
         "deckard.plugins.yellowbrick",
     )
     script = f"""
