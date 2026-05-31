@@ -1,0 +1,15 @@
+# Optional DVCLive overlay for sklearn defaults.
+# Usage example:
+#   python -m deckard optimize +dvclive-default
+
+dvclive_enabled: true
+dvc_plugin:
+  enabled: ${dvclive_enabled}
+  dvclive_dir: null
+  make_summary: true
+  make_report: true
+  report_mode: html
+  resume: true
+  save_dvc_exp: false
+  cache_images: false
+  monitor_system: false

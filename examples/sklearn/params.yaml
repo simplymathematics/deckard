@@ -4,6 +4,7 @@ experiment:
   path: ''
   payload_kind: data
   metadata: {}
+  default_stage: post-pipeline
   data:
     _target_: deckard.data.base.DataConfig
     id: ''
@@ -131,29 +132,13 @@ experiment:
     score_stage: post-pipeline
     pipeline: null
     files: {}
-    times:
-      data_load_time: null
-      data_sample_time: null
-      data_pipeline_time: null
-      data_score_time: null
-      pipeline_fit_time: null
-      pipeline_transform_time: null
-      pipeline_y_fit_time: null
-      pipeline_y_transform_time: null
-    train_indices: null
-    test_indices: null
-    val_indices: null
-    X_val: null
-    y_val: null
-    train_n: null
-    test_n: null
-    val_n: null
-  experiment_name: 1b546a0650fe5b826b28db80e8425f87
+  experiment_name: sklearn_smoke_chain
   model:
     id: ''
     path: ''
     payload_kind: data
     metadata: {}
+    default_stage: post-pipeline
     name: sklearn.linear_model.LogisticRegression
     classifier: true
     model_params:
@@ -196,7 +181,7 @@ experiment:
         defense_name: art.defences.postprocessor.ClassLabels
         defense_params:
           apply_fit: false
-          apply_predict: false
+          apply_predict: true
         alias: class-labels
         plugins: []
         _model: null
@@ -307,9 +292,6 @@ experiment:
     score_mode: test
     trainer: {}
     trainer_params: {}
-    training_n: null
-    prediction_n: null
-    val_n: null
     _target_: deckard.model.base.ModelConfig
   defense:
     _target_: deckard.model.defense.base.DefensePipelineConfig
@@ -333,7 +315,7 @@ experiment:
       defense_name: art.defences.postprocessor.ClassLabels
       defense_params:
         apply_fit: false
-        apply_predict: false
+        apply_predict: true
       alias: class-labels
       plugins: []
       _model: null
@@ -345,14 +327,18 @@ experiment:
     path: ''
     payload_kind: data
     metadata: {}
-    name: art.attacks.evasion.HopSkipJump
+    default_stage: post-pipeline
+    name: art.attacks.evasion.BoundaryAttack
     attack_params:
-      max_iter: 76
-      init_eval: 16
-      max_eval: 619
-      init_size: 2
-      norm: 2
+      batch_size: 10
       targeted: false
+      delta: 0.01
+      epsilon: 0.01
+      max_iter: 10
+      num_trial: 25
+      sample_size: 10
+      init_size: 10
+      min_epsilon: 0.0
       verbose: false
     attack_size: 10
     targeted_attribute: ''
@@ -691,19 +677,14 @@ experiment:
             probability_clip_eps: 1.0e-12
         stage: []
         classifier: false
-    alias: hsj
+    alias: boundary
     plugins: []
     device: mps
     mode: auto
-    attack: null
-    attacked_labels: null
-    score_y_pred: null
-    score_y_proba: null
-    target_index: null
   detector: null
   files:
     replace: {}
-    handler: <deckard.file.CanonFileHandler object at 0x17f5c9b70>
+    handler: <deckard.file.CanonFileHandler object at 0x17851ffa0>
   score: null
   random_state: 42
   library: sklearn
@@ -711,106 +692,6 @@ experiment:
   classifier: true
   evaluation_mode: standard
   score_mode: []
-  times:
-    experiment_total_time: null
-    data_load_time: null
-    data_sample_time: null
-    model_training_time: null
-    attack_time: null
-    detector_time: null
-    score_time: null
-  outputs:
-    hooks:
-      graph:
-        data:
-        - stage: pre-load
-          before: before_pre_load
-          after: after_pre_load
-        - stage: pre-sample
-          before: before_pre_sample
-          after: after_pre_sample
-        - stage: post-sample
-          before: before_post_sample
-          after: after_post_sample
-        - stage: post-pipeline
-          before: before_post_pipeline
-          after: after_post_pipeline
-        model:
-        - stage: pre_art_defense
-          before: before_pre_art_defense
-          after: after_pre_art_defense
-        - stage: pre_fit
-          before: before_pre_fit
-          after: after_pre_fit
-        - stage: post_fit_pre_predict
-          before: before_post_fit_pre_predict
-          after: after_post_fit_pre_predict
-        attack:
-        - stage: post-attack
-          before: before_post_attack
-          after: after_post_attack
-        - stage: pre-attack
-          before: before_pre_attack
-          after: after_pre_attack
-        detector:
-        - stage: post-detect
-          before: before_post_detect
-          after: after_post_detect
-        - stage: post-fit
-          before: before_post_fit
-          after: after_post_fit
-        - stage: pre-detect
-          before: before_pre_detect
-          after: after_pre_detect
-        - stage: pre-fit
-          before: before_pre_fit
-          after: after_pre_fit
-        score:
-        - stage: score
-          before: before_score
-          after: after_score
-    cache: {}
-    dvclive:
-      hook_trace:
-      - enabled: true
-        position: first
-        component: data
-        stage: load
-        event: before
-        executed: false
-      enabled: true
-      position: first
-      executed: true
-  params:
-    experiment_name: 1b546a0650fe5b826b28db80e8425f87
-    library: sklearn
-    classifier: true
-    evaluation_mode: standard
-    score_mode: []
-    random_state: 42
-    data:
-      type: deckard.data.base.DataConfig
-      alias: test_classification
-      fingerprint: e4914b20fa33164997a5e6afd5b93461
-    model:
-      type: deckard.model.base.ModelConfig
-      alias: test_logistic
-      fingerprint: b609ac0e72b7f9fec4e3b4948458d435
-    defense:
-      type: deckard.model.defense.base.DefensePipelineConfig
-      alias: ''
-      fingerprint: 6f960636ec10b6630e62885efe7dee84
-    attack:
-      type: deckard.attack.base.AttackConfig
-      alias: hsj
-      fingerprint: 93bf73ad0d27bfc13073d70683de9522
-    detector: null
-    score: null
-    attack_chain:
-    - type: deckard.attack.base.AttackConfig
-      alias: hsj
-      fingerprint: 93bf73ad0d27bfc13073d70683de9522
-    schema_version: deckard.experiment.runtime.v1
   hook_plugins: []
   hook_bundles: []
   cache_enabled: true
@@ -837,7 +718,7 @@ _dvc:
   stage_selection: load
   run_mode: single
   params_manifest:
-    experiment_name: 1b546a0650fe5b826b28db80e8425f87
+    experiment_name: sklearn_smoke_chain
     library: sklearn
     classifier: true
     evaluation_mode: standard
@@ -846,25 +727,25 @@ _dvc:
     data:
       type: deckard.data.base.DataConfig
       alias: test_classification
-      fingerprint: e4914b20fa33164997a5e6afd5b93461
+      fingerprint: 1d5cd50842743cdc8859955c5002cc10
     model:
       type: deckard.model.base.ModelConfig
       alias: test_logistic
-      fingerprint: b609ac0e72b7f9fec4e3b4948458d435
+      fingerprint: df1100c7fd6032f3c85fe8aaf6f9aa1c
     defense:
       type: deckard.model.defense.base.DefensePipelineConfig
       alias: ''
-      fingerprint: 6f960636ec10b6630e62885efe7dee84
+      fingerprint: 4414a77ae3f4c2a088e185b56939b8d9
     attack:
       type: deckard.attack.base.AttackConfig
-      alias: hsj
-      fingerprint: 93bf73ad0d27bfc13073d70683de9522
+      alias: boundary
+      fingerprint: 9ed70dc8fe38b95e2f0447e1fe434da2
     detector: null
     score: null
     attack_chain:
     - type: deckard.attack.base.AttackConfig
-      alias: hsj
-      fingerprint: 93bf73ad0d27bfc13073d70683de9522
+      alias: boundary
+      fingerprint: 9ed70dc8fe38b95e2f0447e1fe434da2
     schema_version: deckard.experiment.runtime.v1
   dvclive:
     enabled: true

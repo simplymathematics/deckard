@@ -25,18 +25,7 @@ optimizers:
 - evasion_success
 - attack_generation_time
 report_trial_attrs: true
-pruning_enabled: true
-dvclive_enabled: false
-dvc_plugin:
-  enabled: ${dvclive_enabled}
-  dvclive_dir: null
-  make_summary: true
-  make_report: true
-  report_mode: html
-  resume: true
-  save_dvc_exp: false
-  cache_images: false
-  monitor_system: false
+pruning_enabled: false
 hydra:
   run:
     dir: outputs/logs/${experiment_name}
