@@ -1,5 +1,6 @@
 # Standard library imports
 import copy
+import importlib
 import pickle
 import logging
 
@@ -31,17 +32,13 @@ from ..data import DataConfig
 from ..model import ModelConfig
 from ..frameworks.types import ArrayLike, AttackLike, EstimatorLike, MatrixLike
 from ..model.defense.base import _get_art_symbols
-from ..score.base import (
-    DefaultClassifierScorerDictConfig,
-    ScorerDictConfig,
-)
 from ..utils import (
     BaseConfig,
     is_default_config_value,
     is_null_config_value,
+    instantiate_plugin_spec,
     load_class,
     normalize_plugin_specs,
-    instantiate_plugin_spec,
     resolve_class,
     resolve_torch_device,
 )
@@ -58,7 +55,7 @@ from .canon import (
     normalize_attack_mode,
     normalize_attack_stage,
 )
-
+from ..orchestration import ScoreOrchestratorMixin
 from ..score.attack import AttackScorerConfig
 
 logger = logging.getLogger(__name__)
@@ -71,8 +68,6 @@ AttackFamily = Literal[
     "reconstruction",
 ]
 AttackSubFamily = str
-AttackFamilyLike = AttackFamily | str
-AttackSubFamilyLike = AttackSubFamily | str
 
 
 def _sensitive_slice(sensitive, n):
@@ -174,231 +169,6 @@ class SensitiveFeaturesWrapper(BaseEstimator):
             self._sensitive = np.asarray(params["sensitive_features"])
         return self
 
-    def _sensitive_slice(self, sensitive, n):
-        """Return the first *n* rows of *sensitive*, or None if unavailable."""
-        if sensitive is None:
-            return None
-        arr = np.asarray(sensitive)
-        return arr[:n]
-
-
-supported_attacks = [
-    "blackbox_membership_inference",
-    "blackbox_evasion",
-    "whitebox_evasion",
-    "blackbox_attribute_inference",
-    "whitebox_attribute_inference",
-]
-
-
-@dataclass(eq=True)
-class AttackMixin:
-    """Base callable attack handler used by runtime attack context resolution.
-
-    The ``runtime`` attribute is the active ``AttackConfig`` instance owned by
-    ``AttackConfig.__call__``. Mixins delegate mutable runtime state such as
-    timers, predictions, and ``score_dict`` to that object.
-
-    Attributes:
-        Runtime attributes are inherited or configured via class fields documented in this module.
-    """
-
-    runtime: Any = None
-
-    def __getattr__(self, name: str) -> Any:
-        return getattr(self.runtime, name)
-
-    def __setattr__(self, name: str, value: Any) -> None:
-        if name == "runtime":
-            object.__setattr__(self, name, value)
-            return
-        runtime = object.__getattribute__(self, "runtime")
-        if runtime is None:
-            object.__setattr__(self, name, value)
-            return
-        setattr(runtime, name, value)
-
-    def __call__(
-        self,
-        *,
-        data: DataConfig,
-        model: ModelConfig | EstimatorLike | BaseEstimator,
-        art_model: EstimatorLike,
-        attack: AttackLike,
-        attack_family: AttackFamilyLike,
-        attack_sub_family: AttackSubFamilyLike,
-    ) -> ScoreDict:
-        """Execute one attack handler.
-
-        Args:
-            data: Data runtime containing train/test/val splits.
-            model: User model object or model config supplied to ``AttackConfig``.
-            art_model: ART estimator wrapper used by the selected attack implementation.
-            attack: Instantiated attack object (for example ART attack instance).
-            attack_family: Parsed attack family.
-            attack_sub_family: Parsed attack sub-family from attack path.
-
-        Returns:
-            Score dictionary merged into runtime ``score_dict``.
-
-        Raises:
-            NotImplementedError: Always raised by the base attack mixin.
-        """
-        raise NotImplementedError(
-            "Attack handlers must implement __call__",
-        )
-
-    def attack(
-        self,
-        *,
-        data: DataConfig,
-        model: ModelConfig | EstimatorLike | BaseEstimator,
-        art_model: EstimatorLike,
-        attack: AttackLike,
-        attack_family: AttackFamilyLike,
-        attack_sub_family: AttackSubFamilyLike,
-    ) -> ScoreDict:
-        """Public alias for base attack dispatch.
-
-        This mirrors the canonical attack type name and keeps a consistent
-        public entrypoint across attack mixins.
-        """
-        return self(
-            data=data,
-            model=model,
-            art_model=art_model,
-            attack=attack,
-            attack_family=attack_family,
-            attack_sub_family=attack_sub_family,
-        )
-
-
-@dataclass(eq=False, kw_only=True)
-class AttackTypePlugin:
-    """Generic attack plugin that binds one mixin to one attack family/subtype.
-
-    Initialization fields
-    ---------------------
-    mixin_type : Any
-        Mixin class (or import path) implementing runtime ``__call__``.
-    attack_family : str
-        Attack family this plugin matches.
-    attack_sub_family : str | None
-        Optional subtype constraint.
-    excluded_subtypes : tuple[str, ...]
-        Subtypes explicitly excluded from this plugin match.
-
-    Runtime behavior
-    ----------------
-    - ``resolve_attack_mixins`` contributes mixins to runtime context assembly.
-    - ``resolve_attack_handler`` returns callable handler for dispatch.
-    - ``__call__`` forwards ``*args``/``**kwargs`` to the configured mixin
-      instance bound to the runtime config.
-
-    Attributes:
-        Runtime attributes are inherited or configured via class fields documented in this module.
-    """
-
-    mixin_type: Any
-    attack_family: str
-    attack_sub_family: Union[str, None] = None
-    excluded_subtypes: tuple[str, ...] = field(default_factory=tuple)
-
-    def _resolve_mixin_type(self) -> type:
-        if isinstance(self.mixin_type, str):
-            resolved = resolve_class(self.mixin_type)
-            self.mixin_type = resolved
-            return resolved
-        return self.mixin_type
-
-    def _matches(self, *, attack_family: str, attack_sub_family: str) -> bool:
-        if (attack_family or "").lower() != (self.attack_family or "").lower():
-            return False
-        subtype = (attack_sub_family or "").lower()
-        if (
-            self.attack_sub_family is not None
-            and subtype != self.attack_sub_family.lower()
-        ):
-            return False
-        if subtype in {item.lower() for item in self.excluded_subtypes}:
-            return False
-        return True
-
-    def resolve_attack_mixins(
-        self,
-        runtime: "AttackConfig",
-        *,
-        attack_family: str,
-        attack_sub_family: str,
-        default_mixins: tuple[type, ...],
-    ) -> tuple[type, ...]:
-        """Return mixin tuple for matching attack family/subtype.
-
-        Args:
-            runtime: Active runtime attack config.
-            attack_family: Requested attack family.
-            attack_sub_family: Requested attack sub-family.
-            default_mixins: Default mixins for this attack family.
-
-        Returns:
-            Mixin tuple to attach to runtime context.
-        """
-        _ = (runtime, default_mixins)
-        if not self._matches(
-            attack_family=attack_family,
-            attack_sub_family=attack_sub_family,
-        ):
-            return ()
-        mixin = self._resolve_mixin_type()
-        return (mixin,)
-
-    def resolve_attack_handler(
-        self,
-        runtime: "AttackConfig",
-        *,
-        attack_family: str,
-        attack_sub_family: str,
-        default_handler: Callable[..., ScoreDict] | None,
-        default_mixins: tuple[type, ...],
-    ) -> Callable[..., ScoreDict] | None:
-        """Return callable runtime handler for matching attack family/subtype.
-
-        Args:
-            runtime: Active runtime attack config.
-            attack_family: Requested attack family.
-            attack_sub_family: Requested attack sub-family.
-            default_handler: Existing resolved runtime handler.
-            default_mixins: Existing resolved mixins.
-
-        Returns:
-            Callable runtime handler when plugin matches; otherwise ``None``.
-        """
-        _ = (default_handler, default_mixins)
-        if not self._matches(
-            attack_family=attack_family,
-            attack_sub_family=attack_sub_family,
-        ):
-            return None
-        return lambda *args, **kwargs: self(runtime, *args, **kwargs)
-
-    def __call__(self, runtime: "AttackConfig", *args, **kwargs) -> ScoreDict:
-        """Delegate runtime attack execution to configured mixin handler.
-
-        Args:
-            runtime: Runtime config instance currently orchestrating the attack.
-            *args: Positional runtime args forwarded to mixin ``__call__``.
-            **kwargs: Keyword runtime args forwarded to mixin ``__call__``.
-
-        Returns:
-            Runtime attack score payload.
-        """
-        mixin = self._resolve_mixin_type()
-        if isinstance(mixin, type) and mixin in type(runtime).mro():
-            handler = runtime
-        else:
-            handler = mixin(runtime)
-        return ScoreDict.from_payload(handler(*args, **kwargs))
-
 
 def _get_sklearn_dict() -> dict[str, Any]:
     return _get_art_symbols()["sklearn_dict"]
@@ -408,8 +178,58 @@ def _get_supported_models() -> tuple[type, ...]:
     return tuple(_get_sklearn_dict().values())
 
 
+def _resolve_plugin_root_from_attack_name(attack_name: str) -> str | None:
+    """Infer plugin root token from canonical attack name.
+
+    Example:
+        ``textattack.attack_recipes...`` -> ``textattack``
+    """
+    normalized_name = str(attack_name or "").strip().lower()
+    if normalized_name == "":
+        return None
+    parts = normalized_name.split(".")
+    if len(parts) < 2:
+        return None
+    root = str(parts[0]).strip()
+    if root in {"", "deckard", "art"}:
+        return None
+    return root
+
+
+def _resolve_plugin_runtime_config_type(attack_name: str) -> type | None:
+    """Resolve plugin runtime config class for a canonical attack declaration.
+
+    This avoids hard-coded attack-name prefixes by resolving plugin runtime
+    handlers from plugin module declarations at runtime.
+    """
+    plugin_root = _resolve_plugin_root_from_attack_name(attack_name)
+    if plugin_root in {None, "", "art", "deckard"}:
+        return None
+    module_name = f"deckard.plugins.{plugin_root}.attack"
+    try:
+        module = importlib.import_module(module_name)
+    except Exception:
+        return None
+
+    candidates: list[type] = []
+    for value in vars(module).values():
+        if not isinstance(value, type):
+            continue
+        if value is AttackConfig:
+            continue
+        if not issubclass(value, AttackConfig):
+            continue
+        if value.__module__ != module.__name__:
+            continue
+        candidates.append(value)
+    if not candidates:
+        return None
+    candidates.sort(key=lambda cls: cls.__name__)
+    return candidates[0]
+
+
 @dataclass(eq=False, kw_only=True)
-class AttackConfig(BaseConfig):
+class AttackConfig(ScoreOrchestratorMixin, BaseConfig):
     """Runtime attack configuration with plugin-driven dispatch.
 
     Attack behavior is resolved at runtime via mixins and optional plugins.
@@ -489,8 +309,12 @@ class AttackConfig(BaseConfig):
         attack_name = str(self.name).strip()
         if attack_name == "":
             raise ValueError("AttackConfig.name must be a non-empty attack class path")
+        if attack_name.lower().startswith("deckard.plugins."):
+            raise ValueError(
+                "AttackConfig.name must use third-party library attack paths "
+                "(for example textattack.* or OpenAttack.*), not deckard plugin paths.",
+            )
         self.name = attack_name
-
         self._target_ = "deckard.attack.AttackConfig"
         attack_scorer_cls = resolve_class(
             "deckard.score.attack.AttackScorerConfig",
@@ -744,6 +568,74 @@ class AttackConfig(BaseConfig):
             payload.update(aliases)
         return ScoreDict.from_payload(payload)
 
+    def _finalize_attack_state(
+        self,
+        *,
+        attack: Any = None,
+        attack_predictions: Any = None,
+        attacked_labels: Any = None,
+        score_dict: Any = None,
+        score_y_pred: Any = None,
+        score_y_proba: Any = None,
+    ) -> ScoreDict:
+        """Write common runtime attack outputs to this config instance."""
+        if attack is not None:
+            self.attack = attack
+        if attack_predictions is not None:
+            self.attack_predictions = attack_predictions
+        if attacked_labels is not None:
+            self.attacked_labels = attacked_labels
+        if score_y_pred is not None:
+            self.score_y_pred = score_y_pred
+        if score_y_proba is not None:
+            self.score_y_proba = score_y_proba
+        if score_dict is not None:
+            payload = score_dict
+            if isinstance(payload, ScoreDict):
+                payload = dict(payload)
+            self.score_dict = ScoreDict.from_payload({**self.score_dict, **payload})
+        return ScoreDict.from_payload(self.score_dict)
+
+    def _combine_attack_scores(
+        self,
+        *,
+        benign_scores: Any,
+        attack_scores: Any,
+        attack_kind: str | None = None,
+        extra_scores: Any = None,
+    ) -> ScoreDict:
+        """Merge shared benign and attack score payloads."""
+        merged_payload: dict[str, Any] = {}
+        if benign_scores:
+            merged_payload.update(dict(benign_scores))
+        if attack_scores:
+            merged_payload.update(dict(attack_scores))
+        if extra_scores:
+            merged_payload.update(dict(extra_scores))
+        merged_scores = ScoreDict.from_payload(merged_payload)
+        if attack_kind:
+            merged_scores = self._with_targeted_attack_labels(
+                merged_scores,
+                attack_kind,
+            )
+        return merged_scores
+
+    def _dispatch_attack_scores(
+        self,
+        *,
+        benign_scores: Any,
+        attack_scores: Any,
+        attack_kind: str | None = None,
+        extra_scores: Any = None,
+    ) -> ScoreDict:
+        """Shared scoring dispatch for attack family modes."""
+        return self._combine_attack_scores(
+            benign_scores=benign_scores,
+            attack_scores=attack_scores,
+            attack_kind=attack_kind,
+            extra_scores=extra_scores,
+        )
+
     def _instantiate_plugin(self, plugin_spec: Any):
         return instantiate_plugin_spec(
             plugin_spec,
@@ -788,10 +680,14 @@ class AttackConfig(BaseConfig):
         attack_sub_family: str,
     ) -> tuple[type, ...]:
         mixins: list[type] = []
+        attack_name = str(self.resolve_name(default="") or "")
         attack_family_lower = (attack_family or "").lower()
         attack_sub_family_lower = (attack_sub_family or "").lower()
 
-        if attack_family_lower == "evasion":
+        plugin_runtime_config = _resolve_plugin_runtime_config_type(attack_name)
+        if plugin_runtime_config is not None:
+            mixins.append(plugin_runtime_config)
+        elif attack_family_lower == "evasion":
             from .evasion import EvasionAttackConfig
 
             mixins.append(EvasionAttackConfig)
@@ -844,11 +740,17 @@ class AttackConfig(BaseConfig):
         )
         default_handler = None
         for mixin in mixins:
-            if isinstance(mixin, type) and mixin in type(self).mro():
+            if not isinstance(mixin, type):
+                continue
+            if mixin in type(self).mro():
                 default_handler = self
                 break
-            if isinstance(mixin, type) and issubclass(mixin, AttackMixin):
-                default_handler = mixin(self)
+            if issubclass(mixin, AttackConfig):
+                # Config-first dispatch: resolve one concrete runtime config class
+                # instead of composing multiple *Config types into a synthetic class.
+                runtime_handler = copy.copy(self)
+                runtime_handler.__class__ = mixin
+                default_handler = runtime_handler
                 break
 
         hook_outputs = self._run_plugin_hook(
@@ -861,32 +763,106 @@ class AttackConfig(BaseConfig):
         for output in hook_outputs:
             if callable(output):
                 return output
-            if isinstance(output, type) and issubclass(output, AttackMixin):
-                return output(self)
 
         return default_handler
 
     def _with_attack_context(
         self,
+        *,
         attack_family: str,
         attack_sub_family: str,
-    ):
-        mixins = self._resolve_runtime_attack_config(
+    ) -> "AttackConfig":
+        """Return an attack runtime view bound to the resolved family context."""
+        runtime: AttackConfig = self
+        runtime._attack_family = attack_family
+        runtime._attack_sub_family = attack_sub_family
+
+        for mixin in runtime._resolve_runtime_attack_config(
+            attack_family=attack_family,
+            attack_sub_family=attack_sub_family,
+        ):
+            if not isinstance(mixin, type):
+                continue
+            if mixin in type(runtime).mro():
+                break
+            if issubclass(mixin, AttackConfig):
+                # Preserve config-first behavior without mutating this instance type.
+                runtime = copy.copy(runtime)
+                runtime.__class__ = mixin
+                runtime._attack_family = attack_family
+                runtime._attack_sub_family = attack_sub_family
+                break
+
+        return runtime
+
+    def resolve_runtime_attack_config(
+        self,
+        attack_family: str,
+        attack_sub_family: str,
+    ) -> tuple[type, ...]:
+        """Public wrapper for config-first runtime attack config resolution."""
+        return self._resolve_runtime_attack_config(
             attack_family=attack_family,
             attack_sub_family=attack_sub_family,
         )
-        mixins = tuple(mixin for mixin in mixins if mixin not in type(self).mro())
-        if len(mixins) == 0:
-            return self
 
-        runtime_cls = type(
-            f"RuntimeAttackContext_{attack_family}_{attack_sub_family}_{self.__class__.__name__}",
-            (*mixins, self.__class__),
-            {},
+    def resolve_runtime_attack_handler(
+        self,
+        attack_family: str,
+        attack_sub_family: str,
+    ) -> Callable[..., ScoreDict] | None:
+        """Public wrapper for config-first runtime attack handler resolution."""
+        return self._resolve_attack_handler(
+            attack_family=attack_family,
+            attack_sub_family=attack_sub_family,
         )
-        runtime = copy.copy(self)
-        runtime.__class__ = runtime_cls
-        return runtime
+
+    def run(
+        self,
+        data: DataConfig,
+        model: ModelConfig | BaseEstimator | EstimatorLike,
+        files: dict[str, str | None] | None = None,
+        attack_file: Union[str, None] = None,
+        attack_predictions_file: Union[str, None] = None,
+        score_file: Union[str, None] = None,
+    ) -> ScoreDict:
+        """Public execution alias for attack runtime orchestration."""
+        return self(
+            data=data,
+            model=model,
+            files=files,
+            attack_file=attack_file,
+            attack_predictions_file=attack_predictions_file,
+            score_file=score_file,
+        )
+
+    def load(
+        self,
+        attack_file: str | None = None,
+        attack_predictions_file: str | None = None,
+    ) -> "AttackConfig":
+        """Load cached runtime attack artifacts onto this config object."""
+        self.load_cached_attack_artifacts(
+            attack_file=attack_file,
+            attack_predictions_file=attack_predictions_file,
+        )
+        return self
+
+    def score(
+        self,
+        *,
+        attack_kind: str,
+        y_true: Any,
+        y_pred: Any = None,
+        **kwargs: Any,
+    ) -> ScoreDict:
+        """Public scoring wrapper around the configured attack scorer."""
+        return self._score(
+            attack_kind=attack_kind,
+            y_true=y_true,
+            y_pred=y_pred,
+            **kwargs,
+        )
 
     @property
     def attack_family(self) -> Optional[str]:
@@ -1211,6 +1187,24 @@ class AttackConfig(BaseConfig):
         else:
             art_model.clip_values = (lower, upper)
 
+    def _sync_runtime_state_from(self, runtime: "AttackConfig") -> None:
+        """Copy runtime attack outputs from a resolved handler config to this config."""
+        runtime_fields = (
+            "attack_time",
+            "attack_prediction_time",
+            "attack_score_time",
+            "attack",
+            "attack_predictions",
+            "attacked_labels",
+            "score_y_pred",
+            "score_y_proba",
+            "score_dict",
+            "_attack_family",
+            "_attack_sub_family",
+        )
+        for field_name in runtime_fields:
+            setattr(self, field_name, getattr(runtime, field_name))
+
     def __call__(
         self,
         data: DataConfig,
@@ -1305,9 +1299,7 @@ class AttackConfig(BaseConfig):
             attack_family=attack_family,
             attack_sub_family=attack_sub_family,
         )
-
-        self.__dict__.update(runtime.__dict__)
-        self._run_attack_stage_hooks(
+        runtime._run_attack_stage_hooks(
             "after",
             "post-attack",
             data=data,
@@ -1318,7 +1310,7 @@ class AttackConfig(BaseConfig):
             attack_sub_family=attack_sub_family,
             execution_order=attack_execution_order,
         )
-        after_outputs = self._run_plugin_hook(
+        after_outputs = runtime._run_plugin_hook(
             "after_attack_dispatch",
             data=data,
             model=model,
@@ -1328,24 +1320,24 @@ class AttackConfig(BaseConfig):
             attack_sub_family=attack_sub_family,
             scores=scores,
         )
-        self._merge_plugin_scores(after_outputs)
+        runtime._merge_plugin_scores(after_outputs)
         assert isinstance(scores, dict), "Scores should be a dictionary"
         assert isinstance(
-            self.attack_time,
+            runtime.attack_time,
             float,
-        ), f"Attack time should be a float, got {type(self.attack_time)}"
+        ), f"Attack time should be a float, got {type(runtime.attack_time)}"
         assert isinstance(
-            self.attack_prediction_time,
+            runtime.attack_prediction_time,
             float,
         ), "Attack prediction time should be a float"
         assert isinstance(
-            self.attack_score_time,
+            runtime.attack_score_time,
             float,
         ), "Attack score time should be a float"
         times = {
-            "attack_generation_time": self.attack_time,
-            "attack_prediction_time": self.attack_prediction_time,
-            "attack_score_time": self.attack_score_time,
+            "attack_generation_time": runtime.attack_time,
+            "attack_prediction_time": runtime.attack_prediction_time,
+            "attack_score_time": runtime.attack_score_time,
         }
         score_dict = {
             **scores,
@@ -1353,7 +1345,8 @@ class AttackConfig(BaseConfig):
             "attack_stage": normalize_attack_stage("post-attack"),
             "attack_execution_order": attack_execution_order,
         }
-        self.score_dict = ScoreDict.from_payload(score_dict)
+        runtime.score_dict = ScoreDict.from_payload(score_dict)
+        self._sync_runtime_state_from(runtime)
 
         self.merge_runtime_files(
             {
@@ -1380,143 +1373,6 @@ class AttackConfig(BaseConfig):
             self.merge_and_persist_scores(self.score_dict, score_file),
         )
         return ScoreDict.from_payload(score_dict)
-
-    def _get_benign_preds(
-        self,
-        data: DataConfig,
-        art_model: EstimatorLike,
-        train: bool = False,
-    ):
-        """
-        Generate benign predictions and corresponding labels for a subset of data.
-
-        Depending on the `train` flag, selects either the training or test set, obtains predictions
-        from the provided ART model, and returns the predicted labels along with the corresponding
-        data subset and true labels.
-
-        Args:
-            data: Data runtime providing train and test splits.
-            art_model: ART-compatible model with a ``predict`` method.
-            train: When ``True``, score against the test split; otherwise use the training split.
-
-        Returns:
-            Tuple of subset size, benign prediction labels, feature subset, and
-            true-label subset.
-        """
-        n = self.attack_size
-        if train is True:
-            ben_preds = art_model.predict(
-                self._prepare_features_for_art(data.X_test),
-            )
-            ben_pred_labels = ben_preds.argmax(axis=1)
-            n, X_subset, y_subset = self.get_attack_subset(data, test=True)
-        else:
-            ben_preds = art_model.predict(
-                self._prepare_features_for_art(data.X_train),
-            )
-            ben_preds = tensor_to_numpy(ben_preds, dtype=ART_NUMPY_DTYPE)
-            ben_pred_labels = ben_preds.argmax(axis=1)
-            n, X_subset, y_subset = self.get_attack_subset(data, test=False)
-        y_subset = tensor_to_numpy(y_subset, dtype=ART_NUMPY_DTYPE)
-        assert isinstance(
-            ben_pred_labels,
-            np.ndarray,
-        ), f"ben_pred_labels should be np.ndarray, got {type(ben_pred_labels)}"
-        assert isinstance(
-            X_subset,
-            np.ndarray,
-        ), f"X_subset should be np.ndarray, got {type(X_subset)}"
-        assert isinstance(
-            y_subset,
-            np.ndarray,
-        ), f"y_subset should be np.ndarray, got {type(y_subset)}"
-        return n, ben_pred_labels, X_subset, y_subset
-
-    def _get_feature_vector_preds(
-        self,
-        data: DataConfig,
-        targeted_attribute: str | list[str],
-        train: bool = False,
-    ):
-        """
-        Extracts a subset of feature vectors, labels, and attributes from the provided data for either training or testing.
-
-        Args:
-            data: Data runtime providing train and test splits.
-            targeted_attribute: Attribute column or columns to recover.
-            train: When ``True``, extract from the training split; otherwise use the test split.
-
-        Returns:
-            Tuple of subset size, feature subset, label subset, and attribute subset.
-
-        Raises:
-            AssertionError: If the extracted feature, label, and attribute lengths diverge.
-        """
-        n = self.attack_size
-        if train is False:
-            X_train = data.X_train
-            y_train = data.y_train
-            a_train = data.X_train[targeted_attribute]
-            X_test = data.X_test
-            y_test = data.y_test
-            a_test = data.X_test[targeted_attribute]
-            X_train = X_train.drop(columns=[targeted_attribute])
-            X_test = X_test.drop(columns=[targeted_attribute])
-            assert (
-                len(X_test) == len(y_test) == len(a_test)
-            ), "X_test, y_test, and a_test must have the same length, but got lengths: {}, {}, {}".format(
-                len(X_test),
-                len(y_test),
-                len(a_test),
-            )
-            X_subset = X_test[:n]
-            y_subset = y_test[:n]
-            a_subset = a_test[:n]
-        else:
-
-            assert (
-                len(X_train) == len(y_train) == len(a_train)
-            ), "X_train, y_train, and a_train must have the same length, but got lengths: {}, {}, {}".format(
-                len(X_train),
-                len(y_train),
-                len(a_train),
-            )
-            X_subset = X_train[:n]
-            y_subset = y_train[:n]
-            a_subset = a_train[:n]
-        return n, X_subset, y_subset, a_subset
-
-    def _score_attack(self, ben_pred_labels, adv_pred_labels, y_test_numeric):
-        """
-        Computes and logs various performance metrics for adversarial attack predictions.
-
-        Calculates the following metrics for the adversarial predictions:
-            - Accuracy
-            - Precision
-            - Recall
-            - F1-score
-            - Success rate (agreement between benign and adversarial predictions)
-
-        Args:
-            ben_pred_labels: Predicted labels from the benign model.
-            adv_pred_labels: Predicted labels from the adversarially perturbed model.
-            y_test_numeric: True numeric labels for the evaluation subset.
-
-        Returns:
-            ``None``. The method updates ``self.score_dict`` with computed metrics.
-        """
-        score_dict = self._score(
-            attack_kind="evasion",
-            y_true=y_test_numeric,
-            y_pred=adv_pred_labels,
-            ben_pred_labels=ben_pred_labels,
-        )
-        logger.info(
-            f"Attack scoring took {self.attack_score_time} seconds for {len(adv_pred_labels)} samples and {len(self.score_dict)} scores.",
-        )
-        self.score_dict = {**self.score_dict, **score_dict}
-        for score in self.score_dict:
-            logger.info(f"{score}: {self.score_dict[score]}")
 
     def _score_comparison(
         self,
@@ -1664,7 +1520,7 @@ class AttackConfig(BaseConfig):
         """
         if is_dataloader(value):
             x_subset, _ = collect_subset_from_dataloader(value, n=len(value.dataset))
-            return tensor_to_numpy(x_subset, dtype=ART_NUMPY_DTYPE)
+            return tensor_to_numpy(x_subset)
         try:
             from torch.utils.data import DataLoader, Dataset, Subset
         except ImportError:  # pragma: no cover
@@ -1673,9 +1529,9 @@ class AttackConfig(BaseConfig):
             loader = DataLoader(value, batch_size=len(value), shuffle=False)
             batch = next(iter(loader))
             features = batch[0] if isinstance(batch, (tuple, list)) else batch
-            return tensor_to_numpy(features, dtype=ART_NUMPY_DTYPE)
+            return tensor_to_numpy(features)
         if is_tensor(value):
-            return tensor_to_numpy(value, dtype=ART_NUMPY_DTYPE)
+            return tensor_to_numpy(value)
         if isinstance(value, pd.DataFrame):
             return value.values
         if isinstance(value, pd.Series):
@@ -1795,36 +1651,6 @@ class AttackConfig(BaseConfig):
             return False
         row_sums = pred.sum(axis=1)
         return np.allclose(row_sums, 1.0, atol=1e-4)
-
-    @staticmethod
-    def _select_extraction_scorer(benign_pred, extracted_pred):
-        """Use full classifier metrics when probabilities are available, else label-only metrics."""
-        preds = [np.asarray(benign_pred), np.asarray(extracted_pred)]
-        has_probabilities = all(
-            AttackConfig._looks_like_probabilities(pred) for pred in preds
-        )
-        if has_probabilities:
-            return DefaultClassifierScorerDictConfig(), True
-        full_classifier = DefaultClassifierScorerDictConfig()
-        label_only = {
-            name: scorer
-            for name, scorer in full_classifier.scorers.items()
-            if not scorer.needs_proba
-        }
-        return ScorerDictConfig(scorers=label_only), False
-
-    def _score_attack_legacy(
-        self,
-        ben_pred_labels,
-        adv_pred_labels,
-        y_test_numeric,
-    ):
-        """Backward-compatible alias retained for older call sites."""
-        return self._score_attack(
-            ben_pred_labels,
-            adv_pred_labels,
-            y_test_numeric,
-        )
 
     def get_attack_subset(
         self,

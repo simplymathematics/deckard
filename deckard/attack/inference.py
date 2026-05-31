@@ -19,16 +19,15 @@ from .base import (
     AttackConfig,
     AttackFamily,
     AttackSubFamily,
-    AttackTypePlugin,
-    AttackMixin,
     _sensitive_slice,
 )
 
 logger = logging.getLogger(__name__)
 
 
-class InferenceAttackMixin(AttackMixin):
-    """Reusable inference attack behavior (membership, attribute, inversion).
+@dataclass(eq=False, kw_only=True)
+class InferenceAttackConfig(AttackConfig):
+    """Configuration for privacy inference attacks.
 
     Attributes:
         targeted_attribute: Attribute name/index used by attribute inference flows.
@@ -65,7 +64,7 @@ class InferenceAttackMixin(AttackMixin):
         """
         if (attack_family or "").lower() != "inference":
             raise ValueError(
-                f"_InferenceAttackMixin received unsupported attack family: {attack_family}",
+                f"_InferenceAttackConfig received unsupported attack family: {attack_family}",
             )
         return self.infer(
             data=data,
@@ -337,13 +336,14 @@ class InferenceAttackMixin(AttackMixin):
             attack_generation_time=self.attack_time,
             sensitive_features=sensitive_attribute,
         )
-        self.score_y_pred = inferred
-        self.score_y_proba = None
-        self.score_dict = ScoreDict.from_payload({**self.score_dict, **score_dict})
-        self.attack = inferred
-        self.attack_predictions = inferred
-        self.attacked_labels = target
-        return ScoreDict.from_payload(self.score_dict)
+        return self._finalize_attack_state(
+            attack=inferred,
+            attack_predictions=inferred,
+            attacked_labels=target,
+            score_dict=score_dict,
+            score_y_pred=inferred,
+            score_y_proba=None,
+        )
 
     def infer_membership(self, data: DataConfig, attack: AttackLike) -> ScoreDict:
         """Infer whether sampled records belonged to the model training set.
@@ -432,8 +432,6 @@ class InferenceAttackMixin(AttackMixin):
         inferred = self._normalize_inferred_output(inferred, reference=labels)
         inferred = self._prediction_to_labels(inferred, is_regression=False)
         labels = self._normalize_ground_truth(labels, is_regression=False)
-        self.attack_predictions = inferred
-        self.attacked_labels = labels
         end_time = time.perf_counter()
         self.attack_prediction_time = end_time - start_time
         score_dict = self._score(
@@ -442,11 +440,14 @@ class InferenceAttackMixin(AttackMixin):
             y_pred=inferred,
             sensitive_features=sensitive_membership,
         )
-        self.score_y_pred = inferred
-        self.score_y_proba = None
-        self.score_dict = ScoreDict.from_payload({**self.score_dict, **score_dict})
-        self.attack = inferred
-        return ScoreDict.from_payload(self.score_dict)
+        return self._finalize_attack_state(
+            attack=inferred,
+            attack_predictions=inferred,
+            attacked_labels=labels,
+            score_dict=score_dict,
+            score_y_pred=inferred,
+            score_y_proba=None,
+        )
 
     def _resolve_source_split(
         self,
@@ -598,24 +599,18 @@ class InferenceAttackMixin(AttackMixin):
         )
         self.attack_score_time = float(score_dict.get("attack_score_time", 0.0))
 
-        self.attack_predictions = inferred_arr
-        self.attacked_labels = target_labels
-        self.attack = inferred_arr
-
         model_inversion_scores = {
             "model_inversion_mse": score_dict.get("inferred_model_inversion_mse"),
             "model_inversion_mae": score_dict.get("inferred_model_inversion_mae"),
             "model_inversion_num_targets": int(len(target_labels)),
             "model_inversion_mode": split,
         }
-        self.score_dict = ScoreDict.from_payload(
-            {
-                **self.score_dict,
-                **score_dict,
-                **model_inversion_scores,
-            },
+        return self._finalize_attack_state(
+            attack=inferred_arr,
+            attack_predictions=inferred_arr,
+            attacked_labels=target_labels,
+            score_dict={**score_dict, **model_inversion_scores},
         )
-        return ScoreDict.from_payload(self.score_dict)
 
     def infer_database_reconstruction(
         self,
@@ -745,10 +740,6 @@ class InferenceAttackMixin(AttackMixin):
 
         self.attack_score_time = time.perf_counter() - start_time
 
-        self.attack_predictions = x_reconstructed
-        self.attacked_labels = x_true_missing
-        self.attack = x_reconstructed
-
         compatibility_scores = {
             "database_reconstruction_feature_mse": feature_scores.get(
                 "inferred_database_reconstruction_feature_mse",
@@ -757,9 +748,11 @@ class InferenceAttackMixin(AttackMixin):
                 "inferred_database_reconstruction_feature_mae",
             ),
         }
-        self.score_dict = ScoreDict.from_payload(
-            {
-                **self.score_dict,
+        return self._finalize_attack_state(
+            attack=x_reconstructed,
+            attack_predictions=x_reconstructed,
+            attacked_labels=x_true_missing,
+            score_dict={
                 **feature_scores,
                 **compatibility_scores,
                 "database_reconstruction_num_features": int(x_true.shape[1]),
@@ -770,28 +763,5 @@ class InferenceAttackMixin(AttackMixin):
                 "attack_score_time": float(self.attack_score_time),
             },
         )
-        return ScoreDict.from_payload(self.score_dict)
 
 
-@dataclass(eq=False, kw_only=True)
-class InferenceAttackConfig(InferenceAttackMixin, AttackConfig):
-    """Configuration for privacy inference attacks.
-
-    Note:
-        Expected family is ``inference``. The default plugin excludes the
-        ``reconstruction`` subtype, which is routed through
-        ``ReconstructionAttackConfig``.
-
-    Attributes:
-        plugins: Default plugin wiring for ``attack_family='inference'``.
-    """
-
-    plugins: list = field(
-        default_factory=lambda: [
-            AttackTypePlugin(
-                mixin_type="deckard.attack.inference.InferenceAttackConfig",
-                attack_family="inference",
-                excluded_subtypes=("reconstruction",),
-            ),
-        ],
-    )

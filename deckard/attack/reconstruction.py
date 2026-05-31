@@ -7,12 +7,13 @@ from ..artifacts import ScoreDict
 from ..data import DataConfig
 from ..frameworks.types import AttackLike, EstimatorLike
 from ..model import ModelConfig
-from .base import AttackConfig, AttackFamily, AttackSubFamily, AttackTypePlugin
-from .inference import InferenceAttackMixin
+from .base import AttackConfig, AttackFamily, AttackSubFamily
+from .inference import InferenceAttackConfig
 
 
-class ReconstructionAttackMixin(InferenceAttackMixin):
-    """Reusable database reconstruction attack behavior.
+@dataclass(eq=False, kw_only=True)
+class ReconstructionAttackConfig(InferenceAttackConfig):
+    """Configuration for database reconstruction attacks.
 
     Attributes:
         score_dict: Runtime score payload for reconstruction metrics.
@@ -81,30 +82,9 @@ class ReconstructionAttackMixin(InferenceAttackMixin):
             attack_sub_family or ""
         ).lower() != "reconstruction":
             raise ValueError(
-                "_ReconstructionAttackMixin requires inference.reconstruction attack subtype",
+                "_ReconstructionAttackConfig requires inference.reconstruction attack subtype",
             )
         return self.reconstruct(data=data, attack=attack)
 
-
-@dataclass(eq=False, kw_only=True)
-class ReconstructionAttackConfig(ReconstructionAttackMixin, AttackConfig):
-    """Configuration for database reconstruction attacks.
-
-    Note:
-        Expected family/subtype is ``inference.reconstruction``. Runtime
-        behavior is delegated to ``ReconstructionAttackMixin`` through the
-        default ``AttackTypePlugin``.
-
-    Attributes:
-        plugins: Default plugin wiring for ``inference.reconstruction``.
-    """
-
-    plugins: list = field(
-        default_factory=lambda: [
-            AttackTypePlugin(
-                mixin_type="deckard.attack.reconstruction.ReconstructionAttackConfig",
-                attack_family="inference",
-                attack_sub_family="reconstruction",
-            ),
-        ],
-    )
+    # Note:
+    #     Expected family/subtype is ``inference.reconstruction``.

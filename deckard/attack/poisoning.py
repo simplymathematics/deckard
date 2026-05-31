@@ -3,7 +3,7 @@
 import logging
 import time
 from dataclasses import dataclass, field
-from typing import Protocol
+from typing import Any, Mapping, Protocol, cast
 
 import numpy as np
 from art.config import ART_NUMPY_DTYPE
@@ -19,8 +19,6 @@ from .base import (
     AttackConfig,
     AttackFamily,
     AttackSubFamily,
-    AttackTypePlugin,
-    AttackMixin,
 )
 
 logger = logging.getLogger(__name__)
@@ -98,14 +96,15 @@ class _PoisoningAttack(Protocol):
         ...
 
 
-class PoisoningAttackMixin(AttackMixin):
-    """Reusable poisoning attack behavior (backdoor, trojan).
+@dataclass(eq=False, kw_only=True)
+class PoisoningAttackConfig(AttackConfig):
+    """Configuration for poisoning attacks that corrupt training data.
 
     Attributes:
         score_dict: Runtime score payload for poisoning metrics.
     """
 
-    def __call__(
+    def __call__(  # pyright: ignore[reportIncompatibleMethodOverride]
         self,
         *,
         data: DataConfig,
@@ -114,7 +113,7 @@ class PoisoningAttackMixin(AttackMixin):
         attack: AttackLike,
         attack_family: AttackFamily | str,
         attack_sub_family: AttackSubFamily | str,
-    ) -> ScoreDict:
+    ) -> ScoreDict:  # type: ignore[override]
         """Dispatch poisoning attack execution for runtime attack family validation.
 
         Args:
@@ -134,46 +133,14 @@ class PoisoningAttackMixin(AttackMixin):
         _ = attack_sub_family
         if (attack_family or "").lower() != "poisoning":
             raise ValueError(
-                f"_PoisoningAttackMixin received unsupported attack family: {attack_family}",
+                f"_PoisoningAttackConfig received unsupported attack family: {attack_family}",
             )
 
         return self.poison(data=data, art_model=art_model, attack=attack)
 
-    def poison(
-        self,
-        data: DataConfig,
-        art_model: _PoisoningArtModel,
-        attack: _PoisoningAttack,
-    ) -> ScoreDict:
-        """Execute poisoning workflow and emit poisoned/benign comparison metrics."""
-
-        attack_name: StringifiedClass = type(attack).__name__.lower()
-        if "poisoningattacksvm" in attack_name:
-            return self._poison_svm(data=data, art_model=art_model, attack=attack)
-
-        class_source = int(self.attack_params["class_source"])
-        class_target = int(self.attack_params["class_target"])
-        trigger_index = int(self.attack_params.get("trigger_index", 0))
-        poison_fit_params = self.attack_params.get("poison_fit_params", {})
-
-        # ART GradientMatching on macOS can fail with spawned DataLoader workers;
-        # force CPU and single-worker loaders for deterministic smoke/integration runs.
-        if "gradientmatchingattack" in attack_name:
-            try:
-                import torch
-
-                art_device = getattr(art_model, "_device", None)
-                if getattr(art_device, "type", None) == "mps":
-                    if hasattr(art_model, "_model") and hasattr(
-                        art_model._model,
-                        "to",
-                    ):
-                        art_model._model = art_model._model.to(torch.device("cpu"))
-                    if hasattr(art_model, "_device"):
-                        art_model._device = torch.device("cpu")
-            except ImportError:
-                pass
-
+    def _resolve_poison_context(self, data: DataConfig):
+        class_source, class_target, trigger_index, poison_fit_params = self._resolve_poison_params()
+        mode_used, x_eval_raw, y_eval_raw = self._resolve_eval_split(data)
         x_train = self._to_numpy_array(
             self._prepare_features_for_attack(getattr(data, "X_train")),
             dtype=ART_NUMPY_DTYPE,
@@ -181,15 +148,35 @@ class PoisoningAttackMixin(AttackMixin):
         y_train_raw = self._to_numpy_array(
             self._prepare_labels_for_attack(getattr(data, "y_train")),
         )
-
-        mode_used, x_eval_raw, y_eval_raw = self._resolve_eval_split(data)
         x_eval = self._to_numpy_array(
             self._prepare_features_for_attack(x_eval_raw),
             dtype=ART_NUMPY_DTYPE,
         )
         y_eval = self._normalize_ground_truth(y_eval_raw, is_regression=False)
         y_eval_class = self._target_to_class_labels(y_eval_raw)
+        return (
+            class_source,
+            class_target,
+            trigger_index,
+            poison_fit_params,
+            mode_used,
+            x_train,
+            y_train_raw,
+            x_eval,
+            y_eval,
+            y_eval_class,
+        )
 
+    def _select_poison_trigger(
+        self,
+        *,
+        class_source: int,
+        class_target: int,
+        trigger_index: int,
+        mode_used: str,
+        x_eval: Any,
+        y_eval_class: Any,
+    ) -> tuple[int, Any, Any, int, int]:
         source_indices = np.where(y_eval_class == class_source)[0]
         if len(source_indices) == 0:
             fallback_source = int(y_eval_class[0])
@@ -204,24 +191,96 @@ class PoisoningAttackMixin(AttackMixin):
 
         trigger_pos = trigger_index if trigger_index < len(source_indices) else 0
         trigger_idx = int(source_indices[trigger_pos])
-        x_trigger = x_eval[trigger_idx : trigger_idx + 1]
-
-        nb_classes = getattr(art_model, "nb_classes", None)
-        if nb_classes is None or int(nb_classes) <= 0:
-            nb_classes = int(np.max(y_eval_class)) + 1
+        nb_classes = int(np.max(y_eval_class)) + 1
         y_trigger = self._one_hot_encode([class_target], nb_classes=int(nb_classes))
+        return class_source, x_eval[trigger_idx : trigger_idx + 1], y_trigger, trigger_idx, nb_classes
 
-        if y_train_raw.ndim == 1 or (
-            y_train_raw.ndim == 2 and y_train_raw.shape[1] == 1
+    def _score_poison_predictions(
+        self,
+        *,
+        mode_used: str,
+        y_eval: Any,
+        benign_pred: Any,
+        poisoned_pred: Any,
+        extra_scores: dict[str, Any],
+    ) -> ScoreDict:
+        benign_labels = self._prediction_to_labels(benign_pred, is_regression=False)
+        poisoned_labels = self._prediction_to_labels(poisoned_pred, is_regression=False)
+        benign_scores = self._score_comparison(
+            y_true=y_eval,
+            y_pred=benign_labels,
+            stage="benign",
+            prefix="benign",
+            is_classification=True,
+            y_proba=benign_pred,
+            mode=mode_used,
+        )
+        poisoned_scores = self._score_comparison(
+            y_true=y_eval,
+            y_pred=poisoned_labels,
+            stage="adversarial",
+            prefix="poisoned",
+            is_classification=True,
+            y_proba=poisoned_pred,
+            mode=mode_used,
+        )
+        return self._dispatch_attack_scores(
+            benign_scores=benign_scores,
+            attack_scores=poisoned_scores,
+            attack_kind="poisoning",
+            extra_scores=extra_scores,
+        )
+
+    def _resolve_poison_params(self) -> tuple[int, int, int, dict[str, Any]]:
+        attack_params = self.attack_params
+        class_source = int(attack_params["class_source"])
+        class_target = int(attack_params["class_target"])
+        trigger_index = int(attack_params.get("trigger_index", 0))
+        poison_fit_params = attack_params.get("poison_fit_params", {})
+        return class_source, class_target, trigger_index, poison_fit_params
+
+    @staticmethod
+    def _prepare_gradient_matching_attack(attack_name: str, art_model: _PoisoningArtModel) -> None:
+        if "gradientmatchingattack" not in attack_name:
+            return
+        try:
+            import torch
+
+            runtime_art_model = cast(Any, art_model)
+            art_device = getattr(runtime_art_model, "_device", None)
+            if getattr(art_device, "type", None) == "mps":
+                if hasattr(runtime_art_model, "_model") and hasattr(
+                    runtime_art_model._model,
+                    "to",
+                ):
+                    object.__setattr__(runtime_art_model, "_model", runtime_art_model._model.to("cpu"))
+                if hasattr(runtime_art_model, "_device"):
+                    object.__setattr__(runtime_art_model, "_device", "cpu")
+        except ImportError:
+            pass
+
+    def _build_poison_training_labels(
+        self,
+        y_train_raw: MatrixLike,
+        nb_classes: int,
+    ) -> MatrixLike:
+        y_train_array = np.asarray(y_train_raw)
+        if y_train_array.ndim == 1 or (
+            y_train_array.ndim == 2 and y_train_array.shape[1] == 1
         ):
-            y_train_for_poison = self._one_hot_encode(
-                y_train_raw.reshape(-1),
-                nb_classes,
-            )
-        else:
-            y_train_for_poison = y_train_raw
+            return self._one_hot_encode(y_train_array.reshape(-1), nb_classes)
+        return y_train_array
 
-        start_time = time.perf_counter()
+    def _run_poison_attack(
+        self,
+        *,
+        attack_name: str,
+        attack: Any,
+        x_trigger: Any,
+        y_trigger: Any,
+        x_train: Any,
+        y_train_for_poison: Any,
+    ) -> tuple[Any, Any]:
         patched_torch_utils_data = None
         patched_dataloader = None
         try:
@@ -237,7 +296,7 @@ class PoisoningAttackMixin(AttackMixin):
 
                 torch_utils_data.DataLoader = _single_worker_loader
 
-            x_poison, y_poison = attack.poison(
+            return attack.poison(
                 x_trigger,
                 y_trigger,
                 x_train,
@@ -246,6 +305,77 @@ class PoisoningAttackMixin(AttackMixin):
         finally:
             if patched_torch_utils_data is not None and patched_dataloader is not None:
                 patched_torch_utils_data.DataLoader = patched_dataloader
+
+    def _finalize_poison_runtime(
+        self,
+        *,
+        poisoned_pred: MatrixLike,
+        y_eval: MatrixLike,
+        merged_scores: Mapping[str, Any],
+        attack_obj: Any,
+    ) -> ScoreDict:
+        return self._finalize_attack_state(
+            attack=attack_obj,
+            attack_predictions=poisoned_pred,
+            attacked_labels=y_eval,
+            score_dict=merged_scores,
+        )
+
+    def poison(
+        self,
+        data: DataConfig,
+        art_model: Any,
+        attack: Any,
+    ) -> ScoreDict:
+        """Execute poisoning workflow and emit poisoned/benign comparison metrics."""
+
+        attack_name: StringifiedClass = type(attack).__name__.lower()
+        if "poisoningattacksvm" in attack_name:
+            return self._poison_svm(data=data, art_model=art_model, attack=attack)
+
+        (
+            class_source,
+            class_target,
+            trigger_index,
+            poison_fit_params,
+            mode_used,
+            x_train,
+            y_train_raw,
+            x_eval,
+            y_eval,
+            y_eval_class,
+        ) = self._resolve_poison_context(data)
+
+        # ART GradientMatching on macOS can fail with spawned DataLoader workers;
+        # force CPU and single-worker loaders for deterministic smoke/integration runs.
+        self._prepare_gradient_matching_attack(attack_name, art_model)
+
+        (
+            class_source,
+            x_trigger,
+            y_trigger,
+            trigger_idx,
+            nb_classes,
+        ) = self._select_poison_trigger(
+            class_source=class_source,
+            class_target=class_target,
+            trigger_index=trigger_index,
+            mode_used=mode_used,
+            x_eval=x_eval,
+            y_eval_class=y_eval_class,
+        )
+
+        y_train_for_poison = self._build_poison_training_labels(y_train_raw, nb_classes)
+
+        start_time = time.perf_counter()
+        x_poison, y_poison = self._run_poison_attack(
+            attack_name=attack_name,
+            attack=attack,
+            x_trigger=x_trigger,
+            y_trigger=y_trigger,
+            x_train=x_train,
+            y_train_for_poison=y_train_for_poison,
+        )
         self.attack_time = time.perf_counter() - start_time
         logger.info(
             f"Poison generation took {self.attack_time} seconds for {len(x_poison)} training samples",
@@ -276,66 +406,40 @@ class PoisoningAttackMixin(AttackMixin):
             f"Poisoned model fit + prediction took {self.attack_prediction_time} seconds on {mode_used} split",
         )
 
-        benign_labels = self._prediction_to_labels(benign_pred, is_regression=False)
-        poisoned_labels = self._prediction_to_labels(
-            poisoned_pred,
-            is_regression=False,
-        )
-
         start_time = time.perf_counter()
-        benign_scores = self._score_comparison(
-            y_true=y_eval,
-            y_pred=benign_labels,
-            stage="benign",
-            prefix="benign",
-            is_classification=True,
-            y_proba=benign_pred,
-            mode=mode_used,
-        )
-        poisoned_scores = self._score_comparison(
-            y_true=y_eval,
-            y_pred=poisoned_labels,
-            stage="adversarial",
-            prefix="poisoned",
-            is_classification=True,
-            y_proba=poisoned_pred,
-            mode=mode_used,
-        )
-
         trigger_pred = art_model.predict(x_trigger)
         trigger_label = int(self._labels_from_classifier_predictions(trigger_pred)[0])
-        self.attack_score_time = time.perf_counter() - start_time
-
-        self.attack_predictions = poisoned_pred
-        self.attacked_labels = y_eval
-        self.attack = art_model
-        merged_scores = self._with_targeted_attack_labels(
-            ScoreDict.from_payload(
-                {
-                    **benign_scores,
-                    **poisoned_scores,
-                    "poison_attack_target_class": class_target,
-                    "poison_attack_source_class": class_source,
-                    "poison_trigger_index": trigger_idx,
-                    "poison_trigger_predicted_class": trigger_label,
-                    "poison_trigger_success": int(trigger_label == class_target),
-                    "attack_size": len(x_poison),
-                    "poison_mode": mode_used,
-                },
-            ),
-            "poisoning",
+        merged_scores = self._score_poison_predictions(
+            mode_used=mode_used,
+            y_eval=y_eval,
+            benign_pred=benign_pred,
+            poisoned_pred=poisoned_pred,
+            extra_scores={
+                "poison_attack_target_class": class_target,
+                "poison_attack_source_class": class_source,
+                "poison_trigger_index": trigger_idx,
+                "poison_trigger_predicted_class": trigger_label,
+                "poison_trigger_success": int(trigger_label == class_target),
+                "attack_size": len(x_poison),
+                "poison_mode": mode_used,
+            },
         )
-        self.score_dict = ScoreDict.from_payload({**self.score_dict, **merged_scores})
-        return ScoreDict.from_payload(self.score_dict)
+        self.attack_score_time = time.perf_counter() - start_time
+        return self._finalize_poison_runtime(
+            poisoned_pred=poisoned_pred,
+            y_eval=y_eval,
+            merged_scores=merged_scores,
+            attack_obj=art_model,
+        )
 
     def _poison_svm(
         self,
         data: DataConfig,
-        art_model: _PoisoningArtModel,
-        attack: _PoisoningAttack,
+        art_model: Any,
+        attack: Any,
     ) -> ScoreDict:
         """Execute an ART PoisoningAttackSVM attack and score benign vs poisoned model accuracy."""
-        poison_fit_params = self.attack_params.get("poison_fit_params", {})
+        poison_fit_params = dict(self.attack_params.get("poison_fit_params", {}) or {})
 
         x_train = self._to_numpy_array(
             self._prepare_features_for_attack(getattr(data, "X_train")),
@@ -380,50 +484,25 @@ class PoisoningAttackMixin(AttackMixin):
             f"SVM poisoned model fit + prediction took {self.attack_prediction_time} seconds on {mode_used} split",
         )
 
-        benign_labels = self._prediction_to_labels(benign_pred, is_regression=False)
-        poisoned_labels = self._prediction_to_labels(
-            poisoned_pred,
-            is_regression=False,
-        )
-
         start_time = time.perf_counter()
-        benign_scores = self._score_comparison(
-            y_true=y_eval,
-            y_pred=benign_labels,
-            stage="benign",
-            prefix="benign",
-            is_classification=True,
-            y_proba=benign_pred,
-            mode=mode_used,
-        )
-        poisoned_scores = self._score_comparison(
-            y_true=y_eval,
-            y_pred=poisoned_labels,
-            stage="adversarial",
-            prefix="poisoned",
-            is_classification=True,
-            y_proba=poisoned_pred,
-            mode=mode_used,
+        merged_scores = self._score_poison_predictions(
+            mode_used=mode_used,
+            y_eval=y_eval,
+            benign_pred=benign_pred,
+            poisoned_pred=poisoned_pred,
+            extra_scores={
+                "poisoning_attack_points": int(len(x_adv_arr)),
+                "poison_mode": mode_used,
+                "attack_size": int(len(x_adv_arr)),
+            },
         )
         self.attack_score_time = time.perf_counter() - start_time
-
-        self.attack_predictions = poisoned_pred
-        self.attacked_labels = y_eval
-        self.attack = art_model
-        merged_scores = self._with_targeted_attack_labels(
-            ScoreDict.from_payload(
-                {
-                    **benign_scores,
-                    **poisoned_scores,
-                    "poisoning_attack_points": int(len(x_adv_arr)),
-                    "poison_mode": mode_used,
-                    "attack_size": int(len(x_adv_arr)),
-                },
-            ),
-            "poisoning",
+        return self._finalize_poison_runtime(
+            poisoned_pred=poisoned_pred,
+            y_eval=y_eval,
+            merged_scores=merged_scores,
+            attack_obj=art_model,
         )
-        self.score_dict = ScoreDict.from_payload({**self.score_dict, **merged_scores})
-        return ScoreDict.from_payload(self.score_dict)
 
     @staticmethod
     def _is_nn_art_classifier(art_model) -> bool:
@@ -493,23 +572,5 @@ class PoisoningAttackMixin(AttackMixin):
         return "test", X_test, y_test
 
 
-@dataclass(eq=False, kw_only=True)
-class PoisoningAttackConfig(PoisoningAttackMixin, AttackConfig):
-    """Configuration for poisoning attacks that corrupt training data.
-
-    Note:
-        Expected family is ``poisoning``. Runtime behavior is delegated to
-        ``PoisoningAttackMixin`` through the default ``AttackTypePlugin``.
-
-    Attributes:
-        plugins: Default plugin wiring for ``attack_family='poisoning'``.
-    """
-
-    plugins: list = field(
-        default_factory=lambda: [
-            AttackTypePlugin(
-                mixin_type="deckard.attack.poisoning.PoisoningAttackConfig",
-                attack_family="poisoning",
-            ),
-        ],
-    )
+    # Note:
+    #     Expected family is ``poisoning``.

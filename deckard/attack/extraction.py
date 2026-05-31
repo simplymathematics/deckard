@@ -13,14 +13,15 @@ from ..frameworks.types import AttackLike, EstimatorLike, MatrixLike
 from ..model import ModelConfig
 from ..score.base import DefaultClassifierScorerDictConfig
 
-from .base import AttackConfig, AttackFamily, AttackSubFamily, AttackTypePlugin
-from .poisoning import PoisoningAttackMixin
+from .base import AttackConfig, AttackFamily, AttackSubFamily
+from .poisoning import PoisoningAttackConfig
 
 logger = logging.getLogger(__name__)
 
 
-class ExtractionAttackMixin(PoisoningAttackMixin):
-    """Reusable extraction attack behavior (model stealing).
+@dataclass(eq=False, kw_only=True)
+class ExtractionAttackConfig(PoisoningAttackConfig):
+    """Configuration for model extraction attacks (model stealing).
 
     Attributes:
         score_dict: Runtime score payload for extraction metrics.
@@ -92,7 +93,7 @@ class ExtractionAttackMixin(PoisoningAttackMixin):
         _ = attack_sub_family
         if (attack_family or "").lower() != "extraction":
             raise ValueError(
-                f"_ExtractionAttackMixin received unsupported attack family: {attack_family}",
+                f"_ExtractionAttackConfig received unsupported attack family: {attack_family}",
             )
         return self.extract(data=data, art_model=art_model, attack=attack)
 
@@ -212,38 +213,18 @@ class ExtractionAttackMixin(PoisoningAttackMixin):
         )
         self.attack_score_time = time.perf_counter() - start_time
 
-        self.attack_predictions = extracted_pred
-        self.attacked_labels = y_eval
-        self.attack = extracted_classifier
-        self.score_dict = ScoreDict.from_payload(
-            {
-                **self.score_dict,
+        return self._finalize_attack_state(
+            attack=extracted_classifier,
+            attack_predictions=extracted_pred,
+            attacked_labels=y_eval,
+            score_dict={
                 **benign_scores,
                 **extracted_scores,
                 "attack_size": n,
                 "extraction_mode": mode_used,
             },
         )
-        return ScoreDict.from_payload(self.score_dict)
 
 
-@dataclass(eq=False, kw_only=True)
-class ExtractionAttackConfig(ExtractionAttackMixin, AttackConfig):
-    """Configuration for model extraction attacks (model stealing).
-
-    Note:
-        Expected family is ``extraction``. Runtime behavior is delegated to
-        ``ExtractionAttackMixin`` through the default ``AttackTypePlugin``.
-
-    Attributes:
-        plugins: Default plugin wiring for ``attack_family='extraction'``.
-    """
-
-    plugins: list = field(
-        default_factory=lambda: [
-            AttackTypePlugin(
-                mixin_type="deckard.attack.extraction.ExtractionAttackConfig",
-                attack_family="extraction",
-            ),
-        ],
-    )
+    # Note:
+    #     Expected family is ``extraction``.
