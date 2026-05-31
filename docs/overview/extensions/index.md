@@ -41,6 +41,7 @@ See also [PyTorch framework overview](pytorch).
 Transformer workflows build on tokenization, encoded feature payloads, and
 transformer-specific trainer/runtime adapters.
 
+- [Transformers API](/api/transformers/index)
 - [Pipeline API](/api/data/pipeline)
 - [Model API](/api/model/index)
 - [Attack API](/api/attack/index)
@@ -60,7 +61,7 @@ Anjana adds anonymization-aware preprocessing and privacy-oriented scoring.
 - [Anjana API](/api/plugins/anjana)
 - [Anjana notebook](../../notebooks/anjana)
 
-See also {doc}`ANJANA plugin overview </api/plugins/anjana>`.
+See also [Anjana plugin overview](./anjana.md).
 
 ### Fairlearn
 
@@ -101,6 +102,8 @@ examples rather than a standalone plugin page.
 
 - [Attack API](/api/attack/index)
 - [Defense API](/api/model/defend)
+- [TextAttack API](/api/plugins/textattack)
+- [OpenAttack API](/api/plugins/openattack)
 - [art_attacks notebook](../../notebooks/art_attacks)
 - [art_defenses notebook](../../notebooks/art_defenses)
 - [detector notebook](../../notebooks/detector)
@@ -116,6 +119,7 @@ examples rather than a standalone plugin page.
 For consolidated dependency and plugin licensing references, see [LICENSES](../../LICENSES).
 
 ```{toctree}
+:maxdepth: 2
 :hidden:
 
 sklearn

@@ -30,15 +30,19 @@ Core themes covered in this section:
 
 Choose one path based on your goal:
 
-1. First steps: [Quickstart](quickstart) -> [Core Modules](core) -> [Experiment Workflow](./experiment.md) -> [Scoring](scoring) -> [API Reference](../api/modules)
-2. Tuning and optimization workflows: [Quickstart](quickstart) -> [Hydra](hydra) -> [Optimization](optimize) -> [DVC](dvc)
-3. Extending the software: [Core Modules](core) -> [Extensions](extensions/index) -> [Developer Docs](../developers/index)
+1. Core Concepts: [Overview](index) -> [Quickstart](quickstart) -> [Core Modules](core) -> [Experiment Workflow](./experiment.md) -> [Notebooks](../notebooks/index) -> [sklearn notebook](../notebooks/sklearn), [pytorch notebook](../notebooks/pytorch), or [huggingface notebook](../notebooks/huggingface)
+2. CLI and Optimization Workflow: [Overview](index) -> [Core Modules](core) -> [Hydra](hydra) -> [Optimization](optimize) -> [dvc notebook](../notebooks/dvc) -> [optuna notebook](../notebooks/optuna)
+3. API + Developer Docs flow (extension and maintenance work): [Core API](../api/modules) -> [Extensions](extensions/index) -> [Developer Docs](../developers/index)
 
 ## How This Section Is Organized
 
 This page follows the exact structure of the hidden toctree below. If you read
 in that order, you move from conceptual orientation to execution details,
-extension surfaces, and release/operations context.
+extension surfaces, to extending and contributing..
+
+From here, continue in this order for a consistent flow:
+[API Reference](../api/modules) -> [Extensions](extensions/index) ->
+[Notebooks](../notebooks/index) -> [Developer Docs](../developers/index).
 
 If you want only one API map page, use [API Reference](../api/modules).
 

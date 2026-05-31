@@ -286,10 +286,10 @@ optimization/dvc
 :hidden:
 :caption: Extension API
 
-extensions/mixins
-extensions/hooks
-extensions/plugins
 extensions/index
+extensions/plugins
+extensions/hooks
+extensions/mixins
 ```
 
 ```{toctree}

@@ -12,6 +12,7 @@ NOTEBOOKSDIR  ?= notebooks
 DVC           ?= dvc
 DVC_REPRO_ARGS ?=
 DVC_STAGE     ?=
+SKIP_DVC      ?= 0
 SPHINX_NB_OFF ?= -D nb_execution_mode=off
 AUTOBUILD_PORT ?= 8000
 AUTOBUILD_OPTS ?= -j auto --port $(AUTOBUILD_PORT)
@@ -30,12 +31,17 @@ help:
 	@echo "Optional variables:"
 	@echo "  DVC_STAGE=<stage>       Run one DVC stage (for example: notebook_fairlearn)"
 	@echo "  DVC_REPRO_ARGS='...'    Extra args forwarded to 'dvc repro'"
+	@echo "  SKIP_DVC=1              Skip DVC notebook repro and build Sphinx docs only"
 	@echo "  AUTOBUILD_PORT=<port>   Port used by sphinx-autobuild (default: $(AUTOBUILD_PORT))"
 	@echo "  AUTOBUILD_OPTS='...'    Extra args forwarded to sphinx-autobuild"
 
 .PHONY: help Makefile notebooks html html-with-notebooks autobuild clean
 
 notebooks:
+	@if [ "$(SKIP_DVC)" = "1" ]; then \
+		echo "Skipping DVC notebook pipeline (SKIP_DVC=1)."; \
+		exit 0; \
+	fi
 	@command -v "$(DVC)" >/dev/null 2>&1 || { \
 		echo "Error: dvc executable not found. Install DVC or run 'make html' for Sphinx-only docs."; \
 		exit 1; \
@@ -44,7 +50,12 @@ notebooks:
 	@cd "$(NOTEBOOKSDIR)" && $(DVC) repro $(DVC_REPRO_ARGS) $(DVC_STAGE)
 	@cd "$(NOTEBOOKSDIR)" && $(DVC) push || echo "DVC push: remote not configured; cache will be managed locally"
 
-html: notebooks
+html:
+	@if [ "$(SKIP_DVC)" = "1" ]; then \
+		echo "Building docs without DVC notebook repro (SKIP_DVC=1)."; \
+	else \
+		$(MAKE) notebooks DVC="$(DVC)" DVC_REPRO_ARGS="$(DVC_REPRO_ARGS)" DVC_STAGE="$(DVC_STAGE)"; \
+	fi
 	@$(SPHINXBUILD) -M html "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(SPHINX_NB_OFF) $(O)
 
 html-with-notebooks: notebooks
@@ -56,7 +67,7 @@ autobuild:
 		exit 1; \
 	}
 	@$(SPHINXAUTOBUILD) $(AUTOBUILD_OPTS) \
-		--pre-build '$(MAKE) notebooks DVC="$(DVC)" DVC_REPRO_ARGS="$(DVC_REPRO_ARGS)" DVC_STAGE="$(DVC_STAGE)"' \
+		--pre-build 'if [ "$(SKIP_DVC)" = "1" ]; then echo "Skipping DVC notebook pipeline (SKIP_DVC=1)."; else $(MAKE) notebooks DVC="$(DVC)" DVC_REPRO_ARGS="$(DVC_REPRO_ARGS)" DVC_STAGE="$(DVC_STAGE)"; fi' \
 		$(AUTOBUILD_WATCH) \
 		$(SPHINX_NB_OFF) \
 		"$(SOURCEDIR)" "$(BUILDDIR)/html"

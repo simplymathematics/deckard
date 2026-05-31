@@ -463,3 +463,11 @@ If you encounter issues with dataset loading, ensure that:
 - {doc}`/api/plugins/anjana` — anonymization-aware data
 - {doc}`/api/plugins/lifelines` — survival analysis data configuration
 - {doc}`/api/utils/index` — utility functions
+
+```{toctree}
+:maxdepth: 1
+:hidden:
+
+sample
+pipeline
+```

@@ -396,7 +396,7 @@ Status update (2026-05-22): DataConfig is now a legacy alias to DataConfig; runt
 
 #### Phase 5: DVC Pipeline Autogeneration
 
-Design spec: [DVC Pipeline Autogeneration Spec](../dvc)
+Design spec: [DVC Pipeline Autogeneration Spec](../optimization/dvc)
 
 - [x] Add utility to generate `dvc.yaml` from experiment persistence values and runtime stage graph.
 
@@ -408,7 +408,7 @@ Design spec: [DVC Pipeline Autogeneration Spec](../dvc)
 
 - [x] Enable Vega-Lite plot spec outputs (`*.vl.json`) for browser-renderable DVC plot artifacts (yellowbrick and seaborn plots should be supported, but not required).
 
-- [x] Create specs according to [DVC Pipeline Autogeneration Spec](../dvc) and deckard-native functionality. Create runnable Hydra YAML files for each plot with names like `attack_alias_vs_metric` or [`roc_auc`](https://www.scikit-yb.org/en/latest/api/classifier/rocauc.html).
+- [x] Create specs according to [DVC Pipeline Autogeneration Spec](../optimization/dvc) and deckard-native functionality. Create runnable Hydra YAML files for each plot with names like `attack_alias_vs_metric` or [`roc_auc`](https://www.scikit-yb.org/en/latest/api/classifier/rocauc.html).
 
 - [x] Ensure generated DVCLive/DVC output directories use runtime identity.
 
@@ -466,7 +466,7 @@ Goal:
 
 #### Phase 6: Hydra Single-Default Multi-Stage Execution
 
-Design specs: [Optimization Runtime Contract](../optimization) | [Hydra and Optuna Orchestration Contract](../hydra) | [Pruning Runtime Contract](../pruning)
+Design specs: [Optimization Runtime Contract](../optimization/optimization) | [Hydra and Optuna Orchestration Contract](../optimization/hydra) | [Pruning Runtime Contract](../optimization/pruning)
 
 - [x] Rename/default callback contract to `DefaultOptimizerCallback` as the configurable Hydra callback adapter.
 

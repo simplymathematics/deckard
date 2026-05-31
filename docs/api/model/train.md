@@ -3,7 +3,7 @@
 ## Contract References
 
 - Canonical API contract page: {doc}`/api/model/train`
-- Developer authoring contract: {doc}`../../developers/trainers`
+- Developer authoring contract: {doc}`/developers/model/trainers`
 - Shared config/mixin/plugin contracts: {doc}`/developers/design/configs`, {doc}`/developers/extensions/mixins`, {doc}`/developers/extensions/plugins`
 
 ## Introduction
@@ -76,5 +76,5 @@ model:
 
 - {doc}`index`
 - {doc}`/api/model/defend`
-- {doc}`../score`
-- {doc}`../../developers/trainers`
+- {doc}`/api/score/index`
+- {doc}`/developers/model/trainers`

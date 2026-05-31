@@ -6,6 +6,10 @@ things you see are the parts that shape almost every run: configuration,
 orchestration, reproducibility, and the trustworthiness metrics that sit on top
 of them.
 
+The documentation follows one consistent story:
+Overview -> Core API -> Extensions -> Notebooks -> Developer Docs.
+Use this page as the routing layer into those sections.
+
 ## First Things First
 
 Start here if you want the shortest path through the system:
@@ -17,42 +21,43 @@ Start here if you want the shortest path through the system:
 
 Trustworthiness concerns come next and are built into the same workflow:
 
-1. [ART / robustness](api/modules) through adversarial attack and defense components.
-2. [Anjana](api/plugins/anjana) for privacy-aware preprocessing and anonymization.
-3. [Fairlearn](api/plugins/fairlearn) for fairness-aware evaluation.
-4. [Lifelines](api/plugins/lifelines) for survival and failure modeling.
+1. [ART / robustness](api/modules) through adversarial attack and defense components. Notebooks: [art_attacks](notebooks/art_attacks), [art_defenses](notebooks/art_defenses), [detector](notebooks/detector).
+2. [Anjana](api/plugins/anjana) for privacy-aware preprocessing and anonymization. Notebook: [anjana](notebooks/anjana).
+3. [Fairlearn](api/plugins/fairlearn) for fairness-aware evaluation. Notebook: [fairlearn](notebooks/fairlearn).
+4. [Lifelines](api/plugins/lifelines) for survival and failure modeling. Notebook: [lifelines](notebooks/lifelines).
+5. [TextAttack](api/plugins/textattack) for plugin-backed text attack recipes. Notebook: [art_attacks](notebooks/art_attacks).
+6. [OpenAttack](api/plugins/openattack) for plugin-backed text attack integrations. Notebook: [art_attacks](notebooks/art_attacks).
 
-Popular framework and plotting support is available through extensions:
+Popular model frameworks is available through framework extensions:
 
 1. [sklearn](overview/extensions/sklearn)
 2. [PyTorch](overview/extensions/pytorch)
-3. [Seaborn](overview/extensions/seaborn)
-4. [Yellowbrick](overview/extensions/yellowbrick)
+3. [Transformers](overview/extensions/transformers)
 
-## Where To Go Next
+Visualization, diagnostics, and explainability available through plugin extensions.
+1. [Seaborn](overview/extensions/seaborn)
+2. [Yellowbrick](overview/extensions/yellowbrick)
 
-If you are new to the project, begin with:
+## Navigation
 
-1. [Overview -> Quickstart](overview/quickstart)
-2. [Overview -> Core Modules](overview/core)
-3. [Overview -> Experiment Workflow](overview/experiment)
-4. [Notebooks -> sklearn](notebooks/sklearn) or [Notebooks -> pytorch](notebooks/pytorch)
 
-If you are extending the framework, begin with:
+Choose your own adventure:
 
-1. [Core API](api/modules)
-2. [Overview -> Extensions](overview/extensions/index)
-3. [Developer Docs](developers/index)
+### Core Concepts:
+	[Overview](overview/index) -> [Quickstart](overview/quickstart) ->
+	[Core Modules](overview/core) -> [Experiment Workflow](overview/experiment) ->
+	[Notebooks](notebooks/index) -> [sklearn notebook](notebooks/sklearn),
+	[pytorch notebook](notebooks/pytorch), or
+	[huggingface notebook](notebooks/huggingface)
 
-## Reference Areas
+### CLI and Optimization Workflow:
+	[Overview](overview/index) -> [Core Modules](overview/core) ->
+	[Hydra](overview/hydra) -> [Optimization](overview/optimize) ->
+	[dvc notebook](notebooks/dvc) -> [optuna notebook](notebooks/optuna)
 
-Use these sections for the deeper material behind the landing page:
-
-- [Overview](overview/index): the main conceptual and workflow entry point.
-- [Core API](api/modules): module-level behavior, defaults, and extension points.
-- [Extensions](overview/extensions/index): framework and plugin subsystems.
-- [Notebooks](notebooks/index): executable end-to-end examples.
-- [Developer Docs](developers/index): documentation standards, security notes, and contribution guidance.
+### API + Developer Docs flow (extension and maintenance work):
+	[Core API](api/modules) -> [Extensions](overview/extensions/index) ->
+	[Developer Docs](developers/index)
 
 ## Licensing
 
@@ -61,11 +66,10 @@ Use these sections for the deeper material behind the landing page:
 
 ```{toctree}
 :maxdepth: 2
-:caption: Overview
+:caption: Start Here
 :hidden:
 
 overview/index
-LICENSES
 ```
 
 ```{toctree}
@@ -74,6 +78,14 @@ LICENSES
 :hidden:
 
 api/modules
+```
+
+```{toctree}
+:maxdepth: 2
+:caption: Extensions
+:hidden:
+
+api/plugins/index
 ```
 
 ```{toctree}
@@ -90,4 +102,12 @@ notebooks/index
 :hidden:
 
 developers/index
+```
+
+```{toctree}
+:maxdepth: 1
+:caption: References
+:hidden:
+
+LICENSES
 ```

@@ -69,6 +69,39 @@ Key behavior includes:
 See also {doc}`../attack/index`, {doc}`../model/index`, and
 {doc}`../score/index` for cross-component composition.
 
+### Attack Configuration With Transformers
+
+Transformers workflows use the same flattened attack runtime model as the core
+API: instantiate {class}`deckard.attack.base.AttackConfig` with a canonical
+attack `name`, then let runtime resolution select the concrete handler.
+
+Common transformer attack name patterns:
+
+- Built-in ART attacks: `art.attacks.evasion.*`
+- TextAttack plugin attacks: `textattack.attack_recipes.*` (see {doc}`../plugins/textattack`)
+- OpenAttack plugin attacks: `OpenAttack.attackers.*` (see {doc}`../plugins/openattack`)
+
+Example:
+
+```python
+from deckard.attack import AttackConfig
+
+attack_cfg = AttackConfig(
+  name="textattack.attack_recipes.textfooler_jin_2019.TextFoolerJin2019",
+  attack_params={"split": "test"},
+)
+
+scores = attack_cfg.run(
+  data=data_cfg,
+  model=model_cfg,
+  files=files_cfg.as_dict(),
+)
+```
+
+This dispatches through {class}`deckard.plugins.textattack.attack.TextAttackConfig`
+at runtime while preserving the shared {class}`deckard.attack.base.AttackConfig`
+API surface (`run`, `load`, `score`, and runtime resolver wrappers).
+
 ### Persistence Contract
 
 - Model config persistence follows the same YAML-based config save or load flow

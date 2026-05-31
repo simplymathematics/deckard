@@ -14,7 +14,7 @@ modifying the core.
 - **Reproducibility**: All workflows are [DVC](https://dvc.org)- and
   [Hydra](https://hydra.cc)-compatible for reproducible runs.
 
-See the [Refactor Plan](../refactor_plan) for implementation details and ongoing goals.
+See the [Refactor Plan](../future/refactor_plan) for implementation details and ongoing goals.
 
 ## Canonical Runtime Decisions
 
@@ -36,4 +36,4 @@ These decisions are now treated as stable runtime and contributor policy:
 
 ______________________________________________________________________
 
-**Related:** [Naming Conventions](../naming) | {doc}`Mixin and Plugin Rules <../extensions/plugins>`
+**Related:** [Naming Conventions](../contributor/naming) | {doc}`Mixin and Plugin Rules <../extensions/plugins>`

@@ -9,9 +9,9 @@ for privacy-preserving machine-learning workflows.
 
 Parent core pages:
 
-- {doc}`../data`
-- {doc}`../model`
-- {doc}`../score`
+- {doc}`/api/data/index`
+- {doc}`/api/model/index`
+- {doc}`/api/score/index`
 
 Behavior deltas in this integration:
 
@@ -21,9 +21,9 @@ Behavior deltas in this integration:
 
 Related Deckard docs:
 
-- {doc}`../data` for data pipeline composition
-- {doc}`../model` for training/evaluation stages after anonymization
-- {doc}`../score` for utility/privacy scoring hooks
+- {doc}`/api/data/index` for data pipeline composition
+- {doc}`/api/model/index` for training/evaluation stages after anonymization
+- {doc}`/api/score/index` for utility/privacy scoring hooks
 - {doc}`/overview/extensions/index` for extension mapping
 
 External references:
@@ -71,8 +71,8 @@ compose with other plugin score tails, including Fairlearn-last merges.
 
 ## See also
 
-- {doc}`../data`
-- {doc}`../pipeline`
+- {doc}`/api/data/index`
+- {doc}`/api/data/pipeline`
 - {doc}`/api/plugins/fairlearn`
 - {doc}`/developers/data/data`
 - {doc}`/developers/contributor/migration`

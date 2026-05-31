@@ -57,7 +57,7 @@ Canonical runtime contract:
 
 Deckard runtime attack dispatch is centered on
 {class}`deckard.attack.base.AttackConfig`, which resolves a family/subtype and
-dispatches to mixin handlers via plugins.
+dispatches to direct `*AttackConfig` runtime handlers
 
 Attack execution ordering is explicit in runtime metadata and defaults to
 `post-defense`, so downstream scoring and detector layers can reason about
@@ -194,12 +194,53 @@ Related Deckard docs:
 - {doc}`/api/model/defend` for defense pipeline and defense mixin dispatch
 - {doc}`/api/score/index` for attack-specific scorer profiles
 - {doc}`/api/pytorch/index` for ART estimator integration in torch workflows
-- {doc}`/api/plugins/fairlearn`, {doc}`/api/plugins/lifelines`, and {doc}`/api/plugins/anjana` for plugin-specific attack/scoring integrations
+- {doc}`/api/plugins/textattack` and {doc}`/api/plugins/openattack` for text attack plugin runtime integrations
+- {doc}`/api/plugins/fairlearn`, {doc}`/api/plugins/lifelines`, and {doc}`/api/plugins/anjana` for additional plugin-specific attack/scoring integrations
 
 ## Integrations
 
 - Framework integration: {doc}`/api/pytorch/index`
-- Plugin integrations: {doc}`/api/plugins/fairlearn`, {doc}`/api/plugins/lifelines`, {doc}`/api/plugins/anjana`
+- Plugin integrations: {doc}`/api/plugins/index`
+
+## Runtime API Surface
+
+Stable runtime entrypoints on {class}`deckard.attack.base.AttackConfig`:
+
+- `run(data, model, files=...)` executes attack orchestration.
+- `load(attack_file=..., attack_predictions_file=...)` loads cached artifacts.
+- `score(attack_kind=..., y_true=..., y_pred=...)` forwards to scorer runtime.
+- `resolve_runtime_attack_config(attack_family, attack_sub_family)` returns
+   runtime `*AttackConfig` handlers.
+- `resolve_runtime_attack_handler(attack_family, attack_sub_family)` resolves
+   the callable runtime attack handler.
+
+### Python API Examples
+
+```python
+from deckard.attack import AttackConfig
+
+# Built-in ART attack path.
+attack = AttackConfig(name="art.attacks.evasion.FastGradientMethod")
+scores = attack.run(data=data_cfg, model=model_cfg, files=files_cfg.as_dict())
+
+# TextAttack plugin path through canonical attack name.
+textattack = AttackConfig(
+   name="textattack.attack_recipes.textfooler_jin_2019.TextFoolerJin2019",
+)
+textattack_handler = textattack.resolve_runtime_attack_handler("evasion", "")
+
+# OpenAttack plugin path through canonical attack name.
+openattack = AttackConfig(
+   name="OpenAttack.attackers.PWWSAttacker",
+)
+openattack_handler = openattack.resolve_runtime_attack_handler("evasion", "")
+```
+
+### CLI Example
+
+```bash
+python -m deckard +attack.name=art.attacks.evasion.FastGradientMethod
+```
 
 ## Examples
 
@@ -217,12 +258,56 @@ Related Deckard docs:
 
 ```yaml
 attack:
-   _target_: deckard.attack.base.AttackConfig
    name: art.attacks.evasion.FastGradientMethod
    attack_params:
       eps: 0.1
    attack_size: 100
 ```
+
+## Plugin YAML Examples
+
+```yaml
+attack:
+   name: textattack.attack_recipes.a2t_yoo_2021.A2TYoo2021
+   attack_params:
+      split: test
+      fail_on_error: false
+```
+
+```yaml
+attack:
+   name: OpenAttack.attackers.PWWSAttacker
+   attack_params:
+      split: test
+      fail_on_error: false
+```
+
+## Transformers-Oriented Example
+
+```yaml
+model:
+   _target_: deckard.frameworks.transformers.model.HuggingFacePytorchModelConfig
+
+attack:
+   name: textattack.attack_recipes.textfooler_jin_2019.TextFoolerJin2019
+   attack_params:
+      split: test
+```
+
+## Troubleshooting
+
+- Ensure the selected attack backend matches the active model backend.
+- Confirm attack parameters are valid for the chosen ART/Fairlearn attack type.
+- Verify the attack receives compatible input shapes and labels.
+
+### See also
+
+- {doc}`/api/experiment/index` — experiment orchestration
+- {doc}`/api/model/index` — model configuration and execution
+- {doc}`/api/model/defend` — defense pipeline configuration and mixin behavior
+- {doc}`/api/data/index` — data loading and split handling
+- {doc}`/api/data/sample` — sampling/split strategy definitions
+- {doc}`/api/score/index` — attack scoring profiles
 
 ## API Reference
 
@@ -263,18 +348,3 @@ attack:
 ```
 
 Framework-specific attack adapters are documented in {doc}`/api/pytorch/index`.
-
-## Troubleshooting
-
-- Ensure the selected attack backend matches the active model backend.
-- Confirm attack parameters are valid for the chosen ART/Fairlearn attack type.
-- Verify the attack receives compatible input shapes and labels.
-
-### See also
-
-- {doc}`/api/experiment/index` — experiment orchestration
-- {doc}`/api/model/index` — model configuration and execution
-- {doc}`/api/model/defend` — defense pipeline configuration and mixin behavior
-- {doc}`/api/data/index` — data loading and split handling
-- {doc}`/api/data/sample` — sampling/split strategy definitions
-- {doc}`/api/score/index` — attack scoring profiles

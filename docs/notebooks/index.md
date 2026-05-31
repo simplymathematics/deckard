@@ -36,6 +36,8 @@ Framework support:
   data transforms, model execution, and score composition.
 - {doc}`pytorch </notebooks/pytorch>` demonstrates torch-native training and evaluation flows,
   including dataset loaders, tensor models, and attack-aware scoring.
+- {doc}`huggingface </notebooks/huggingface>` demonstrates Hugging Face dataset/model workflows
+  integrated with Deckard attack and scoring orchestration.
 
 Plugin functionality:
 
@@ -54,6 +56,7 @@ Plugin functionality:
 
 - {doc}`sklearn </notebooks/sklearn>` - End-to-end sklearn experiments.
 - {doc}`pytorch </notebooks/pytorch>` - End-to-end PyTorch experiments.
+- {doc}`huggingface </notebooks/huggingface>` - End-to-end Hugging Face + ART attack workflow.
 - {doc}`hydra </notebooks/hydra>` - [Hydra](https://hydra.cc) config composition and overrides.
 <!-- - {doc}`optimize </notebooks/optimize>` - optimize runtime demonstrations for run and multirun execution. -->
 - {doc}`dvc </notebooks/dvc>` - DVC stage planning, canonical stage contracts, and stage decomposition.
@@ -87,6 +90,7 @@ DVC-backed docs build.
 | --- | --- | --- |
 | {doc}`sklearn </notebooks/sklearn>` | Canonical tabular runtime flow | score artifacts, experiment outputs, and split-aware scoring examples |
 | {doc}`pytorch </notebooks/pytorch>` | Torch-native training and checkpoint flow | checkpoint files, score artifacts, and model-state examples |
+| {doc}`huggingface </notebooks/huggingface>` | Transformer-native text pipeline and attack flow | transformer checkpoints, attack score summaries, and Hugging Face dataset-driven outputs |
 | {doc}`hydra </notebooks/hydra>` | Compose-first config and override behavior | single-run params or score artifacts and resolved override examples |
 <!-- | {doc}`optimize </notebooks/optimize>` | Run versus multirun optimization flow | `params.yaml`, `scores.json`, Optuna storage examples, and cache reuse templates | -->
 | {doc}`dvc </notebooks/dvc>` | DVC stage planning and contract decomposition | canonical stage mappings, stage plan summaries, and contract-oriented inspection outputs |
@@ -150,9 +154,10 @@ For general onboarding:
 
 1. {doc}`sklearn </notebooks/sklearn>`
 2. {doc}`pytorch </notebooks/pytorch>`
-3. {doc}`hydra </notebooks/hydra>`
+3. {doc}`huggingface </notebooks/huggingface>`
+4. {doc}`hydra </notebooks/hydra>`
 <!-- 1. {doc}`optimize </notebooks/optimize>` -->
-4. {doc}`optuna </notebooks/optuna>`
+5. {doc}`optuna </notebooks/optuna>`
 
 For fairness-first users:
 
@@ -199,6 +204,7 @@ For reporting, explainability, and diagnostics:
 :hidden:
 sklearn
 pytorch
+huggingface
 art_attacks
 art_defenses
 detector

@@ -168,9 +168,9 @@ Detailed failure semantics:
 
 ## Cross-Document Dependencies
 
-- Execution boundaries and score contract: [Optimization Runtime Contract](../optimization)
-- Orchestration and callback lifecycle: [Hydra and Optuna Orchestration Contract](../hydra)
-- Reporting and artifact mapping: [DVC Pipeline Autogeneration Spec](../dvc)
+- Execution boundaries and score contract: [Optimization Runtime Contract](../optimization/optimization)
+- Orchestration and callback lifecycle: [Hydra and Optuna Orchestration Contract](../optimization/hydra)
+- Reporting and artifact mapping: [DVC Pipeline Autogeneration Spec](../optimization/dvc)
 
 ## Test Requirements
 

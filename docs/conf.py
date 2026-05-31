@@ -40,6 +40,8 @@ templates_path = []
 
 exclude_patterns = [
     "build",
+    "jupyter_execute",
+    "jupyter_execute/**",
     "**.ipynb_checkpoints",
     "notebooks/build",
     "notebooks/dvc.lock",

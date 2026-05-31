@@ -17,11 +17,11 @@ between core orchestration and extension adapters.
 
 Related docs:
 
-- [Experiment Runtime Contract](../optimization)
-- [Hydra and Optuna Orchestration Contract](../hydra)
-- [Pruning Runtime Contract](../pruning)
-- [DVC Pipeline Autogeneration Spec](../dvc)
-- [Refactor Plan](../refactor_plan)
+- [Experiment Runtime Contract](../optimization/optimization)
+- [Hydra and Optuna Orchestration Contract](../optimization/hydra)
+- [Pruning Runtime Contract](../optimization/pruning)
+- [DVC Pipeline Autogeneration Spec](../optimization/dvc)
+- [Refactor Plan](../future/refactor_plan)
 
 ## Experiment Canon
 

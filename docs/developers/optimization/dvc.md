@@ -12,11 +12,11 @@ It describes the finalized runtime behavior for generating reproducible `dvc.yam
 
 Related contracts:
 
-- [Optimization Runtime Contract](../optimization)
+- [Optimization Runtime Contract](../optimization/optimization)
 
-- [Hydra and Optuna Orchestration Contract](../hydra)
+- [Hydra and Optuna Orchestration Contract](../optimization/hydra)
 
-- [Pruning Runtime Contract](../pruning)
+- [Pruning Runtime Contract](../optimization/pruning)
 
 ## Goals
 
@@ -654,6 +654,6 @@ This contract is satisfied when all are true:
 
 - Expanded integration coverage should build on this contract with end-to-end DVC validation.
 
-- Optimization runtime behavior is specified in [Optimization Runtime Contract](../optimization).
+- Optimization runtime behavior is specified in [Optimization Runtime Contract](../optimization/optimization).
 
-- Hydra and sweeper lifecycle behavior is specified in [Hydra and Optuna Orchestration Contract](../hydra).
+- Hydra and sweeper lifecycle behavior is specified in [Hydra and Optuna Orchestration Contract](../optimization/hydra).

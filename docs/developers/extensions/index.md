@@ -14,6 +14,7 @@ index stay focused on the higher-level runtime families.
 The extension docs are organized by implementation family:
 
 - Framework-specific runtime docs: {doc}`pytorch`
+- Framework-specific runtime docs: {doc}`transformers`
 - Plugin-specific runtime docs: {doc}`anjana`, {doc}`fairlearn`
 
 Each page covers the internal contract for its subsystem and links back to the
@@ -36,6 +37,7 @@ framework or plugin-specific lifecycle.
 ## Extension Points
 
 - {doc}`pytorch`
+- {doc}`transformers`
 - {doc}`anjana`
 - {doc}`fairlearn`
 
@@ -60,6 +62,7 @@ from the root developer index if needed.
 :maxdepth: 1
 
 pytorch
+transformers
 anjana
 fairlearn
 ```

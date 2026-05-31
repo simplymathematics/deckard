@@ -52,8 +52,8 @@ are documented in {doc}`/developers/model/model`.
 Integration-specific capabilities are documented in dedicated pages so this
 core API page remains focused on base model behavior:
 
-- Framework integration: {doc}`../pytorch`
-- Plugin integrations: {doc}`../fairlearn`, {doc}`../lifelines`, {doc}`../anjana`
+- Framework integration: {doc}`/api/pytorch/index`
+- Plugin integrations: {doc}`/api/plugins/fairlearn`, {doc}`/api/plugins/lifelines`, {doc}`/api/plugins/anjana`
 
 ## Overview
 
@@ -91,7 +91,7 @@ Currently supports:
 ### Defense pipeline integration
 
 Model configs can compose deckard defense pipelines used during robustness
-evaluation. See {doc}`../attack` for paired attack orchestration and {doc}`../score`
+evaluation. See {doc}`/api/attack/index` for paired attack orchestration and {doc}`/api/score/index`
 for attack-aware scorer profiles.
 
 Defense application is stage-aware and follows the canonical model stages:
@@ -155,13 +155,21 @@ and framework adapter boundaries) are documented in
 
 ### See also
 
-- {doc}`../data` — data configuration and loading
+- {doc}`/api/data/index` — data configuration and loading
 - {doc}`/api/model/train` — training runtime mixins and trainer-defense behavior
 - {doc}`/api/model/defend` — defense pipeline and defense-family mixins
-- {doc}`../experiment` — experiment orchestration
-- {doc}`../attack` — attack configuration
-- {doc}`../score` — scoring framework
-- {doc}`../pytorch` — PyTorch model integration
-- {doc}`../anjana` — anonymization-aware models
-- {doc}`../lifelines` — survival model configuration
-- {doc}`../utils` — utility functions
+- {doc}`/api/experiment/index` — experiment orchestration
+- {doc}`/api/attack/index` — attack configuration
+- {doc}`/api/score/index` — scoring framework
+- {doc}`/api/pytorch/index` — PyTorch model integration
+- {doc}`/api/plugins/anjana` — anonymization-aware models
+- {doc}`/api/plugins/lifelines` — survival model configuration
+- {doc}`/api/utils/index` — utility functions
+
+```{toctree}
+:maxdepth: 1
+:hidden:
+
+train
+defend
+```

@@ -97,6 +97,7 @@ stages:
     - ./build/art_attacks/sklearn_membership_attack.pkl
     - ./build/art_attacks/sklearn_model.pkl
     - ./build/art_attacks/svm.pkl
+
     - ./build/art_attacks/torch_evasion_attack.pkl
     - ./build/art_attacks/torch_model.pkl
     - ./build/art_attacks/torch_extraction_model.pkl
@@ -165,6 +166,26 @@ stages:
     - ./build/pytorch/exp_model.pkl
     - ./build/pytorch/checkpoints/
     - ./build/pytorch/raw_data/
+
+  notebook_huggingface:
+    cmd: jupyter nbconvert --to notebook --execute --inplace huggingface.ipynb
+    deps:
+    - huggingface.ipynb
+    - ../../deckard/attack/
+    - ../../deckard/data/
+    - ../../deckard/model/
+    - ../../deckard/frameworks/transformers/
+    - ../../deckard/file.py
+    - ../../deckard/utils.py
+    - ../../examples/transformers/config/default.yaml
+    - ../../examples/transformers/hf_task_datasets.py
+    outs:
+    - ./build/huggingface/huggingface_results.csv
+    - ./build/huggingface/checkpoints/hf_model_state.pt
+    - ./build/huggingface/plots/huggingface_classification_report.png
+    - ./build/huggingface/plots/huggingface_line.png
+    - ./build/huggingface/plots/huggingface_scatter.png
+    
   notebook_hydra:
     cmd: jupyter nbconvert --to notebook --execute --inplace hydra.ipynb
     deps:

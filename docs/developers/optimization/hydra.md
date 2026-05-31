@@ -108,9 +108,9 @@ Persistence should include:
 
 ## Cross-Document Dependencies
 
-- Runtime optimization contract: [Optimization Runtime Contract](../optimization)
-- Pruning contract: [Pruning Runtime Contract](../pruning)
-- DVC/DVCLive contract: [DVC Pipeline Autogeneration Spec](../dvc)
+- Runtime optimization contract: [Optimization Runtime Contract](../optimization/optimization)
+- Pruning contract: [Pruning Runtime Contract](../optimization/pruning)
+- DVC/DVCLive contract: [DVC Pipeline Autogeneration Spec](../optimization/dvc)
 
 ## Test Requirements
 

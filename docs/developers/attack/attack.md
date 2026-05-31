@@ -15,13 +15,15 @@ adapter extensions.
 - Define attack scoring and persistence invariants.
 - Define attack-family routing guarantees for core runtime owners.
 - Define plugin and framework-adapter boundaries for attack execution.
+- Define direct `*AttackConfig` runtime dispatch for built-in and plugin attacks.
 
 ## Design Goals
 
 1. Keep attack behavior split-scoped through mode semantics (`auto`, `train`, `test`, `val`).
 2. Keep lifecycle reporting stage-scoped through canonical stage tokens (`pre-attack`, `post-attack`).
-3. Keep backend-specific behavior in framework/plugin wrappers, not in core attack orchestration.
+3. Keep backend-specific behavior in framework/plugin runtime config classes, not in core attack orchestration.
 4. Preserve files-only persistence contracts for attacked outputs and score artifacts.
+5. Keep canonical `name`-based dispatch as the first runtime resolver for built-in and plugin attack handlers.
 
 ## Constraints
 
@@ -29,6 +31,8 @@ adapter extensions.
 2. Attack score payloads must stay merge-safe with experiment-level score aggregation.
 3. Attack artifact persistence must route through canonical file aliases (`attack_file`, `attack_predictions_file`, `score_file`).
 4. Attack-family routing must preserve explicit evasion/poisoning/extraction/inference branches.
+5. Built-in first-party attack behavior must not depend on plugin wrappers.
+6. Plugin extensibility must remain explicit through hook interfaces, not implicit alias fallback.
 
 ## Acceptance Criteria
 
@@ -36,6 +40,8 @@ adapter extensions.
 2. Canonical attack stages normalize to lifecycle boundaries and are observable in outputs/hooks.
 3. Files-only persistence paths are used for attack outputs and downstream scoring artifacts.
 4. Attack scoring outputs remain compatible with experiment-level merge and persistence layers.
+5. Runtime dispatch resolves direct `*AttackConfig` handlers (`EvasionAttackConfig`, `PoisoningAttackConfig`, `InferenceAttackConfig`, `ExtractionAttackConfig`, and plugin `TextAttackConfig`/`OpenAttackConfig`).
+6. Built-in configs are the default runtime path; plugins remain optional extension points.
 
 ## Guardrail Tests
 
@@ -47,5 +53,5 @@ adapter extensions.
 
 - API: {doc}`/api/attack/index`
 - Workflow: {doc}`/developers/experiment/experiment`
-- Scoring contract: {doc}[score](../score)
+- Scoring contract: {doc}`/developers/experiment/score`
 - Plugin and hook execution: {doc}`/developers/extensions/hooks`

@@ -227,5 +227,5 @@ config stacks that cover each runtime owner boundary.
 
 ______________________________________________________________________
 
-**Related:** [Refactor Plan](../refactor_plan) | [Naming
-Conventions](../naming) | {doc}`Mixin and Plugin Rules <../extensions/plugins>`
+**Related:** [Refactor Plan](../future/refactor_plan) | [Naming
+Conventions](../contributor/naming) | {doc}`Mixin and Plugin Rules <../extensions/plugins>`

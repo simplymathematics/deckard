@@ -16,7 +16,7 @@ framework-adapter or plugin-integrated backends.
 - Render configured visual outputs from experiment or data sources.
 - Apply backend-specific plotting behavior behind shared plot config APIs.
 - Persist plot artifacts and runtime plot state metadata.
-- Render outputs produced by upstream {doc}`../experiment` and {doc}`../data` workflows.
+- Render outputs produced by upstream {doc}`/api/experiment/index` and {doc}`/api/data/index` workflows.
 
 Implementation-level plotting contracts are documented in {doc}`/developers/experiment/plot`.
 
@@ -88,7 +88,7 @@ Plot configs separate plotting intent from execution details. They support:
 - optional experiment-aware setup for plotting from prior outputs
 
 Hydra users can compose plot backends and parameters through config groups and
-overrides; see [Hydra](https://hydra.cc) and {doc}`../experiment` for runtime
+overrides; see [Hydra](https://hydra.cc) and {doc}`/api/experiment/index` for runtime
 composition context.
 
 ## Examples
@@ -171,9 +171,9 @@ plot:
 
 ### See also
 
-- {doc}`../experiment` — experiment orchestration and result generation
-- {doc}`../score` — scoring framework that produces plotting data
+- {doc}`/api/experiment/index` — experiment orchestration and result generation
+- {doc}`/api/score/index` — scoring framework that produces plotting data
 - {doc}[seaborn](../../overview/extensions/seaborn) — statistical visualization with Seaborn
 - {doc}[yellowbrick](../../overview/extensions/yellowbrick) — model interpretability visualizations
 - {doc}[lifelines](../../overview/extensions/lifelines) — survival model and plotting integration
-- {doc}`../layers` — plot, survival, and pareto post-processing workflows
+- {doc}`/api/layers/index` — plot, survival, and pareto post-processing workflows

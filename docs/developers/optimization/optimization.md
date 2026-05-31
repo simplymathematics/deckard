@@ -98,7 +98,7 @@ Required behavior:
 ## Integration With Pruning
 
 Pruning behavior is owned by trainer/runtime flow and documented in
-[Pruning Runtime Contract](../pruning).
+[Pruning Runtime Contract](../optimization/pruning).
 
 Optimization runtime must provide trial context that supports:
 
@@ -109,7 +109,7 @@ Optimization runtime must provide trial context that supports:
 ## Integration With Hydra
 
 Hydra orchestration details (sweeper, callback lifecycle, custom search space)
-are documented in [Hydra and Optuna Orchestration Contract](../hydra).
+are documented in [Hydra and Optuna Orchestration Contract](../optimization/hydra).
 
 Hydra integration model for this contract:
 
@@ -120,7 +120,7 @@ Hydra integration model for this contract:
 ## Integration With DVC and DVCLive
 
 DVC stage generation and DVCLive reporting contract are documented in
-[DVC Pipeline Autogeneration Spec](../dvc).
+[DVC Pipeline Autogeneration Spec](../optimization/dvc).
 
 Optimization runtime is the source of truth for:
 
@@ -137,10 +137,10 @@ This page is the implementation-oriented companion to the optimization runtime c
 
 Related specs:
 
-- [Optimization Runtime Contract](../optimization)
-- [Hydra and Optuna Orchestration Contract](../hydra)
-- [Pruning Runtime Contract](../pruning)
-- [DVC Pipeline Autogeneration Spec](../dvc)
+- [Optimization Runtime Contract](../optimization/optimization)
+- [Hydra and Optuna Orchestration Contract](../optimization/hydra)
+- [Pruning Runtime Contract](../optimization/pruning)
+- [DVC Pipeline Autogeneration Spec](../optimization/dvc)
 
 ## Purpose
 

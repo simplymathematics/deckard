@@ -175,8 +175,8 @@ Notebook entry point:
 
 Post-hoc layer entry points:
 
-- Layer API: {doc}`/api/layers`
-- Plot API: {doc}`/api/plot`
+- Layer API: {doc}`/api/layers/index`
+- Plot API: {doc}`/api/plot/index`
 
 ### Example Configs
 
