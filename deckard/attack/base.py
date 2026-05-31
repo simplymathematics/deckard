@@ -290,18 +290,18 @@ class AttackConfig(ScoreOrchestratorMixin, BaseConfig):
     mode: Literal["auto", "train", "test", "val"] = "auto"
 
     # Runtime state fields
-    attack_time: Union[float, None] = None
-    attack_prediction_time: Union[float, None] = None
-    attack_score_time: Union[float, None] = None
-    attack: Union[object, None] = None
-    attack_predictions: Union[object, None] = None
-    attacked_labels: Union[object, None] = None
-    score_y_pred: Union[object, None] = None
-    score_y_proba: Union[object, None] = None
-    target_index: Union[int, None] = None
-    _attack_family: Union[str, None] = None
-    _attack_sub_family: Union[str, None] = None
-    score_dict: ScoreDict = field(default_factory=ScoreDict)
+    attack_time: Union[float, None] = field(default=None, init=False)
+    attack_prediction_time: Union[float, None] = field(default=None, init=False)
+    attack_score_time: Union[float, None] = field(default=None, init=False)
+    attack: Union[object, None] = field(default=None, init=False)
+    attack_predictions: Union[object, None] = field(default=None, init=False)
+    attacked_labels: Union[object, None] = field(default=None, init=False)
+    score_y_pred: Union[object, None] = field(default=None, init=False)
+    score_y_proba: Union[object, None] = field(default=None, init=False)
+    target_index: Union[int, None] = field(default=None, init=False)
+    _attack_family: Union[str, None] = field(default=None, init=False)
+    _attack_sub_family: Union[str, None] = field(default=None, init=False)
+    score_dict: ScoreDict = field(default_factory=ScoreDict, init=False)
     _target_: Union[str, None] = None
     _plugin_objects: Union[list, None] = field(
         default=None,

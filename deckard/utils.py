@@ -1365,11 +1365,18 @@ class BaseConfig(ArtifactLoaderMixin):
         """
         # Build a dict from inherited dataclass fields + runtime attributes
         dict_ = {}
+        declared_field_names: set[str] = set()
 
         # Include dataclass fields from full MRO (base -> child)
         for base in reversed(self.__class__.mro()):
             fields = getattr(base, "__dataclass_fields__", {})
-            for name in fields:
+            for name, field_def in fields.items():
+                declared_field_names.add(name)
+                field_type = str(getattr(field_def, "_field_type", ""))
+                if field_type in {"_FIELD_CLASSVAR", "_FIELD_INITVAR"}:
+                    continue
+                if not bool(getattr(field_def, "init", True)):
+                    continue
                 if name.startswith("_") and not (for_hash and name == "_target_"):
                     continue
                 if for_hash and not self._is_hash_field(name):
@@ -1388,6 +1395,8 @@ class BaseConfig(ArtifactLoaderMixin):
 
         # Include any additional runtime attrs not declared as dataclass fields
         for name, value in self.__dict__.items():
+            if name in declared_field_names:
+                continue
             if (
                 name.startswith("_") and not (for_hash and name == "_target_")
             ) or name in dict_:

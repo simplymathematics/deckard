@@ -287,23 +287,23 @@ class DataConfig(OrchestratorBase, BaseConfig):
 
     # Runtime state fields
     score_dict: ScoreDict = field(default_factory=ScoreDict, init=False, repr=True)
-    times: dict[str, Any] = field(default_factory=dict)
-    data_load_time: Union[float, None] = None
-    data_sample_time: Union[float, None] = None
-    _X: Union[TabularLike, None] = None
-    _y: Union[pd.Series, None] = None
-    train_indices: Union[IndexLike, None] = None
-    test_indices: Union[IndexLike, None] = None
-    val_indices: Union[IndexLike, None] = None
-    X_train: Union[TabularLike, None] = None
-    y_train: Union[pd.Series, None] = None
-    X_test: Union[TabularLike, None] = None
-    y_test: Union[pd.Series, None] = None
-    X_val: Union[TabularLike, None] = None
-    y_val: Union[pd.Series, None] = None
-    train_n: Union[int, None] = None
-    test_n: Union[int, None] = None
-    val_n: Union[int, None] = None
+    times: dict[str, Any] = field(default_factory=dict, init=False)
+    data_load_time: Union[float, None] = field(default=None, init=False)
+    data_sample_time: Union[float, None] = field(default=None, init=False)
+    _X: Union[TabularLike, None] = field(default=None, init=False)
+    _y: Union[pd.Series, None] = field(default=None, init=False)
+    train_indices: Union[IndexLike, None] = field(default=None, init=False)
+    test_indices: Union[IndexLike, None] = field(default=None, init=False)
+    val_indices: Union[IndexLike, None] = field(default=None, init=False)
+    X_train: Union[TabularLike, None] = field(default=None, init=False)
+    y_train: Union[pd.Series, None] = field(default=None, init=False)
+    X_test: Union[TabularLike, None] = field(default=None, init=False)
+    y_test: Union[pd.Series, None] = field(default=None, init=False)
+    X_val: Union[TabularLike, None] = field(default=None, init=False)
+    y_val: Union[pd.Series, None] = field(default=None, init=False)
+    train_n: Union[int, None] = field(default=None, init=False)
+    test_n: Union[int, None] = field(default=None, init=False)
+    val_n: Union[int, None] = field(default=None, init=False)
     _target_: Union[str, None] = None
     _plugin_objects: Union[list[Any], None] = None
     _sampler_obj: Union[Callable[..., Any], None] = None

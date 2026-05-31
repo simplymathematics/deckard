@@ -8,6 +8,12 @@ from __future__ import annotations
 
 from typing import Any, Final, Mapping, TypedDict
 
+from ..orchestration import (
+    MODE_ALIASES as _MODE_ALIASES,
+    STAGE_ALIASES as _STAGE_ALIASES,
+    normalize_runtime_split_mode as _normalize_runtime_split_mode,
+)
+
 CANONICAL_MODEL_METHODS: Final[tuple[str, ...]] = (
     "initialize_model",
     "train",
@@ -25,6 +31,24 @@ CANONICAL_MODEL_SCORE_MODES: Final[tuple[str, ...]] = (
     "test",
     "val",
 )
+
+CANONICAL_MODEL_SCORE_STAGES: Final[tuple[str, ...]] = (
+    "pre-load",
+    "pre-sample",
+    "post-sample",
+    "post-pipeline",
+    "all",
+    "auto",
+)
+
+CANONICAL_MODEL_SCORE_STAGE_ALIASES: Final[dict[str, str]] = dict(_STAGE_ALIASES)
+
+CANONICAL_MODEL_SCORE_MODE_ALIASES: Final[dict[str, str]] = dict(_MODE_ALIASES)
+
+CANONICAL_MODEL_RUNTIME_SPLIT_ALIASES: Final[dict[str, str]] = {
+    **CANONICAL_MODEL_SCORE_MODE_ALIASES,
+    "auto": "test",
+}
 
 CANONICAL_MODEL_TIMES: Final[tuple[str, ...]] = (
     "training_time",
@@ -122,22 +146,45 @@ def ensure_canonical_model_times(
 def normalize_model_score_mode(mode: str | None) -> str:
     """Normalize model score mode aliases to canonical split-scoped names."""
     token = str(mode or DEFAULT_MODEL_SCORE_MODE).strip().lower()
-    aliases = {
-        "train": "train",
-        "training": "train",
-        "test": "test",
-        "eval": "test",
-        "evaluation": "test",
-        "val": "val",
-        "valid": "val",
-        "validation": "val",
-    }
+    aliases = CANONICAL_MODEL_SCORE_MODE_ALIASES
     if token in aliases:
         return aliases[token]
     raise ValueError(
         "Unknown model score mode "
         f"'{mode}'. Must be one of {list(CANONICAL_MODEL_SCORE_MODES)}",
     )
+
+
+def normalize_model_score_stage(stage: str | None) -> str:
+    """Normalize model score stage aliases to canonical orchestration stages."""
+    token = str(stage or "post-pipeline").strip().lower().replace(" ", "-")
+    if token in {"all", "auto"}:
+        return token
+    resolved = CANONICAL_MODEL_SCORE_STAGE_ALIASES.get(token)
+    if resolved is None:
+        raise ValueError(
+            "Unknown model score stage "
+            f"'{stage}'. Must be one of {list(CANONICAL_MODEL_SCORE_STAGES)}",
+        )
+    return resolved
+
+
+def normalize_model_runtime_split_mode(
+    mode: str | None,
+    *,
+    aliases: Mapping[str, str] | None = None,
+    default: str = "test",
+) -> str:
+    """Normalize model split aliases to canonical runtime split tokens."""
+    merged_aliases = dict(CANONICAL_MODEL_RUNTIME_SPLIT_ALIASES)
+    if aliases:
+        merged_aliases.update(
+            {
+                str(key).strip().lower(): str(value).strip().lower()
+                for key, value in aliases.items()
+            },
+        )
+    return _normalize_runtime_split_mode(mode, aliases=merged_aliases, default=default)
 
 
 def ensure_model_runtime_contract(target: Any) -> Any:

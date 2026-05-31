@@ -50,6 +50,7 @@ from ..utils import (
 from ..score.base import coerce_scorer_config, _DataScorerMarker, _AttackProfileScorer
 from ..data.sample import BaseSampler, KFoldSampler, ShuffleSampler
 from ..plugins.base import HookBundle, compose_hook_plugins
+from ..orchestration import ScoreOrchestratorMixin
 from .canon import (
     CANONICAL_EXPERIMENT_PIPELINE_STAGES,
     CANONICAL_EXPERIMENT_TIMES,
@@ -61,6 +62,8 @@ from .canon import (
     build_experiment_stage_cache_key,
     build_experiment_params_manifest,
     ensure_experiment_runtime_contract,
+    normalize_experiment_score_mode,
+    resolve_experiment_score_modes,
 )
 
 try:
@@ -209,7 +212,7 @@ OmegaConf.register_new_resolver("merge", _merge_resolver, replace=True)
 
 
 @dataclass(eq=False, kw_only=True)
-class ExperimentConfig(BaseConfig):
+class ExperimentConfig(ScoreOrchestratorMixin, BaseConfig):
     """Compose and execute a complete deckard experiment.
 
     An experiment coordinates data loading, optional defense application, model
@@ -341,9 +344,9 @@ class ExperimentConfig(BaseConfig):
     classifier: Union[str, bool] = True
     evaluation_mode: Literal["standard", "tuning", "report"] = "standard"
     score_mode: Union[str, list[str], None] = field(default_factory=list)
-    times: dict[str, Any] = field(default_factory=dict)
-    outputs: dict[str, Any] = field(default_factory=dict)
-    params: dict[str, Any] = field(default_factory=dict)
+    times: dict[str, Any] = field(default_factory=dict, init=False)
+    outputs: dict[str, Any] = field(default_factory=dict, init=False)
+    params: dict[str, Any] = field(default_factory=dict, init=False)
     hook_plugins: list[Any] = field(default_factory=list)
     hook_bundles: list[Any] = field(default_factory=list)
     dvc_plugin: Any = None
@@ -352,6 +355,9 @@ class ExperimentConfig(BaseConfig):
     RUNTIME_STATE_VERSION = CANONICAL_EXPERIMENT_RUNTIME_SCHEMA_VERSION
     PIPELINE_STAGE_ORDER = CANONICAL_EXPERIMENT_PIPELINE_STAGES
     HASH_EXCLUDE_FIELDS = BaseConfig.HASH_EXCLUDE_FIELDS | {"dvc_plugin"}
+
+    def _normalize_score_mode(self, mode: str) -> str:
+        return normalize_experiment_score_mode(mode)
 
     def _has_explicit_score_mode(self) -> bool:
         if not hasattr(self, "score_mode"):
@@ -389,31 +395,16 @@ class ExperimentConfig(BaseConfig):
 
     def _resolve_score_modes(self) -> list[str]:
         """Resolve concrete score modes from explicit score_mode or evaluation preset."""
-        if self._has_explicit_score_mode():
-            if isinstance(self.score_mode, list):
-                raw_modes = list(self.score_mode)
-            else:
-                raw_modes = [self.score_mode]
-        elif self.evaluation_mode == "standard":
-            raw_modes = ["train", "test"]
-        elif self.evaluation_mode == "tuning":
-            raw_modes = ["test"]
-        elif self.evaluation_mode == "report":
-            raw_modes = ["train", "test", "val"]
-        else:
-            raise NotImplementedError(
-                f"Evaluation mode: {self.evaluation_mode} not implemented",
+        modes = resolve_experiment_score_modes(
+            score_mode=getattr(self, "score_mode", None),
+            evaluation_mode=getattr(self, "evaluation_mode", "standard"),
+        )
+        allowed = {"pre-sample", "train", "test", "val", "all"}
+        invalid_modes = [mode for mode in modes if mode not in allowed]
+        if invalid_modes:
+            raise ValueError(
+                f"Unsupported score mode(s) {invalid_modes}. Expected one of: {sorted(allowed)}.",
             )
-
-        allowed = {"train", "test", "val", "all"}
-        modes = []
-        for raw_mode in raw_modes:
-            mode = str(raw_mode).strip().lower()
-            if mode not in allowed:
-                raise ValueError(
-                    f"Unsupported score mode '{raw_mode}'. Expected one of: {sorted(allowed)}.",
-                )
-            modes.append(mode)
         return modes
 
     def _resolve_data_mode_inputs(self, mode: str) -> tuple[Any, Any]:

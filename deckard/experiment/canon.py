@@ -16,7 +16,7 @@ from ..attack.canon import ATTACK_RUNTIME_STAGE_ALIASES, AttackFiles
 from ..data.canon import CANONICAL_DATA_STAGES, DataFiles
 from ..detector.canon import DETECTOR_RUNTIME_STAGE_ALIASES, DetectorFiles
 from ..frameworks import __path__ as FRAMEWORKS_PACKAGE_PATHS
-from ..orchestration import CANONICAL_RUNTIME_METHODS
+from ..orchestration import CANONICAL_RUNTIME_METHODS, MODE_ALIASES as _DEFAULT_MODE_ALIASES
 from ..model.canon import (
     CANONICAL_MODEL_DEFENSE_STAGES,
     CANONICAL_MODEL_TRAINER_ALIASES,
@@ -412,17 +412,16 @@ CANONICAL_EXPERIMENT_STAGE_OUTPUT_KEYS: Final[dict[str, tuple[str, ...]]] = (
 
 
 _MODE_ALIASES: Final[dict[str, str]] = {
+    **_DEFAULT_MODE_ALIASES,
     "pre-sample": "pre-sample",
     "presample": "pre-sample",
     "pre_sample": "pre-sample",
-    "train": "train",
-    "training": "train",
-    "test": "test",
-    "eval": "test",
-    "evaluation": "test",
-    "val": "val",
-    "valid": "val",
-    "validation": "val",
+}
+
+CANONICAL_EXPERIMENT_EVALUATION_PRESET_MODES: Final[dict[str, list[str]]] = {
+    "standard": ["train", "test"],
+    "tuning": ["test"],
+    "report": ["train", "test", "val"],
 }
 
 _STAGE_ALIASES: Final[dict[str, str]] = {
@@ -509,6 +508,37 @@ def normalize_experiment_score_modes(modes: Any) -> list[str]:
     else:
         raw_modes = [modes]
     return [normalize_experiment_score_mode(mode) for mode in raw_modes]
+
+
+def resolve_experiment_score_modes(
+    *,
+    score_mode: Any,
+    evaluation_mode: str,
+) -> list[str]:
+    """Resolve effective experiment score modes from explicit mode or preset."""
+    has_explicit = False
+    if score_mode is not None:
+        if isinstance(score_mode, (list, tuple)):
+            has_explicit = len(score_mode) > 0
+        else:
+            has_explicit = str(score_mode).strip() != ""
+
+    if has_explicit:
+        modes = normalize_experiment_score_modes(score_mode)
+    else:
+        preset = str(evaluation_mode or "standard").strip().lower()
+        if preset not in CANONICAL_EXPERIMENT_EVALUATION_PRESET_MODES:
+            raise NotImplementedError(
+                f"Evaluation mode: {evaluation_mode} not implemented",
+            )
+        modes = list(CANONICAL_EXPERIMENT_EVALUATION_PRESET_MODES[preset])
+
+    normalized: list[str] = []
+    for mode in modes:
+        token = normalize_experiment_score_mode(mode)
+        if token not in normalized:
+            normalized.append(token)
+    return normalized
 
 
 def normalize_experiment_stage(stage: str | None) -> str:

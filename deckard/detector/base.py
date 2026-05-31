@@ -1,13 +1,14 @@
 import time
 from dataclasses import dataclass, field
 from types import SimpleNamespace
-from typing import TYPE_CHECKING, Any, Protocol, Union
+from typing import TYPE_CHECKING, Any, ClassVar, Protocol, Union
 
 import numpy as np
 from omegaconf import DictConfig, OmegaConf
 
 from ..artifacts import ScoreDict
 from ..model import ModelConfig
+from ..orchestration import ScoreOrchestratorMixin
 from ..score.base import (
     DefaultModelScorerDictConfig,
     ScorerConfig,
@@ -23,7 +24,14 @@ from ..utils import (
     normalize_plugin_specs,
     resolve_class,
 )
-from .canon import ensure_detector_runtime_contract, normalize_detector_stage
+from .canon import (
+    CANONICAL_DETECTOR_SCORE_STAGE_ALIASES,
+    CANONICAL_DETECTOR_SCORE_STAGES,
+    ensure_detector_runtime_contract,
+    normalize_detector_runtime_split_mode,
+    normalize_detector_score_mode,
+    normalize_detector_stage,
+)
 
 if TYPE_CHECKING:
     from ..attack import AttackConfig
@@ -117,7 +125,7 @@ class DetectorScorerConfig(TaskAwareScorerMixin, ScorerDictConfig):
 
 
 @dataclass(eq=False, kw_only=True)
-class DetectorConfig(BaseConfig):
+class DetectorConfig(ScoreOrchestratorMixin, BaseConfig):
     """Auxiliary detector runtime for adversarial-vs-clean detection tasks.
 
     Attributes:
@@ -139,13 +147,22 @@ class DetectorConfig(BaseConfig):
     alias: str = field(default_factory=str)
     plugins: list = field(default_factory=list)
 
-    detector: Any = None
-    detector_predictions: Any = None
-    score_dict: ScoreDict = field(default_factory=ScoreDict)
-    detector_training_time: Union[float, None] = None
-    detector_detection_time: Union[float, None] = None
+    detector: Any = field(default=None, init=False)
+    detector_predictions: Any = field(default=None, init=False)
+    score_dict: ScoreDict = field(default_factory=ScoreDict, init=False)
+    detector_training_time: Union[float, None] = field(default=None, init=False)
+    detector_detection_time: Union[float, None] = field(default=None, init=False)
     _target_: Union[str, None] = None
     _plugin_objects: Union[list, None] = field(default=None, repr=False, compare=False)
+    score_stage_aliases: ClassVar[dict[str, str]] = CANONICAL_DETECTOR_SCORE_STAGE_ALIASES
+    score_stage_order: ClassVar[tuple[str, ...]] = tuple(
+        stage
+        for stage in CANONICAL_DETECTOR_SCORE_STAGES
+        if stage not in {"all", "auto"}
+    )
+
+    def _normalize_score_mode(self, mode: str) -> str:
+        return normalize_detector_runtime_split_mode(mode, default="test")
 
     def __post_init__(self):
         self._initialize_target_reference()
@@ -259,6 +276,35 @@ class DetectorConfig(BaseConfig):
         if isinstance(scorer, ScorerDictConfig):
             return scorer
         raise TypeError(f"Unsupported detector scorer type: {type(value)}")
+
+    def score(
+        self,
+        y_true: Any,
+        y_pred: Any,
+        *args: Any,
+        mode: str | None = "test",
+        **kwargs: Any,
+    ) -> dict[str, float]:
+        """Compute detector metrics through configured scorer with canonical mode routing."""
+        if self.scorer is None:
+            return {}
+        mode_token = normalize_detector_score_mode(mode)
+        scores = self.scorer(
+            *args,
+            mode=mode_token,
+            y_true=y_true,
+            y_pred=y_pred,
+            **kwargs,
+        )
+        if not isinstance(scores, dict):
+            return {}
+        if mode_token in scores and isinstance(scores.get(mode_token), dict):
+            scores = dict(scores[mode_token])
+        prefixed_scores: dict[str, float] = {}
+        for key, value in scores.items():
+            score_key = key if str(key).startswith("detector_") else f"detector_{key}"
+            prefixed_scores[score_key] = float(value)
+        return prefixed_scores
 
     def _build_detector_dataset(
         self,
@@ -747,18 +793,14 @@ class DetectorConfig(BaseConfig):
         self.detector_predictions = y_pred
 
         self.detector = detector
-        metric_scores = self.scorer(
-            mode=None,
+        prefixed_scores = self.score(
             y_true=y_true,
             y_pred=y_pred,
+            mode=getattr(self, "score_mode", "test"),
             data=data,
             model=model,
             attack=attack,
         )
-        prefixed_scores = {}
-        for key, value in metric_scores.items():
-            score_key = key if str(key).startswith("detector_") else f"detector_{key}"
-            prefixed_scores[score_key] = float(value)
 
         poison_filter_success = 0.0
         evasion_filter_success = 0.0

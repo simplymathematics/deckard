@@ -1,7 +1,7 @@
 import time
 import logging
 import copy
-from typing import Any, Callable, Literal, Union
+from typing import Any, Callable, ClassVar, Literal, Union
 import inspect
 from pathlib import Path
 from dataclasses import dataclass, field
@@ -37,8 +37,12 @@ from ..frameworks.types import (
     MatrixLike,
     StringifiedClass,
 )
+from ..orchestration import ScoreOrchestratorMixin
 from .canon import (
+    CANONICAL_MODEL_SCORE_STAGES,
+    CANONICAL_MODEL_SCORE_STAGE_ALIASES,
     ensure_model_runtime_contract,
+    normalize_model_runtime_split_mode,
     normalize_model_score_mode,
     normalize_model_trainer_alias,
 )
@@ -120,7 +124,7 @@ def _is_art_model_instance(model_obj: Any) -> bool:
 
 
 @dataclass(eq=False, kw_only=True)
-class ModelConfig(BaseConfig):
+class ModelConfig(ScoreOrchestratorMixin, BaseConfig):
     """Runtime model configuration with plugin-aware training/evaluation orchestration.
 
     Model behavior is resolved from canonical ``name`` and runtime context. This
@@ -162,25 +166,25 @@ class ModelConfig(BaseConfig):
     trainer_params: dict = None
 
     # Runtime/model state fields
-    _model: Any = None
-    score_dict: ScoreDict = field(default_factory=ScoreDict)
-    training_time: Union[float, None] = None
-    prediction_time: Union[float, None] = None
-    val_prediction_time: Union[float, None] = None
-    training_prediction_time: Union[float, None] = None
-    training_score_time: Union[float, None] = None
-    prediction_score_time: Union[float, None] = None
-    val_score_time: Union[float, None] = None
-    defense_application_time: Union[float, None] = None
-    training_n: Union[int, None] = None
-    prediction_n: Union[int, None] = None
-    val_n: Union[int, None] = None
-    training_predictions: Any = None
-    predictions: Any = None
-    val_predictions: Any = None
-    training_probabilities: Any = None
-    probabilities: Any = None
-    val_probabilities: Any = None
+    _model: Any = field(default=None, init=False)
+    score_dict: ScoreDict = field(default_factory=ScoreDict, init=False)
+    training_time: Union[float, None] = field(default=None, init=False)
+    prediction_time: Union[float, None] = field(default=None, init=False)
+    val_prediction_time: Union[float, None] = field(default=None, init=False)
+    training_prediction_time: Union[float, None] = field(default=None, init=False)
+    training_score_time: Union[float, None] = field(default=None, init=False)
+    prediction_score_time: Union[float, None] = field(default=None, init=False)
+    val_score_time: Union[float, None] = field(default=None, init=False)
+    defense_application_time: Union[float, None] = field(default=None, init=False)
+    training_n: Union[int, None] = field(default=None, init=False)
+    prediction_n: Union[int, None] = field(default=None, init=False)
+    val_n: Union[int, None] = field(default=None, init=False)
+    training_predictions: Any = field(default=None, init=False)
+    predictions: Any = field(default=None, init=False)
+    val_predictions: Any = field(default=None, init=False)
+    training_probabilities: Any = field(default=None, init=False)
+    probabilities: Any = field(default=None, init=False)
+    val_probabilities: Any = field(default=None, init=False)
     _target_: Union[str, None] = None
     _plugin_objects: Union[list, None] = field(
         default=None,
@@ -189,6 +193,13 @@ class ModelConfig(BaseConfig):
     )
     _defense_pipeline: Any = field(default=None, repr=False, compare=False)
     _trainer_obj: Any = field(default=None, repr=False, compare=False)
+    score_stage_aliases: ClassVar[dict[str, str]] = CANONICAL_MODEL_SCORE_STAGE_ALIASES
+    score_stage_order: ClassVar[tuple[str, ...]] = tuple(
+        stage for stage in CANONICAL_MODEL_SCORE_STAGES if stage not in {"all", "auto"}
+    )
+
+    def _normalize_score_mode(self, mode: str) -> str:
+        return normalize_model_runtime_split_mode(mode, default="test")
 
     def __post_init__(self):
         """Initialize runtime defaults and normalize model-config state."""
