@@ -68,6 +68,7 @@ AttackFamily = Literal[
     "reconstruction",
 ]
 AttackSubFamily = str
+PLUGIN_EVASION_ATTACK_NAMESPACES = frozenset({"textattack", "openattack"})
 
 
 def _sensitive_slice(sensitive, n):
@@ -196,6 +197,18 @@ def _resolve_plugin_root_from_attack_name(attack_name: str) -> str | None:
     return root
 
 
+def _resolve_plugin_attack_family(attack_name: str) -> tuple[str, str] | None:
+    """Resolve first-party plugin family/sub-family tokens from attack name.
+
+    Text-oriented third-party integrations currently expose evasion-style
+    perturbation attacks only.
+    """
+    plugin_root = _resolve_plugin_root_from_attack_name(attack_name)
+    if plugin_root in PLUGIN_EVASION_ATTACK_NAMESPACES:
+        return "evasion", plugin_root
+    return None
+
+
 def _resolve_plugin_runtime_config_type(attack_name: str) -> type | None:
     """Resolve plugin runtime config class for a canonical attack declaration.
 
@@ -309,11 +322,7 @@ class AttackConfig(ScoreOrchestratorMixin, BaseConfig):
         attack_name = str(self.name).strip()
         if attack_name == "":
             raise ValueError("AttackConfig.name must be a non-empty attack class path")
-        if attack_name.lower().startswith("deckard.plugins."):
-            raise ValueError(
-                "AttackConfig.name must use third-party library attack paths "
-                "(for example textattack.* or OpenAttack.*), not deckard plugin paths.",
-            )
+
         self.name = attack_name
         self._target_ = "deckard.attack.AttackConfig"
         attack_scorer_cls = resolve_class(
@@ -512,6 +521,9 @@ class AttackConfig(ScoreOrchestratorMixin, BaseConfig):
 
     def _parse_attack_path(self) -> tuple[str, str]:
         attack_path = str(self.resolve_name(default="") or "")
+        plugin_family = _resolve_plugin_attack_family(attack_path)
+        if plugin_family is not None:
+            return plugin_family
         parts = attack_path.split("attacks.")[-1].split(".")
         attack_family = parts[0] if len(parts) > 0 else ""
         attack_sub_family = parts[1] if len(parts) > 1 else ""
@@ -683,10 +695,17 @@ class AttackConfig(ScoreOrchestratorMixin, BaseConfig):
         attack_name = str(self.resolve_name(default="") or "")
         attack_family_lower = (attack_family or "").lower()
         attack_sub_family_lower = (attack_sub_family or "").lower()
+        plugin_root = _resolve_plugin_root_from_attack_name(attack_name)
 
         plugin_runtime_config = _resolve_plugin_runtime_config_type(attack_name)
         if plugin_runtime_config is not None:
             mixins.append(plugin_runtime_config)
+        elif plugin_root not in {None, "", "art", "deckard"}:
+            raise ValueError(
+                "No plugin runtime config is registered for attack namespace "
+                f"'{plugin_root}'. Expected a deckard plugin runtime module at "
+                f"'deckard.plugins.{plugin_root}.attack'.",
+            )
         elif attack_family_lower == "evasion":
             from .evasion import EvasionAttackConfig
 
@@ -961,6 +980,22 @@ class AttackConfig(ScoreOrchestratorMixin, BaseConfig):
         """
         attack_family = self.attack_family or ""
         attack_sub_family = self.attack_sub_family or ""
+        attack_name = self.resolve_name(default=None)
+        if attack_name is None or str(attack_name).strip() == "":
+            raise ValueError(
+                "AttackConfig.name must be set before attack initialization",
+            )
+        attack_name = str(attack_name)
+        self.name = attack_name
+
+        plugin_family = _resolve_plugin_attack_family(attack_name)
+        if plugin_family is not None:
+            attack_family, attack_sub_family = plugin_family
+            self._attack_family = attack_family
+            self._attack_sub_family = attack_sub_family
+            # TextAttack/OpenAttack runtime handlers construct and execute
+            # concrete attack objects directly from canonical plugin names.
+            return None, None, attack_family, attack_sub_family
 
         art_model = None
         if isinstance(model, ModelConfig):
@@ -988,13 +1023,6 @@ class AttackConfig(ScoreOrchestratorMixin, BaseConfig):
         if attack_family == "poisoning":
             self._validate_poisoning_params()
 
-        attack_name = self.resolve_name(default=None)
-        if attack_name is None or str(attack_name).strip() == "":
-            raise ValueError(
-                "AttackConfig.name must be set before attack initialization",
-            )
-        attack_name = str(attack_name)
-        self.name = attack_name
         attack_class = resolve_class(attack_name)
         if art_model is None:
             sklearn_dict = _get_sklearn_dict()
@@ -1138,7 +1166,7 @@ class AttackConfig(ScoreOrchestratorMixin, BaseConfig):
         self,
         model: ModelConfig | BaseEstimator | EstimatorLike,
         data: DataConfig,
-    ) -> tuple[AttackLike, EstimatorLike, str, str]:
+    ) -> tuple[Any, Any, str, str]:
         """Public entry-point for attack initialisation. Delegates to _initialize_attack().
 
         Args:
@@ -1147,6 +1175,10 @@ class AttackConfig(ScoreOrchestratorMixin, BaseConfig):
 
         Returns:
             Initialized attack, ART model, attack family, and attack subtype.
+
+            For plugin-managed text attacks (for example TextAttack/OpenAttack),
+            attack and ART model placeholders may be ``None`` because concrete
+            runtime handlers construct their own execution objects.
         """
         return self._initialize_attack(model, data)
 

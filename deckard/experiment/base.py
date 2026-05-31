@@ -2688,8 +2688,29 @@ class ExperimentConfig(BaseConfig):
             and Path(data_file_path).exists()
         ):
             configured_data = self.data
-            self.data = self.load_object(str(data_file_path))
-            self._apply_runtime_data_split_overrides(self.data, configured_data)
+            cached_data = self.load_object(
+                str(data_file_path),
+                ignore_corrupt=True,
+                delete_corrupt=True,
+            )
+            if cached_data is not None:
+                self.data = cached_data
+                self._apply_runtime_data_split_overrides(self.data, configured_data)
+            else:
+                # A truncated pickle should behave like a cache miss so reruns can recover.
+                self._run_experiment_stage_hooks(
+                    "before",
+                    "data_score",
+                    component="data",
+                    run_idx=None,
+                )
+                self.data(files=data_file_outputs)
+                self._run_experiment_stage_hooks(
+                    "after",
+                    "data_score",
+                    component="data",
+                    run_idx=None,
+                )
         else:
             # Load raw data only (no sample yet when evaluating repeated splits)
             n_repeats, _ = self._detect_n_repeats()

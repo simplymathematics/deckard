@@ -336,6 +336,76 @@ class _YellowbrickModelAdapter(BaseEstimator, ClassifierMixin):
     def _to_numpy(value: Any) -> np.ndarray:
         return _to_numpy(value)
 
+    def _is_transformers_config(self) -> bool:
+        model_type = type(self.model_config)
+        module_name = str(getattr(model_type, "__module__", "")).lower()
+        class_name = str(getattr(model_type, "__name__", "")).lower()
+        return "transformers" in module_name or "huggingface" in class_name
+
+    @staticmethod
+    def _coerce_transformers_input(X: Any) -> Any:
+        """Coerce feature payload toward token-id compatible inputs.
+
+        Yellowbrick visualizers may pass float arrays/tensors, but transformer
+        token ids are integral. When values appear floating-point, round and
+        cast to int64 while preserving non-array payloads.
+        """
+        if torch is not None and isinstance(X, torch.Tensor):
+            if X.dtype.is_floating_point:
+                return torch.round(X).to(dtype=torch.long)
+            return X
+
+        if isinstance(X, np.ndarray):
+            if np.issubdtype(X.dtype, np.floating):
+                return np.rint(X).astype(np.int64, copy=False)
+            return X
+
+        if isinstance(X, dict):
+            coerced = {}
+            for key, value in X.items():
+                if torch is not None and isinstance(value, torch.Tensor):
+                    if value.dtype.is_floating_point:
+                        coerced[key] = torch.round(value).to(dtype=torch.long)
+                    else:
+                        coerced[key] = value
+                elif isinstance(value, np.ndarray) and np.issubdtype(
+                    value.dtype,
+                    np.floating,
+                ):
+                    coerced[key] = np.rint(value).astype(np.int64, copy=False)
+                else:
+                    coerced[key] = value
+            return coerced
+
+        return X
+
+    def _prediction_candidates(self, X: Any) -> list[Any]:
+        """Yield progressively more permissive prediction inputs."""
+        candidates: list[Any] = [X]
+
+        if self._is_transformers_config():
+            coerced = self._coerce_transformers_input(X)
+            if coerced is not X:
+                candidates.append(coerced)
+
+            if torch is not None and isinstance(coerced, np.ndarray):
+                try:
+                    device = getattr(self.model_config, "device", "cpu")
+                    tensor = torch.as_tensor(coerced, dtype=torch.long, device=device)
+                    candidates.append(tensor)
+                except Exception:
+                    pass
+            return candidates
+
+        if (
+            torch is not None
+            and isinstance(X, np.ndarray)
+            and getattr(self.model_config, "library", "") == "pytorch"
+        ):
+            device = getattr(self.model_config, "device", "cpu")
+            candidates.append(torch.as_tensor(X, dtype=torch.float32, device=device))
+        return candidates
+
     def fit(self, X, y=None, **kwargs):
         """No-op fit adapter used by Yellowbrick estimator contracts.
 
@@ -354,27 +424,56 @@ class _YellowbrickModelAdapter(BaseEstimator, ClassifierMixin):
         return self
 
     def _predict_raw(self, X) -> np.ndarray:
-        if (
-            torch is not None
-            and isinstance(X, np.ndarray)
-            and getattr(self.model_config, "library", "") == "pytorch"
-        ):
-            device = getattr(self.model_config, "device", "cpu")
-            X = torch.as_tensor(X, dtype=torch.float32, device=device)
-        if (
-            torch is not None
-            and isinstance(X, torch.Tensor)
-            and getattr(self.model_config, "library", "") == "pytorch"
-        ):
-            # Yellowbrick may pass grayscale image batches as [N, H, W].
-            # Conv2d expects [N, C, H, W], so inject a channel dimension.
-            if X.ndim == 3:
-                if X.shape[0] <= 4 and X.shape[1] > 4 and X.shape[2] > 4:
-                    X = X.unsqueeze(0)
-                else:
-                    X = X.unsqueeze(1)
-        raw = self.model_config.predict(X)
-        return self._to_numpy(raw)
+        last_error = None
+        for candidate in self._prediction_candidates(X):
+            prepared = candidate
+            if (
+                torch is not None
+                and isinstance(prepared, torch.Tensor)
+                and getattr(self.model_config, "library", "") == "pytorch"
+                and not self._is_transformers_config()
+            ):
+                # Yellowbrick may pass grayscale image batches as [N, H, W].
+                # Conv2d expects [N, C, H, W], so inject a channel dimension.
+                if prepared.ndim == 3:
+                    if (
+                        prepared.shape[0] <= 4
+                        and prepared.shape[1] > 4
+                        and prepared.shape[2] > 4
+                    ):
+                        prepared = prepared.unsqueeze(0)
+                    else:
+                        prepared = prepared.unsqueeze(1)
+
+            try:
+                raw = self.model_config.predict(prepared)
+                return self._to_numpy(raw)
+            except Exception as exc:
+                last_error = exc
+
+                # Transformers pipelines may fail on MPS during visualization-only
+                # inference paths. Retry on CPU to keep Yellowbrick diagnostics
+                # runnable in notebook and docs environments.
+                if self._is_transformers_config() and "mps" in str(exc).lower():
+                    original_device = getattr(self.model_config, "device", None)
+                    try:
+                        cpu_candidate = prepared
+                        if torch is not None and isinstance(cpu_candidate, torch.Tensor):
+                            cpu_candidate = cpu_candidate.detach().cpu()
+
+                        if original_device is not None:
+                            self.model_config.device = "cpu"
+                        raw = self.model_config.predict(cpu_candidate)
+                        return self._to_numpy(raw)
+                    except Exception as cpu_exc:
+                        last_error = cpu_exc
+                    finally:
+                        if original_device is not None:
+                            self.model_config.device = original_device
+
+        raise RuntimeError(
+            "Yellowbrick adapter failed to obtain predictions from model config"
+        ) from last_error
 
     def predict_proba(self, X) -> np.ndarray:
         """Return probability-like predictions for Yellowbrick classifiers.

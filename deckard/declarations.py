@@ -3,7 +3,7 @@
 This module discovers Hydra YAML configurations from canonical locations and
 dynamically registers them with Hydra's ConfigStore at runtime. It supports:
 
-- Built-in canonical config roots (examples/sklearn/config, examples/pytorch/config)
+- Built-in canonical config roots (examples/sklearn/config, examples/pytorch/config, examples/transformers/config)
 - External config roots via DECKARD_CONFIG_DIRS environment variable
 - Optional dependency detection (only register torch configs if torch is available)
 - Safe registration via OmegaConf safe_store
@@ -51,7 +51,7 @@ def discover_config_roots() -> List[Path]:
         List[Path]: Ordered list of config root paths to scan. Built-in roots are prioritized before external roots.
 
     Notes:
-        - Built-in roots: examples/sklearn/config, examples/pytorch/config
+        - Built-in roots: examples/sklearn/config, examples/pytorch/config, examples/transformers/config
         - External roots loaded from DECKARD_CONFIG_DIRS environment variable
         - DECKARD_CONFIG_DIRS format: '/path/a:/path/b:/path/c'
         - Only returns directories that exist
@@ -63,6 +63,7 @@ def discover_config_roots() -> List[Path]:
     builtin_roots = [
         deckard_root / "examples" / "sklearn" / "config",
         deckard_root / "examples" / "pytorch" / "config",
+        deckard_root / "examples" / "transformers" / "config",
     ]
 
     for root in builtin_roots:
@@ -214,6 +215,14 @@ def _should_register_config(path: Path) -> bool:
             )
             return False
 
+    # Check transformers-specific configs
+    if "transformers" in path_str:
+        if not is_package_available("transformers"):
+            logger.debug(
+                f"Skipping transformers config (transformers not installed): {path}",
+            )
+            return False
+
     return True
 
 
@@ -251,6 +260,8 @@ def _root_kind(root: Path) -> str:
         return "sklearn"
     if root_str.endswith("/examples/pytorch/config"):
         return "pytorch"
+    if root_str.endswith("/examples/transformers/config"):
+        return "transformers"
     return "external"
 
 
