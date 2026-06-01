@@ -246,9 +246,6 @@ class DefenseStep:
 
     @staticmethod
     def _derive_default_flags(defense_obj: Any) -> tuple[bool, bool]:
-        defense_name = str(getattr(defense_obj, "name", None) or "").lower()
-        if defense_name.startswith("fairlearn.") or defense_name.startswith("anjana."):
-            return True, True
         return True, True
 
     @classmethod
@@ -460,9 +457,6 @@ class DefensePipelineConfigBehaviorMixin(DefenseHookRuntimeMixin):
     ) -> bool:
         if not isinstance(defense_spec, dict):
             return False
-        target = defense_spec.get("_target_", None)
-        if isinstance(target, str) and not cls._is_pipeline_target(target):
-            return True
         name = defense_spec.get("name", None)
         if isinstance(name, str) and _looks_like_defense_class_path(name):
             return True
@@ -1377,11 +1371,32 @@ class ARTDefenseBehaviorMixin(DefenseHookRuntimeMixin):
         """
         candidate_name = getattr(self, "name", None)
         if not is_null_config_value(candidate_name, allow_empty=True):
+            candidate_token = str(candidate_name)
+            # Model class paths (for ART wrapper resolution) are valid runtime names
+            # but not defense class paths.
+            model_name_prefixes = (
+                "sklearn.",
+                "torch.",
+                "xgboost.",
+                "lightgbm.",
+                "catboost.",
+                "tensorflow.",
+                "keras.",
+            )
+            if (
+                candidate_token.startswith(model_name_prefixes)
+                and
+                not candidate_token.startswith("art.defences.")
+                and not candidate_token.startswith("fairlearn.")
+                and not candidate_token.startswith("anjana.")
+            ):
+                return None, None, None
+
             defense_type, defense_subtype, class_name = _split_defense_name(
-                str(candidate_name),
+                candidate_token,
             )
             try:
-                defense_class = resolve_class(str(candidate_name))
+                defense_class = resolve_class(candidate_token)
             except Exception as exc:
                 raise ImportError(
                     f"Could not import defense class from name {candidate_name}",
@@ -1848,14 +1863,30 @@ class ARTDefenseBehaviorMixin(DefenseHookRuntimeMixin):
 
         from ...utils import is_null_config_value
 
+        base_model = getattr(self, "_model", None)
+        if _is_art_wrapper_instance(base_model):
+            wrapper_state = _get_wrapper_state(base_model)
+            state_base = None if wrapper_state is None else wrapper_state.get("base_estimator")
+            if state_base is not None:
+                base_model = state_base
+            else:
+                wrapped_model = getattr(base_model, "model", None)
+                if wrapped_model is not None:
+                    base_model = wrapped_model
+
         resolve_name = getattr(self, "resolve_name", None)
         model_name = resolve_name(default=None) if callable(resolve_name) else None
         if is_null_config_value(model_name, allow_empty=True):
+            if base_model is None:
+                raise ValueError(
+                    "name must be set before creating an ART defense estimator",
+                )
+            model_name = ""
+        model_name = str(model_name)
+        if model_name.startswith(("art.defences.", "fairlearn.", "anjana.")) and base_model is None:
             raise ValueError(
                 "name must be set before creating an ART defense estimator",
             )
-        assert model_name is not None
-        model_name = str(model_name)
         try:
             art_symbols = _get_art_symbols()
         except Exception as exc:
@@ -1865,19 +1896,8 @@ class ARTDefenseBehaviorMixin(DefenseHookRuntimeMixin):
         wrapper_dict = (
             art_symbols["classifier_dict"] if self.classifier else art_symbols["regressor_dict"]
         )
-        model_key = model_name.split(".")[-1]
+        model_key = model_name.split(".")[-1] if model_name else None
         if model_key not in wrapper_dict:
-            base_model = getattr(self, "_model", None)
-            if _is_art_wrapper_instance(base_model):
-                wrapper_state = _get_wrapper_state(base_model)
-                state_base = None if wrapper_state is None else wrapper_state.get("base_estimator")
-                if state_base is not None:
-                    base_model = state_base
-                else:
-                    wrapped_model = getattr(base_model, "model", None)
-                    if wrapped_model is not None:
-                        base_model = wrapped_model
-
             runtime_key = None if base_model is None else type(base_model).__name__
             if isinstance(runtime_key, str) and runtime_key in wrapper_dict:
                 model_key = runtime_key
@@ -1885,6 +1905,10 @@ class ARTDefenseBehaviorMixin(DefenseHookRuntimeMixin):
                 model_key = "sklearn-classifier"
             elif (not self.classifier) and "sklearn-regressor" in wrapper_dict:
                 model_key = "sklearn-regressor"
+            else:
+                raise ValueError(
+                    "name must be set before creating an ART defense estimator",
+                )
         art_class = wrapper_dict[model_key]
         if art_class in art_symbols["sklearn_dict"].values():
             init_params = {}
@@ -1948,8 +1972,8 @@ class DefenseConfig(
 
     def __post_init__(
         self,
-        name: StringifiedClass | None,
-        defense_params: dict | None,
+        name: StringifiedClass | None = None,
+        defense_params: dict | None = None,
     ):
         legacy_defense_name = name
         legacy_defense_params = dict(defense_params or {})
@@ -1982,7 +2006,3 @@ class DefenseConfig(
 
     def __hash__(self) -> int:
         return super().__hash__()
-
-
-
-
