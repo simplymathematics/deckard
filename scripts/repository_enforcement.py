@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
 """Repository-wide structural enforcement checks.
 
-Default mode enforces durable, low-noise structural invariants:
+Default mode enforces all repository structural, docs, and runtime invariants:
 - Class naming conventions for `*Config`, `*Mixin`, `*Plugin`
 - Default scorer naming conventions for `Default*ScorerDictConfig`
 - `*Config` inheritance chains (direct or indirect `*Config`/`BaseConfig`/`ABC`)
 - Dataclass decoration for mixins that define dataclass-like fields
-- Runtime dataclass fields are distinct from initialization params (opt-in)
+- Runtime dataclass fields are distinct from initialization params
 - Docstrings must avoid reStructuredText tokens
 - Docstrings for selected protected mixin hook methods
 - `*Plugin.__call__` signature contract (`*args`, `**kwargs`)
-
-Strict mode (opt-in via ``--strict-docs-types``) additionally enforces public
-docstring and annotation policies for all classes in the selected scope.
+- Public class/method docstring and annotation policies
+- Dataclass field metadata and runtime repr conventions
+- Canonical `_target_` field semantics
 """
 
 from __future__ import annotations
@@ -54,12 +54,11 @@ RULE_ANNOTATIONS = {
     "NAME003": "Classes containing 'Plugin' must end with 'Plugin'.",
     "NAME004": "Classes containing 'ScorerDict' must end with 'ScorerDictConfig'.",
     "NAME005": "Default scorer classes must end with 'ScorerDictConfig'.",
-    "MIX001": "Mixins with concrete annotated defaults must be dataclasses.",
-    "MIX003": "Mixin class names must be public (no leading underscore).",
-    "MIX004": "Mixin classes must include a class docstring.",
-    "MIX005": "Docstrings must avoid reStructuredText tokens.",
-    "MIX006": "Public mixin methods must include docstrings.",
-    "MIX007": "Selected protected mixin hook methods must include docstrings.",
+    "CLS001": "Public classes with concrete annotated defaults must be dataclasses.",
+    "CLS004": "Public classes must include a class docstring.",
+    "CLS005": "Docstrings must avoid reStructuredText tokens.",
+    "CLS006": "Public class methods must include docstrings.",
+    "CLS007": "Selected protected hook methods must include docstrings.",
     "CFG007": "Runtime dataclass fields must use init=False.",
     "CFG008": "Dataclass field() declarations must include metadata.",
     "CFG009": "Dataclass field(init=False) declarations except _target_ must also set repr=False.",
@@ -623,6 +622,7 @@ def _docstring_lineno(node: ast.AST) -> int:
 def validate_file(
     path: Path,
     *,
+    enforce_class_contracts: bool = True,
     strict_docs_types: bool = False,
     require_attributes_sections: bool = False,
     enforce_runtime_init_params: bool = False,
@@ -638,7 +638,7 @@ def validate_file(
     tree = ast.parse(source, filename=rel)
     violations: list[Violation] = []
 
-    # MIX005: default mode policy for RST tokens across all docstrings.
+    # CLS005: default mode policy for RST tokens across all docstrings.
     docstring_nodes: list[
         ast.Module | ast.ClassDef | ast.FunctionDef | ast.AsyncFunctionDef
     ] = [tree]
@@ -669,7 +669,7 @@ def validate_file(
                 Violation(
                     rel,
                     _docstring_lineno(node),
-                    "MIX005",
+                    "CLS005",
                     f"{target} docstring contains reStructuredText tokens",
                 ),
             )
@@ -732,83 +732,73 @@ def validate_file(
                 ),
             )
 
-        if class_name.endswith("Mixin"):
-            # MIX003: mixin class names are public API and must not be private.
-            if class_name.startswith("_"):
-                violations.append(
-                    Violation(
-                        rel,
-                        node.lineno,
-                        "MIX003",
-                        f"{class_name} must be public and must not start with '_'",
-                    ),
-                )
-
-            field_anns = _class_field_annotations(node)
-            # Require dataclass only when mixins define concrete defaults, not
-            # when they only declare type hints for static analysis.
-            has_concrete_field = any(ann.value is not None for ann in field_anns)
-            # MIX001: concrete field defaults in mixins require dataclass semantics.
-            if has_concrete_field and "dataclass" not in decorators:
-                violations.append(
-                    Violation(
-                        rel,
-                        node.lineno,
-                        "MIX001",
-                        f"{class_name} defines annotated fields and must be a dataclass",
-                    ),
-                )
-
-            public_methods = [
-                c
-                for c in node.body
-                if isinstance(c, (ast.FunctionDef, ast.AsyncFunctionDef))
-                and not c.name.startswith("_")
-            ]
-            protected_hook_methods = [
-                c
-                for c in node.body
-                if isinstance(c, (ast.FunctionDef, ast.AsyncFunctionDef))
-                and c.name in PROTECTED_MIXIN_HOOK_METHODS
-            ]
-
-            class_doc = ast.get_docstring(node) or ""
-            # MIX004/MIX005: class docstring presence + token policy.
-            if not class_doc.strip():
-                violations.append(
-                    Violation(
-                        rel,
-                        node.lineno,
-                        "MIX004",
-                        f"{class_name} missing class docstring",
-                    ),
-                )
-
-            # MIX006: public mixin methods must be documented.
-            for fn in public_methods:
-                doc = ast.get_docstring(fn) or ""
-                if not doc.strip():
+        if enforce_class_contracts:
+            if _is_public_name(class_name):
+                field_anns = _class_field_annotations(node)
+                # Require dataclass when public classes define concrete annotated defaults,
+                # not when they only declare type hints for static analysis.
+                has_concrete_field = any(ann.value is not None for ann in field_anns)
+                # CLS001: concrete field defaults in public classes require dataclass semantics.
+                if has_concrete_field and "dataclass" not in decorators:
                     violations.append(
                         Violation(
                             rel,
-                            fn.lineno,
-                            "MIX006",
-                            f"{class_name}.{fn.name} missing public docstring",
+                            node.lineno,
+                            "CLS001",
+                            f"{class_name} defines annotated fields and must be a dataclass",
                         ),
                     )
 
-            # MIX007: selected protected hook methods must also be documented.
-            for fn in protected_hook_methods:
-                doc = ast.get_docstring(fn) or ""
-                if not doc.strip():
+                public_methods = [
+                    c
+                    for c in node.body
+                    if isinstance(c, (ast.FunctionDef, ast.AsyncFunctionDef))
+                    and _is_public_method(c)
+                ]
+                protected_hook_methods = [
+                    c
+                    for c in node.body
+                    if isinstance(c, (ast.FunctionDef, ast.AsyncFunctionDef))
+                    and c.name in PROTECTED_MIXIN_HOOK_METHODS
+                ]
+
+                class_doc = ast.get_docstring(node) or ""
+                # CLS004/CLS005: class docstring presence + token policy.
+                if not class_doc.strip():
                     violations.append(
                         Violation(
                             rel,
-                            fn.lineno,
-                            "MIX007",
-                            f"{class_name}.{fn.name} missing protected hook docstring",
+                            node.lineno,
+                            "CLS004",
+                            f"{class_name} missing class docstring",
                         ),
                     )
+
+                # CLS006: public class methods must be documented.
+                for fn in public_methods:
+                    doc = ast.get_docstring(fn) or ""
+                    if not doc.strip():
+                        violations.append(
+                            Violation(
+                                rel,
+                                fn.lineno,
+                                "CLS006",
+                                f"{class_name}.{fn.name} missing public docstring",
+                            ),
+                        )
+
+                # CLS007: selected protected hook methods must also be documented.
+                for fn in protected_hook_methods:
+                    doc = ast.get_docstring(fn) or ""
+                    if not doc.strip():
+                        violations.append(
+                            Violation(
+                                rel,
+                                fn.lineno,
+                                "CLS007",
+                                f"{class_name}.{fn.name} missing protected hook docstring",
+                            ),
+                        )
 
         methods = [
             c
@@ -954,11 +944,14 @@ def validate_file(
         # Docs apply across all classes; annotation strictness stays focused on
         # canonical runtime classes to keep signal-to-noise manageable.
         if strict_docs_types:
+            class_is_canonical_runtime = class_name.endswith(
+                ("Config", "Mixin", "Plugin"),
+            )
             for fn in methods:
                 if not _is_public_method(fn):
                     continue
 
-                if class_name.endswith(("Config", "Mixin", "Plugin")):
+                if class_is_canonical_runtime:
                     # ANN001/ANN003/ANN004: strict type annotation checks.
                     # Type annotations on args + returns.
                     all_args = [*fn.args.args, *fn.args.kwonlyargs]
@@ -996,14 +989,15 @@ def validate_file(
                 # DOC001-DOC003: strict public docstring checks.
                 doc = ast.get_docstring(fn) or ""
                 if not doc.strip():
-                    violations.append(
-                        Violation(
-                            rel,
-                            fn.lineno,
-                            "DOC001",
-                            f"{class_name}.{fn.name} missing public docstring",
-                        ),
-                    )
+                    if not (enforce_class_contracts and _is_public_name(class_name)):
+                        violations.append(
+                            Violation(
+                                rel,
+                                fn.lineno,
+                                "DOC001",
+                                f"{class_name}.{fn.name} missing public docstring",
+                            ),
+                        )
                 else:
                     if any(token in doc for token in RST_TOKENS):
                         violations.append(
@@ -1017,7 +1011,8 @@ def validate_file(
                     # Require an Args section when public methods expose
                     # user-facing parameters beyond self/cls.
                     if (
-                        fn.name != "__init__"
+                        class_is_canonical_runtime
+                        and fn.name != "__init__"
                         and _has_user_parameters(fn)
                         and "Args:" not in doc
                     ):
@@ -1030,6 +1025,8 @@ def validate_file(
                             ),
                         )
                     if (
+                        class_is_canonical_runtime
+                        and
                         fn.name != "__init__"
                         and fn.returns is not None
                         and not _returns_none_annotation(fn.returns)
@@ -1044,6 +1041,8 @@ def validate_file(
                             ),
                         )
                     if _has_raise_statement(fn) and "Raises:" not in doc:
+                        if not class_is_canonical_runtime:
+                            continue
                         violations.append(
                             Violation(
                                 rel,
@@ -1073,6 +1072,7 @@ def validate_file(
 def collect_violations(
     scope: str,
     *,
+    enforce_class_contracts: bool = True,
     strict_docs_types: bool = False,
     require_attributes_sections: bool = False,
     enforce_runtime_init_params: bool = False,
@@ -1087,6 +1087,7 @@ def collect_violations(
         violations.extend(
             validate_file(
                 base,
+                enforce_class_contracts=enforce_class_contracts,
                 strict_docs_types=strict_docs_types,
                 require_attributes_sections=require_attributes_sections,
                 enforce_runtime_init_params=enforce_runtime_init_params,
@@ -1100,6 +1101,7 @@ def collect_violations(
         violations.extend(
             validate_file(
                 path,
+                enforce_class_contracts=enforce_class_contracts,
                 strict_docs_types=strict_docs_types,
                 require_attributes_sections=require_attributes_sections,
                 enforce_runtime_init_params=enforce_runtime_init_params,
@@ -1201,47 +1203,101 @@ def main() -> int:
         help="Path scope to validate (default: deckard)",
     )
     parser.add_argument(
-        "--strict-docs-types",
+        "--enforce-class-contracts",
+        dest="enforce_class_contracts",
         action="store_true",
-        help="Enable strict public docstring/type-annotation checks",
+        help="Enforce public-class contract rules (CLS001/CLS004/CLS006/CLS007) (enabled by default)",
+    )
+    parser.add_argument(
+        "--no-enforce-class-contracts",
+        dest="enforce_class_contracts",
+        action="store_false",
+        help="Disable public-class contract enforcement rules",
+    )
+    parser.add_argument(
+        "--strict-docs-types",
+        dest="strict_docs_types",
+        action="store_true",
+        help="Enable strict public docstring/type-annotation checks (enabled by default)",
+    )
+    parser.add_argument(
+        "--no-strict-docs-types",
+        dest="strict_docs_types",
+        action="store_false",
+        help="Disable strict public docstring/type-annotation checks",
     )
     parser.add_argument(
         "--require-attributes-sections",
+        dest="require_attributes_sections",
         action="store_true",
-        help="Require Google-style 'Attributes:' sections for Config/Mixin/Plugin and related runtime classes",
+        help="Require Google-style 'Attributes:' sections for Config/Mixin/Plugin and related runtime classes (enabled by default)",
+    )
+    parser.add_argument(
+        "--no-require-attributes-sections",
+        dest="require_attributes_sections",
+        action="store_false",
+        help="Disable Attributes section enforcement",
     )
     parser.add_argument(
         "--enforce-runtime-init-params",
+        dest="enforce_runtime_init_params",
         action="store_true",
         help=(
             "Enforce that runtime-looking dataclass fields (for example private "
-            "state fields) are marked field(init=False)"
+            "state fields) are marked field(init=False) (enabled by default)"
         ),
+    )
+    parser.add_argument(
+        "--no-enforce-runtime-init-params",
+        dest="enforce_runtime_init_params",
+        action="store_false",
+        help="Disable runtime init=False enforcement",
     )
     parser.add_argument(
         "--enforce-field-metadata",
+        dest="enforce_field_metadata",
         action="store_true",
         help=(
             "Enforce that dataclass field() declarations explicitly provide "
-            "metadata={...}"
+            "metadata={...} (enabled by default)"
         ),
     )
     parser.add_argument(
+        "--no-enforce-field-metadata",
+        dest="enforce_field_metadata",
+        action="store_false",
+        help="Disable dataclass field metadata enforcement",
+    )
+    parser.add_argument(
         "--enforce-runtime-repr",
+        dest="enforce_runtime_repr",
         action="store_true",
         help=(
             "Enforce that dataclass field(init=False) declarations also set "
             "repr=False so repr matches BaseConfig fingerprint/YAML behavior "
-            "for non-_target_ runtime fields"
+            "for non-_target_ runtime fields (enabled by default)"
         ),
     )
     parser.add_argument(
+        "--no-enforce-runtime-repr",
+        dest="enforce_runtime_repr",
+        action="store_false",
+        help="Disable runtime repr=False enforcement",
+    )
+    parser.add_argument(
         "--enforce-target-field",
+        dest="enforce_target_field",
         action="store_true",
         help=(
             "Enforce that dataclass _target_ fields preserve init/repr visibility "
-            "and default to the canonical Deckard object path"
+            "and default to the canonical Deckard object path (enabled by default)"
         ),
+    )
+    parser.add_argument(
+        "--no-enforce-target-field",
+        dest="enforce_target_field",
+        action="store_false",
+        help="Disable canonical _target_ field enforcement",
     )
     parser.add_argument(
         "--docs-scope",
@@ -1260,10 +1316,20 @@ def main() -> int:
             "violation counts. Can be relative to repository root."
         ),
     )
+    parser.set_defaults(
+        enforce_class_contracts=True,
+        strict_docs_types=True,
+        require_attributes_sections=True,
+        enforce_runtime_init_params=True,
+        enforce_field_metadata=True,
+        enforce_runtime_repr=True,
+        enforce_target_field=True,
+    )
     args = parser.parse_args()
 
     violations = collect_violations(
         args.scope,
+        enforce_class_contracts=args.enforce_class_contracts,
         strict_docs_types=args.strict_docs_types,
         require_attributes_sections=args.require_attributes_sections,
         enforce_runtime_init_params=args.enforce_runtime_init_params,

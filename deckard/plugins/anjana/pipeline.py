@@ -7,6 +7,7 @@ from omegaconf import DictConfig
 
 from deckard.plugins import HookPlugin
 from deckard.plugins.base import HookBundle
+from deckard.model.defense.base import DefenseStep
 
 from ...utils import resolve_class as _default_resolve_class
 
@@ -122,7 +123,7 @@ class AnjanaPipelineHooksMixin:
 
     @staticmethod
     def _normalize_runtime_defense_config(
-        defense_cfg: dict,
+        defense_cfg,
         *,
         field_name: str,
     ) -> tuple[str, dict]:
@@ -130,7 +131,23 @@ class AnjanaPipelineHooksMixin:
 
         Requires canonical ``name`` and merges ``defense_params`` into call kwargs.
         """
-        normalized = dict(defense_cfg)
+        if isinstance(defense_cfg, DefenseStep):
+            defense_name = defense_cfg.name
+            if not isinstance(defense_name, str):
+                raise ValueError(
+                    f"{field_name} config must include 'name'",
+                )
+            return defense_name, dict(defense_cfg.defense_params or {})
+
+        if isinstance(defense_cfg, DictConfig):
+            normalized = dict(defense_cfg)
+        elif isinstance(defense_cfg, dict):
+            normalized = dict(defense_cfg)
+        else:
+            raise TypeError(
+                f"{field_name} must be dict/DictConfig or DefenseStep. Got {type(defense_cfg)}",
+            )
+
         defense_params = normalized.pop("defense_params", {})
         if isinstance(defense_params, DictConfig):
             defense_params = dict(defense_params)
@@ -144,6 +161,9 @@ class AnjanaPipelineHooksMixin:
             raise ValueError(
                 f"{field_name} config must include 'name'",
             )
+
+        for key in ("apply_fit", "apply_predict", "alias", "_target_", "plugins"):
+            normalized.pop(key, None)
 
         return defense_name, {**defense_params, **normalized}
 

@@ -28,7 +28,7 @@ jobs:
 
       - name: Run structural enforcement checks
         run: |
-          python scripts/repository_enforcement.py --scope deckard/
-          python scripts/repository_enforcement.py --scope deckard/ --require-attributes-sections
+          python scripts/repository_enforcement.py --scope deckard/ --enforce-runtime-init-params --enforce-field-metadata --enforce-runtime-repr --enforce-target-field
+          python scripts/repository_enforcement.py --scope deckard/ --require-attributes-sections --enforce-runtime-init-params --enforce-field-metadata --enforce-runtime-repr --enforce-target-field
 
      

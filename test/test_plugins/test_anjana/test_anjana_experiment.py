@@ -327,33 +327,6 @@ def test_anjana_data_with_art_model_defense_chain(monkeypatch):
     assert "class_count_max" in scores or "accuracy" in scores
 
 
-def test_anjana_art_defense_is_applied_last(monkeypatch):
-    """When a model is defended via pipeline with only ART, ART runs last.
-
-    This is trivially satisfied when there's only one defense. For mixed chains,
-    see test_art_last_ordering tests in test_torch_experiment.py.
-    """
-    from deckard.model import DefenseConfig
-
-    pipeline = DefenseConfig(
-        defenses=[
-            {
-                "name": "art.defences.postprocessor.ClassLabels",
-                "defense_params": {"apply_fit": False, "apply_predict": True},
-                "classifier": True,
-                "model_name": "sklearn.linear_model.LogisticRegression",
-            },
-        ],
-    )
-    # Single ART defense: nothing to reorder
-    art_defenses = [d for d in pipeline.defenses if pipeline._is_art_defense(d)]
-    non_art_defenses = [
-        d for d in pipeline.defenses if not pipeline._is_art_defense(d)
-    ]
-    assert len(art_defenses) == 1
-    assert len(non_art_defenses) == 0
-
-
 def test_anjana_fairness_data_and_art_model_chain(monkeypatch):
     """Combined chain: Anjana pre-split data transform + ART model wrapper.
 
@@ -453,17 +426,17 @@ def test_art_defense_reordered_last_with_warning(caplog):
 
     call_order = []
 
-    class _StubFairnessDefense:
-        defense_name = "fairlearn.mock.MockFairnessDefense"
+    class _StubDataDefense:
+        name = "anjana.mock.MockDataDefense"
         defense_application_time = 0.0
 
         def apply_to(self, estimator, data):
             _ = data
-            call_order.append("fairness")
+            call_order.append("data")
             return estimator
 
     class _StubArtDefense:
-        defense_name = "art.mock.MockArtDefense"
+        name = "art.mock.MockArtDefense"
         defense_application_time = 0.0
 
         def apply_to(self, estimator, data):
@@ -472,14 +445,17 @@ def test_art_defense_reordered_last_with_warning(caplog):
             return estimator
 
     pipeline = DefenseConfig(
-        defenses=[_StubArtDefense(), _StubFairnessDefense()],
+        defenses=[_StubArtDefense(), _StubDataDefense()],
     )
 
     with caplog.at_level(logging.WARNING, logger="deckard.model.defense.base"):
         pipeline.apply(estimator=object(), data=object())
 
-    assert call_order == ["fairness", "art"]
-    assert any("automatically reordered" in rec.message for rec in caplog.records)
+    assert call_order == ["data", "art"]
+    assert any(
+        "stage order adjusted to canonical model defense staging" in rec.message
+        for rec in caplog.records
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -526,15 +502,16 @@ def test_anjana_data_with_fairlearn_model_chain(monkeypatch):
     )
 
     # Fairlearn defense must NOT be classified as an ART defense
-    from deckard.plugins.fairlearn.model import FairlearnDefenseConfig as FLDef
+    from deckard.model.defense.base import DefenseStep
 
     assert not pipeline._is_art_defense(
         pipeline.defenses[0],
     ), "Fairlearn defense must not be treated as ART defense"
     assert isinstance(
         pipeline.defenses[0],
-        FLDef,
-    ), "Defense should have been coerced to FairlearnDefenseConfig"
+        DefenseStep,
+    ), "Defense should be normalized to canonical DefenseStep"
+    assert pipeline.defenses[0].name == "fairlearn.reductions.ExponentiatedGradient"
 
 
 # ---------------------------------------------------------------------------

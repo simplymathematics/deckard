@@ -62,7 +62,6 @@ class DefaultEvasionAttackScorerDictConfig(
     """
 
     _profile_attr = "evasion"
-    _deckard_attack_profile: str | None = field(default=None, init=False, metadata={'help': 'Resolved attack-profile name used to select the evasion scorer family.'}, repr=False)
     classifier: Union[bool, str] = True
     scorers: dict[str, ScorerConfig] = field(
         default_factory=dict,
@@ -625,12 +624,18 @@ safe_store(
 safe_store(
     group="score",
     name="evasion-classification",
-    node={"_deckard_attack_profile": "evasion-classification"},
+    node={
+        "_target_": "deckard.score.attack.DefaultEvasionAttackScorerDictConfig",
+        "classifier": True,
+    },
 )
 safe_store(
     group="score",
     name="evasion-regression",
-    node={"_deckard_attack_profile": "evasion-regression"},
+    node={
+        "_target_": "deckard.score.attack.DefaultEvasionRegressionAttackScorerDictConfig",
+        "classifier": False,
+    },
 )
 
 

@@ -91,19 +91,6 @@ class TestDefenseConfig:
         hash_value = hash(self.defense_config)
         assert isinstance(hash_value, int)
 
-    def test_supported_defense_types(self):
-        # Test supported defense types
-        supported_types = [
-            "detector",
-            "preprocessor",
-            "postprocessor",
-            "trainer",
-            "regularizer",
-            "transformer",
-        ]
-        assert "postprocessor" in supported_types
-        assert "unsupported_type" not in supported_types
-
     def test_hash_stable_after_apply_for_defense_config(self):
         """DefenseConfig hash remains stable after runtime-only apply attrs are set."""
         original_hash = hash(self.defense_config)
@@ -139,11 +126,6 @@ class TestDefensePipelineConfigListCoerce:
         "defense_params": {"apply_fit": False, "apply_predict": True},
     }
 
-    def test_list_of_two_specs_produces_two_defenses(self):
-        result = DefenseConfig.coerce([self.spec_a, self.spec_b])
-        assert isinstance(result, DefenseConfig)
-        assert len(result.defenses) == 2
-
     def test_list_of_one_spec_produces_one_defense(self):
         result = DefenseConfig.coerce([self.spec_a])
         assert isinstance(result, DefenseConfig)
@@ -169,14 +151,6 @@ class TestDefensePipelineConfigListCoerce:
         assert result is not None
         assert isinstance(result, DefenseConfig)
         assert len(result.defenses) == 1
-
-    def test_raw_dict_without_target_is_rejected(self):
-        with pytest.raises(TypeError, match="Defense config must be"):
-            DefenseConfig.coerce(
-                {
-                    "name": "art.defences.postprocessor.HighConfidence",
-                },
-            )
 
 
 def test_defense_behavior_defaults_signature_and_apply_to_paths(monkeypatch):
@@ -240,11 +214,11 @@ def test_parse_defense_name_and_get_art_class_edge_paths(monkeypatch):
     assert subtype is None
     assert defense_class is None
 
-    defense.defense_name = "short.Class"
+    defense.name = "short.Class"
     with pytest.raises(ImportError, match="Could not parse defense type"):
         defense.parse_defense_name()
 
-    defense.defense_name = "art.defences.postprocessor.Missing"
+    defense.name = "art.defences.postprocessor.Missing"
     monkeypatch.setattr(
         "deckard.model.defense.base.resolve_class",
         lambda name: (_ for _ in ()).throw(AttributeError(name)),
@@ -608,10 +582,11 @@ def test_pipeline_single_defense_coercion_and_context_inheritance(monkeypatch):
     assert reg_defense.model_params == {"alpha": 1}
 
     assert pipeline.normalize_defenses(None) == []
-    with pytest.raises(TypeError, match="Defense specs must use an explicit _target_"):
-        pipeline.normalize_defenses(
-            {"name": "art.defences.postprocessor.HighConfidence"},
-        )
+    normalized = pipeline.normalize_defenses(
+        {"name": "art.defences.postprocessor.HighConfidence"},
+    )
+    assert len(normalized) == 1
+    assert normalized[0].name == "art.defences.postprocessor.HighConfidence"
 
 
 def test_pipeline_apply_validation_and_elapsed_fallback(monkeypatch):

@@ -23,7 +23,7 @@ from deckard.file import FileConfig
 from deckard.frameworks.pytorch.data import PytorchDataConfig
 from deckard.frameworks.pytorch.model import PytorchModelConfig
 from deckard.model import DefenseConfig
-from deckard.model.defense.base import DefenseConfig
+from deckard.model.defense.base import DefenseConfig, DefenseStep
 
 torch = pytest.importorskip("torch")
 ROOT = Path(__file__).resolve().parents[3]
@@ -129,7 +129,7 @@ def test_pytorch_defense_pipeline_initialises():
         ],
     )
     assert len(pipeline.defenses) == 1
-    assert isinstance(pipeline.defenses[0], DefenseConfig)
+    assert isinstance(pipeline.defenses[0], DefenseStep)
 
 
 def test_pytorch_art_defense_is_detected_as_art_by_pipeline():

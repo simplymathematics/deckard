@@ -9,7 +9,7 @@ from sklearn.base import BaseEstimator
 
 from ...data._mixins import RuntimePayload, SensitiveColumnsMixin
 from ...model.base import ModelConfig, logger
-from ...model.defense.base import ARTDefenseBehaviorMixin
+from ...model.defense.base import ARTDefenseBehaviorMixin, DefenseStep
 from ...pytorch.model import PytorchModelConfig
 from ...utils import (
     BaseConfig,
@@ -249,23 +249,44 @@ class FairlearnDefenseConfig(
 
     data: Union[FairlearnDataConfig, None] = None
 
+    @staticmethod
+    def _sanitize_defense_params(payload: Any) -> dict[str, Any]:
+        params = dict(payload or {}) if isinstance(payload, dict) else {}
+        for key in (
+            "apply_fit",
+            "apply_predict",
+            "alias",
+            "name",
+            "defense_name",
+            "_target_",
+            "plugins",
+        ):
+            params.pop(key, None)
+        return params
+
+    @staticmethod
+    def _extract_named_defense(defense_obj: Any) -> tuple[str | None, dict[str, Any]]:
+        if isinstance(defense_obj, DefenseStep):
+            name = defense_obj.name
+            params = FairlearnDefenseConfig._sanitize_defense_params(
+                defense_obj.defense_params,
+            )
+            return (name if isinstance(name, str) else None), params
+        return None, {}
+
     def _resolve_fairness_defense_spec(self):
         normalized_name = getattr(self, "name", None)
-        if not isinstance(normalized_name, str):
-            normalized_name = getattr(self, "defense_name", None)
-        if isinstance(normalized_name, str) and normalized_name.startswith(
-            "fairlearn.",
-        ):
-            return normalized_name, dict(getattr(self, "defense_params", {}) or {})
-        defense_obj = getattr(self, "defense", None)
-        if defense_obj is not None:
-            nested_name = getattr(defense_obj, "name", None)
-            if not isinstance(nested_name, str):
-                nested_name = getattr(defense_obj, "defense_name", None)
-            if isinstance(nested_name, str) and nested_name.startswith("fairlearn."):
-                return nested_name, dict(
-                    getattr(defense_obj, "defense_params", {}) or {},
-                )
+        if isinstance(normalized_name, str) and normalized_name.startswith("fairlearn."):
+            return normalized_name, self._sanitize_defense_params(
+                getattr(self, "defense_params", {}) or {},
+            )
+
+        defenses = getattr(self, "defenses", None)
+        if isinstance(defenses, (list, tuple)):
+            for candidate in defenses:
+                candidate_name, candidate_params = self._extract_named_defense(candidate)
+                if isinstance(candidate_name, str) and candidate_name.startswith("fairlearn."):
+                    return candidate_name, candidate_params
         return None, {}
 
     def _apply_fairlearn_defense(self, data):

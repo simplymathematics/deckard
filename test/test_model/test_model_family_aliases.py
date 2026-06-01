@@ -23,4 +23,4 @@ def test_model_defense_package_exports_are_importable():
 
 def test_defense_config_is_neutral_baseline():
     cfg = DefenseConfig()
-    assert cfg.defense_name is None
+    assert cfg.name is None

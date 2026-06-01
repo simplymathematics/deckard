@@ -7,6 +7,7 @@ from omegaconf import DictConfig
 
 from deckard.plugins import HookPlugin
 from deckard.plugins.base import compose_hook_plugins
+from deckard.model.defense.base import DefenseStep
 
 from ...data._mixins import RuntimePayload, SensitiveColumnsMixin
 from ...data.base import DataConfig
@@ -202,7 +203,7 @@ class PrivacyBehaviorMixin(SensitiveColumnsMixin):
 
     @staticmethod
     def _normalize_named_defense_mapping(
-        defense_mapping: Dict[str, Any],
+        defense_mapping: Any,
         *,
         field_name: str,
     ) -> Dict[str, Any]:
@@ -210,7 +211,25 @@ class PrivacyBehaviorMixin(SensitiveColumnsMixin):
 
         Requires canonical ``name`` and optional ``defense_params``.
         """
-        normalized = dict(defense_mapping)
+        if isinstance(defense_mapping, DefenseStep):
+            defense_name = defense_mapping.name
+            if not isinstance(defense_name, str):
+                raise ValueError(
+                    f"{field_name} config must include 'name'",
+                )
+            normalized = {
+                "name": defense_name,
+                "defense_params": dict(defense_mapping.defense_params or {}),
+            }
+        elif isinstance(defense_mapping, DictConfig):
+            normalized = dict(defense_mapping)
+        elif isinstance(defense_mapping, dict):
+            normalized = dict(defense_mapping)
+        else:
+            raise TypeError(
+                f"{field_name} must be a dict/DictConfig/DefenseStep. Got {type(defense_mapping)}",
+            )
+
         defense_params = normalized.pop("defense_params", {})
         if isinstance(defense_params, DictConfig):
             defense_params = dict(defense_params)
@@ -224,6 +243,8 @@ class PrivacyBehaviorMixin(SensitiveColumnsMixin):
             raise ValueError(
                 f"{field_name} config must include 'name'",
             )
+        for key in ("apply_fit", "apply_predict", "alias", "_target_", "plugins"):
+            normalized.pop(key, None)
         result: Dict[str, Any] = {"name": defense_name}
         for key, value in defense_params.items():
             result[str(key)] = value

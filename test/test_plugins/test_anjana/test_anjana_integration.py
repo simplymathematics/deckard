@@ -72,14 +72,6 @@ def _run_optimize_and_load_scores(
         final_overrides.append(
             "++score.data._target_=deckard.plugins.anjana.score.DefaultAnjanaDataScorerDictConfig",
         )
-    if any(
-        isinstance(item, str)
-        and item.startswith("+score@score.attack=evasion-classification")
-        for item in final_overrides
-    ):
-        final_overrides.append(
-            "++score.attack._target_=deckard.score.attack.DefaultEvasionAttackScorerDictConfig",
-        )
     for alias_override in (
         "~data_alias",
         "~model_alias",
@@ -557,7 +549,7 @@ def test_wrapper_defenses_reordered_last_with_warning(caplog):
     call_order = []
 
     class _StubDataDefense:
-        defense_name = "custom.mock.DataDefense"
+        name = "custom.mock.DataDefense"
         defense_application_time = 0.0
 
         def apply_to(self, estimator, data):
@@ -566,7 +558,7 @@ def test_wrapper_defenses_reordered_last_with_warning(caplog):
             return estimator
 
     class _StubArtDefense:
-        defense_name = "art.mock.MockArtDefense"
+        name = "art.mock.MockArtDefense"
         defense_application_time = 0.0
 
         def apply_to(self, estimator, data):
@@ -582,7 +574,10 @@ def test_wrapper_defenses_reordered_last_with_warning(caplog):
         pipeline.apply(estimator=object(), data=object())
 
     assert call_order == ["data", "art"]
-    assert any("automatically reordered" in rec.message for rec in caplog.records)
+    assert any(
+        "automatically reordered to run last" in rec.message
+        for rec in caplog.records
+    )
 
 
 @pytest.mark.slow
