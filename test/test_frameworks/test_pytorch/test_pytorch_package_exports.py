@@ -29,8 +29,16 @@ def _stub_module(name: str, **attrs) -> ModuleType:
             "deckard.frameworks.pytorch.fairness_data",
             "FairlearnPytorchDataConfig",
         ),
-        ("PytorchModelConfig", "deckard.frameworks.pytorch.model", "PytorchModelConfig"),
-        ("PytorchAttackConfig", "deckard.frameworks.pytorch.attack", "PytorchAttackConfig"),
+        (
+            "PytorchModelConfig",
+            "deckard.frameworks.pytorch.model",
+            "PytorchModelConfig",
+        ),
+        (
+            "PytorchAttackConfig",
+            "deckard.frameworks.pytorch.attack",
+            "PytorchAttackConfig",
+        ),
         (
             "TorchExperimentConfig",
             "deckard.frameworks.pytorch.experiment",
@@ -97,10 +105,14 @@ def test_pytorch_package_getattr_resolves_lazy_symbols(
             "TorchKFoldSampler",
             "TorchShuffleSampler",
         ):
-            setattr(module, alias, sentinel if alias == attr_name else type(alias, (), {}))
+            setattr(
+                module, alias, sentinel if alias == attr_name else type(alias, (), {})
+            )
     if module_name.endswith(".data"):
         for alias in ("PytorchDataConfig", "PytorchCustomDataConfig"):
-            setattr(module, alias, sentinel if alias == attr_name else type(alias, (), {}))
+            setattr(
+                module, alias, sentinel if alias == attr_name else type(alias, (), {})
+            )
 
     monkeypatch.setitem(sys.modules, module_name, module)
 

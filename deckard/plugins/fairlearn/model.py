@@ -276,7 +276,9 @@ class FairlearnDefenseConfig(
 
     def _resolve_fairness_defense_spec(self):
         normalized_name = getattr(self, "name", None)
-        if isinstance(normalized_name, str) and normalized_name.startswith("fairlearn."):
+        if isinstance(normalized_name, str) and normalized_name.startswith(
+            "fairlearn."
+        ):
             return normalized_name, self._sanitize_defense_params(
                 getattr(self, "defense_params", {}) or {},
             )
@@ -284,8 +286,12 @@ class FairlearnDefenseConfig(
         defenses = getattr(self, "defenses", None)
         if isinstance(defenses, (list, tuple)):
             for candidate in defenses:
-                candidate_name, candidate_params = self._extract_named_defense(candidate)
-                if isinstance(candidate_name, str) and candidate_name.startswith("fairlearn."):
+                candidate_name, candidate_params = self._extract_named_defense(
+                    candidate
+                )
+                if isinstance(candidate_name, str) and candidate_name.startswith(
+                    "fairlearn."
+                ):
                     return candidate_name, candidate_params
         return None, {}
 

@@ -257,7 +257,12 @@ class ScoreOrchestratorMixin(OrchestratorBase, DataRuntimeStateMixin):
         "post-sample": "after_sample",
         "post-pipeline": "after_pipeline",
     }
-    _score_orchestration_active: bool = field(default=True, init=False, metadata={'help': 'Configuration field: _score_orchestration_active.'}, repr=False)
+    _score_orchestration_active: bool = field(
+        default=True,
+        init=False,
+        metadata={"help": "Configuration field: _score_orchestration_active."},
+        repr=False,
+    )
 
     def _normalize_score_mode(self, mode: str) -> str:
         return normalize_score_mode(mode)

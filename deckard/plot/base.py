@@ -117,8 +117,13 @@ class PlotTypePlugin:
     mixin_type: Any
     backend: str
     plot_family: Union[str, None] = None
-    excluded_families: tuple[str, ...] = field(default_factory=tuple, metadata={'help': 'Configuration field: excluded_families.'})
-    init_params: dict[str, Any] = field(default_factory=dict, metadata={'help': 'Configuration field: init_params.'})
+    excluded_families: tuple[str, ...] = field(
+        default_factory=tuple,
+        metadata={"help": "Configuration field: excluded_families."},
+    )
+    init_params: dict[str, Any] = field(
+        default_factory=dict, metadata={"help": "Configuration field: init_params."}
+    )
 
     def _resolve_mixin_type(self) -> type:
         if isinstance(self.mixin_type, str):
@@ -232,7 +237,9 @@ class PlotDictConfig(BaseConfig):
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
 
-    plots: dict[str, Any] = field(default_factory=dict, metadata={'help': 'Configuration field: plots.'})
+    plots: dict[str, Any] = field(
+        default_factory=dict, metadata={"help": "Configuration field: plots."}
+    )
     backend: str = "yellowbrick"
 
     def __post_init__(self):

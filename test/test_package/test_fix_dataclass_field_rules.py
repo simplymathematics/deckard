@@ -22,7 +22,9 @@ def _run_fixer(path: Path, *args: str) -> subprocess.CompletedProcess[str]:
     )
 
 
-def test_fix_dataclass_field_rules_adds_init_false_and_metadata(tmp_path: Path) -> None:
+def test_fix_dataclass_field_rules_adds_init_false_and_metadata(
+    tmp_path: Path,
+) -> None:
     sample = tmp_path / "runtime_fields.py"
     sample.write_text(
         "from dataclasses import dataclass\n\n"
@@ -50,7 +52,7 @@ def test_fix_dataclass_field_rules_preserves_existing_metadata(tmp_path: Path) -
         "from dataclasses import dataclass, field\n\n"
         "@dataclass\n"
         "class RuntimeConfig:\n"
-        "    value: int = field(default=1, metadata={\"help\": \"Keep me\"})\n",
+        '    value: int = field(default=1, metadata={"help": "Keep me"})\n',
         encoding="utf-8",
     )
 
@@ -95,7 +97,7 @@ def test_fix_dataclass_field_rules_preserves_module_docstring_position(
     assert result.returncode == 0, result.stdout + "\n" + result.stderr
     text = sample.read_text(encoding="utf-8")
     assert text.startswith('"""Module docstring."""')
-    assert 'from dataclasses import dataclass, field' in text
+    assert "from dataclasses import dataclass, field" in text
 
 
 def test_fix_dataclass_field_rules_adds_repr_false_for_cfg009(tmp_path: Path) -> None:
@@ -122,7 +124,7 @@ def test_fix_dataclass_field_rules_cfg009_skips_target_field(tmp_path: Path) -> 
         "from dataclasses import dataclass, field\n\n"
         "@dataclass\n"
         "class RuntimeConfig:\n"
-        "    _target_: str | None = field(default=\"target_field.RuntimeConfig\", init=False)\n",
+        '    _target_: str | None = field(default="target_field.RuntimeConfig", init=False)\n',
         encoding="utf-8",
     )
 

@@ -194,11 +194,27 @@ class DVCPowerMixin:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
 
-    cpu_tdp_watts: float = field(default_factory=lambda : DVCPowerMixin._detect_cpu_tdp(), metadata={'help': 'Configuration field: cpu_tdp_watts.'})
-    gpu_tdp_watts: float = field(default_factory=lambda : DVCPowerMixin._detect_gpu_tdp(), metadata={'help': 'Configuration field: gpu_tdp_watts.'})
+    cpu_tdp_watts: float = field(
+        default_factory=lambda: DVCPowerMixin._detect_cpu_tdp(),
+        metadata={"help": "Configuration field: cpu_tdp_watts."},
+    )
+    gpu_tdp_watts: float = field(
+        default_factory=lambda: DVCPowerMixin._detect_gpu_tdp(),
+        metadata={"help": "Configuration field: gpu_tdp_watts."},
+    )
 
-    _power_energy_wh: float = field(default=0.0, init=False, repr=False, metadata={'help': 'Configuration field: _power_energy_wh.'})
-    _power_last_ts: float | None = field(default=None, init=False, repr=False, metadata={'help': 'Configuration field: _power_last_ts.'})
+    _power_energy_wh: float = field(
+        default=0.0,
+        init=False,
+        repr=False,
+        metadata={"help": "Configuration field: _power_energy_wh."},
+    )
+    _power_last_ts: float | None = field(
+        default=None,
+        init=False,
+        repr=False,
+        metadata={"help": "Configuration field: _power_last_ts."},
+    )
 
     def _log_power_score(
         self,

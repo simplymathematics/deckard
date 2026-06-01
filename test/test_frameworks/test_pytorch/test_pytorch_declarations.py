@@ -90,7 +90,9 @@ def test_flexnet_input_adaptation_unsupported(monkeypatch: pytest.MonkeyPatch) -
         )
 
 
-def test_flexnet_output_adaptation_unsupported(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_flexnet_output_adaptation_unsupported(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     torch = pytest.importorskip("torch")
     nn = torch.nn
 

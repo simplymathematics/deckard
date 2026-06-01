@@ -5,7 +5,12 @@ from dataclasses import dataclass, field
 import pytest
 
 from deckard.plugins import HookPlugin
-from deckard.plugins.base import HookBundle, OrchestratorBase, RuntimeBase, compose_hook_plugins
+from deckard.plugins.base import (
+    HookBundle,
+    OrchestratorBase,
+    RuntimeBase,
+    compose_hook_plugins,
+)
 
 
 def test_compose_hook_plugins_flattens_and_deduplicates() -> None:
@@ -43,7 +48,9 @@ class _PluginWithoutHook:
     pass
 
 
-def test_runtime_base_caches_instantiated_plugins(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_runtime_base_caches_instantiated_plugins(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     runtime = _RuntimeHarness(plugins=[{"name": "plugin-a"}, {"name": "plugin-b"}])
     seen: list[object] = []
 
@@ -62,7 +69,9 @@ def test_runtime_base_caches_instantiated_plugins(monkeypatch: pytest.MonkeyPatc
 
 
 def test_runtime_base_run_plugin_hook_only_calls_matching_hooks() -> None:
-    runtime = _RuntimeHarness(_plugin_objects=[_PluginWithHook(), _PluginWithoutHook()])
+    runtime = _RuntimeHarness(
+        _plugin_objects=[_PluginWithHook(), _PluginWithoutHook()]
+    )
 
     outputs = runtime._run_plugin_hook("before_score", flag=True)
 
@@ -123,7 +132,12 @@ def test_stage_hook_token_and_expand_stage_aliases() -> None:
         scorer=type(
             "_Scorer",
             (),
-            {"configured_scorers": {"a": _ScorerCfg(stage="all"), "b": _ScorerCfg(stage="auto")}},
+            {
+                "configured_scorers": {
+                    "a": _ScorerCfg(stage="all"),
+                    "b": _ScorerCfg(stage="auto"),
+                }
+            },
         )(),
     )
 
@@ -151,7 +165,11 @@ def test_configure_score_orchestration_plugins_populates_hook_plugins() -> None:
         scorer=type(
             "_Scorer",
             (),
-            {"configured_scorers": {"a": _ScorerCfg(stage=["pre-sample", "post-pipeline"])}},
+            {
+                "configured_scorers": {
+                    "a": _ScorerCfg(stage=["pre-sample", "post-pipeline"])
+                }
+            },
         )(),
     )
 
@@ -195,7 +213,10 @@ def test_configure_score_orchestration_plugins_skips_unknown_stage_hooks() -> No
         scorer=type(
             "_Scorer",
             (),
-            {"configured_scorers": {"a": _ScorerCfg(stage=[])}, "__len__": lambda self: 1},
+            {
+                "configured_scorers": {"a": _ScorerCfg(stage=[])},
+                "__len__": lambda self: 1,
+            },
         )(),
     )
     runtime.score_stage_to_hook = {}
@@ -205,10 +226,14 @@ def test_configure_score_orchestration_plugins_skips_unknown_stage_hooks() -> No
     assert runtime._plugin_objects == []
 
 
-def test_score_orchestration_hook_merges_plugin_scores_and_updates_score_dict() -> None:
+def test_score_orchestration_hook_merges_plugin_scores_and_updates_score_dict() -> (
+    None
+):
     runtime = _OrchestratorHarness(score_dict={"existing": {"x": 1}})
 
-    result = runtime._score_orchestration_hook("post-pipeline", score_kwargs={"mode": "ignored"})
+    result = runtime._score_orchestration_hook(
+        "post-pipeline", score_kwargs={"mode": "ignored"}
+    )
 
     assert result["base_metric"] == 1.0
     assert result["plugin_metric"] == 2.0
@@ -265,7 +290,9 @@ def test_score_orchestration_hook_returns_none_for_invalid_stage() -> None:
 def test_run_score_stage_hooks_rejects_invalid_event() -> None:
     runtime = _OrchestratorHarness()
 
-    with pytest.raises(ValueError, match="Score hook event must be 'before' or 'after'"):
+    with pytest.raises(
+        ValueError, match="Score hook event must be 'before' or 'after'"
+    ):
         runtime._run_score_stage_hooks("during", "post-pipeline")
 
 

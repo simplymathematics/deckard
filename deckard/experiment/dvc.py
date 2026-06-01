@@ -223,8 +223,20 @@ class DVCExperimentConfig:
 
     experiment: Any
     dvc_plugin: Any = None
-    _target_: str | None = field(default='deckard.experiment.dvc.DVCExperimentConfig', init=True, repr=True, metadata={'help': 'Hydra target path used to rehydrate this DVC experiment wrapper.'})
-    _experiment_obj: Any = field(default=None, init=False, repr=False, metadata={'help': 'Configuration field: _experiment_obj.'})
+    _target_: str | None = field(
+        default="deckard.experiment.dvc.DVCExperimentConfig",
+        init=True,
+        repr=True,
+        metadata={
+            "help": "Hydra target path used to rehydrate this DVC experiment wrapper."
+        },
+    )
+    _experiment_obj: Any = field(
+        default=None,
+        init=False,
+        repr=False,
+        metadata={"help": "Configuration field: _experiment_obj."},
+    )
 
     def __post_init__(self) -> None:
         if self._target_ in [None, ""]:

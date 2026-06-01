@@ -57,7 +57,9 @@ def test_resolve_defense_mixins_returns_mixin_when_matched() -> None:
     assert mixins == (_ExternalMixin,)
 
 
-def test_resolve_mixin_type_string_uses_resolver(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_resolve_mixin_type_string_uses_resolver(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     plugin = DefenseTypePlugin(
         mixin_type="pkg.ExternalMixin",
         defense_type="trainer",

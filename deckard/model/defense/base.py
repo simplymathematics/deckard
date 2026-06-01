@@ -69,7 +69,11 @@ def _split_defense_name(
             f"Could not parse defense type from defense name {defense_name}",
         ) from exc
     module_parts = module_name.split(".")
-    if len(module_parts) >= 3 and module_parts[0] == "art" and module_parts[1] == "defences":
+    if (
+        len(module_parts) >= 3
+        and module_parts[0] == "art"
+        and module_parts[1] == "defences"
+    ):
         defense_type = module_parts[2]
         defense_subtype = module_parts[3] if len(module_parts) >= 4 else None
         if defense_type not in supported_defense_types:
@@ -320,7 +324,9 @@ class DefenseStep:
     def __getstate__(self) -> dict[str, Any]:
         return {
             "name": object.__getattribute__(self, "name"),
-            "defense_params": dict(object.__getattribute__(self, "defense_params") or {}),
+            "defense_params": dict(
+                object.__getattribute__(self, "defense_params") or {}
+            ),
             "apply_fit": bool(object.__getattribute__(self, "apply_fit")),
             "apply_predict": bool(object.__getattribute__(self, "apply_predict")),
         }
@@ -495,7 +501,9 @@ class DefensePipelineConfigBehaviorMixin(DefenseHookRuntimeMixin):
                     return DefenseConfig(**defense_dict)
                 return DefenseConfig(
                     defenses=[
-                        DefenseStep.from_defense(resolve_class(target)(**defense_dict)),
+                        DefenseStep.from_defense(
+                            resolve_class(target)(**defense_dict)
+                        ),
                     ],
                 )
             if "defenses" in defense_dict:
@@ -591,7 +599,9 @@ class DefensePipelineConfigBehaviorMixin(DefenseHookRuntimeMixin):
                     name=step_name,
                     defense_params=step_params,
                     apply_fit=True if apply_fit is None else bool(apply_fit),
-                    apply_predict=True if apply_predict is None else bool(apply_predict),
+                    apply_predict=(
+                        True if apply_predict is None else bool(apply_predict)
+                    ),
                 )
 
             if "defense_name" in defense_dict:
@@ -1027,7 +1037,9 @@ class DefensePipelineConfigBehaviorMixin(DefenseHookRuntimeMixin):
 def _is_torch_model_instance(model_obj) -> bool:
     try:
         import torch
-    except Exception:  # pragma: no cover - optional dependency import may fail at runtime
+    except (
+        Exception
+    ):  # pragma: no cover - optional dependency import may fail at runtime
         return False
     return isinstance(model_obj, torch.nn.Module)
 
@@ -1204,12 +1216,46 @@ class ARTDefenseBehaviorMixin(DefenseHookRuntimeMixin):
         metadata={"help": "Defense constructor parameters."},
     )
     model_name: StringifiedClass | None = None
-    _model: Union[BaseEstimator, None] = field(default=None, init=False, repr=False, compare=False, metadata={'help': 'Configuration field: _model.'})
-    score_dict: ScoreDict = field(default_factory=ScoreDict, init=False, repr=False, metadata={'help': 'Configuration field: score_dict.'})
-    _target_: Union[str, None] = field(default='deckard.model.defense.base.ARTDefenseBehaviorMixin', init=True, repr=True, metadata={'help': 'Hydra target path used when this defense behavior mixin is serialized through a concrete config.'})
-    _model_config: Union[ModelConfig, None] = field(default=None, init=False, repr=False, compare=False, metadata={'help': 'Configuration field: _model_config.'})
-    plugins: list = field(default_factory=list, repr=True, metadata={'help': 'Configuration field: plugins.'})
-    _plugin_objects: Union[list, None] = field(default=None, init=False, repr=False, compare=False, metadata={'help': 'Configuration field: _plugin_objects.'})
+    _model: Union[BaseEstimator, None] = field(
+        default=None,
+        init=False,
+        repr=False,
+        compare=False,
+        metadata={"help": "Configuration field: _model."},
+    )
+    score_dict: ScoreDict = field(
+        default_factory=ScoreDict,
+        init=False,
+        repr=False,
+        metadata={"help": "Configuration field: score_dict."},
+    )
+    _target_: Union[str, None] = field(
+        default="deckard.model.defense.base.ARTDefenseBehaviorMixin",
+        init=True,
+        repr=True,
+        metadata={
+            "help": "Hydra target path used when this defense behavior mixin is serialized through a concrete config."
+        },
+    )
+    _model_config: Union[ModelConfig, None] = field(
+        default=None,
+        init=False,
+        repr=False,
+        compare=False,
+        metadata={"help": "Configuration field: _model_config."},
+    )
+    plugins: list = field(
+        default_factory=list,
+        repr=True,
+        metadata={"help": "Configuration field: plugins."},
+    )
+    _plugin_objects: Union[list, None] = field(
+        default=None,
+        init=False,
+        repr=False,
+        compare=False,
+        metadata={"help": "Configuration field: _plugin_objects."},
+    )
 
     _BUILTIN_DEFENSE_HANDLER_TYPES: ClassVar[dict[str, str]] = {
         "detector": "deckard.model.defense.detector.DetectorDefenseConfig",
@@ -1385,8 +1431,7 @@ class ARTDefenseBehaviorMixin(DefenseHookRuntimeMixin):
             )
             if (
                 candidate_token.startswith(model_name_prefixes)
-                and
-                not candidate_token.startswith("art.defences.")
+                and not candidate_token.startswith("art.defences.")
                 and not candidate_token.startswith("fairlearn.")
                 and not candidate_token.startswith("anjana.")
             ):
@@ -1783,7 +1828,9 @@ class ARTDefenseBehaviorMixin(DefenseHookRuntimeMixin):
                 )
             try:
                 import torch
-            except Exception as exc:  # pragma: no cover - optional dependency import may fail at runtime
+            except (
+                Exception
+            ) as exc:  # pragma: no cover - optional dependency import may fail at runtime
                 raise ImportError(
                     "Torch model defenses require optional dependency deckard[torch]",
                 ) from exc
@@ -1866,7 +1913,9 @@ class ARTDefenseBehaviorMixin(DefenseHookRuntimeMixin):
         base_model = getattr(self, "_model", None)
         if _is_art_wrapper_instance(base_model):
             wrapper_state = _get_wrapper_state(base_model)
-            state_base = None if wrapper_state is None else wrapper_state.get("base_estimator")
+            state_base = (
+                None if wrapper_state is None else wrapper_state.get("base_estimator")
+            )
             if state_base is not None:
                 base_model = state_base
             else:
@@ -1883,7 +1932,10 @@ class ARTDefenseBehaviorMixin(DefenseHookRuntimeMixin):
                 )
             model_name = ""
         model_name = str(model_name)
-        if model_name.startswith(("art.defences.", "fairlearn.", "anjana.")) and base_model is None:
+        if (
+            model_name.startswith(("art.defences.", "fairlearn.", "anjana."))
+            and base_model is None
+        ):
             raise ValueError(
                 "name must be set before creating an ART defense estimator",
             )
@@ -1894,7 +1946,9 @@ class ARTDefenseBehaviorMixin(DefenseHookRuntimeMixin):
                 "ART estimators are required for defense wrapping. Install optional dependencies that include ART.",
             ) from exc
         wrapper_dict = (
-            art_symbols["classifier_dict"] if self.classifier else art_symbols["regressor_dict"]
+            art_symbols["classifier_dict"]
+            if self.classifier
+            else art_symbols["regressor_dict"]
         )
         model_key = model_name.split(".")[-1] if model_name else None
         if model_key not in wrapper_dict:
@@ -1939,7 +1993,9 @@ class DefenseConfig(
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
 
-    defenses: list = field(default_factory=list, metadata={'help': 'Configuration field: defenses.'})
+    defenses: list = field(
+        default_factory=list, metadata={"help": "Configuration field: defenses."}
+    )
     name: InitVar[StringifiedClass | None] = None
     defense_params: InitVar[dict | None] = None
     model_name: StringifiedClass | None = None
@@ -1955,9 +2011,20 @@ class DefenseConfig(
             "help": "Tuple of the form (min, max) to clip input features.",
         },
     )
-    plugins: list = field(default_factory=list, repr=True, metadata={'help': 'Configuration field: plugins.'})
-    alias: str = field(default_factory=str, metadata={'help': 'Configuration field: alias.'})
-    score_dict: ScoreDict = field(default_factory=ScoreDict, init=False, repr=False, metadata={'help': 'Configuration field: score_dict.'})
+    plugins: list = field(
+        default_factory=list,
+        repr=True,
+        metadata={"help": "Configuration field: plugins."},
+    )
+    alias: str = field(
+        default_factory=str, metadata={"help": "Configuration field: alias."}
+    )
+    score_dict: ScoreDict = field(
+        default_factory=ScoreDict,
+        init=False,
+        repr=False,
+        metadata={"help": "Configuration field: score_dict."},
+    )
     defense_application_time: Union[float, None] = field(
         default=None,
         init=False,
@@ -1965,10 +2032,32 @@ class DefenseConfig(
         compare=False,
         metadata={"help": "Runtime-only timing: total defense application seconds."},
     )
-    _target_: Union[str, None] = field(default='deckard.model.defense.base.DefenseConfig', init=True, repr=True, metadata={'help': 'Hydra target path used to rehydrate this defense config.'})
-    _plugin_objects: Union[list, None] = field(default=None, init=False, repr=False, compare=False, metadata={'help': 'Configuration field: _plugin_objects.'})
-    _model: Union[BaseEstimator, None] = field(default=None, init=False, repr=False, metadata={'help': 'Configuration field: _model.'})
-    _model_config: Union[ModelConfig, None] = field(default=None, init=False, repr=False, compare=False, metadata={'help': 'Configuration field: _model_config.'})
+    _target_: Union[str, None] = field(
+        default="deckard.model.defense.base.DefenseConfig",
+        init=True,
+        repr=True,
+        metadata={"help": "Hydra target path used to rehydrate this defense config."},
+    )
+    _plugin_objects: Union[list, None] = field(
+        default=None,
+        init=False,
+        repr=False,
+        compare=False,
+        metadata={"help": "Configuration field: _plugin_objects."},
+    )
+    _model: Union[BaseEstimator, None] = field(
+        default=None,
+        init=False,
+        repr=False,
+        metadata={"help": "Configuration field: _model."},
+    )
+    _model_config: Union[ModelConfig, None] = field(
+        default=None,
+        init=False,
+        repr=False,
+        compare=False,
+        metadata={"help": "Configuration field: _model_config."},
+    )
 
     def __post_init__(
         self,
@@ -1977,9 +2066,8 @@ class DefenseConfig(
     ):
         legacy_defense_name = name
         legacy_defense_params = dict(defense_params or {})
-        if (
-            not getattr(self, "defenses", None)
-            and _looks_like_defense_class_path(legacy_defense_name)
+        if not getattr(self, "defenses", None) and _looks_like_defense_class_path(
+            legacy_defense_name
         ):
             apply_fit = legacy_defense_params.pop("apply_fit", None)
             apply_predict = legacy_defense_params.pop("apply_predict", None)

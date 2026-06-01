@@ -40,7 +40,9 @@ class TestDefenseConfig:
         assert self.defense_config.defenses == []
         assert self.defense_config.plugins == []
         assert self.defense_config.score_dict == {}
-        assert self.defense_config._target_ == "deckard.model.defense.base.DefenseConfig"
+        assert (
+            self.defense_config._target_ == "deckard.model.defense.base.DefenseConfig"
+        )
 
     def test_apply_defense_without_model(self):
         # DefenseConfig is pipeline-only, so estimator is required.
@@ -349,7 +351,12 @@ def test_get_art_class_torch_requires_typed_base_estimator(monkeypatch):
 
     with pytest.raises(TypeError, match="Torch defenses require a torch.nn.Module"):
         defense.get_art_class(
-            cast(Any, SimpleNamespace(X_train=np.zeros((4, 3)), y_train=np.array([0, 1, 0, 1]))),
+            cast(
+                Any,
+                SimpleNamespace(
+                    X_train=np.zeros((4, 3)), y_train=np.array([0, 1, 0, 1])
+                ),
+            ),
         )
 
 
@@ -395,7 +402,10 @@ def test_get_art_class_torch_runtime_import_error_wrapped(monkeypatch):
         match="Torch model defenses require optional dependency deckard\\[torch\\]",
     ):
         defense.get_art_class(
-            cast(Any, SimpleNamespace(X_train=np.zeros((2, 3)), y_train=np.array([0, 1]))),
+            cast(
+                Any,
+                SimpleNamespace(X_train=np.zeros((2, 3)), y_train=np.array([0, 1])),
+            ),
         )
 
 
@@ -532,7 +542,9 @@ def test_pipeline_single_defense_coercion_and_context_inheritance(monkeypatch):
         },
     )
     assert isinstance(coerced_fair, DefenseStep)
-    assert coerced_fair.name == "deckard.plugins.fairlearn.model.FairlearnDefenseConfig"
+    assert (
+        coerced_fair.name == "deckard.plugins.fairlearn.model.FairlearnDefenseConfig"
+    )
     assert coerced_fair.kwargs["eps"] == 0.1
 
     monkeypatch.setattr(
@@ -596,9 +608,20 @@ def test_pipeline_apply_validation_and_elapsed_fallback(monkeypatch):
         pipeline.apply(estimator=cast(Any, None), data=cast(Any, object()))
 
     estimator = object()
-    assert pipeline.apply(estimator=cast(Any, estimator), data=cast(Any, object())) is estimator
-    assert pipeline.apply_to(estimator=cast(Any, estimator), data=cast(Any, object())) is estimator
-    assert pipeline.apply_defense(estimator=cast(Any, estimator), data=cast(Any, object())) is estimator
+    assert (
+        pipeline.apply(estimator=cast(Any, estimator), data=cast(Any, object()))
+        is estimator
+    )
+    assert (
+        pipeline.apply_to(estimator=cast(Any, estimator), data=cast(Any, object()))
+        is estimator
+    )
+    assert (
+        pipeline.apply_defense(
+            estimator=cast(Any, estimator), data=cast(Any, object())
+        )
+        is estimator
+    )
 
     bad_pipeline = DefenseConfig(defenses=[SimpleNamespace(apply_to=1)])
     with pytest.raises(TypeError, match="must implement apply_to"):

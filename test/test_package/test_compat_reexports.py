@@ -60,10 +60,14 @@ def test_transformers_namespace_getattr_dispatches_known_symbols(monkeypatch):
     fake_model.HuggingFacePytorchModelConfig = sentinel_model_cfg
 
     monkeypatch.setitem(
-        sys.modules, "deckard.frameworks.transformers.declarations", fake_decl
+        sys.modules,
+        "deckard.frameworks.transformers.declarations",
+        fake_decl,
     )
     monkeypatch.setitem(
-        sys.modules, "deckard.frameworks.transformers.model", fake_model
+        sys.modules,
+        "deckard.frameworks.transformers.model",
+        fake_model,
     )
 
     assert pkg.__getattr__("GenericFlexibleTransformer") is sentinel_transformer

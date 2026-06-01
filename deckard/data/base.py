@@ -284,7 +284,9 @@ class DataConfig(OrchestratorBase, BaseConfig):
     )
     keep: list[str] = field(
         default_factory=list,
-        metadata={"help": "Optional allowlist of feature columns retained from the dataset."},
+        metadata={
+            "help": "Optional allowlist of feature columns retained from the dataset."
+        },
     )
     plugins: list[Any] = field(
         default_factory=list,
@@ -297,7 +299,9 @@ class DataConfig(OrchestratorBase, BaseConfig):
     pipeline: "DataPipeline | None" = None
     files: DataFiles = field(
         default_factory=lambda: {},
-        metadata={"help": "Declared input and output file paths for this dataset runtime."},
+        metadata={
+            "help": "Declared input and output file paths for this dataset runtime."
+        },
     )
 
     # Runtime state fields
@@ -311,7 +315,9 @@ class DataConfig(OrchestratorBase, BaseConfig):
         default_factory=dict,
         init=False,
         repr=False,
-        metadata={"help": "Timing measurements collected for dataset load and sample stages."},
+        metadata={
+            "help": "Timing measurements collected for dataset load and sample stages."
+        },
     )
     data_load_time: Union[float, None] = field(
         default=None,
@@ -419,19 +425,25 @@ class DataConfig(OrchestratorBase, BaseConfig):
         default=None,
         init=False,
         repr=False,
-        metadata={"help": "Instantiated plugin objects cached for runtime hook dispatch."},
+        metadata={
+            "help": "Instantiated plugin objects cached for runtime hook dispatch."
+        },
     )
     _sampler_obj: Union[Callable[..., Any], None] = field(
         default=None,
         init=False,
         repr=False,
-        metadata={"help": "Resolved sampler object cached for repeated split generation."},
+        metadata={
+            "help": "Resolved sampler object cached for repeated split generation."
+        },
     )
     _score_orchestration_active: bool = field(
         default=False,
         init=False,
         repr=False,
-        metadata={"help": "Internal guard indicating score orchestration is currently active."},
+        metadata={
+            "help": "Internal guard indicating score orchestration is currently active."
+        },
     )
 
     def _normalize_score_mode(self, mode: str) -> str:

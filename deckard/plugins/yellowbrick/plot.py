@@ -629,8 +629,12 @@ class YellowbrickPlotConfig(_YellowbrickPlotterMarker, BaseConfig):
     classes: Union[List[str], Literal["all"]] = "all"
     title: str = "Yellowbrick Plot"
     save_path: str = "yellowbrick_plot.png"
-    rc_config: Dict[str, Any] = field(default_factory=dict, metadata={'help': 'Configuration field: rc_config.'})
-    plot_params: Dict[str, Any] = field(default_factory=dict, metadata={'help': 'Configuration field: plot_params.'})
+    rc_config: Dict[str, Any] = field(
+        default_factory=dict, metadata={"help": "Configuration field: rc_config."}
+    )
+    plot_params: Dict[str, Any] = field(
+        default_factory=dict, metadata={"help": "Configuration field: plot_params."}
+    )
 
     def __post_init__(self):
         self._experiment_prepared = False
@@ -1369,7 +1373,8 @@ class YellowbrickPlotConfig(_YellowbrickPlotterMarker, BaseConfig):
                 message = str(exc)
                 if "Legend needs either Axes or FigureBase as parent" in message:
                     logger.warning(
-                        "Skipping yellowbrick finalize legend step: %s", message
+                        "Skipping yellowbrick finalize legend step: %s",
+                        message,
                     )
                 elif "The passed figure is not managed by pyplot" in message:
                     logger.warning(
@@ -1452,7 +1457,9 @@ class YellowbrickConfigList(BaseConfig):
     ) = "all"
     clustering: bool = False
     plot_folder: Optional[str] = None
-    rc_config: Dict[str, Any] = field(default_factory=dict, metadata={'help': 'Configuration field: rc_config.'})
+    rc_config: Dict[str, Any] = field(
+        default_factory=dict, metadata={"help": "Configuration field: rc_config."}
+    )
 
     def __post_init__(self):
         self._experiment_prepared = False

@@ -32,7 +32,10 @@ class LifelinesDataConfig(DataConfig):
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
 
-    mode: LifelinesDataMode = field(default=LifelinesDataMode.NATIVE, metadata={'help': 'Configuration field: mode.'})
+    mode: LifelinesDataMode = field(
+        default=LifelinesDataMode.NATIVE,
+        metadata={"help": "Configuration field: mode."},
+    )
     duration_col: str = "T"
     event_col: str = "E"
     reference_metric: str = "accuracy"

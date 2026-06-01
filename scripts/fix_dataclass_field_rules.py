@@ -137,7 +137,9 @@ def _ensure_field_import(source: str, tree: ast.Module) -> str:
         None,
     )
     if dataclasses_from is not None:
-        start = _to_offset(offsets, dataclasses_from.lineno, dataclasses_from.col_offset)
+        start = _to_offset(
+            offsets, dataclasses_from.lineno, dataclasses_from.col_offset
+        )
         end_lineno, end_col_offset = _node_end(dataclasses_from)
         end = _to_offset(
             offsets,
@@ -146,14 +148,21 @@ def _ensure_field_import(source: str, tree: ast.Module) -> str:
         )
         names = [alias.name for alias in dataclasses_from.names]
         names.append("field")
-        replacement = f"from dataclasses import {', '.join(sorted(dict.fromkeys(names)))}"
+        replacement = (
+            f"from dataclasses import {', '.join(sorted(dict.fromkeys(names)))}"
+        )
         return source[:start] + replacement + source[end:]
 
     insert_at = 0
-    if tree.body and isinstance(tree.body[0], ast.Expr) and isinstance(
-        tree.body[0].value,
-        ast.Constant,
-    ) and isinstance(tree.body[0].value.value, str):
+    if (
+        tree.body
+        and isinstance(tree.body[0], ast.Expr)
+        and isinstance(
+            tree.body[0].value,
+            ast.Constant,
+        )
+        and isinstance(tree.body[0].value.value, str)
+    ):
         end_lineno, end_col_offset = _node_end(tree.body[0])
         insert_at = _to_offset(
             offsets,
@@ -163,7 +172,11 @@ def _ensure_field_import(source: str, tree: ast.Module) -> str:
         prefix = "\n\n"
     else:
         prefix = ""
-    return source[:insert_at] + f"{prefix}from dataclasses import field\n" + source[insert_at:]
+    return (
+        source[:insert_at]
+        + f"{prefix}from dataclasses import field\n"
+        + source[insert_at:]
+    )
 
 
 def _fix_source(

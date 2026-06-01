@@ -647,32 +647,62 @@ class FairlearnEvasionAttackScorerConfig:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
 
-    group_scorers: dict[str, Any] = field(default_factory=lambda : {'accuracy': ScorerConfig(score_name='accuracy', score_function='sklearn.metrics.accuracy_score'), 'f1': ScorerConfig(score_name='f1', score_function='sklearn.metrics.f1_score', score_params={'average': 'weighted', 'zero_division': 0})}, metadata={'help': 'Configuration field: group_scorers.'})
     group_scorers: dict[str, Any] = field(
         default_factory=lambda: {
-            'accuracy': ScorerConfig(score_name='accuracy', score_function='sklearn.metrics.accuracy_score'),
-            'f1': ScorerConfig(score_name='f1', score_function='sklearn.metrics.f1_score', score_params={'average': 'weighted', 'zero_division': 0}),
+            "accuracy": ScorerConfig(
+                score_name="accuracy", score_function="sklearn.metrics.accuracy_score"
+            ),
+            "f1": ScorerConfig(
+                score_name="f1",
+                score_function="sklearn.metrics.f1_score",
+                score_params={"average": "weighted", "zero_division": 0},
+            ),
+        },
+        metadata={"help": "Configuration field: group_scorers."},
+    )
+    group_scorers: dict[str, Any] = field(
+        default_factory=lambda: {
+            "accuracy": ScorerConfig(
+                score_name="accuracy", score_function="sklearn.metrics.accuracy_score"
+            ),
+            "f1": ScorerConfig(
+                score_name="f1",
+                score_function="sklearn.metrics.f1_score",
+                score_params={"average": "weighted", "zero_division": 0},
+            ),
         },
         metadata={
-            'help': 'Per-group evasion scorers applied within Fairlearn MetricFrame evaluation.',
+            "help": "Per-group evasion scorers applied within Fairlearn MetricFrame evaluation.",
         },
     )
     group_scorers: dict[str, Any] = field(
         default_factory=lambda: {
-            'accuracy': ScorerConfig(score_name='accuracy', score_function='sklearn.metrics.accuracy_score'),
-            'f1': ScorerConfig(score_name='f1', score_function='sklearn.metrics.f1_score', score_params={'average': 'weighted', 'zero_division': 0}),
+            "accuracy": ScorerConfig(
+                score_name="accuracy", score_function="sklearn.metrics.accuracy_score"
+            ),
+            "f1": ScorerConfig(
+                score_name="f1",
+                score_function="sklearn.metrics.f1_score",
+                score_params={"average": "weighted", "zero_division": 0},
+            ),
         },
         metadata={
-            'help': 'Per-group membership-inference scorers applied within Fairlearn MetricFrame evaluation.',
+            "help": "Per-group membership-inference scorers applied within Fairlearn MetricFrame evaluation.",
         },
     )
     group_scorers: dict[str, Any] = field(
         default_factory=lambda: {
-            'accuracy': ScorerConfig(score_name='accuracy', score_function='sklearn.metrics.accuracy_score'),
-            'f1': ScorerConfig(score_name='f1', score_function='sklearn.metrics.f1_score', score_params={'average': 'weighted', 'zero_division': 0}),
+            "accuracy": ScorerConfig(
+                score_name="accuracy", score_function="sklearn.metrics.accuracy_score"
+            ),
+            "f1": ScorerConfig(
+                score_name="f1",
+                score_function="sklearn.metrics.f1_score",
+                score_params={"average": "weighted", "zero_division": 0},
+            ),
         },
         metadata={
-            'help': 'Per-group attribute-inference scorers applied within Fairlearn MetricFrame evaluation.',
+            "help": "Per-group attribute-inference scorers applied within Fairlearn MetricFrame evaluation.",
         },
     )
 
@@ -685,7 +715,19 @@ class FairlearnMembershipInferenceAttackScorerConfig:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
 
-    group_scorers: dict[str, Any] = field(default_factory=lambda : {'accuracy': ScorerConfig(score_name='accuracy', score_function='sklearn.metrics.accuracy_score'), 'f1': ScorerConfig(score_name='f1', score_function='sklearn.metrics.f1_score', score_params={'average': 'weighted', 'zero_division': 0})}, metadata={'help': 'Configuration field: group_scorers.'})
+    group_scorers: dict[str, Any] = field(
+        default_factory=lambda: {
+            "accuracy": ScorerConfig(
+                score_name="accuracy", score_function="sklearn.metrics.accuracy_score"
+            ),
+            "f1": ScorerConfig(
+                score_name="f1",
+                score_function="sklearn.metrics.f1_score",
+                score_params={"average": "weighted", "zero_division": 0},
+            ),
+        },
+        metadata={"help": "Configuration field: group_scorers."},
+    )
 
 
 @dataclass(eq=False, kw_only=True)
@@ -696,7 +738,19 @@ class FairlearnAttributeInferenceAttackScorerConfig:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
 
-    group_scorers: dict[str, Any] = field(default_factory=lambda : {'accuracy': ScorerConfig(score_name='accuracy', score_function='sklearn.metrics.accuracy_score'), 'f1': ScorerConfig(score_name='f1', score_function='sklearn.metrics.f1_score', score_params={'average': 'weighted', 'zero_division': 0})}, metadata={'help': 'Configuration field: group_scorers.'})
+    group_scorers: dict[str, Any] = field(
+        default_factory=lambda: {
+            "accuracy": ScorerConfig(
+                score_name="accuracy", score_function="sklearn.metrics.accuracy_score"
+            ),
+            "f1": ScorerConfig(
+                score_name="f1",
+                score_function="sklearn.metrics.f1_score",
+                score_params={"average": "weighted", "zero_division": 0},
+            ),
+        },
+        metadata={"help": "Configuration field: group_scorers."},
+    )
 
 
 @dataclass(eq=False, kw_only=True)
@@ -707,14 +761,36 @@ class FairlearnAttributeInferenceRegressionAttackScorerConfig:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
 
-    group_scorers: dict[str, Any] = field(default_factory=lambda : {'mse': ScorerConfig(score_name='mse', score_function='sklearn.metrics.mean_squared_error', greater_is_better=False), 'mae': ScorerConfig(score_name='mae', score_function='sklearn.metrics.mean_absolute_error', greater_is_better=False)}, metadata={'help': 'Configuration field: group_scorers.'})
     group_scorers: dict[str, Any] = field(
         default_factory=lambda: {
-            'mse': ScorerConfig(score_name='mse', score_function='sklearn.metrics.mean_squared_error', greater_is_better=False),
-            'mae': ScorerConfig(score_name='mae', score_function='sklearn.metrics.mean_absolute_error', greater_is_better=False),
+            "mse": ScorerConfig(
+                score_name="mse",
+                score_function="sklearn.metrics.mean_squared_error",
+                greater_is_better=False,
+            ),
+            "mae": ScorerConfig(
+                score_name="mae",
+                score_function="sklearn.metrics.mean_absolute_error",
+                greater_is_better=False,
+            ),
+        },
+        metadata={"help": "Configuration field: group_scorers."},
+    )
+    group_scorers: dict[str, Any] = field(
+        default_factory=lambda: {
+            "mse": ScorerConfig(
+                score_name="mse",
+                score_function="sklearn.metrics.mean_squared_error",
+                greater_is_better=False,
+            ),
+            "mae": ScorerConfig(
+                score_name="mae",
+                score_function="sklearn.metrics.mean_absolute_error",
+                greater_is_better=False,
+            ),
         },
         metadata={
-            'help': 'Per-group regression scorers applied within Fairlearn MetricFrame evaluation.',
+            "help": "Per-group regression scorers applied within Fairlearn MetricFrame evaluation.",
         },
     )
 

@@ -305,15 +305,18 @@ class TestPytorchAttackConfig:
         frame = pd.DataFrame({"a": [1.0], "b": [2.0]})
         series = pd.Series([1.0, 2.0])
 
-        with patch(
-            "deckard.frameworks.pytorch.attack.is_tensor",
-            side_effect=lambda value: value in {float_tensor, int_tensor},
-        ), patch(
-            "deckard.frameworks.pytorch.attack.tensor_to_numpy",
-            side_effect=[
-                np.array([[1.0, 2.0]], dtype=np.float64),
-                np.array([[1, 2]], dtype=np.int64),
-            ],
+        with (
+            patch(
+                "deckard.frameworks.pytorch.attack.is_tensor",
+                side_effect=lambda value: value in {float_tensor, int_tensor},
+            ),
+            patch(
+                "deckard.frameworks.pytorch.attack.tensor_to_numpy",
+                side_effect=[
+                    np.array([[1.0, 2.0]], dtype=np.float64),
+                    np.array([[1, 2]], dtype=np.int64),
+                ],
+            ),
         ):
             tensor_result = cfg._prepare_features_for_art(float_tensor)
             int_result = cfg._prepare_features_for_art(int_tensor)
@@ -338,12 +341,15 @@ class TestPytorchAttackConfig:
         series = pd.Series([1, 0])
         labels = [1, 0]
 
-        with patch(
-            "deckard.frameworks.pytorch.attack.is_tensor",
-            side_effect=lambda value: value is tensor,
-        ), patch(
-            "deckard.frameworks.pytorch.attack.tensor_to_numpy",
-            return_value=np.array([1, 0]),
+        with (
+            patch(
+                "deckard.frameworks.pytorch.attack.is_tensor",
+                side_effect=lambda value: value is tensor,
+            ),
+            patch(
+                "deckard.frameworks.pytorch.attack.tensor_to_numpy",
+                return_value=np.array([1, 0]),
+            ),
         ):
             tensor_result = cfg._prepare_labels_for_art(tensor)
 

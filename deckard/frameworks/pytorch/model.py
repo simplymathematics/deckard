@@ -142,19 +142,43 @@ class PytorchModelConfig(ModelConfig):
     """
 
     name: ModelType = "torch.nn.Linear"
-    model_params: dict = field(default_factory=dict, metadata={'help': 'Configuration field: model_params.'})
+    model_params: dict = field(
+        default_factory=dict, metadata={"help": "Configuration field: model_params."}
+    )
     classifier: bool = True
-    fit_params: dict = field(default_factory=dict, metadata={'help': 'Configuration field: fit_params.'})
+    fit_params: dict = field(
+        default_factory=dict, metadata={"help": "Configuration field: fit_params."}
+    )
     library: str = "pytorch"
     device: Any = None
-    criterion: Any = field(default='torch.nn.CrossEntropyLoss', metadata={'help': 'Configuration field: criterion.'})
-    optimizer: Any = field(default='torch.optim.SGD', metadata={'help': 'Configuration field: optimizer.'})
+    criterion: Any = field(
+        default="torch.nn.CrossEntropyLoss",
+        metadata={"help": "Configuration field: criterion."},
+    )
+    optimizer: Any = field(
+        default="torch.optim.SGD", metadata={"help": "Configuration field: optimizer."}
+    )
     clip_values: Union[tuple, None] = None
     random_seed: int = 42
     channels_first: bool = True
-    checkpoint_records: list = field(default_factory=list, metadata={'help': 'Configuration field: checkpoint_records.'})
-    _checkpoint_context: Any = field(default=None, init=False, repr=False, compare=False, metadata={'help': 'Configuration field: _checkpoint_context.'})
-    _epoch_attack: Any = field(default=None, init=False, repr=False, compare=False, metadata={'help': 'Configuration field: _epoch_attack.'})
+    checkpoint_records: list = field(
+        default_factory=list,
+        metadata={"help": "Configuration field: checkpoint_records."},
+    )
+    _checkpoint_context: Any = field(
+        default=None,
+        init=False,
+        repr=False,
+        compare=False,
+        metadata={"help": "Configuration field: _checkpoint_context."},
+    )
+    _epoch_attack: Any = field(
+        default=None,
+        init=False,
+        repr=False,
+        compare=False,
+        metadata={"help": "Configuration field: _epoch_attack."},
+    )
 
     @staticmethod
     def _pickle_safe_model_name(name: Any) -> Any:

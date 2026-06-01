@@ -183,8 +183,7 @@ def test_repository_enforcement_public_class_docstring_required(
 ) -> None:
     sample = tmp_path / "bad_public_class_docstring.py"
     sample.write_text(
-        "class RuntimePolicy:\n"
-        "    value: int = 1\n",
+        "class RuntimePolicy:\n" "    value: int = 1\n",
         encoding="utf-8",
     )
 
@@ -204,7 +203,7 @@ def test_repository_enforcement_public_class_docstring_passes(
     sample = tmp_path / "good_public_class_docstring.py"
     sample.write_text(
         "class RuntimePolicy:\n"
-        "    \"\"\"Temporary runtime policy.\"\"\"\n"
+        '    """Temporary runtime policy."""\n'
         "    value: int\n",
         encoding="utf-8",
     )
@@ -223,7 +222,7 @@ def test_repository_enforcement_public_method_docstring_required(
     sample = tmp_path / "bad_public_method_docstring.py"
     sample.write_text(
         "class RuntimePolicy:\n"
-        "    \"\"\"Temporary runtime policy.\"\"\"\n\n"
+        '    """Temporary runtime policy."""\n\n'
         "    def run(self) -> None:\n"
         "        pass\n",
         encoding="utf-8",
@@ -273,7 +272,7 @@ def test_repository_enforcement_runtime_fields_init_false_passes(
         "        _model: Runtime model object.\n"
         "        user_param: Example user parameter.\n"
         '    """\n'
-        "    _model: object | None = field(default=None, init=False, repr=False, metadata={\"help\": \"Runtime model\"})\n"
+        '    _model: object | None = field(default=None, init=False, repr=False, metadata={"help": "Runtime model"})\n'
         "    user_param: int = 1\n",
         encoding="utf-8",
     )
@@ -315,7 +314,7 @@ def test_repository_enforcement_field_metadata_passes(
         "    Attributes:\n"
         "        value: Example runtime value.\n"
         '    """\n'
-        "    value: int = field(default=1, metadata={\"help\": \"Example\"})\n",
+        '    value: int = field(default=1, metadata={"help": "Example"})\n',
         encoding="utf-8",
     )
 
@@ -356,7 +355,7 @@ def test_repository_enforcement_runtime_repr_passes(
         "    Attributes:\n"
         "        runtime_state: Example runtime state.\n"
         '    """\n'
-        "    runtime_state: int = field(default=1, init=False, repr=False, metadata={\"help\": \"Runtime state\"})\n",
+        '    runtime_state: int = field(default=1, init=False, repr=False, metadata={"help": "Runtime state"})\n',
         encoding="utf-8",
     )
 
@@ -374,7 +373,7 @@ def test_repository_enforcement_target_field_required(
         "@dataclass\n"
         "class RuntimeConfig:\n"
         '    """Temporary runtime config."""\n'
-        "    _target_: str | None = field(default=\"deckard.alias.RuntimeConfig\", init=False, repr=False, metadata={\"help\": \"Example\"})\n",
+        '    _target_: str | None = field(default="deckard.alias.RuntimeConfig", init=False, repr=False, metadata={"help": "Example"})\n',
         encoding="utf-8",
     )
 
@@ -397,7 +396,7 @@ def test_repository_enforcement_target_field_passes(
         "    Attributes:\n"
         "        _target_: Canonical runtime path.\n"
         '    """\n'
-        "    _target_: str | None = field(default=\"good_target_field.RuntimeConfig\", metadata={\"help\": \"Example\"})\n",
+        '    _target_: str | None = field(default="good_target_field.RuntimeConfig", metadata={"help": "Example"})\n',
         encoding="utf-8",
     )
 

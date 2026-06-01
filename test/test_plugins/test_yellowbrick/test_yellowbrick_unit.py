@@ -79,10 +79,16 @@ def temp_dir():
 
 @pytest.fixture(scope="module")
 def experiments(temp_dir):
-    config_dir = Path(__file__).resolve().parents[3] / "examples" / "sklearn" / "config"
-    data_conf = OmegaConf.load((config_dir / "data" / "classification.yaml").as_posix())
+    config_dir = (
+        Path(__file__).resolve().parents[3] / "examples" / "sklearn" / "config"
+    )
+    data_conf = OmegaConf.load(
+        (config_dir / "data" / "classification.yaml").as_posix()
+    )
     model_conf = OmegaConf.load((config_dir / "model" / "logistic.yaml").as_posix())
-    reg_data_conf = OmegaConf.load((config_dir / "data" / "regression.yaml").as_posix())
+    reg_data_conf = OmegaConf.load(
+        (config_dir / "data" / "regression.yaml").as_posix()
+    )
     reg_model_conf = OmegaConf.load((config_dir / "model" / "ridge.yaml").as_posix())
 
     cls_exp = ExperimentConfig(
@@ -134,7 +140,9 @@ def test_named_classifier_adapter_preserves_model_name():
 
 
 def test_adapter_predict_proba_predict_and_score_variants():
-    logits_adapter = yb_plot._YellowbrickModelAdapter(_PredictConfig(np.array([-1.0, 1.0])))
+    logits_adapter = yb_plot._YellowbrickModelAdapter(
+        _PredictConfig(np.array([-1.0, 1.0]))
+    )
     probs = logits_adapter.predict_proba(np.array([[0.0], [1.0]]))
     assert probs.shape == (2, 2)
     assert np.allclose(probs.sum(axis=1), 1.0)
@@ -145,7 +153,9 @@ def test_adapter_predict_proba_predict_and_score_variants():
     labels = multiclass_adapter.predict(np.array([[0.0], [1.0]]))
     assert labels.tolist() == [2, 0]
 
-    empty_score_adapter = yb_plot._YellowbrickModelAdapter(_PredictConfig(np.array([])))
+    empty_score_adapter = yb_plot._YellowbrickModelAdapter(
+        _PredictConfig(np.array([]))
+    )
     assert empty_score_adapter.score(np.array([]), np.array([])) == 0.0
 
 
@@ -272,7 +282,11 @@ def test_visualize_feature_target_regressor_classifier_cluster_model_selection_b
         "pca",
         "manifold",
     ]
-    target_types = ["class_balance", "balanced_binning_reference", "feature_correlation"]
+    target_types = [
+        "class_balance",
+        "balanced_binning_reference",
+        "feature_correlation",
+    ]
     reg_types = ["prediction_error", "residuals_plot", "alpha_selection"]
     cls_types = [
         "roc_auc",
@@ -291,7 +305,14 @@ def test_visualize_feature_target_regressor_classifier_cluster_model_selection_b
         "dropping_curve",
     ]
 
-    for plot_type in feature_types + target_types + reg_types + cls_types + cluster_types + model_sel_types:
+    for plot_type in (
+        feature_types
+        + target_types
+        + reg_types
+        + cls_types
+        + cluster_types
+        + model_sel_types
+    ):
         cfg = _make_plot_cfg(experiments["classifier"], plot_type=plot_type)
         monkeypatch.setattr(cfg, "_get_plot_data", _stub_plot_data)
         monkeypatch.setattr(cfg, "_get_plot_model", lambda: object())
@@ -304,7 +325,12 @@ def test_visualize_feature_target_regressor_classifier_cluster_model_selection_b
                 "param_range": [1, 3, "linear"],
                 "num": 3,
             }
-        elif plot_type in {"cv_scores", "feature_importances", "rfecv", "dropping_curve"}:
+        elif plot_type in {
+            "cv_scores",
+            "feature_importances",
+            "rfecv",
+            "dropping_curve",
+        }:
             cfg.plot_params = {"cv": {"name": "kfold", "n_splits": 2}}
         else:
             cfg.plot_params = {}
@@ -357,6 +383,10 @@ def test_config_list_set_plot_dict_and_len(monkeypatch, experiments, tmp_path):
     assert set(cfg.plots.keys()) == {"roc_auc", "precision_recall_curve"}
 
     monkeypatch.setattr(cfg, "_ensure_experiment_prepared", lambda: {"ok": 1})
-    monkeypatch.setattr(yb_plot.YellowbrickConfigList, "_set_plot_dict", lambda self: None)
-    monkeypatch.setattr(yb_plot.YellowbrickPlotConfig, "__call__", lambda self: {"ok": 1})
+    monkeypatch.setattr(
+        yb_plot.YellowbrickConfigList, "_set_plot_dict", lambda self: None
+    )
+    monkeypatch.setattr(
+        yb_plot.YellowbrickPlotConfig, "__call__", lambda self: {"ok": 1}
+    )
     assert cfg() == {"ok": 1}

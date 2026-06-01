@@ -554,9 +554,7 @@ def _field_has_metadata(value: ast.AST | None) -> bool:
         return False
     for kw in call.keywords:
         if kw.arg == "metadata":
-            return not (
-                isinstance(kw.value, ast.Constant) and kw.value.value is None
-            )
+            return not (isinstance(kw.value, ast.Constant) and kw.value.value is None)
     return False
 
 
@@ -890,7 +888,7 @@ def validate_file(
                             ann.lineno,
                             "CFG010",
                             (
-                                f"{class_name}._target_ must use field(default=\"{canonical_target}\") "
+                                f'{class_name}._target_ must use field(default="{canonical_target}") '
                                 "with init/repr enabled"
                             ),
                         ),
@@ -911,7 +909,7 @@ def validate_file(
                             ann.lineno,
                             "CFG010",
                             (
-                                f"{class_name}._target_ must default to \"{canonical_target}\" "
+                                f'{class_name}._target_ must default to "{canonical_target}" '
                                 "with init=True and repr=True"
                             ),
                         ),
@@ -1026,8 +1024,7 @@ def validate_file(
                         )
                     if (
                         class_is_canonical_runtime
-                        and
-                        fn.name != "__init__"
+                        and fn.name != "__init__"
                         and fn.returns is not None
                         and not _returns_none_annotation(fn.returns)
                         and "Returns:" not in doc

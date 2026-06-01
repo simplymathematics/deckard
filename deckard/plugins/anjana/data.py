@@ -331,7 +331,11 @@ class AnjanaDataConfig(
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
 
-    plugins: list = field(default_factory=default_anjana_data_plugins, metadata={'help': 'Configuration field: plugins.'}, repr=True)
+    plugins: list = field(
+        default_factory=default_anjana_data_plugins,
+        metadata={"help": "Configuration field: plugins."},
+        repr=True,
+    )
 
     score_mode: str = "test"
 

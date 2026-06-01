@@ -33,8 +33,13 @@ class DefenseTypePlugin:
     mixin_type: Any
     defense_type: StringifiedClass | None
     defense_subtype: Union[str, None] = None
-    excluded_subtypes: tuple[str, ...] = field(default_factory=tuple, metadata={'help': 'Configuration field: excluded_subtypes.'})
-    init_params: dict[str, Any] = field(default_factory=dict, metadata={'help': 'Configuration field: init_params.'})
+    excluded_subtypes: tuple[str, ...] = field(
+        default_factory=tuple,
+        metadata={"help": "Configuration field: excluded_subtypes."},
+    )
+    init_params: dict[str, Any] = field(
+        default_factory=dict, metadata={"help": "Configuration field: init_params."}
+    )
 
     def _resolve_mixin_type(self) -> type:
         if isinstance(self.mixin_type, str):

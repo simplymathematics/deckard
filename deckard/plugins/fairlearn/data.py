@@ -145,7 +145,11 @@ class FairlearnDataConfig(
         assert hasattr(self, "X_train"), ".X_train not found"
         return result
 
-    plugins: list = field(default_factory=default_fairlearn_data_plugins, metadata={'help': 'Configuration field: plugins.'}, repr=True)
+    plugins: list = field(
+        default_factory=default_fairlearn_data_plugins,
+        metadata={"help": "Configuration field: plugins."},
+        repr=True,
+    )
 
     def __post_init__(self):
         super().__post_init__()

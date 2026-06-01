@@ -575,8 +575,7 @@ def test_wrapper_defenses_reordered_last_with_warning(caplog):
 
     assert call_order == ["data", "art"]
     assert any(
-        "automatically reordered to run last" in rec.message
-        for rec in caplog.records
+        "automatically reordered to run last" in rec.message for rec in caplog.records
     )
 
 

@@ -297,13 +297,17 @@ class AttackConfig(ScoreOrchestratorMixin, BaseConfig):
         default=None,
         init=False,
         repr=False,
-        metadata={"help": "Elapsed time in seconds for generating adversarial examples."},
+        metadata={
+            "help": "Elapsed time in seconds for generating adversarial examples."
+        },
     )
     attack_prediction_time: Union[float, None] = field(
         default=None,
         init=False,
         repr=False,
-        metadata={"help": "Elapsed time in seconds for model predictions on attacked inputs."},
+        metadata={
+            "help": "Elapsed time in seconds for model predictions on attacked inputs."
+        },
     )
     attack_score_time: Union[float, None] = field(
         default=None,
@@ -345,7 +349,9 @@ class AttackConfig(ScoreOrchestratorMixin, BaseConfig):
         default=None,
         init=False,
         repr=False,
-        metadata={"help": "Selected target-class index for targeted attack workflows."},
+        metadata={
+            "help": "Selected target-class index for targeted attack workflows."
+        },
     )
     _attack_family: Union[str, None] = field(
         default=None,
@@ -363,7 +369,9 @@ class AttackConfig(ScoreOrchestratorMixin, BaseConfig):
         default_factory=ScoreDict,
         init=False,
         repr=False,
-        metadata={"help": "Attack score payload accumulated during runtime evaluation."},
+        metadata={
+            "help": "Attack score payload accumulated during runtime evaluation."
+        },
     )
     _target_: Union[str, None] = field(
         default="deckard.attack.base.AttackConfig",
@@ -376,7 +384,9 @@ class AttackConfig(ScoreOrchestratorMixin, BaseConfig):
         init=False,
         repr=False,
         compare=False,
-        metadata={"help": "Instantiated plugin objects cached for attack hook dispatch."},
+        metadata={
+            "help": "Instantiated plugin objects cached for attack hook dispatch."
+        },
     )
 
     def __hash__(self):

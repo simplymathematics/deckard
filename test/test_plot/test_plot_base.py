@@ -149,8 +149,12 @@ def test_plot_type_plugin_call_delegates_to_runtime_mixin():
 
 
 def test_plot_dict_config_iter_len_and_merge_behavior():
-    cfg = PlotDictConfig(plots={"one": {"plot_type": "roc_auc"}}, backend="yellowbrick")
-    other = PlotDictConfig(plots={"two": {"plot_type": "pr_curve"}}, backend="yellowbrick")
+    cfg = PlotDictConfig(
+        plots={"one": {"plot_type": "roc_auc"}}, backend="yellowbrick"
+    )
+    other = PlotDictConfig(
+        plots={"two": {"plot_type": "pr_curve"}}, backend="yellowbrick"
+    )
 
     assert len(cfg) == 1
     assert list(dict(cfg).keys()) == ["one"]
@@ -163,7 +167,9 @@ def test_plot_dict_config_iter_len_and_merge_behavior():
 
 
 def test_plot_dict_config_merge_ignores_non_plotdict_values():
-    cfg = PlotDictConfig(plots={"one": {"plot_type": "roc_auc"}}, backend="yellowbrick")
+    cfg = PlotDictConfig(
+        plots={"one": {"plot_type": "roc_auc"}}, backend="yellowbrick"
+    )
 
     merged = cfg.merge(cast(Any, {"two": {"plot_type": "pr_curve"}}))
 

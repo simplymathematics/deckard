@@ -343,12 +343,33 @@ class ExperimentConfig(ScoreOrchestratorMixin, BaseConfig):
     device: Any = None
     classifier: Union[str, bool] = True
     evaluation_mode: Literal["standard", "tuning", "report"] = "standard"
-    score_mode: Union[str, list[str], None] = field(default_factory=list, metadata={'help': 'Configuration field: score_mode.'})
-    times: dict[str, Any] = field(default_factory=dict, init=False, repr=False, metadata={'help': 'Configuration field: times.'})
-    outputs: dict[str, Any] = field(default_factory=dict, init=False, repr=False, metadata={'help': 'Configuration field: outputs.'})
-    params: dict[str, Any] = field(default_factory=dict, init=False, repr=False, metadata={'help': 'Configuration field: params.'})
-    hook_plugins: list[Any] = field(default_factory=list, metadata={'help': 'Configuration field: hook_plugins.'})
-    hook_bundles: list[Any] = field(default_factory=list, metadata={'help': 'Configuration field: hook_bundles.'})
+    score_mode: Union[str, list[str], None] = field(
+        default_factory=list, metadata={"help": "Configuration field: score_mode."}
+    )
+    times: dict[str, Any] = field(
+        default_factory=dict,
+        init=False,
+        repr=False,
+        metadata={"help": "Configuration field: times."},
+    )
+    outputs: dict[str, Any] = field(
+        default_factory=dict,
+        init=False,
+        repr=False,
+        metadata={"help": "Configuration field: outputs."},
+    )
+    params: dict[str, Any] = field(
+        default_factory=dict,
+        init=False,
+        repr=False,
+        metadata={"help": "Configuration field: params."},
+    )
+    hook_plugins: list[Any] = field(
+        default_factory=list, metadata={"help": "Configuration field: hook_plugins."}
+    )
+    hook_bundles: list[Any] = field(
+        default_factory=list, metadata={"help": "Configuration field: hook_bundles."}
+    )
     dvc_plugin: Any = None
     cache_enabled: bool = True
 

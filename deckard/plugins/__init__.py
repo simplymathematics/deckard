@@ -57,8 +57,12 @@ class HookPlugin:
 
     hook_name: str
     method_name: str
-    method_kwargs: dict[str, Any] = field(default_factory=dict, metadata={'help': 'Configuration field: method_kwargs.'})
-    init_params: dict[str, Any] = field(default_factory=dict, metadata={'help': 'Configuration field: init_params.'})
+    method_kwargs: dict[str, Any] = field(
+        default_factory=dict, metadata={"help": "Configuration field: method_kwargs."}
+    )
+    init_params: dict[str, Any] = field(
+        default_factory=dict, metadata={"help": "Configuration field: init_params."}
+    )
 
     def declares_hook(self, hook_name: str) -> bool:
         """Return whether this plugin handles the provided hook name.

@@ -598,7 +598,9 @@ class ScorerConfig:
         },
     )
     metric_scope: str = "auto"
-    stage: List[str] = field(default_factory=list, metadata={'help': 'Configuration field: stage.'})
+    stage: List[str] = field(
+        default_factory=list, metadata={"help": "Configuration field: stage."}
+    )
     greater_is_better: bool = True
     needs_labels: Union[bool, None] = True
     needs_proba: Union[bool, None] = None
@@ -893,7 +895,9 @@ class ScorerDictConfig(BaseConfig):
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
 
-    scorers: dict[str, ScorerConfig] = field(default_factory=dict, metadata={'help': 'Configuration field: scorers.'})
+    scorers: dict[str, ScorerConfig] = field(
+        default_factory=dict, metadata={"help": "Configuration field: scorers."}
+    )
     stage: List[str] = field(
         default_factory=list,
         metadata={
@@ -1912,7 +1916,9 @@ class DefaultModelScorerDictConfig(TaskAwareScorerMixin, ScorerDictConfig):
 
     classifier: Union[bool, str, None] = None
     scoring_type: str = "model"
-    scorers: dict[str, ScorerConfig] = field(default_factory=dict, metadata={'help': 'Configuration field: scorers.'})
+    scorers: dict[str, ScorerConfig] = field(
+        default_factory=dict, metadata={"help": "Configuration field: scorers."}
+    )
 
     def _build_default_scorers(self, classifier: bool) -> dict[str, ScorerConfig]:
         return (
@@ -1958,7 +1964,9 @@ class DefaultPytorchScorerDictConfig(TaskAwareScorerMixin, ScorerDictConfig):
 
     classifier: Union[bool, str, None] = None
     scoring_type: str = "model"
-    scorers: dict[str, ScorerConfig] = field(default_factory=dict, metadata={'help': 'Configuration field: scorers.'})
+    scorers: dict[str, ScorerConfig] = field(
+        default_factory=dict, metadata={"help": "Configuration field: scorers."}
+    )
 
     def _build_default_scorers(self, classifier: bool) -> dict[str, ScorerConfig]:
         return (
