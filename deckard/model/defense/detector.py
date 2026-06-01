@@ -6,7 +6,7 @@ from ...data import DataConfig
 from ...frameworks.types import ArtEsimtator, EstimatorLike, StringifiedClass
 from ...utils import BaseConfig, safe_store
 from .base import (
-    DefenseConfig,
+    ARTDefenseBehaviorMixin,
     DefenseInitParamValue,
     _is_art_torch_wrapper,
     _is_torch_model_instance,
@@ -14,7 +14,7 @@ from .base import (
 
 
 @dataclass(eq=False)
-class DetectorDefenseConfig(DefenseConfig):
+class DetectorDefenseConfig(ARTDefenseBehaviorMixin, BaseConfig):
     """Configuration for detector-based defenses.
 
     This wraps detector-family defense behavior and registers detector-specific
@@ -91,29 +91,6 @@ class DetectorDefenseConfig(DefenseConfig):
 
         setattr(detector_classifier, "_deckard_evasion_detector", defense)
         return defense, detector_classifier
-
-    def _build_art_wrapper(
-        self,
-        art_class,
-        base_estimator,
-        init_params,
-        preprocessing_defences,
-        postprocessing_defences,
-    ):
-        art_params = dict(init_params or {})
-        art_params["preprocessing_defences"] = preprocessing_defences or None
-        art_params["postprocessing_defences"] = postprocessing_defences or None
-        wrapped_estimator = art_class(base_estimator, **art_params)
-        setattr(
-            wrapped_estimator,
-            "_deckard_art_wrapper_state",
-            {
-                "wrapped_by_deckard": True,
-                "base_estimator": base_estimator,
-                "wrapper_type": type(wrapped_estimator).__name__,
-            },
-        )
-        return wrapped_estimator
 
     def detect_poison(
         self,

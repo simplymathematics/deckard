@@ -27,7 +27,7 @@ try:
     from ..data import FairlearnDataConfig
 except ImportError:  # pragma: no cover
     FairlearnDataConfig = None
-from ..model.defense.base import DefensePipelineConfig
+from ..model.defense.base import DefenseConfig
 
 try:
     from ..attack import AttackConfig
@@ -333,7 +333,7 @@ class ExperimentConfig(ScoreOrchestratorMixin, BaseConfig):
     data: DataConfig
     experiment_name: str = "{hash}"
     model: ModelConfig = None
-    defense: DefensePipelineConfig = None
+    defense: DefenseConfig = None
     attack: AttackConfig = None
     detector: DetectorConfig = None
     files: FileConfig = None
@@ -1214,11 +1214,11 @@ class ExperimentConfig(ScoreOrchestratorMixin, BaseConfig):
     def _initialize_defense(self) -> None:
         """Normalize defense config when configured."""
         if self.defense is not None:
-            self.defense = DefensePipelineConfig.coerce(self.defense)
+            self.defense = DefenseConfig.coerce(self.defense)
             assert isinstance(
                 self.defense,
-                DefensePipelineConfig,
-            ), "defense must be an instance of DefensePipelineConfig"
+                DefenseConfig,
+            ), "defense must be an instance of DefenseConfig"
 
     def _coerce_model(self) -> None:
         """Normalize model config and enforce model/classifier consistency."""

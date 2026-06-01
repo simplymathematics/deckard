@@ -9,9 +9,10 @@ from sklearn.base import BaseEstimator
 
 from ...data._mixins import RuntimePayload, SensitiveColumnsMixin
 from ...model.base import ModelConfig, logger
-from ...model.defense.base import DefenseConfig
+from ...model.defense.base import ARTDefenseBehaviorMixin
 from ...pytorch.model import PytorchModelConfig
 from ...utils import (
+    BaseConfig,
     is_default_config_value,
     load_class,
     resolve_class,
@@ -235,7 +236,11 @@ class BinaryLogitAdapter:
 
 
 @dataclass(eq=False, kw_only=True)
-class FairlearnDefenseConfig(SensitiveColumnsMixin, DefenseConfig):
+class FairlearnDefenseConfig(
+    SensitiveColumnsMixin,
+    ARTDefenseBehaviorMixin,
+    BaseConfig,
+):
     """Fairness-aware defense config that inherits DefenseConfig.
 
     Attributes:
@@ -245,10 +250,6 @@ class FairlearnDefenseConfig(SensitiveColumnsMixin, DefenseConfig):
     data: Union[FairlearnDataConfig, None] = None
 
     def _resolve_fairness_defense_spec(self):
-        if hasattr(self, "name"):
-            candidate = getattr(self, "name", None)
-            if isinstance(candidate, str) and candidate.startswith("fairlearn."):
-                return candidate, dict(getattr(self, "defense_params", {}) or {})
         normalized_name = getattr(self, "defense_name", None)
         if isinstance(normalized_name, str) and normalized_name.startswith(
             "fairlearn.",
@@ -256,7 +257,7 @@ class FairlearnDefenseConfig(SensitiveColumnsMixin, DefenseConfig):
             return normalized_name, dict(getattr(self, "defense_params", {}) or {})
         defense_obj = getattr(self, "defense", None)
         if defense_obj is not None:
-            nested_name = getattr(defense_obj, "name", None)
+            nested_name = getattr(defense_obj, "defense_name", None)
             if isinstance(nested_name, str) and nested_name.startswith("fairlearn."):
                 return nested_name, dict(
                     getattr(defense_obj, "defense_params", {}) or {},

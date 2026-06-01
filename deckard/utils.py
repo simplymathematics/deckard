@@ -1088,7 +1088,7 @@ class BaseConfig(ArtifactLoaderMixin):
         self._finalize_parent_component_values(instance, overrides=overrides)
         return instance
 
-    def __call__(self) -> ScoreDict:
+    def __call__(self, *args, **kwargs) -> Any:
         """Execute runtime behavior and return normalized score payload.
 
         Returns:

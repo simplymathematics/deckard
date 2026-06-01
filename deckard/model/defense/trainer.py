@@ -6,7 +6,7 @@ from ...data import DataConfig
 from ...frameworks.types import ArtEsimtator, EstimatorLike, StringifiedClass
 from ...utils import BaseConfig, safe_store
 from .base import (
-    DefenseConfig,
+    ARTDefenseBehaviorMixin,
     DefenseInitParamValue,
     _is_art_torch_wrapper,
     _is_torch_model_instance,
@@ -14,7 +14,7 @@ from .base import (
 
 
 @dataclass(eq=False, kw_only=True)
-class TrainerDefenseConfig(DefenseConfig):
+class TrainerDefenseConfig(ARTDefenseBehaviorMixin, BaseConfig):
     """Configuration for trainer-based defenses.
 
     Registers trainer defense behavior and plugin metadata used during defense

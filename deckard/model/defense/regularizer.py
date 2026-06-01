@@ -5,11 +5,11 @@ from dataclasses import dataclass
 from ...data import DataConfig
 from ...frameworks.types import ArtEsimtator, EstimatorLike, StringifiedClass
 from ...utils import BaseConfig, safe_store
-from .base import DefenseConfig, DefenseInitParamValue
+from .base import ARTDefenseBehaviorMixin, DefenseInitParamValue
 
 
 @dataclass(eq=False, kw_only=True)
-class RegularizerDefenseConfig(DefenseConfig):
+class RegularizerDefenseConfig(ARTDefenseBehaviorMixin, BaseConfig):
     """Configuration for regularizer-based defenses.
 
     Registers regularizer defense behavior and plugin metadata used during

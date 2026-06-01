@@ -398,9 +398,9 @@ class ModelConfig(ScoreOrchestratorMixin, BaseConfig):
     def _coerce_defense_config(self) -> None:
         """Coerce defense configuration into the runtime pipeline wrapper."""
         if self.defense is not None:
-            from .defense.base import DefensePipelineConfig
+            from .defense.base import DefenseConfig
 
-            self.defense = DefensePipelineConfig.coerce(self.defense)
+            self.defense = DefenseConfig.coerce(self.defense)
 
     def _initialize_model(self):
         # Initialize model through the shared loader used by config objects.
@@ -615,9 +615,9 @@ class ModelConfig(ScoreOrchestratorMixin, BaseConfig):
             self._defense_pipeline = None
             return None
 
-        from .defense.base import DefensePipelineConfig
+        from .defense.base import DefenseConfig
 
-        self.defense = DefensePipelineConfig.coerce(self.defense)
+        self.defense = DefenseConfig.coerce(self.defense)
         self._defense_pipeline = self.defense
         return self._defense_pipeline
 

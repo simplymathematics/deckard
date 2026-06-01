@@ -6,7 +6,7 @@ from ...data import DataConfig
 from ...frameworks.types import ArtEsimtator, EstimatorLike, StringifiedClass
 from ...utils import BaseConfig, safe_store
 from .base import (
-    DefenseConfig,
+    ARTDefenseBehaviorMixin,
     DefenseInitParamValue,
     _is_art_torch_wrapper,
     _is_torch_model_instance,
@@ -14,7 +14,7 @@ from .base import (
 
 
 @dataclass(eq=False, kw_only=True)
-class TransformerDefenseConfig(DefenseConfig):
+class TransformerDefenseConfig(ARTDefenseBehaviorMixin, BaseConfig):
     """Configuration for transformer-based defenses.
 
     Registers transformer defense behavior and plugin metadata used during

@@ -9,7 +9,7 @@ import logging
 from typing import Any
 
 from .base import ModelConfig
-from .defense.base import DefenseConfig, DefensePipelineConfig
+from .defense.base import DefenseConfig
 from .defense.detector import DetectorDefenseConfig
 from .defense.postprocessor import PostprocessorDefenseConfig
 from .defense.preprocessor import PreprocessorDefenseConfig
@@ -111,7 +111,6 @@ def _load_torch_model_symbols() -> bool:
 __all__ = [
     "ModelConfig",
     "DefenseConfig",
-    "DefensePipelineConfig",
     "DetectorDefenseConfig",
     "PreprocessorDefenseConfig",
     "PostprocessorDefenseConfig",
