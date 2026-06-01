@@ -18,6 +18,36 @@ Before opening a PR, ensure:
 - linting passes
 - type checks pass
 
+### Pre-commit Hook Requirement
+
+Lint tools do not run automatically on `git commit` unless the local git hook is
+installed in your clone.
+
+Install and verify hook wiring:
+
+```bash
+pre-commit install
+ls -la .git/hooks/pre-commit
+```
+
+Expected outcome:
+
+- `.git/hooks/pre-commit` exists and is executable.
+- The hook references `.pre-commit-config.yaml`.
+
+If hooks appear to be skipped:
+
+- Check for `git commit --no-verify` usage (this bypasses hooks).
+- Re-run `pre-commit install` after cloning/reinitializing the repository.
+- Confirm git is not using a custom hooks path:
+
+```bash
+git config --get core.hooksPath
+```
+
+If this prints a non-empty path, ensure pre-commit is installed into that hooks
+directory as well.
+
 If CI fails, install broader tooling and run checks locally:
 
 ```bash

@@ -168,7 +168,7 @@ stages:
     - ./build/pytorch/raw_data/
 
   notebook_huggingface:
-    cmd: jupyter nbconvert --to notebook --execute --inplace huggingface.ipynb
+    cmd: DECKARD_TEST_MAX_SAMPLES=512 jupyter nbconvert --to notebook --execute --inplace huggingface.ipynb
     deps:
     - huggingface.ipynb
     - ../../deckard/attack/
