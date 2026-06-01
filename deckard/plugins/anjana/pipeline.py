@@ -35,7 +35,12 @@ class AnjanaPipelineHooksMixin:
     """
 
     def apply_defense(self) -> None:
-        """Canonical public entrypoint for ANJANA pipeline defense application."""
+        """Canonical public entrypoint for ANJANA pipeline defense application.
+
+        Raises:
+            ValueError: If ANJANA defense config is ambiguous or invalid.
+            TypeError: If ANJANA defense config has unsupported type.
+        """
         if self.anjana_defense in [None, False]:
             return
         if self.anjana_defense is True:

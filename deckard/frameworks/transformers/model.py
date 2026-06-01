@@ -128,9 +128,16 @@ class HuggingFacePytorchModelConfig(PytorchModelConfig):
     Use this config (``_target_: deckard.frameworks.transformers.model.HuggingFacePytorchModelConfig``)
     instead of the base ``PytorchModelConfig`` when the model is a HuggingFace
     transformer (e.g. :class:`~deckard.frameworks.transformers.declarations.GenericFlexibleTransformer`).
+
+    Attributes:
+        Inherits runtime model and optimizer configuration fields from
+        ``PytorchModelConfig``.
     """
 
-    def get_art_model(self, data: "DataConfig"):
+    def get_art_model(
+        self,
+        data: "DataConfig",
+    ) -> DeckardHuggingFaceClassifierPyTorch:
         """Build an ART HuggingFaceClassifierPyTorch around the inner torch model.
 
         The inner model is wrapped in :class:`~deckard.frameworks.transformers.declarations.HuggingFaceArtModelWrapper`
@@ -142,6 +149,9 @@ class HuggingFacePytorchModelConfig(PytorchModelConfig):
 
         Returns:
             A configured :class:`~art.estimators.classification.HuggingFaceClassifierPyTorch` instance.
+
+        Raises:
+            ImportError: If ART HuggingFace wrapper dependency is unavailable.
         """
         if DeckardHuggingFaceClassifierPyTorch is None:
             raise ImportError(

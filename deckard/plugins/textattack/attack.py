@@ -123,7 +123,11 @@ def run_textattack_attack_config(
 
 
 class TextAttackConfig(AttackConfig):
-    """Dedicated runtime attack config for TextAttack-backed attack names."""
+    """Dedicated runtime attack config for TextAttack-backed attack names.
+
+    Attributes:
+        Inherits runtime attack configuration fields from ``AttackConfig``.
+    """
 
     def __call__(
         self,
@@ -134,6 +138,22 @@ class TextAttackConfig(AttackConfig):
         attack_family: str,
         attack_sub_family: str,
     ) -> ScoreDict:
+        """Execute TextAttack runtime flow and persist attack runtime outputs.
+
+        Args:
+            data: Runtime data payload.
+            model: Runtime model payload.
+            art_model: Unused ART model payload (plugin manages runtime directly).
+            attack: Unused attack object placeholder.
+            attack_family: Canonical attack family token.
+            attack_sub_family: Canonical attack subtype token.
+
+        Returns:
+            Runtime score dictionary updated with TextAttack outputs.
+
+        Raises:
+            ValueError: If attack family is unsupported for TextAttack runtime.
+        """
         _ = (art_model, attack, attack_sub_family)
         if (attack_family or "").lower() != "evasion":
             raise ValueError(

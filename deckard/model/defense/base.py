@@ -177,18 +177,43 @@ class DefenseStep:
     """One defense-chain step with explicit fit/predict application flags.
 
     Attributes:
-        defense : A string-or-dict-like defense object.
-        apply_fit : bool Whether or not to apply before training (might trigger a retrain).
-        apply_pred: bool Whether or not to apply during prediction.
+        name: Canonical defense class path.
+        defense_params: Defense parameters passed during class instantiation.
+        apply_fit: Whether or not to apply before training (might trigger a retrain).
+        apply_predict: Whether or not to apply during prediction.
     """
 
-    defense: Any
+    name: str | None
+    defense_params: dict[str, Any]
     apply_fit: bool
     apply_predict: bool
+    _runtime_defense: Any = field(
+        default=None,
+        init=False,
+        repr=False,
+        compare=False,
+        metadata={"help": "Runtime defense instance cache for this step."},
+    )
+
+    def __post_init__(self) -> None:
+        if isinstance(self.name, str) and self.name.strip() == "":
+            self.name = None
+        if not isinstance(self.defense_params, dict):
+            self.defense_params = dict(self.defense_params or {})
+
+    def _get_runtime_defense(self) -> Any:
+        runtime_defense = object.__getattribute__(self, "_runtime_defense")
+        if runtime_defense is not None:
+            return runtime_defense
+        if not isinstance(self.name, str) or self.name.strip() == "":
+            return None
+        runtime_defense = resolve_class(self.name)(**dict(self.defense_params or {}))
+        object.__setattr__(self, "_runtime_defense", runtime_defense)
+        return runtime_defense
 
     @staticmethod
     def _derive_default_flags(defense_obj: Any) -> tuple[bool, bool]:
-        defense_name = str(getattr(defense_obj, "defense_name", None) or "").lower()
+        defense_name = str(getattr(defense_obj, "name", None) or "").lower()
         if defense_name.startswith("fairlearn.") or defense_name.startswith("anjana."):
             return True, True
         return True, True
@@ -217,7 +242,7 @@ class DefenseStep:
             default_predict if apply_predict is None else bool(apply_predict)
         )
 
-        defense_name = str(getattr(defense_obj, "defense_name", None) or "").lower()
+        defense_name = str(getattr(defense_obj, "name", None) or "").lower()
         if (
             defense_name.startswith("art.")
             and apply_fit is None
@@ -226,23 +251,39 @@ class DefenseStep:
             logger.warning(
                 "ART defense step '%s' is missing explicit apply_fit/apply_predict flags; "
                 "defaulting to apply_fit=True, apply_predict=True.",
-                getattr(defense_obj, "defense_name", None) or type(defense_obj).__name__,
+                getattr(defense_obj, "name", None) or type(defense_obj).__name__,
             )
 
-        return cls(
-            defense=defense_obj,
+        step = cls(
+            name=getattr(defense_obj, "name", None),
+            defense_params=dict(getattr(defense_obj, "defense_params", {}) or {}),
             apply_fit=resolved_apply_fit,
             apply_predict=resolved_apply_predict,
         )
+        object.__setattr__(step, "_runtime_defense", defense_obj)
+        return step
 
     def __getattr__(self, name: str) -> Any:
-        return getattr(self.defense, name)
+        runtime_defense = self._get_runtime_defense()
+        if runtime_defense is None:
+            raise AttributeError(name)
+        return getattr(runtime_defense, name)
 
     def __setattr__(self, name: str, value: Any) -> None:
-        if name in {"defense", "apply_fit", "apply_predict"}:
+        if name in {
+            "name",
+            "defense_params",
+            "apply_fit",
+            "apply_predict",
+            "_runtime_defense",
+        }:
             object.__setattr__(self, name, value)
             return
-        setattr(self.defense, name, value)
+        runtime_defense = self._get_runtime_defense()
+        if runtime_defense is None:
+            object.__setattr__(self, name, value)
+            return
+        setattr(runtime_defense, name, value)
 
 
 class DefenseHookRuntimeMixin:
@@ -435,11 +476,14 @@ class DefensePipelineConfigBehaviorMixin(DefenseHookRuntimeMixin):
             target = defense_dict.pop("_target_", None)
             if target is not None:
                 defense_instance = resolve_class(target)(**defense_dict)
-                return DefenseStep.from_defense(
+                step = DefenseStep.from_defense(
                     defense_instance,
                     apply_fit=apply_fit,
                     apply_predict=apply_predict,
                 )
+                if not isinstance(step.name, str) or step.name.strip() == "":
+                    step.name = str(defense_dict.get("name", None) or target)
+                return step
 
             if "defense_name" in defense_dict:
                 raise ValueError(
@@ -539,7 +583,7 @@ class DefensePipelineConfigBehaviorMixin(DefenseHookRuntimeMixin):
     @staticmethod
     def _unwrap_defense(defense_obj: Any) -> Any:
         if isinstance(defense_obj, DefenseStep):
-            return defense_obj.defense
+            return defense_obj._get_runtime_defense()
         return defense_obj
 
     def resolve_stage(
@@ -578,7 +622,7 @@ class DefensePipelineConfigBehaviorMixin(DefenseHookRuntimeMixin):
     def _is_art_defense(self, defense_obj) -> bool:
         """Return True if defense_obj is an ART defense (wraps model, must be last)."""
         defense_obj = self._unwrap_defense(defense_obj)
-        defense_name = getattr(defense_obj, "defense_name", None)
+        defense_name = getattr(defense_obj, "name", None)
         if isinstance(defense_name, str) and defense_name.startswith("art."):
             return True
         try:
@@ -608,7 +652,7 @@ class DefensePipelineConfigBehaviorMixin(DefenseHookRuntimeMixin):
 
     def _is_retraining_defense(self, defense_obj) -> bool:
         defense_obj = self._unwrap_defense(defense_obj)
-        defense_name = getattr(defense_obj, "defense_name", None)
+        defense_name = getattr(defense_obj, "name", None)
         if not isinstance(defense_name, str):
             return False
         lowered = defense_name.lower()
@@ -648,7 +692,7 @@ class DefensePipelineConfigBehaviorMixin(DefenseHookRuntimeMixin):
 
         staged_chain = []
         for step in defense_chain:
-            defense_name = getattr(step, "defense_name", None)
+            defense_name = step.name if isinstance(step, DefenseStep) else None
             resolved_stage = resolve_model_defense_stage(
                 defense_name,
                 default_stage=stage,
@@ -664,11 +708,12 @@ class DefensePipelineConfigBehaviorMixin(DefenseHookRuntimeMixin):
                 "Defense chain stage order adjusted to canonical model defense staging. "
                 "Original=%s Reordered=%s",
                 [
-                    getattr(d, "defense_name", None) or type(d).__name__
+                    (d.name if isinstance(d, DefenseStep) else None)
+                    or type(d).__name__
                     for d in defense_chain
                 ],
                 [
-                    f"{getattr(d, 'defense_name', None) or type(d).__name__}@{s}"
+                    f"{(d.name if isinstance(d, DefenseStep) else None) or type(d).__name__}@{s}"
                     for s, d in sorted_chain
                 ],
             )
@@ -698,11 +743,13 @@ class DefensePipelineConfigBehaviorMixin(DefenseHookRuntimeMixin):
                     "so they are automatically reordered to run last. "
                     "Data defenses: %s; wrapper defenses: %s.",
                     [
-                        getattr(d, "defense_name", None) or type(d).__name__
+                        (d.name if isinstance(d, DefenseStep) else None)
+                        or type(d).__name__
                         for d in data_defenses
                     ],
                     [
-                        getattr(d, "defense_name", None) or type(d).__name__
+                        (d.name if isinstance(d, DefenseStep) else None)
+                        or type(d).__name__
                         for d in wrapper_defenses
                     ],
                 )
@@ -1019,11 +1066,17 @@ class ARTDefenseBehaviorMixin(DefenseHookRuntimeMixin):
 
     name: StringifiedClass | None = None
     classifier: Union[bool, str, None] = True
-    model_params: dict = field(default_factory=dict)
+    model_params: dict = field(
+        default_factory=dict,
+        metadata={"help": "Model construction parameters for defense application."},
+    )
     probability: bool = False
     alias: str = ""
     defense_name: Union[str, None] = None
-    defense_params: dict = field(default_factory=dict)
+    defense_params: dict = field(
+        default_factory=dict,
+        metadata={"help": "Defense constructor parameters."},
+    )
     model_name: StringifiedClass | None = None
     _model: Union[BaseEstimator, None] = field(default=None, init=False, repr=False, compare=False, metadata={'help': 'Configuration field: _model.'})
     score_dict: ScoreDict = field(default_factory=ScoreDict, init=False, repr=False, metadata={'help': 'Configuration field: score_dict.'})
@@ -1193,7 +1246,14 @@ class ARTDefenseBehaviorMixin(DefenseHookRuntimeMixin):
     def parse_defense_name(
         self,
     ) -> tuple[str | None, str | None, type | None]:
-        """Parse the configured defense name into type, subtype, and class."""
+        """Parse the configured defense name into type, subtype, and class.
+
+        Returns:
+            Defense family token, subtype token, and resolved defense class.
+
+        Raises:
+            ImportError: If the configured defense class cannot be imported.
+        """
         candidate_name = getattr(self, "defense_name", None)
         if not is_null_config_value(candidate_name, allow_empty=True):
             defense_type, defense_subtype, class_name = _split_defense_name(
@@ -1222,7 +1282,25 @@ class ARTDefenseBehaviorMixin(DefenseHookRuntimeMixin):
         existing_preprocessors: list,
         existing_postprocessors: list,
     ) -> tuple[BaseConfig | None, EstimatorLike]:
-        """Abstract single-defense dispatch contract."""
+        """Abstract single-defense dispatch contract.
+
+        Args:
+            data: Optional runtime data config.
+            defense_type: Canonical defense family token.
+            defense_subtype: Canonical defense subtype token.
+            defense_class: Resolved defense class.
+            art_class: ART wrapper class for defense execution.
+            init_params: ART wrapper initialization kwargs.
+            base_estimator: Base estimator to defend.
+            existing_preprocessors: Existing preprocessor defenses.
+            existing_postprocessors: Existing postprocessor defenses.
+
+        Returns:
+            Tuple of configured defense object and defended estimator.
+
+        Raises:
+            NotImplementedError: Subclasses must implement runtime defense dispatch.
+        """
         raise NotImplementedError("Defense handlers must implement __call__")
 
     def __hash__(self) -> int:
@@ -1713,15 +1791,16 @@ class DefenseConfig(
             "help": "Tuple of the form (min, max) to clip input features.",
         },
     )
-    defense_name: Union[str, None] = field(default=None, repr=False, metadata={'help': 'Configuration field: defense_name.'})
-    defense_params: dict = field(
-        default_factory=dict,
-        metadata={"help": "Parameters for the defense."},
-    )
     plugins: list = field(default_factory=list, repr=True, metadata={'help': 'Configuration field: plugins.'})
     alias: str = field(default_factory=str, metadata={'help': 'Configuration field: alias.'})
     score_dict: ScoreDict = field(default_factory=ScoreDict, init=False, repr=False, metadata={'help': 'Configuration field: score_dict.'})
-    defense_application_time: Union[float, None] = None
+    defense_application_time: Union[float, None] = field(
+        default=None,
+        init=False,
+        repr=False,
+        compare=False,
+        metadata={"help": "Runtime-only timing: total defense application seconds."},
+    )
     _target_: Union[str, None] = field(default='deckard.model.defense.base.DefenseConfig', init=True, repr=True, metadata={'help': 'Hydra target path used to rehydrate this defense config.'})
     _plugin_objects: Union[list, None] = field(default=None, init=False, repr=False, compare=False, metadata={'help': 'Configuration field: _plugin_objects.'})
     _model: Union[BaseEstimator, None] = field(default=None, init=False, repr=False, metadata={'help': 'Configuration field: _model.'})
@@ -1736,11 +1815,7 @@ class DefenseConfig(
             self._target_ = "deckard.model.defense.base.DefenseConfig"
         self.defenses = self.normalize_defenses(getattr(self, "defenses", []))
         self.plugins = normalize_plugin_specs(getattr(self, "plugins", []))
-        self.defense_application_time = getattr(
-            self,
-            "defense_application_time",
-            None,
-        )
+        self.defense_application_time = None
         BaseConfig._after_post_init(self)
 
     def __hash__(self) -> int:

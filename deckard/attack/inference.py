@@ -91,6 +91,9 @@ class InferenceAttackConfig(AttackConfig):
 
         Returns:
             Score payload for the selected inference subtype.
+
+        Raises:
+            ValueError: If attack subtype is unsupported.
         """
         subtype = (attack_sub_family or "").lower()
         if subtype == "membership_inference":

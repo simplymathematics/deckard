@@ -197,9 +197,22 @@ class DetectorConfig(ScoreOrchestratorMixin, BaseConfig):
         self.scorer = self._coerce_scorer(self.scorer)
 
     def _instantiate_plugin(self, plugin_spec: Any):
+        """Instantiate one detector plugin specification.
+
+        Args:
+            plugin_spec: Plugin declaration payload or runtime plugin object.
+
+        Returns:
+            Instantiated plugin object.
+        """
         return instantiate_plugin_spec(plugin_spec, loader=load_class)
 
     def _get_plugins(self) -> list:
+        """Resolve and cache detector plugins for this config instance.
+
+        Returns:
+            Ordered list of instantiated detector plugins.
+        """
         if self._plugin_objects is None:
             plugin_specs = normalize_plugin_specs(self.plugins)
             self._plugin_objects = [
@@ -208,6 +221,15 @@ class DetectorConfig(ScoreOrchestratorMixin, BaseConfig):
         return self._plugin_objects
 
     def _run_plugin_hook(self, hook_name: str, **kwargs) -> list[Any]:
+        """Execute one detector plugin hook across all instantiated plugins.
+
+        Args:
+            hook_name: Hook method name to invoke when present on a plugin.
+            **kwargs: Hook-specific keyword arguments.
+
+        Returns:
+            Ordered list of hook return values.
+        """
         outputs = []
         for plugin in self._get_plugins():
             hook = getattr(plugin, hook_name, None)
@@ -216,6 +238,11 @@ class DetectorConfig(ScoreOrchestratorMixin, BaseConfig):
         return outputs
 
     def _merge_plugin_scores(self, hook_outputs: list[Any]) -> None:
+        """Merge plugin hook score outputs into the runtime score dictionary.
+
+        Args:
+            hook_outputs: Iterable of plugin hook return payloads.
+        """
         if self.score_dict is None:
             self.score_dict = {}
         for output in hook_outputs:
@@ -285,7 +312,18 @@ class DetectorConfig(ScoreOrchestratorMixin, BaseConfig):
         mode: str | None = "test",
         **kwargs: Any,
     ) -> dict[str, float]:
-        """Compute detector metrics through configured scorer with canonical mode routing."""
+        """Compute detector metrics through configured scorer with canonical mode routing.
+
+        Args:
+            y_true: Ground-truth labels/targets.
+            y_pred: Predicted labels/targets.
+            *args: Additional positional scorer inputs.
+            mode: Scoring mode token.
+            **kwargs: Additional scorer kwargs.
+
+        Returns:
+            Detector-prefixed metric dictionary.
+        """
         if self.scorer is None:
             return {}
         mode_token = normalize_detector_score_mode(mode)

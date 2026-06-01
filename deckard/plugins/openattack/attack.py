@@ -26,9 +26,25 @@ class _DeckardOpenAttackClassifierBase:
         self._adapter = adapter
 
     def get_prob(self, input_):
+        """Return class probabilities for a batch of raw text inputs.
+
+        Args:
+            input_: Iterable text payload accepted by OpenAttack classifier API.
+
+        Returns:
+            Probability matrix for the input batch.
+        """
         return self._adapter.predict_proba(list(input_))
 
     def get_pred(self, input_):
+        """Return predicted class labels for a batch of raw text inputs.
+
+        Args:
+            input_: Iterable text payload accepted by OpenAttack classifier API.
+
+        Returns:
+            Predicted class label vector.
+        """
         return self.get_prob(input_).argmax(axis=1)
 
 
@@ -130,7 +146,11 @@ def run_openattack_attack_config(
 
 
 class OpenAttackConfig(AttackConfig):
-    """Dedicated runtime attack config for OpenAttack-backed attack names."""
+    """Dedicated runtime attack config for OpenAttack-backed attack names.
+
+    Attributes:
+        Inherits runtime attack configuration fields from ``AttackConfig``.
+    """
 
     def __call__(
         self,
@@ -141,6 +161,22 @@ class OpenAttackConfig(AttackConfig):
         attack_family: str,
         attack_sub_family: str,
     ) -> ScoreDict:
+        """Execute OpenAttack runtime flow and persist attack runtime outputs.
+
+        Args:
+            data: Runtime data payload.
+            model: Runtime model payload.
+            art_model: Unused ART model payload (plugin manages runtime directly).
+            attack: Unused attack object placeholder.
+            attack_family: Canonical attack family token.
+            attack_sub_family: Canonical attack subtype token.
+
+        Returns:
+            Runtime score dictionary updated with OpenAttack outputs.
+
+        Raises:
+            ValueError: If attack family is unsupported for OpenAttack runtime.
+        """
         _ = (art_model, attack, attack_sub_family)
         if (attack_family or "").lower() != "evasion":
             raise ValueError(

@@ -225,6 +225,18 @@ class PretrainedSequenceClassificationTransformer(nn.Module if nn else object):
         return value
 
     def forward(self, *args, **kwargs):
+        """Run sequence-classification forward pass with index-tensor coercion.
+
+        Args:
+            *args: Optional positional input tensor.
+            **kwargs: Transformer forward kwargs.
+
+        Returns:
+            Logits tensor or feature/logit mapping when feature return is enabled.
+
+        Raises:
+            ValueError: If incompatible positional/keyword input combinations are supplied.
+        """
         if args:
             if len(args) != 1:
                 raise ValueError(
@@ -284,6 +296,14 @@ class HuggingFaceArtModelWrapper(nn.Module if nn else object):
         return first_param.device
 
     def forward(self, x: "torch.Tensor"):
+        """Forward wrapper that guarantees ART-compatible logits namespace output.
+
+        Args:
+            x: Input tensor payload.
+
+        Returns:
+            Namespace object exposing a logits attribute.
+        """
         from types import SimpleNamespace
 
         if torch.is_tensor(x) and x.dtype in (torch.float32, torch.float64):
@@ -298,15 +318,45 @@ class HuggingFaceArtModelWrapper(nn.Module if nn else object):
         return SimpleNamespace(logits=logits)
 
     def parameters(self, recurse: bool = True):
+        """Proxy inner model parameter iterator.
+
+        Args:
+            recurse: Whether to recurse into submodules.
+
+        Returns:
+            Iterator over model parameters.
+        """
         return self._inner.parameters(recurse=recurse)
 
     def named_parameters(self, *args, **kwargs):
+        """Proxy inner model named-parameter iterator.
+
+        Args:
+            *args: Positional arguments forwarded to named_parameters.
+            **kwargs: Keyword arguments forwarded to named_parameters.
+
+        Returns:
+            Iterator over named model parameters.
+        """
         return self._inner.named_parameters(*args, **kwargs)
 
     def train(self, mode: bool = True):
+        """Set training mode on the wrapped inner model.
+
+        Args:
+            mode: Training mode flag.
+
+        Returns:
+            This wrapper instance.
+        """
         self._inner.train(mode)
         return self
 
     def eval(self):
+        """Set evaluation mode on the wrapped inner model.
+
+        Returns:
+            This wrapper instance.
+        """
         self._inner.eval()
         return self

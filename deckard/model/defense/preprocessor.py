@@ -32,7 +32,22 @@ class PreprocessorDefenseConfig(ARTDefenseBehaviorMixin, BaseConfig):
         existing_preprocessors: list,
         existing_postprocessors: list,
     ) -> tuple[BaseConfig | None, EstimatorLike]:
-        """Public verb-form entrypoint for preprocessor defense execution."""
+        """Public verb-form entrypoint for preprocessor defense execution.
+
+        Args:
+            data: Optional runtime data config used by preprocessor defenses.
+            defense_type: Canonical defense family token.
+            defense_subtype: Canonical preprocessor subtype token.
+            defense_class: Resolved preprocessor defense class.
+            art_class: ART wrapper class for defense execution.
+            init_params: ART wrapper initialization kwargs.
+            base_estimator: Base estimator to defend.
+            existing_preprocessors: Existing preprocessor defenses.
+            existing_postprocessors: Existing postprocessor defenses.
+
+        Returns:
+            Tuple of configured defense object and defended estimator.
+        """
         return self(
             data=data,
             defense_type=defense_type,
@@ -58,7 +73,22 @@ class PreprocessorDefenseConfig(ARTDefenseBehaviorMixin, BaseConfig):
         existing_preprocessors: list,
         existing_postprocessors: list,
     ) -> tuple[BaseConfig | None, EstimatorLike]:
-        """Attach preprocessor defense and return defense with defended estimator."""
+        """Attach preprocessor defense and return defense with defended estimator.
+
+        Args:
+            data: Optional runtime data config used by preprocessor defenses.
+            defense_type: Canonical defense family token.
+            defense_subtype: Canonical preprocessor subtype token.
+            defense_class: Resolved preprocessor defense class.
+            art_class: ART wrapper class for defense execution.
+            init_params: ART wrapper initialization kwargs.
+            base_estimator: Base estimator to defend.
+            existing_preprocessors: Existing preprocessor defenses.
+            existing_postprocessors: Existing postprocessor defenses.
+
+        Returns:
+            Tuple of configured defense object and defended estimator.
+        """
         _ = (data, defense_type, defense_subtype)
         assert defense_class is not None
         defense = defense_class(**(self.defense_params or {}))

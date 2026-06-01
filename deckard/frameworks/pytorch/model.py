@@ -901,6 +901,16 @@ class PytorchModelConfig(ModelConfig):
         ART wrapper (built via :meth:`get_art_model`) so that any preprocessor
         or postprocessor defenses attach to the correct ART estimator and
         benefit from the model's criterion, optimizer, and device settings.
+
+        Args:
+            data: Runtime data config used by defense pipeline orchestration.
+            stage: Defense stage token for pipeline application.
+
+        Returns:
+            Defended estimator payload for downstream prediction.
+
+        Raises:
+            ValueError: If no fitted model is available for defense application.
         """
         if self.defense is None:
             return self._model
@@ -984,7 +994,15 @@ class PytorchModelConfig(ModelConfig):
             )
 
     def train(self, X: torch.Tensor, y: torch.Tensor) -> None:
-        """Train the PyTorch model with per-epoch logging and metrics tracking."""
+        """Train the PyTorch model with per-epoch logging and metrics tracking.
+
+        Args:
+            X: Training feature tensor.
+            y: Training label tensor.
+
+        Raises:
+            ValueError: If model is not initialized.
+        """
         if self._model is None:
             raise ValueError("Model not initialized")
 
@@ -1086,7 +1104,17 @@ class PytorchModelConfig(ModelConfig):
         self,
         X: Union[torch.Tensor, torch.utils.data.DataLoader],
     ) -> torch.Tensor:
-        """Make predictions, handling Tensor, DataLoader, Subset, or Dataset inputs."""
+        """Make predictions, handling Tensor, DataLoader, Subset, or Dataset inputs.
+
+        Args:
+            X: Tensor, DataLoader, or Dataset-like input payload.
+
+        Returns:
+            Model prediction tensor.
+
+        Raises:
+            ValueError: If model is not initialized.
+        """
         if self._model is None:
             raise ValueError("Model not initialized")
 

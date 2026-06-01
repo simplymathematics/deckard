@@ -15,6 +15,8 @@ from ..plugins.base import HookBundle
 
 logger = logging.getLogger(__name__)
 
+PluginPrimitive = str | int | float | bool | None
+
 
 @dataclass(eq=False, kw_only=True)
 class DVCPowerPlugin:
@@ -26,14 +28,35 @@ class DVCPowerPlugin:
 
     enabled: bool = False
 
-    def __call__(self, *args: Any, **overrides: Any) -> dict[str, Any]:
-        """Return normalized plugin payload, optionally applying runtime overrides."""
+    def __call__(
+        self,
+        *args: Any,
+        **overrides: Any,
+    ) -> dict[str, PluginPrimitive]:
+        """Return normalized plugin payload, optionally applying runtime overrides.
+
+        Args:
+            *args: Unused positional plugin hook arguments.
+            **overrides: Runtime payload overrides.
+
+        Returns:
+            Normalized plugin payload dictionary.
+        """
         _ = args
         payload = self.to_dict()
-        payload.update({str(key): value for key, value in overrides.items()})
+        for key, value in overrides.items():
+            if isinstance(value, (str, int, float, bool)) or value is None:
+                payload[str(key)] = value
+            else:
+                payload[str(key)] = str(value)
         return payload
 
-    def to_dict(self) -> dict[str, Any]:
+    def to_dict(self) -> dict[str, PluginPrimitive]:
+        """Serialize power plugin policy to a runtime payload mapping.
+
+        Returns:
+            Plugin payload dictionary.
+        """
         return {"enabled": bool(self.enabled)}
 
 

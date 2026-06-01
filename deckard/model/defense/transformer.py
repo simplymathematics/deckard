@@ -37,7 +37,25 @@ class TransformerDefenseConfig(ARTDefenseBehaviorMixin, BaseConfig):
         existing_preprocessors: list,
         existing_postprocessors: list,
     ) -> tuple[BaseConfig | None, EstimatorLike]:
-        """Build transformer defense wrapper and return defended estimator."""
+        """Build transformer defense wrapper and return defended estimator.
+
+        Args:
+            data: Optional runtime data config used by transformer defenses.
+            defense_type: Canonical defense family token.
+            defense_subtype: Canonical transformer subtype token.
+            defense_class: Resolved transformer defense class.
+            art_class: ART wrapper class for defense execution.
+            init_params: ART wrapper initialization kwargs.
+            base_estimator: Base estimator to defend.
+            existing_preprocessors: Existing preprocessor defenses.
+            existing_postprocessors: Existing postprocessor defenses.
+
+        Returns:
+            Tuple of configured defense object and defended estimator.
+
+        Raises:
+            ValueError: If subtype is unknown or base estimator type is unsupported.
+        """
         _ = (data, defense_type)
         assert defense_class is not None
         transformer_params = dict(self.defense_params or {})

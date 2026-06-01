@@ -285,7 +285,16 @@ class SurvivalExperimentConfig(ExperimentConfig):
         failure_profile: Optional[Any] = None,
         reference_metric: str = "accuracy",
     ) -> pd.DataFrame:
-        """Derive failure-count columns from attack and non-attack signals."""
+        """Derive failure-count columns from attack and non-attack signals.
+
+        Args:
+            data: Input dataframe containing benign or adversarial metrics.
+            failure_profile: Optional failure profile for fallback metadata.
+            reference_metric: Column used to compute benign failure rate.
+
+        Returns:
+            Dataframe with failure-count columns added when derivable.
+        """
         config = cls(
             data=DataConfig(name="toy"),
             model="weibull",
@@ -501,7 +510,16 @@ class SurvivalExperimentConfig(ExperimentConfig):
         attack_config: Optional["AttackConfig"] = None,
         benign_metric: str = "accuracy",
     ) -> pd.DataFrame:
-        """Backwards-compatible wrapper for calculate_failures_from_signals."""
+        """Backwards-compatible wrapper for calculate_failures_from_signals.
+
+        Args:
+            data: Input dataframe containing benign or adversarial metrics.
+            attack_config: Optional attack configuration for fallback metadata.
+            benign_metric: Column used to compute benign failure rate.
+
+        Returns:
+            Dataframe with derived failure columns.
+        """
         return self.calculate_failures_from_signals(
             data=data,
             failure_profile=attack_config,

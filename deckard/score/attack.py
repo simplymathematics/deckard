@@ -62,7 +62,7 @@ class DefaultEvasionAttackScorerDictConfig(
     """
 
     _profile_attr = "evasion"
-    _deckard_attack_profile: str | None = field(default=None, init=True, metadata={'help': 'Resolved attack-profile name used to select the evasion scorer family.'}, repr=False)
+    _deckard_attack_profile: str | None = field(default=None, init=False, metadata={'help': 'Resolved attack-profile name used to select the evasion scorer family.'}, repr=False)
     classifier: Union[bool, str] = True
     scorers: dict[str, ScorerConfig] = field(
         default_factory=dict,

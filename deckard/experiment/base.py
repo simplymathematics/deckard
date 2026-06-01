@@ -2902,5 +2902,9 @@ class ExperimentConfig(ScoreOrchestratorMixin, BaseConfig):
     def __call__(
         self,
     ) -> dict:
-        """Backward-compatible callable alias for experiment execution."""
+        """Backward-compatible callable alias for experiment execution.
+
+        Returns:
+            Experiment score dictionary emitted by run().
+        """
         return self.run()

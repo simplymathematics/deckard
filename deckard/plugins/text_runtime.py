@@ -145,12 +145,25 @@ class TransformerTextAdapter:
 
     @property
     def device(self):
+        """Return runtime torch device for adapter model execution.
+
+        Returns:
+            Torch device inferred from the first model parameter.
+        """
         first_param = next(self.model.parameters(), None)
         if first_param is None:
             return torch.device("cpu")
         return first_param.device
 
     def predict_logits(self, texts: list[str]) -> np.ndarray:
+        """Generate logits for a batch of raw text inputs.
+
+        Args:
+            texts: Raw text batch.
+
+        Returns:
+            Two-dimensional logits array.
+        """
         if len(texts) == 0:
             return np.empty((0, 0), dtype=np.float32)
 
@@ -186,6 +199,14 @@ class TransformerTextAdapter:
         return np.concatenate(all_logits, axis=0)
 
     def predict_proba(self, texts: list[str]) -> np.ndarray:
+        """Generate normalized class probabilities for a text batch.
+
+        Args:
+            texts: Raw text batch.
+
+        Returns:
+            Two-dimensional probability array.
+        """
         logits = self.predict_logits(texts)
         if logits.size == 0:
             return logits

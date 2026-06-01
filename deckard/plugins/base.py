@@ -99,9 +99,22 @@ class RuntimeBase:
     """Reusable plugin instantiation and hook dispatch behavior."""
 
     def _instantiate_plugin(self, plugin_spec: Any):
+        """Instantiate one runtime plugin specification.
+
+        Args:
+            plugin_spec: Plugin declaration payload or runtime plugin object.
+
+        Returns:
+            Instantiated plugin object.
+        """
         return instantiate_plugin_spec(plugin_spec, loader=load_class)
 
     def _get_plugins(self) -> list:
+        """Resolve and cache runtime plugins for this object instance.
+
+        Returns:
+            Ordered list of instantiated runtime plugins.
+        """
         if not hasattr(self, "_plugin_objects") or self._plugin_objects is None:
             plugin_specs = normalize_plugin_specs(getattr(self, "plugins", []))
             self._plugin_objects = [
@@ -110,6 +123,15 @@ class RuntimeBase:
         return self._plugin_objects
 
     def _run_plugin_hook(self, hook_name: str, **kwargs: Any) -> list[Any]:
+        """Execute one plugin hook across all instantiated runtime plugins.
+
+        Args:
+            hook_name: Hook method name to invoke when present on a plugin.
+            **kwargs: Hook-specific keyword arguments.
+
+        Returns:
+            Ordered list of hook return values.
+        """
         hook_outputs: list[Any] = []
         for plugin in self._get_plugins():
             hook = getattr(plugin, hook_name, None)

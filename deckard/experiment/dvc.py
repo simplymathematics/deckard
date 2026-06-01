@@ -188,7 +188,7 @@ class DVCExperimentMixin:
         stage: str,
         event: str,
         **kwargs: Any,
-    ) -> dict[str, Any]:
+    ) -> dict[str, str | int | float | bool | None]:
         """Execute one DVCLive monitoring hook callback.
 
         Args:

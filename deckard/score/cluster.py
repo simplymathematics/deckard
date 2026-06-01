@@ -11,6 +11,10 @@ class DefaultClusterScorerDictConfig(ScorerDictConfig):
 
     These scorers compare predicted cluster assignments against available
     reference labels when present (for example synthetic benchmark datasets).
+
+    Attributes:
+        scoring_type: Scoring family identifier for model outputs.
+        scorers: Metric configurations keyed by score name.
     """
 
     scoring_type: str = "model"

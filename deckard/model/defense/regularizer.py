@@ -32,7 +32,22 @@ class RegularizerDefenseConfig(ARTDefenseBehaviorMixin, BaseConfig):
         existing_preprocessors: list,
         existing_postprocessors: list,
     ) -> tuple[BaseConfig | None, EstimatorLike]:
-        """Public ergonomic alias for regularizer defense execution."""
+        """Public ergonomic alias for regularizer defense execution.
+
+        Args:
+            data: Optional runtime data config used by regularizer defenses.
+            defense_type: Canonical defense family token.
+            defense_subtype: Canonical regularizer subtype token.
+            defense_class: Resolved regularizer defense class.
+            art_class: ART wrapper class for defense execution.
+            init_params: ART wrapper initialization kwargs.
+            base_estimator: Base estimator to defend.
+            existing_preprocessors: Existing preprocessor defenses.
+            existing_postprocessors: Existing postprocessor defenses.
+
+        Returns:
+            Tuple of configured defense object and defended estimator.
+        """
         return self(
             data=data,
             defense_type=defense_type,
@@ -58,7 +73,25 @@ class RegularizerDefenseConfig(ARTDefenseBehaviorMixin, BaseConfig):
         existing_preprocessors: list,
         existing_postprocessors: list,
     ) -> tuple[BaseConfig | None, EstimatorLike]:
-        """Raise for unimplemented regularizer defense runtime path."""
+        """Raise for unimplemented regularizer defense runtime path.
+
+        Args:
+            data: Optional runtime data config used by regularizer defenses.
+            defense_type: Canonical defense family token.
+            defense_subtype: Canonical regularizer subtype token.
+            defense_class: Resolved regularizer defense class.
+            art_class: ART wrapper class for defense execution.
+            init_params: ART wrapper initialization kwargs.
+            base_estimator: Base estimator to defend.
+            existing_preprocessors: Existing preprocessor defenses.
+            existing_postprocessors: Existing postprocessor defenses.
+
+        Returns:
+            Tuple of configured defense object and defended estimator.
+
+        Raises:
+            NotImplementedError: Regularizer runtime defense behavior is not implemented.
+        """
         _ = (
             data,
             defense_type,

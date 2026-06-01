@@ -37,7 +37,22 @@ class TrainerDefenseConfig(ARTDefenseBehaviorMixin, BaseConfig):
         existing_preprocessors: list,
         existing_postprocessors: list,
     ) -> tuple[BaseConfig | None, EstimatorLike]:
-        """Public verb-form alias for trainer defense execution."""
+        """Public verb-form alias for trainer defense execution.
+
+        Args:
+            data: Optional runtime data config used by trainer defenses.
+            defense_type: Canonical defense family token.
+            defense_subtype: Canonical trainer subtype token.
+            defense_class: Resolved trainer defense class.
+            art_class: ART wrapper class for defense execution.
+            init_params: ART wrapper initialization kwargs.
+            base_estimator: Base estimator to defend.
+            existing_preprocessors: Existing preprocessor defenses.
+            existing_postprocessors: Existing postprocessor defenses.
+
+        Returns:
+            Tuple of configured defense object and defended estimator.
+        """
         return self(
             data=data,
             defense_type=defense_type,
@@ -63,7 +78,25 @@ class TrainerDefenseConfig(ARTDefenseBehaviorMixin, BaseConfig):
         existing_preprocessors: list,
         existing_postprocessors: list,
     ) -> tuple[BaseConfig | None, EstimatorLike]:
-        """Build trainer defense wrapper and return defended estimator."""
+        """Build trainer defense wrapper and return defended estimator.
+
+        Args:
+            data: Optional runtime data config used by trainer defenses.
+            defense_type: Canonical defense family token.
+            defense_subtype: Canonical trainer subtype token.
+            defense_class: Resolved trainer defense class.
+            art_class: ART wrapper class for defense execution.
+            init_params: ART wrapper initialization kwargs.
+            base_estimator: Base estimator to defend.
+            existing_preprocessors: Existing preprocessor defenses.
+            existing_postprocessors: Existing postprocessor defenses.
+
+        Returns:
+            Tuple of configured defense object and defended estimator.
+
+        Raises:
+            ValueError: If base estimator type is unsupported for trainer defenses.
+        """
         _ = (data, defense_type, defense_subtype)
         assert defense_class is not None
         trainer_params = dict(self.defense_params or {})

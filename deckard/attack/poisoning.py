@@ -343,7 +343,16 @@ class PoisoningAttackConfig(AttackConfig):
         art_model: Any,
         attack: Any,
     ) -> ScoreDict:
-        """Execute poisoning workflow and emit poisoned/benign comparison metrics."""
+        """Execute poisoning workflow and emit poisoned/benign comparison metrics.
+
+        Args:
+            data: Runtime data config for poisoning workflow inputs.
+            art_model: ART estimator wrapper used by the poisoning attack.
+            attack: Initialized poisoning attack object.
+
+        Returns:
+            Score dictionary containing poisoning runtime outputs.
+        """
 
         attack_name: StringifiedClass = type(attack).__name__.lower()
         if "poisoningattacksvm" in attack_name:

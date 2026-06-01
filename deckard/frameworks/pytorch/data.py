@@ -206,7 +206,14 @@ class PytorchDataConfig(DataConfig):
         return ds
 
     def resolve_dataset_type(self, dataset_obj: Dataset) -> str:
-        """Classify runtime dataset shape for downstream sampling behavior."""
+        """Classify runtime dataset shape for downstream sampling behavior.
+
+        Args:
+            dataset_obj: Runtime torch dataset payload.
+
+        Returns:
+            Dataset type token: tensor, iterable, map, or unknown.
+        """
         if isinstance(dataset_obj, TensorDataset):
             return "tensor"
         if isinstance(dataset_obj, IterableDataset):

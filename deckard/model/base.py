@@ -451,6 +451,9 @@ class ModelConfig(ScoreOrchestratorMixin, BaseConfig):
 
         Returns:
             Defended estimator payload.
+
+        Raises:
+            ValueError: If model is not fitted before defense application.
         """
         if self.defense is None:
             return self._model
@@ -559,9 +562,22 @@ class ModelConfig(ScoreOrchestratorMixin, BaseConfig):
         return super().__hash__()
 
     def _instantiate_plugin(self, plugin_spec: Any):
+        """Instantiate one model plugin specification.
+
+        Args:
+            plugin_spec: Plugin declaration payload or runtime plugin object.
+
+        Returns:
+            Instantiated plugin object.
+        """
         return instantiate_plugin_spec(plugin_spec, loader=load_class)
 
     def _get_plugins(self) -> list:
+        """Resolve and cache model plugins for this config instance.
+
+        Returns:
+            Ordered list of instantiated model plugins.
+        """
         if self._plugin_objects is None:
             plugin_specs = normalize_plugin_specs(self.plugins)
             self._plugin_objects = [
@@ -570,6 +586,15 @@ class ModelConfig(ScoreOrchestratorMixin, BaseConfig):
         return self._plugin_objects
 
     def _run_plugin_hook(self, hook_name: str, **kwargs):
+        """Execute one model plugin hook across all instantiated plugins.
+
+        Args:
+            hook_name: Hook method name to invoke when present on a plugin.
+            **kwargs: Hook-specific keyword arguments.
+
+        Returns:
+            Ordered list of hook return values.
+        """
         hook_outputs = []
         for plugin in self._get_plugins():
             hook = getattr(plugin, hook_name, None)
@@ -578,6 +603,11 @@ class ModelConfig(ScoreOrchestratorMixin, BaseConfig):
         return hook_outputs
 
     def _merge_plugin_scores(self, hook_outputs):
+        """Merge plugin hook outputs into the runtime score dictionary.
+
+        Args:
+            hook_outputs: Iterable of plugin hook return payloads.
+        """
         if self.score_dict is None:
             self.score_dict = {}
         for output in hook_outputs:
@@ -878,6 +908,10 @@ class ModelConfig(ScoreOrchestratorMixin, BaseConfig):
 
         Returns:
             Rounded score payload.
+
+        Raises:
+            TypeError: If scorer is non-callable or a data-profile scorer.
+            ValueError: If pre-sample scoring mode is requested for model scoring.
         """
         if self.scorer is None:
             return {}

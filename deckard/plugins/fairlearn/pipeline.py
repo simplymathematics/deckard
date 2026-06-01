@@ -52,6 +52,10 @@ class FairlearnPipelineHooksMixin:
         and keeps an existing pipeline object synchronized when the runtime
         already owns one. If the defense is disabled or the backing frame is not
         loaded, the method returns without mutating the pipeline.
+
+        Raises:
+            ValueError: If defense config is ambiguous or sensitive columns are missing.
+            TypeError: If fairness defense config has unsupported type.
         """
         if self.fairness_defense in [None, False]:
             return

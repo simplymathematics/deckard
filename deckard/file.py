@@ -58,6 +58,9 @@ _ALLOWED_KEYS = collect_typed_dict_keys(
     DetectorFiles,
 )
 
+JsonScalar = str | int | float | bool | None
+JsonValue = JsonScalar | list["JsonValue"] | dict[str, "JsonValue"]
+
 # Key registries for each file type category
 data_files = tuple(collect_typed_dict_keys(BaseFiles, DataFiles, LogFiles))
 model_files = tuple(collect_typed_dict_keys(ModelFiles))
@@ -317,7 +320,17 @@ class FileConfig(PlaceholderResolverMixin):
 
     @classmethod
     def from_payload(cls, payload: Any) -> "FileConfig":
-        """Coerce a dict-like files payload into a FileConfig instance."""
+        """Coerce a dict-like files payload into a FileConfig instance.
+
+        Args:
+            payload: Files payload mapping, DictConfig, or FileConfig.
+
+        Returns:
+            Normalized FileConfig instance.
+
+        Raises:
+            TypeError: If payload is not mapping-like.
+        """
         if isinstance(payload, cls):
             return payload
         if payload is None:
@@ -373,7 +386,11 @@ class FileConfig(PlaceholderResolverMixin):
             self._set(k, v)
 
     def apply_runtime_paths(self, **kwargs: Any) -> None:
-        """Assign resolved runtime paths for configured file fields."""
+        """Assign resolved runtime paths for configured file fields.
+
+        Args:
+            **kwargs: Runtime file field updates keyed by file field name.
+        """
         runtime_updates = {
             key: value for key, value in kwargs.items() if value is not None
         }
@@ -388,7 +405,12 @@ class FileConfig(PlaceholderResolverMixin):
         *,
         exclude: Collection[str] = (),
     ) -> None:
-        """Hash runtime artifact filenames while preserving init templates."""
+        """Hash runtime artifact filenames while preserving init templates.
+
+        Args:
+            context_hash: Stable hash used for artifact basename rewriting.
+            exclude: File keys excluded from path hashing.
+        """
         for key, value in list(self._files.items()):
             if (
                 key.endswith("_file")
@@ -407,7 +429,7 @@ class FileConfig(PlaceholderResolverMixin):
         hashed_name = f"{context_hash}{suffix}" if suffix else context_hash
         return (path.parent / hashed_name).as_posix()
 
-    def as_dict(self) -> dict[str, Any]:
+    def as_dict(self) -> dict[str, JsonValue]:
         """Return file mapping as a plain dictionary.
 
         Returns:
@@ -415,15 +437,23 @@ class FileConfig(PlaceholderResolverMixin):
         """
         return dict(self._files)
 
-    def to_init_dict(self) -> dict[str, Any]:
-        """Return reproducible initialization payload without live helper objects."""
+    def to_init_dict(self) -> dict[str, JsonValue]:
+        """Return reproducible initialization payload without live helper objects.
+
+        Returns:
+            Constructor-safe file payload map.
+        """
         payload = dict(self._raw_files)
         if self.replace:
             payload["replace"] = dict(self.replace)
         return payload
 
-    def to_runtime_dict(self) -> dict[str, Any]:
-        """Return runtime-resolved file mapping for execution/config propagation."""
+    def to_runtime_dict(self) -> dict[str, JsonValue]:
+        """Return runtime-resolved file mapping for execution/config propagation.
+
+        Returns:
+            Runtime file payload map.
+        """
         payload = self.as_dict()
         if self.replace:
             payload["replace"] = dict(self.replace)

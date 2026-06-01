@@ -37,7 +37,22 @@ class DetectorDefenseConfig(ARTDefenseBehaviorMixin, BaseConfig):
         existing_preprocessors: list,
         existing_postprocessors: list,
     ) -> tuple[BaseConfig | None, EstimatorLike]:
-        """Public verb-form entrypoint for detector defense execution."""
+        """Public verb-form entrypoint for detector defense execution.
+
+        Args:
+            data: Optional runtime data config used by detector defenses.
+            defense_type: Canonical defense family token.
+            defense_subtype: Canonical detector subtype token.
+            defense_class: Resolved detector defense class.
+            art_class: ART wrapper class for detector execution.
+            init_params: ART wrapper initialization kwargs.
+            base_estimator: Base estimator to defend.
+            existing_preprocessors: Existing preprocessor defenses.
+            existing_postprocessors: Existing postprocessor defenses.
+
+        Returns:
+            Tuple of configured defense object and defended estimator.
+        """
         return self(
             data=data,
             defense_type=defense_type,
@@ -60,7 +75,22 @@ class DetectorDefenseConfig(ARTDefenseBehaviorMixin, BaseConfig):
         existing_preprocessors: list,
         existing_postprocessors: list,
     ) -> tuple[BaseConfig | None, EstimatorLike]:
-        """Execute detector evasion defense path."""
+        """Execute detector evasion defense path.
+
+        Args:
+            defense_class: Resolved detector defense class.
+            art_class: ART wrapper class for detector execution.
+            init_params: ART wrapper initialization kwargs.
+            base_estimator: Base estimator to defend.
+            existing_preprocessors: Existing preprocessor defenses.
+            existing_postprocessors: Existing postprocessor defenses.
+
+        Returns:
+            Tuple of configured detector defense and defended estimator.
+
+        Raises:
+            ValueError: If model type is unsupported for evasion detectors.
+        """
         if not _is_torch_model_instance(base_estimator) and not _is_art_torch_wrapper(
             self._model,
         ):
@@ -98,7 +128,15 @@ class DetectorDefenseConfig(ARTDefenseBehaviorMixin, BaseConfig):
         defense_class: type,
         init_params: dict[str, DefenseInitParamValue],
     ) -> tuple[BaseConfig | None, EstimatorLike]:
-        """Execute detector poison defense path."""
+        """Execute detector poison defense path.
+
+        Args:
+            defense_class: Resolved detector defense class.
+            init_params: Defense execution kwargs.
+
+        Returns:
+            Tuple of configured detector defense and defended estimator.
+        """
         defense = defense_class(**(self.defense_params or {}))
         defended_estimator = defense(
             self.get_model(),
@@ -119,7 +157,25 @@ class DetectorDefenseConfig(ARTDefenseBehaviorMixin, BaseConfig):
         existing_preprocessors: list,
         existing_postprocessors: list,
     ) -> tuple[BaseConfig | None, EstimatorLike]:
-        """Build detector defense wrapper and return defense with defended estimator."""
+        """Build detector defense wrapper and return defense with defended estimator.
+
+        Args:
+            data: Optional runtime data config used by detector defenses.
+            defense_type: Canonical defense family token.
+            defense_subtype: Canonical detector subtype token.
+            defense_class: Resolved detector defense class.
+            art_class: ART wrapper class for detector execution.
+            init_params: ART wrapper initialization kwargs.
+            base_estimator: Base estimator to defend.
+            existing_preprocessors: Existing preprocessor defenses.
+            existing_postprocessors: Existing postprocessor defenses.
+
+        Returns:
+            Tuple of configured defense object and defended estimator.
+
+        Raises:
+            NotImplementedError: If detector subtype is unsupported.
+        """
         _ = (data, defense_type)
         assert defense_class is not None
         subtype = (defense_subtype or "").lower()

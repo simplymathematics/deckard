@@ -1347,6 +1347,9 @@ class YellowbrickPlotConfig(_YellowbrickPlotterMarker, BaseConfig):
 
         Args:
             visualizer: Fitted yellowbrick visualizer instance.
+
+        Raises:
+            AssertionError: If visualizer does not provide required yellowbrick API.
         """
         assert hasattr(
             visualizer,

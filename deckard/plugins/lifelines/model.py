@@ -221,7 +221,7 @@ class SurvivalModelConfig(ModelConfig):
         y_pred: RegressionFitter,
         mode: str = "test",
         **kwargs,
-    ) -> dict[str, Any]:
+    ) -> dict[str, float]:
         """Compute survival model scores (calibration metrics).
 
         For survival models, y_pred is the fitted fitter and y_true contains

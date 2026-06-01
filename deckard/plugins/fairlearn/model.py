@@ -87,7 +87,7 @@ class FairnessBehaviorMixin:
         self.training_n = len(y)
         logger.info(f"Model trained in {self.training_time:.2f} seconds")
 
-    def predict(self, X: pd.DataFrame) -> Any:
+    def predict(self, X: pd.DataFrame) -> np.ndarray | pd.Series:
         """Generate predictions from the wrapped Fairlearn model.
 
         Args:
@@ -123,7 +123,7 @@ class FairnessBehaviorMixin:
                 )
             raise
 
-    def predict_proba(self, X: pd.DataFrame) -> Any:
+    def predict_proba(self, X: pd.DataFrame) -> np.ndarray | pd.Series:
         """Generate class probabilities from the wrapped Fairlearn model.
 
         Args:
@@ -250,14 +250,18 @@ class FairlearnDefenseConfig(
     data: Union[FairlearnDataConfig, None] = None
 
     def _resolve_fairness_defense_spec(self):
-        normalized_name = getattr(self, "defense_name", None)
+        normalized_name = getattr(self, "name", None)
+        if not isinstance(normalized_name, str):
+            normalized_name = getattr(self, "defense_name", None)
         if isinstance(normalized_name, str) and normalized_name.startswith(
             "fairlearn.",
         ):
             return normalized_name, dict(getattr(self, "defense_params", {}) or {})
         defense_obj = getattr(self, "defense", None)
         if defense_obj is not None:
-            nested_name = getattr(defense_obj, "defense_name", None)
+            nested_name = getattr(defense_obj, "name", None)
+            if not isinstance(nested_name, str):
+                nested_name = getattr(defense_obj, "defense_name", None)
             if isinstance(nested_name, str) and nested_name.startswith("fairlearn."):
                 return nested_name, dict(
                     getattr(defense_obj, "defense_params", {}) or {},
@@ -342,6 +346,18 @@ class FairlearnDefenseConfig(
         return defended_estimator
 
     def train(self, X: pd.DataFrame, y: pd.Series) -> BaseEstimator:
+        """Fit the runtime fairness model and return the fitted estimator.
+
+        Args:
+            X: Training feature matrix.
+            y: Training target vector.
+
+        Returns:
+            Fitted base estimator.
+
+        Raises:
+            ValueError: If model name is missing before lazy model construction.
+        """
         if self._model is None:
             model_name = str(self.resolve_name(default="") or "").strip()
             if model_name == "":

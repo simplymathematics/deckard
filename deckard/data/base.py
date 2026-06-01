@@ -1124,6 +1124,29 @@ class DataConfig(OrchestratorBase, BaseConfig):
         return self
 
     def load_dataset(self) -> None:
+        """Load dataset payload based on configured dataset source or file type.
+
+        Supported datasets (without optional dependencies)
+        --------------------------------------------------
+        - adult
+        - make_classification
+        - make_regression
+        - diabetes
+        - digits
+        - iris
+        - wine
+        - breast_cancer
+        - california_housing
+        - olivetti_faces
+        - lfw_people
+        - lfw_pairs
+        - 20newsgroups
+        - 20newsgroups_vectorized
+
+        Raises:
+            NotImplementedError: If dataset source type is unsupported.
+            TypeError: If loaded dataset payload has unsupported structure.
+        """
         f"""
         Loads dataset based on the provided dataset name or file type.
 
