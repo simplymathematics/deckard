@@ -53,6 +53,8 @@ The scoring runtime supports:
 
 - Framework integration: {doc}`../pytorch/index`
 - Plugin integrations: {doc}`../plugins/fairlearn`, {doc}`../plugins/lifelines`, {doc}`../plugins/anjana`
+- Defense runtime: {doc}`../model/defend`
+- Defense plugin reference: {doc}`../plugins/fairlearn`, {doc}`../plugins/anjana`
 
 ## Custom Scoring and Runtime Arguments
 

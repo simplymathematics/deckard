@@ -220,6 +220,8 @@ attack-time fairness scoring.
 
 ### See also
 
+- {doc}`/api/model/defend` — defense runtime integration for ART/fairness workflows
+- {doc}`/api/score/index` — scoring runtime and scorer configuration
 - {doc}`../data/index` — general data configuration including {mod}`deckard.plugins.fairlearn.data`
 - {doc}`../model/index` — general model configuration including {mod}`deckard.plugins.fairlearn.model`
 - {doc}`../score/index` — scoring framework including {mod}`deckard.plugins.fairlearn.score`

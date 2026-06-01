@@ -71,6 +71,8 @@ compose with other plugin score tails, including Fairlearn-last merges.
 
 ## See also
 
+- {doc}`/api/model/defend` — defense runtime integration for ART and plugin-backed workflows
+- {doc}`/api/score/index` — scoring runtime and privacy scorer configuration
 - {doc}`/api/data/index`
 - {doc}`/api/data/pipeline`
 - {doc}`/api/plugins/fairlearn`

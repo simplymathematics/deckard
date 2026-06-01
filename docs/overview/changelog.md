@@ -69,7 +69,7 @@ Scan scope:
 
 #### Tooling and docs-process cleanup
 
-- [ ] `scripts/fix_docs_crosslinks.py` + `docs/developers/contributor/documentation.md`: close remaining `TODO-BROKEN-LINK` remediation loop by tracking and resolving unresolved link placeholders in docs runs.
+- [x] `scripts/fix_docs_crosslinks.py` + `docs/developers/contributor/documentation.md`: replace `TODO-BROKEN-LINK` placeholder fallbacks with concrete docs index fallbacks and document the follow-up review expectation.
 
 #### Backlog classification notes
 

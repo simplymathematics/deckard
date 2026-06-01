@@ -106,6 +106,10 @@ Optional class-level docstring field policy:
 
 - `--require-attributes-sections` enforces `DOC006` for required class families.
 
+Runtime-vs-init dataclass policy:
+
+- `--enforce-runtime-init-params` enforces `CFG007` so runtime-like dataclass fields use `field(init=False)`.
+
 ### Canon Literal Exception Policy
 
 `canon.py` literal token sets (mode/stage/alias/valid families and normalized variants) are exempted from plain inline-code link requirements to reduce false positives for canonical literals.
@@ -124,8 +128,8 @@ Behavior:
 
 Fallback behavior:
 
-- unresolved mappings become `TODO-BROKEN-LINK` entries with an inline TODO comment
-- TODO fallbacks are expected to be resolved to concrete docs targets in follow-up edits
+- unresolved API mappings fall back to the general `docs/api/modules` index
+- unresolved framework/plugin mappings fall back to the extensions overview index
 
 ## Build Docs Standard
 
@@ -154,10 +158,10 @@ Related CI/build contracts:
 Run this sequence before opening a docs-heavy PR:
 
 ```bash
-python scripts/repository_enforcement.py --scope deckard --docs-scope docs/developers,docs/api
+python scripts/repository_enforcement.py --scope deckard --docs-scope docs/developers,docs/api --enforce-runtime-init-params
 python scripts/fix_docs_crosslinks.py
-python scripts/repository_enforcement.py --scope deckard --docs-scope docs/developers,docs/api
+python scripts/repository_enforcement.py --scope deckard --docs-scope docs/developers,docs/api --enforce-runtime-init-params
 cd docs && make html
 ```
 
-If the fixer introduces `TODO-BROKEN-LINK`, replace each placeholder with a concrete page or symbol link before final review.
+If the fixer falls back to a general index page, replace that fallback with a more specific page or symbol link before final review when the exact target is known.

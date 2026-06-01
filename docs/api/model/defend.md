@@ -79,11 +79,33 @@ External ART references:
 
 ## Minimal YAML Example
 
+Use `_target_` to initialize the surrounding defense config, then use `name`
+and `defense_params` for each defense step.
+
+You can also attach multiple plugin defenses to the same `DefenseConfig` through run-time composed defense-chains. 
+
+Art defenses, if chosen, will be applied last for compatibility with downstream ART attacks.
+
+Anjana defenses, if chosen, are applied on pre-sampled data by default, but can be configured more precisely using a `HookPlugin`. 
+
 ```yaml
+data:
+  _target_: deckard.plugins.anjana.data.AnjanaDataConfig
+  anjana_defense:
+    k: 2
+
+score:
+  _target_: deckard.plugins.fairlearn.score.FairlearnScorerDictConfig
+
 model:
+  _target_: deckard.model.base.ModelConfig
+  name: sklearn.ensemble.RandomForestClassifier
   defense:
-    _target_: deckard.model.defense.base.DefensePipelineConfig
+    _target_: deckard.model.defense.base.DefenseConfig
     defenses:
+      - name: fairlearn.reductions.ExponentiatedGradient
+        defense_params:
+          constraints: fairlearn.reductions.DemographicParity
       - name: art.defences.preprocessor.FeatureSqueezing
         defense_params:
           bit_depth: 4
@@ -132,5 +154,8 @@ model:
 - {doc}`index`
 - {doc}`/api/attack/index`
 - {doc}`/api/score/index`
+- {doc}`/overview/scoring`
+- {doc}`/api/plugins/fairlearn`
+- {doc}`/api/plugins/anjana`
 - {doc}`/api/model/train`
 - {doc}`/developers/model/defenses`

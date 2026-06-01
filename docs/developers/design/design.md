@@ -23,6 +23,8 @@ These decisions are now treated as stable runtime and contributor policy:
 - Unknown init kwargs remain warning-first (duck-typed passthrough allowed where needed).
 - Legacy aliases (`dataset_name`, `model_type`, `attack_type`) are removed in favor of `name`.
 - Defense runtime naming is standardized on `name` (not `defense_name`) for active consolidation paths.
+- `DefenseConfig` carries the default runtime target and can host multiple plugin defenses on the same object.
+- Defense configs require explicit `name` for runtime defense instantiation, while `_target_` is reserved for Hydra `*Config` initialization; raw `defense_name` fallback and shape inference are removed.
 - ArtifactLoaderConfig is replaced by ArtifactLoaderMixin without compatibility shims.
 - Experiment stage-component mapping is unified to canonical component/sub-component ownership.
 - BaseConfig.fingerprint includes all reproducibility-critical components and runs at post-init finalization.
