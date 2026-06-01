@@ -1,6 +1,6 @@
 import collections
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, cast
 
 import numpy as np

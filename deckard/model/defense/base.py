@@ -1018,7 +1018,7 @@ class ARTDefenseBehaviorMixin(DefenseHookRuntimeMixin):
     score_dict: ScoreDict = field(default_factory=ScoreDict, init=False, repr=False, metadata={'help': 'Configuration field: score_dict.'})
     _target_: Union[str, None] = field(default='deckard.model.defense.base.ARTDefenseBehaviorMixin', init=True, repr=True, metadata={'help': 'Hydra target path used when this defense behavior mixin is serialized through a concrete config.'})
     _model_config: Union[ModelConfig, None] = field(default=None, init=False, repr=False, compare=False, metadata={'help': 'Configuration field: _model_config.'})
-    plugins: list = field(default_factory=list, init=False, repr=False, metadata={'help': 'Configuration field: plugins.'})
+    plugins: list = field(default_factory=list, repr=True, metadata={'help': 'Configuration field: plugins.'})
     _plugin_objects: Union[list, None] = field(default=None, init=False, repr=False, compare=False, metadata={'help': 'Configuration field: _plugin_objects.'})
 
     _BUILTIN_DEFENSE_HANDLER_TYPES: ClassVar[dict[str, str]] = {
@@ -1677,7 +1677,7 @@ class DefensePipelineConfig(DefensePipelineConfigBehaviorMixin, BaseConfig):
     """
 
     defenses: list = field(default_factory=list, metadata={'help': 'Configuration field: defenses.'})
-    plugins: list = field(default_factory=list, init=False, repr=False, metadata={'help': 'Configuration field: plugins.'})
+    plugins: list = field(default_factory=list, repr=True, metadata={'help': 'Configuration field: plugins.'})
     alias: str = field(default_factory=str, metadata={'help': 'Configuration field: alias.'})
     score_dict: ScoreDict = field(default_factory=ScoreDict, init=False, repr=False, metadata={'help': 'Configuration field: score_dict.'})
     defense_application_time: Union[float, None] = None
@@ -1732,7 +1732,7 @@ class DefenseConfig(ARTDefenseBehaviorMixin, BaseConfig):
         metadata={"help": "Parameters for the defense."},
     )
     alias: str = field(default_factory=str, metadata={'help': 'Configuration field: alias.'})
-    plugins: list = field(default_factory=list, init=False, repr=False, metadata={'help': 'Configuration field: plugins.'})
+    plugins: list = field(default_factory=list, repr=True, metadata={'help': 'Configuration field: plugins.'})
     _model: Union[BaseEstimator, None] = field(default=None, init=False, repr=False, metadata={'help': 'Configuration field: _model.'})
     score_dict: ScoreDict = field(default_factory=ScoreDict, init=False, repr=False, metadata={'help': 'Configuration field: score_dict.'})
     _target_: Union[str, None] = field(default='deckard.model.defense.base.DefenseConfig', init=True, repr=True, metadata={'help': 'Hydra target path used to rehydrate this defense config.'})

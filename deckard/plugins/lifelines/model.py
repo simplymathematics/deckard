@@ -100,7 +100,11 @@ class SurvivalModelConfig(ModelConfig):
                 setattr(self, attr, None)
 
     def _initialize_target(self) -> None:
-        if not hasattr(self, "_target_") or self._target_ is None:
+        if (
+            not hasattr(self, "_target_")
+            or self._target_ is None
+            or self._target_ == "deckard.model.base.ModelConfig"
+        ):
             self._target_ = "deckard.plugins.lifelines.model.SurvivalModelConfig"
 
     def __post_init__(self) -> None:

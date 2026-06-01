@@ -143,7 +143,7 @@ class DetectorConfig(ScoreOrchestratorMixin, BaseConfig):
         None,
     ] = None
     alias: str = field(default_factory=str, metadata={'help': 'Configuration field: alias.'})
-    plugins: list = field(default_factory=list, init=False, repr=False, metadata={'help': 'Configuration field: plugins.'})
+    plugins: list = field(default_factory=list, repr=True, metadata={'help': 'Configuration field: plugins.'})
 
     detector: Any = field(default=None, init=False, repr=False, metadata={'help': 'Configuration field: detector.'})
     detector_predictions: Any = field(default=None, init=False, repr=False, metadata={'help': 'Configuration field: detector_predictions.'})
