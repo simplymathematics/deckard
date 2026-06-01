@@ -16,7 +16,7 @@ from deckard.data import DataConfig  # noqa: E402
 from deckard.experiment import ExperimentConfig  # noqa: E402
 from deckard.file import FileConfig  # noqa: E402
 from deckard.model import DefenseConfig, ModelConfig  # noqa: E402
-from deckard.model.defense.base import DefensePipelineConfig  # noqa: E402
+from deckard.model.defense.base import DefenseConfig  # noqa: E402
 from deckard.score.attack import AttackScorerConfig  # noqa: E402
 from deckard.score import (  # noqa: E402
     DefaultDataClassificationScorerDictConfig,
@@ -800,7 +800,7 @@ def test_cli_defense_composition_feature_squeezing():
 
     # Load config into defense
     defense_dict = OmegaConf.to_container(cfg.defense, resolve=True)
-    defense = DefensePipelineConfig.coerce(defense_dict)
+    defense = DefenseConfig.coerce(defense_dict)
 
     # Apply defense
     defended = defense.apply(estimator=model.get_model(), data=data)

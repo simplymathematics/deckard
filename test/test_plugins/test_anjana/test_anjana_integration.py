@@ -15,7 +15,7 @@ from helpers import make_runtime_env
 from deckard.attack import AttackConfig
 from deckard.experiment import ExperimentConfig
 from deckard.file import FileConfig
-from deckard.model import DefensePipelineConfig, ModelConfig
+from deckard.model import DefenseConfig, ModelConfig
 
 ROOT = Path(__file__).resolve().parents[3]
 EXAMPLES_SKLEARN_DIR = ROOT / "examples" / "sklearn"
@@ -520,7 +520,7 @@ def test_anjana_fairness_and_art_chain_type_and_transform(monkeypatch):
         name="sklearn.linear_model.LogisticRegression",
         classifier=True,
         model_params={"max_iter": 30},
-        defense=DefensePipelineConfig(
+        defense=DefenseConfig(
             defenses=[
                 {
                     "name": "art.defences.postprocessor.ClassLabels",
@@ -574,7 +574,7 @@ def test_wrapper_defenses_reordered_last_with_warning(caplog):
             call_order.append("art")
             return estimator
 
-    pipeline = DefensePipelineConfig(
+    pipeline = DefenseConfig(
         defenses=[_StubArtDefense(), _StubDataDefense()],
     )
 

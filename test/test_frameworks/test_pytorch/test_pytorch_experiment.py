@@ -22,7 +22,7 @@ from deckard.experiment import TorchExperimentConfig
 from deckard.file import FileConfig
 from deckard.frameworks.pytorch.data import PytorchDataConfig
 from deckard.frameworks.pytorch.model import PytorchModelConfig
-from deckard.model import DefensePipelineConfig
+from deckard.model import DefenseConfig
 from deckard.model.defense.base import DefenseConfig
 
 torch = pytest.importorskip("torch")
@@ -119,7 +119,7 @@ def test_torch_experiment_canonical_device_handles_null_aliases():
 
 
 def test_pytorch_defense_pipeline_initialises():
-    pipeline = DefensePipelineConfig(
+    pipeline = DefenseConfig(
         defenses=[
             {
                 "name": "art.defences.postprocessor.ClassLabels",
@@ -133,7 +133,7 @@ def test_pytorch_defense_pipeline_initialises():
 
 
 def test_pytorch_art_defense_is_detected_as_art_by_pipeline():
-    pipeline = DefensePipelineConfig(
+    pipeline = DefenseConfig(
         defenses=[
             {
                 "name": "art.defences.postprocessor.ClassLabels",
@@ -160,7 +160,7 @@ def test_pytorch_model_trains_on_synthetic_data():
 
 def test_pytorch_model_with_art_postprocessor_defense():
     data = _make_torch_data()
-    defense_cfg = DefensePipelineConfig(
+    defense_cfg = DefenseConfig(
         defenses=[
             {
                 "name": "art.defences.postprocessor.ClassLabels",
@@ -177,7 +177,7 @@ def test_pytorch_model_with_art_postprocessor_defense():
 
 def test_pytorch_model_with_art_preprocessor_defense():
     data = _make_torch_data(unit_interval=True)
-    defense_cfg = DefensePipelineConfig(
+    defense_cfg = DefenseConfig(
         defenses=[
             {
                 "name": "art.defences.preprocessor.FeatureSqueezing",
@@ -323,7 +323,7 @@ def test_art_last_ordering_no_warning_for_wrapper_only_chain(caplog):
         "classifier": True,
     }
 
-    pipeline = DefensePipelineConfig(
+    pipeline = DefenseConfig(
         defenses=[art_defense_dict, fairlearn_defense],
     )
 
@@ -344,7 +344,7 @@ def test_art_last_ordering_no_warning_for_wrapper_only_chain(caplog):
 def test_art_last_ordering_no_warning_when_already_last(caplog):
     import logging
 
-    pipeline = DefensePipelineConfig(
+    pipeline = DefenseConfig(
         defenses=[
             {
                 "name": "art.defences.postprocessor.ClassLabels",

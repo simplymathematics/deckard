@@ -87,7 +87,8 @@ class TestUtilsAdditional:
         obj = BaseConfig(score_dict={"x": 1})
         out = coerce_config(obj)
         assert isinstance(out, dict)
-        assert "score_dict" in out
+        assert "score_dict" not in out
+        assert "_target_" in out
 
     def test_coerce_config_yaml_path_to_dict(self):
         with tempfile.TemporaryDirectory() as td:
@@ -712,13 +713,15 @@ class TestBaseConfigSerialisation:
         cfg = _Cfg(score_dict={"a": 1})
         yaml_str = cfg.to_yaml()
         assert isinstance(yaml_str, str)
-        assert "score_dict" in yaml_str
+        assert "score_dict" not in yaml_str
+        assert "_target_" in yaml_str
 
     def test_to_dict_returns_dict(self):
         cfg = _Cfg(score_dict={"b": 2})
         d = cfg.to_dict()
         assert isinstance(d, dict)
-        assert "score_dict" in d
+        assert "score_dict" not in d
+        assert "_target_" in d
 
     def test_to_dict_for_hash_excludes_score_dict(self):
         cfg = _Cfg(score_dict={"c": 3})

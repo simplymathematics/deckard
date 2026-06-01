@@ -3,6 +3,7 @@ from types import SimpleNamespace
 
 import numpy as np
 import pandas as pd
+import deckard.score as score_mod
 from omegaconf import OmegaConf
 from sklearn.metrics import accuracy_score, mean_squared_error, precision_score
 
@@ -22,6 +23,140 @@ from deckard.score.base import (
 )
 from deckard.score.data import DefaultDataScorerDictConfig
 import pytest
+
+
+@pytest.mark.parametrize(
+    ("module_name", "available"),
+    [("fairlearn", True), ("missing_optional_dep", False)],
+)
+def test_optional_score_dependency_detection(
+    monkeypatch: pytest.MonkeyPatch,
+    module_name: str,
+    available: bool,
+) -> None:
+    sentinel = object()
+    monkeypatch.setattr(
+        score_mod.importlib.util,
+        "find_spec",
+        lambda name: sentinel if name == module_name and available else None,
+    )
+
+    assert score_mod._is_available(module_name) is available
+
+
+@pytest.mark.parametrize(
+    ("wrapper_name", "loader_name", "symbol_name"),
+    [
+        (
+            "fairness_demographic_parity_difference",
+            "_load_fairlearn_score_symbol",
+            "fairness_demographic_parity_difference",
+        ),
+        (
+            "fairness_equalized_odds_difference",
+            "_load_fairlearn_score_symbol",
+            "fairness_equalized_odds_difference",
+        ),
+        (
+            "fairness_group_mean_prediction_difference",
+            "_load_fairlearn_score_symbol",
+            "fairness_group_mean_prediction_difference",
+        ),
+        (
+            "fairness_group_mae_difference",
+            "_load_fairlearn_score_symbol",
+            "fairness_group_mae_difference",
+        ),
+        (
+            "fairness_group_mse_difference",
+            "_load_fairlearn_score_symbol",
+            "fairness_group_mse_difference",
+        ),
+        (
+            "anjana_k_anonymity_score",
+            "_load_anjana_score_symbol",
+            "anjana_k_anonymity_score",
+        ),
+        (
+            "anjana_l_diversity_score",
+            "_load_anjana_score_symbol",
+            "anjana_l_diversity_score",
+        ),
+        (
+            "anjana_t_closeness_score",
+            "_load_anjana_score_symbol",
+            "anjana_t_closeness_score",
+        ),
+        (
+            "survival_concordance_score",
+            "_load_lifelines_score_symbol",
+            "survival_concordance_score",
+        ),
+        (
+            "survival_aic_score",
+            "_load_lifelines_score_symbol",
+            "survival_aic_score",
+        ),
+        (
+            "survival_bic_score",
+            "_load_lifelines_score_symbol",
+            "survival_bic_score",
+        ),
+    ],
+)
+def test_score_wrapper_functions_delegate_to_lazy_loaders(
+    monkeypatch: pytest.MonkeyPatch,
+    wrapper_name: str,
+    loader_name: str,
+    symbol_name: str,
+) -> None:
+    monkeypatch.setattr(
+        score_mod,
+        loader_name,
+        lambda requested: lambda *args, **kwargs: (requested, args, kwargs),
+    )
+
+    wrapper = getattr(score_mod, wrapper_name)
+    result = wrapper(1, flag=True)
+
+    assert result == (symbol_name, (1,), {"flag": True})
+
+
+@pytest.mark.parametrize(
+    ("symbol_name", "loader_name"),
+    [
+        ("DefaultFairlearnScorerDictConfig", "_load_fairlearn_score_symbols"),
+        ("DefaultAnjanaScorerDictConfig", "_load_anjana_score_symbols"),
+        ("DefaultLifelinesConfig", "_load_lifelines_score_symbols"),
+    ],
+)
+def test_score_module_getattr_returns_lazy_loaded_symbol(
+    monkeypatch: pytest.MonkeyPatch,
+    symbol_name: str,
+    loader_name: str,
+) -> None:
+    sentinel = object()
+    monkeypatch.delattr(score_mod, symbol_name, raising=False)
+
+    def _loader() -> bool:
+        score_mod.__dict__[symbol_name] = sentinel
+        return True
+
+    monkeypatch.setattr(score_mod, loader_name, _loader)
+
+    assert score_mod.__getattr__(symbol_name) is sentinel
+
+
+def test_score_module_getattr_raises_for_unknown_or_unloaded_symbol(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(score_mod, "_load_fairlearn_score_symbols", lambda: False)
+
+    with pytest.raises(AttributeError):
+        score_mod.__getattr__("DefaultFairlearnScorerDictConfig")
+
+    with pytest.raises(AttributeError):
+        score_mod.__getattr__("DefinitelyMissingScoreSymbol")
 
 
 class TestScorerDictConfigMerge:

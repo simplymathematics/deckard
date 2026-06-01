@@ -16,6 +16,7 @@ from sklearn.linear_model import LinearRegression, LogisticRegression
 from deckard.attack import AttackConfig
 from deckard.attack.base import SensitiveFeaturesWrapper, _sensitive_slice
 from deckard.attack.extraction import ExtractionAttackConfig
+from deckard.frameworks.pytorch.attack import PytorchAttackConfig
 from deckard.score.attack import FairlearnAttackScorerConfig
 
 pytest.importorskip("torch")
@@ -269,6 +270,88 @@ class TestAttackConfig:
         assert "membership_inference_accuracy" in scores
         assert "attack_score_time" in scores
 
+
+class TestPytorchAttackConfig:
+    def test_prepare_features_for_attack_preserves_tensors_and_coerces_pandas(self):
+        torch = pytest.importorskip("torch")
+        cfg = PytorchAttackConfig(name="art.attacks.evasion.FastGradientMethod")
+
+        tensor = torch.tensor([[1.0, 2.0]])
+        frame = pd.DataFrame({"a": [1.0], "b": [2.0]})
+        series = pd.Series([1.0, 2.0])
+
+        assert cfg._prepare_features_for_attack(tensor) is tensor
+        assert cfg._prepare_features_for_attack(frame).dtype == np.dtype("float32")
+        assert cfg._prepare_features_for_attack(series).dtype == np.dtype("float32")
+
+    def test_prepare_labels_for_attack_preserves_tensors_and_coerces_pandas(self):
+        torch = pytest.importorskip("torch")
+        cfg = PytorchAttackConfig(name="art.attacks.evasion.FastGradientMethod")
+
+        tensor = torch.tensor([1, 0])
+        frame = pd.DataFrame({"label": [1, 0]})
+        series = pd.Series([1, 0])
+
+        assert cfg._prepare_labels_for_attack(tensor) is tensor
+        assert np.array_equal(cfg._prepare_labels_for_attack(frame), frame.values)
+        assert np.array_equal(cfg._prepare_labels_for_attack(series), series.values)
+
+    def test_prepare_features_for_art_covers_tensor_numpy_and_fallback_inputs(self):
+        cfg = PytorchAttackConfig(name="art.attacks.evasion.FastGradientMethod")
+
+        float_tensor = object()
+        int_tensor = object()
+        float_array = np.array([[1.0, 2.0]], dtype=np.float64)
+        frame = pd.DataFrame({"a": [1.0], "b": [2.0]})
+        series = pd.Series([1.0, 2.0])
+
+        with patch(
+            "deckard.frameworks.pytorch.attack.is_tensor",
+            side_effect=lambda value: value in {float_tensor, int_tensor},
+        ), patch(
+            "deckard.frameworks.pytorch.attack.tensor_to_numpy",
+            side_effect=[
+                np.array([[1.0, 2.0]], dtype=np.float64),
+                np.array([[1, 2]], dtype=np.int64),
+            ],
+        ):
+            tensor_result = cfg._prepare_features_for_art(float_tensor)
+            int_result = cfg._prepare_features_for_art(int_tensor)
+
+        array_result = cfg._prepare_features_for_art(float_array)
+        frame_result = cfg._prepare_features_for_art(frame)
+        series_result = cfg._prepare_features_for_art(series)
+        list_result = cfg._prepare_features_for_art([[1, 2], [3, 4]])
+
+        assert tensor_result.dtype == np.dtype("float32")
+        assert int_result.dtype == np.dtype("int64")
+        assert array_result.dtype == np.dtype("float32")
+        assert frame_result.dtype == np.dtype("float32")
+        assert series_result.dtype == np.dtype("float32")
+        assert np.array_equal(list_result, np.asarray([[1, 2], [3, 4]]))
+
+    def test_prepare_labels_for_art_covers_tensor_and_pandas_inputs(self):
+        cfg = PytorchAttackConfig(name="art.attacks.evasion.FastGradientMethod")
+
+        tensor = object()
+        frame = pd.DataFrame({"label": [1, 0]})
+        series = pd.Series([1, 0])
+        labels = [1, 0]
+
+        with patch(
+            "deckard.frameworks.pytorch.attack.is_tensor",
+            side_effect=lambda value: value is tensor,
+        ), patch(
+            "deckard.frameworks.pytorch.attack.tensor_to_numpy",
+            return_value=np.array([1, 0]),
+        ):
+            tensor_result = cfg._prepare_labels_for_art(tensor)
+
+        assert np.array_equal(tensor_result, np.array([1, 0]))
+        assert np.array_equal(cfg._prepare_labels_for_art(frame), frame.values)
+        assert np.array_equal(cfg._prepare_labels_for_art(series), series.values)
+        assert cfg._prepare_labels_for_art(labels) == labels
+
     def test_real_attribute_inference_attack_executes(self):
 
         data = TinyData()
@@ -481,6 +564,54 @@ class TestPytorchAttackConfig:
         assert isinstance(result, np.ndarray)
         assert result.shape == (4, 3)
         assert np.issubdtype(result.dtype, np.floating)
+
+    def test_prepare_features_for_art_dataframe_and_series_to_float_numpy(self):
+        from deckard.frameworks.pytorch.attack import PytorchAttackConfig
+
+        cfg = PytorchAttackConfig(
+            name="art.attacks.evasion.FastGradientMethod",
+        )
+        df = pd.DataFrame({"a": [1.0, 2.0], "b": [3.0, 4.0]})
+        series = pd.Series([1.0, 2.0, 3.0])
+
+        df_result = cfg._prepare_features_for_art(df)
+        series_result = cfg._prepare_features_for_art(series)
+
+        assert isinstance(df_result, np.ndarray)
+        assert isinstance(series_result, np.ndarray)
+        assert np.issubdtype(df_result.dtype, np.floating)
+        assert np.issubdtype(series_result.dtype, np.floating)
+
+    def test_prepare_features_for_art_preserves_non_float_numpy_dtype(self):
+        from deckard.frameworks.pytorch.attack import PytorchAttackConfig
+
+        cfg = PytorchAttackConfig(
+            name="art.attacks.evasion.FastGradientMethod",
+        )
+        arr = np.array([[1, 2], [3, 4]], dtype=np.int64)
+
+        result = cfg._prepare_features_for_art(arr)
+
+        assert result.dtype == np.int64
+
+    def test_prepare_labels_for_art_tensor_and_pandas(self):
+        self._skip_if_no_torch()
+        from deckard.frameworks.pytorch.attack import PytorchAttackConfig
+
+        cfg = PytorchAttackConfig(
+            name="art.attacks.evasion.FastGradientMethod",
+        )
+        tensor = self.torch.tensor([0, 1, 1])
+        df = pd.DataFrame({"label": [0, 1]})
+        series = pd.Series([0, 1, 0])
+
+        tensor_result = cfg._prepare_labels_for_art(tensor)
+        df_result = cfg._prepare_labels_for_art(df)
+        series_result = cfg._prepare_labels_for_art(series)
+
+        assert isinstance(tensor_result, np.ndarray)
+        assert np.array_equal(df_result, df.values)
+        assert np.array_equal(series_result, series.values)
 
     def test_torch_evasion_uses_art_boundary_conversion(self):
         self._skip_if_no_torch()

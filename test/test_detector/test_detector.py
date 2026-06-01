@@ -7,7 +7,13 @@ from omegaconf import OmegaConf
 from sklearn.datasets import make_classification
 
 from deckard.detector import DetectorConfig
-from deckard.detector.canon import normalize_detector_stage
+from deckard.detector.canon import (
+    ensure_detector_runtime_contract,
+    normalize_detector_runtime_split_mode,
+    normalize_detector_score_mode,
+    normalize_detector_score_stage,
+    normalize_detector_stage,
+)
 from deckard.detector.default import DetectorScorerConfig
 
 
@@ -258,6 +264,45 @@ def test_detector_model_coercion_from_yaml_string(monkeypatch):
 
     cfg = DetectorConfig(detector_model="fake.yaml")
     assert cfg.detector_model is not None
+
+
+def test_detector_canon_stage_and_score_aliases() -> None:
+    assert normalize_detector_stage("before_fit") == "pre-fit"
+    assert normalize_detector_stage(None) == "post-detect"
+    assert normalize_detector_score_stage("pre_sample") == "pre-sample"
+    assert normalize_detector_score_stage("auto") == "auto"
+    assert normalize_detector_score_mode("evaluation") == "test"
+
+
+def test_detector_canon_invalid_score_tokens_raise() -> None:
+    with pytest.raises(ValueError, match="Unknown detector score stage"):
+        normalize_detector_score_stage("definitely-not-a-stage")
+
+    with pytest.raises(ValueError, match="Unknown detector score mode"):
+        normalize_detector_score_mode("definitely-not-a-mode")
+
+
+def test_detector_runtime_split_mode_supports_override_aliases() -> None:
+    assert normalize_detector_runtime_split_mode("detect") == "test"
+    assert (
+        normalize_detector_runtime_split_mode(
+            "holdout",
+            aliases={"holdout": "val"},
+        )
+        == "val"
+    )
+
+
+def test_ensure_detector_runtime_contract_initializes_missing_attrs() -> None:
+    runtime = SimpleNamespace()
+
+    ensure_detector_runtime_contract(runtime)
+
+    assert runtime.score_dict == {}
+    assert runtime.detector is None
+    assert runtime.detector_training_time is None
+    assert runtime.detector_detection_time is None
+    assert runtime.detector_predictions is None
 
 
 @pytest.mark.parametrize(

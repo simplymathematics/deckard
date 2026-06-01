@@ -1,5 +1,6 @@
 from types import SimpleNamespace
 import builtins
+from typing import Any, cast
 
 import numpy as np
 import pandas as pd
@@ -7,10 +8,8 @@ import pytest
 from omegaconf import OmegaConf
 
 from deckard.model.base import ModelConfig
-from deckard.model.defense.base import (
-    DefenseConfig,
-    DefensePipelineConfig,
-)
+from deckard.model.defense.base import DefenseConfig, DefenseStep
+from deckard.model.defense.postprocessor import PostprocessorDefenseConfig
 
 
 class DummyDataConfig:
@@ -34,38 +33,41 @@ class TestDefenseConfig:
             y_test=pd.Series(np.random.randint(0, 2, size=20)),
         )
 
-        self.defense_config = DefenseConfig(
-            name="art.defences.postprocessor.HighConfidence",
-            model_name="sklearn.ensemble.RandomForestClassifier",
-        )
+        self.defense_config = DefenseConfig(defenses=[])
 
     def test_defense_config_initialization(self):
         # Test default initialization
-        assert self.defense_config.name == "sklearn.ensemble.RandomForestClassifier"
-        assert self.defense_config.classifier
-        assert not self.defense_config.probability
-        assert self.defense_config.clip_values is None
-        assert (
-            self.defense_config.defense_name
-            == "art.defences.postprocessor.HighConfidence"
-        )
+        assert self.defense_config.defenses == []
+        assert self.defense_config.plugins == []
+        assert self.defense_config.score_dict == {}
+        assert self.defense_config._target_ == "deckard.model.defense.base.DefenseConfig"
 
     def test_apply_defense_without_model(self):
-        # Test applying defense without a fitted model
+        # DefenseConfig is pipeline-only, so estimator is required.
         with pytest.raises(ValueError):
-            self.defense_config.apply_defense(data=self.data)
+            self.defense_config.apply(
+                estimator=cast(Any, None),
+                data=cast(Any, self.data),
+            )
 
     def test_apply_defense_with_invalid_defense_name(self):
-        # Test applying defense with an invalid defense name
-        self.defense_config.defense_name = "invalid.defense.Class"
-        with pytest.raises(ImportError):
-            self.defense_config.apply_defense(data=self.data)
+        # Pipeline configs no longer expose single-defense name parsing.
+        assert not hasattr(self.defense_config, "parse_defense_name")
 
     def test_call_is_not_runtime_owner(self):
         with pytest.raises(NotImplementedError):
-            self.defense_config(data=self.data)
+            self.defense_config()
 
     def test_apply_to_trained_model(self):
+        class _IdentityDefense:
+            def __init__(self):
+                self.name = "art.defences.postprocessor.HighConfidence"
+                self.defense_application_time = None
+
+            def apply_to(self, estimator, data):
+                _ = data
+                return {"estimator": estimator}
+
         model = ModelConfig(
             name="sklearn.ensemble.RandomForestClassifier",
             classifier=True,
@@ -73,12 +75,16 @@ class TestDefenseConfig:
         )
         model.train(self.data.X_train, self.data.y_train)
 
-        defended = self.defense_config.apply_to(
+        pipeline = DefenseConfig(
+            defenses=[DefenseStep.from_defense(_IdentityDefense())],
+        )
+
+        defended = pipeline.apply(
             estimator=model.get_model(),
-            data=self.data,
+            data=cast(Any, self.data),
         )
         assert defended is not None
-        assert self.defense_config.defense_application_time is not None
+        assert pipeline.defense_application_time is not None
 
     def test_hash_function(self):
         # Test the hash function for DefenseConfig
@@ -102,8 +108,12 @@ class TestDefenseConfig:
         """DefenseConfig hash remains stable after runtime-only apply attrs are set."""
         original_hash = hash(self.defense_config)
         self.defense_config.defense_application_time = 1.23
-        self.defense_config._defense_applied_at = 1234567890.5
-        self.defense_config._runtime_defense_state = {"applied": True}
+        setattr(self.defense_config, "_defense_applied_at", 1234567890.5)
+        setattr(
+            self.defense_config,
+            "_runtime_defense_state",
+            {"applied": True},
+        )
         if hasattr(self.defense_config, "score_dict") and isinstance(
             self.defense_config.score_dict,
             dict,
@@ -119,65 +129,81 @@ class TestDefensePipelineConfigListCoerce:
     """DefensePipelineConfig.coerce() with a list should chain all specs."""
 
     spec_a = {
+        "_target_": "deckard.model.defense.postprocessor.PostprocessorDefenseConfig",
         "name": "art.defences.postprocessor.HighConfidence",
         "defense_params": {"cutoff": 0.25},
     }
     spec_b = {
+        "_target_": "deckard.model.defense.postprocessor.PostprocessorDefenseConfig",
         "name": "art.defences.postprocessor.ClassLabels",
         "defense_params": {"apply_fit": False, "apply_predict": True},
     }
 
     def test_list_of_two_specs_produces_two_defenses(self):
-        result = DefensePipelineConfig.coerce([self.spec_a, self.spec_b])
-        assert isinstance(result, DefensePipelineConfig)
+        result = DefenseConfig.coerce([self.spec_a, self.spec_b])
+        assert isinstance(result, DefenseConfig)
         assert len(result.defenses) == 2
 
     def test_list_of_one_spec_produces_one_defense(self):
-        result = DefensePipelineConfig.coerce([self.spec_a])
-        assert isinstance(result, DefensePipelineConfig)
+        result = DefenseConfig.coerce([self.spec_a])
+        assert isinstance(result, DefenseConfig)
         assert len(result.defenses) == 1
 
     def test_list_order_is_preserved(self):
-        result = DefensePipelineConfig.coerce([self.spec_a, self.spec_b])
+        result = DefenseConfig.coerce([self.spec_a, self.spec_b])
+        assert result is not None
         assert "HighConfidence" in result.defenses[0].defense_name
         assert "ClassLabels" in result.defenses[1].defense_name
 
     def test_empty_list_produces_empty_pipeline(self):
-        result = DefensePipelineConfig.coerce([])
-        assert isinstance(result, DefensePipelineConfig)
+        result = DefenseConfig.coerce([])
+        assert isinstance(result, DefenseConfig)
         assert len(result.defenses) == 0
 
     def test_none_still_returns_none(self):
-        result = DefensePipelineConfig.coerce(None)
+        result = DefenseConfig.coerce(None)
         assert result is None
 
-    def test_single_dict_still_wraps_in_one_element_list(self):
-        result = DefensePipelineConfig.coerce(self.spec_a)
-        assert isinstance(result, DefensePipelineConfig)
+    def test_single_explicit_target_dict_wraps_in_one_element_list(self):
+        result = DefenseConfig.coerce(dict(self.spec_a))
+        assert result is not None
+        assert isinstance(result, DefenseConfig)
         assert len(result.defenses) == 1
+
+    def test_raw_dict_without_target_is_rejected(self):
+        with pytest.raises(TypeError, match="Defense config must be"):
+            DefenseConfig.coerce(
+                {
+                    "name": "art.defences.postprocessor.HighConfidence",
+                },
+            )
 
 
 def test_defense_behavior_defaults_signature_and_apply_to_paths(monkeypatch):
-    defense = DefenseConfig.__new__(DefenseConfig)
+    defense = PostprocessorDefenseConfig.__new__(PostprocessorDefenseConfig)
     defense.name = None
     defense.classifier = True
     defense.model_params = {}
     defense.probability = False
     defense.alias = ""
     defense.name = "art.defences.postprocessor.HighConfidence"
-    defense.defense_params = None
-    defense.score_dict = None
-    defense._target_ = None
+    setattr(defense, "defense_params", None)
+    setattr(defense, "score_dict", None)
+    setattr(defense, "_target_", None)
 
     defense.__post_init__()
 
     assert defense._model is None
     assert defense.score_dict == {}
-    assert defense._target_ == "deckard.model.defense.base.DefenseConfig"
+    assert (
+        defense._target_
+        == "deckard.model.defense.postprocessor.PostprocessorDefenseConfig"
+    )
     assert defense.defense_params == {}
 
-    defense.defense_params = OmegaConf.create(
-        {"outer": {"inner": [1, {"value": 2}]}, "flat": [3, 4]},
+    defense.defense_params = cast(
+        Any,
+        OmegaConf.create({"outer": {"inner": [1, {"value": 2}]}, "flat": [3, 4]}),
     )
     signature = defense._defense_signature()
     assert signature[0] == "art.defences.postprocessor.HighConfidence"
@@ -187,22 +213,25 @@ def test_defense_behavior_defaults_signature_and_apply_to_paths(monkeypatch):
         defense.get_model()
 
     with pytest.raises(ValueError, match="estimator must be provided"):
-        defense.apply_to(estimator=None, data=object())
+        defense.apply_to(estimator=cast(Any, None), data=cast(Any, object()))
 
-    defense._model_config = SimpleNamespace(_model=None)
+    defense._model_config = cast(Any, SimpleNamespace(_model=None))
     monkeypatch.setattr(
-        DefenseConfig,
+        PostprocessorDefenseConfig,
         "apply_defense",
         lambda self, data: {"data": data, "model": self._model},
     )
     estimator = object()
-    result = defense.apply_to(estimator=estimator, data="payload")
+    result = defense.apply_to(
+        estimator=cast(Any, estimator),
+        data=cast(Any, "payload"),
+    )
     assert result == {"data": "payload", "model": estimator}
     assert defense._model_config._model is estimator
 
 
 def test_parse_defense_name_and_get_art_class_edge_paths(monkeypatch):
-    defense = DefenseConfig(
+    defense = PostprocessorDefenseConfig(
         name="sklearn.linear_model.LogisticRegression",
         classifier=True,
     )
@@ -223,13 +252,13 @@ def test_parse_defense_name_and_get_art_class_edge_paths(monkeypatch):
     with pytest.raises(ImportError, match="Could not import defense class"):
         defense.parse_defense_name()
 
-    defense = DefenseConfig(
+    defense = PostprocessorDefenseConfig(
         name="art.defences.postprocessor.HighConfidence",
         classifier=True,
     )
     with pytest.raises(ValueError, match="name must be set"):
         defense.get_art_class(
-            SimpleNamespace(X_train=np.zeros((2, 3)), y_train=[0, 1]),
+            cast(Any, SimpleNamespace(X_train=np.zeros((2, 3)), y_train=[0, 1])),
         )
 
     import deckard.model.defense.base as defend_module
@@ -251,7 +280,7 @@ def test_parse_defense_name_and_get_art_class_edge_paths(monkeypatch):
 
 
 def test_extract_art_wrapper_context_ignores_untyped_cached_wrappers():
-    defense = DefenseConfig(
+    defense = PostprocessorDefenseConfig(
         name="art.defences.postprocessor.HighConfidence",
         model_name="sklearn.linear_model.LogisticRegression",
         classifier=True,
@@ -264,7 +293,7 @@ def test_extract_art_wrapper_context_ignores_untyped_cached_wrappers():
             self.postprocessing_defences = ["fake-post"]
 
     cached_like = CachedLike()
-    defense._model = cached_like
+    defense._model = cast(Any, cached_like)
 
     (
         base_estimator,
@@ -284,7 +313,7 @@ def test_extract_art_wrapper_context_ignores_untyped_cached_wrappers():
 
 
 def test_extract_art_wrapper_context_prefers_explicit_wrapper_state(monkeypatch):
-    defense = DefenseConfig(
+    defense = PostprocessorDefenseConfig(
         name="art.defences.postprocessor.HighConfidence",
         model_name="sklearn.linear_model.LogisticRegression",
         classifier=True,
@@ -297,7 +326,7 @@ def test_extract_art_wrapper_context_prefers_explicit_wrapper_state(monkeypatch)
         preprocessing=(0.0, 1.0),
         clip_values=(0.0, 1.0),
     )
-    defense._model = wrapper
+    defense._model = cast(Any, wrapper)
 
     monkeypatch.setattr(
         "deckard.model.defense.base._is_art_wrapper_instance",
@@ -328,12 +357,12 @@ def test_extract_art_wrapper_context_prefers_explicit_wrapper_state(monkeypatch)
 
 
 def test_get_art_class_torch_requires_typed_base_estimator(monkeypatch):
-    defense = DefenseConfig(
+    defense = PostprocessorDefenseConfig(
         name="art.defences.postprocessor.HighConfidence",
         classifier=True,
     )
     defense.name = "torch.nn.Linear"
-    defense._model = SimpleNamespace(model="not-a-torch-module")
+    defense._model = cast(Any, SimpleNamespace(model="not-a-torch-module"))
 
     monkeypatch.setattr(
         "deckard.model.defense.base._is_art_torch_wrapper",
@@ -346,7 +375,7 @@ def test_get_art_class_torch_requires_typed_base_estimator(monkeypatch):
 
     with pytest.raises(TypeError, match="Torch defenses require a torch.nn.Module"):
         defense.get_art_class(
-            SimpleNamespace(X_train=np.zeros((4, 3)), y_train=np.array([0, 1, 0, 1])),
+            cast(Any, SimpleNamespace(X_train=np.zeros((4, 3)), y_train=np.array([0, 1, 0, 1]))),
         )
 
 
@@ -366,12 +395,12 @@ def test_is_torch_model_instance_handles_runtime_import_error(monkeypatch):
 
 
 def test_get_art_class_torch_runtime_import_error_wrapped(monkeypatch):
-    defense = DefenseConfig(
+    defense = PostprocessorDefenseConfig(
         name="art.defences.postprocessor.HighConfidence",
         classifier=True,
     )
     defense.name = "torch.nn.Linear"
-    defense._model = object()
+    defense._model = cast(Any, object())
 
     monkeypatch.setattr(
         "deckard.model.defense.base._is_torch_model_instance",
@@ -392,23 +421,23 @@ def test_get_art_class_torch_runtime_import_error_wrapped(monkeypatch):
         match="Torch model defenses require optional dependency deckard\\[torch\\]",
     ):
         defense.get_art_class(
-            SimpleNamespace(X_train=np.zeros((2, 3)), y_train=np.array([0, 1])),
+            cast(Any, SimpleNamespace(X_train=np.zeros((2, 3)), y_train=np.array([0, 1]))),
         )
 
 
 def test_pipeline_coerce_plugin_context_and_stage_helpers(monkeypatch):
-    pipeline = DefensePipelineConfig.__new__(DefensePipelineConfig)
+    pipeline = DefenseConfig.__new__(DefenseConfig)
     pipeline.defenses = []
     pipeline.plugins = []
-    pipeline.score_dict = None
+    setattr(pipeline, "score_dict", None)
     pipeline._target_ = None
     pipeline.__post_init__()
     assert pipeline.score_dict == {}
-    assert pipeline._target_ == "deckard.model.defense.base.DefensePipelineConfig"
+    assert pipeline._target_ == "deckard.model.defense.base.DefenseConfig"
 
-    assert not DefensePipelineConfig._is_pipeline_target(7)
-    assert not DefensePipelineConfig._looks_like_single_defense_spec({"defenses": []})
-    assert DefensePipelineConfig._looks_like_single_defense_spec(
+    assert not DefenseConfig._is_pipeline_target(7)
+    assert not DefenseConfig._looks_like_single_defense_spec({"defenses": []})
+    assert not DefenseConfig._looks_like_single_defense_spec(
         {"_target_": "pkg.OtherDefense"},
     )
 
@@ -416,20 +445,27 @@ def test_pipeline_coerce_plugin_context_and_stage_helpers(monkeypatch):
         def apply_to(self, estimator, data):
             return estimator
 
-    assert len(DefensePipelineConfig.coerce(ApplyObj()).defenses) == 1
+    coerced_apply = DefenseConfig.coerce(cast(Any, ApplyObj()))
+    assert coerced_apply is not None
+    assert len(coerced_apply.defenses) == 1
     assert (
         len(
-            DefensePipelineConfig.coerce(
-                [{"name": "art.defences.postprocessor.HighConfidence"}],
+            DefenseConfig.coerce(
+                [
+                    {
+                        "_target_": "deckard.model.defense.base.DefenseConfig",
+                        "name": "art.defences.postprocessor.HighConfidence",
+                    },
+                ],
             ).defenses,
         )
         == 1
     )
     assert (
         len(
-            DefensePipelineConfig.coerce(
+            DefenseConfig.coerce(
                 {
-                    "_target_": "deckard.model.defense.base.DefensePipelineConfig",
+                    "_target_": "deckard.model.defense.base.DefenseConfig",
                     "defenses": [],
                 },
             ).defenses,
@@ -437,17 +473,7 @@ def test_pipeline_coerce_plugin_context_and_stage_helpers(monkeypatch):
         == 0
     )
     with pytest.raises(TypeError, match="Defense config must be"):
-        DefensePipelineConfig.coerce(3)
-
-    monkeypatch.setattr(
-        "deckard.model.defense.base.coerce_config",
-        lambda obj: (
-            [{"name": "art.defences.postprocessor.HighConfidence"}]
-            if obj == "legacy-list"
-            else obj
-        ),
-    )
-    assert len(DefensePipelineConfig.coerce("legacy-list").defenses) == 1
+        DefenseConfig.coerce(cast(Any, 3))
 
     resolved_plugins = []
 
@@ -459,7 +485,7 @@ def test_pipeline_coerce_plugin_context_and_stage_helpers(monkeypatch):
         return _factory
 
     monkeypatch.setattr("deckard.model.defense.base.resolve_class", _resolve_plugin)
-    plugin_pipeline = DefensePipelineConfig(defenses=[])
+    plugin_pipeline = DefenseConfig(defenses=[])
     assert plugin_pipeline._instantiate_plugin(
         {"name": "pkg.Plugin", "flag": True},
     ) == {"name": "pkg.Plugin", "flag": True}
@@ -475,7 +501,7 @@ def test_pipeline_coerce_plugin_context_and_stage_helpers(monkeypatch):
     marker = object()
     assert plugin_pipeline._instantiate_plugin(marker) is marker
 
-    plugin_pipeline.plugins = "bad"
+    setattr(plugin_pipeline, "plugins", "bad")
     plugin_pipeline._plugin_objects = None
     with pytest.raises(TypeError, match="plugins must be a list"):
         plugin_pipeline._get_plugins()
@@ -499,7 +525,7 @@ def test_pipeline_coerce_plugin_context_and_stage_helpers(monkeypatch):
 
 
 def test_pipeline_single_defense_coercion_and_context_inheritance(monkeypatch):
-    pipeline = DefensePipelineConfig(defenses=[])
+    pipeline = DefenseConfig(defenses=[])
 
     class CustomDefense:
         def __init__(self, **kwargs):
@@ -521,23 +547,30 @@ def test_pipeline_single_defense_coercion_and_context_inheritance(monkeypatch):
     coerced_target = pipeline._coerce_single_defense(
         {"_target_": "pkg.CustomDefense", "x": 1},
     )
-    assert isinstance(coerced_target, CustomDefense)
-    assert coerced_target.kwargs == {"x": 1}
+    assert isinstance(coerced_target, DefenseStep)
+    assert isinstance(coerced_target.defense, CustomDefense)
+    assert coerced_target.defense.kwargs == {"x": 1}
 
     coerced_fair = pipeline._coerce_single_defense(
-        {"name": "fairlearn.reductions.ExponentiatedGradient", "eps": 0.1},
+        {
+            "_target_": "deckard.plugins.fairlearn.model.FairlearnDefenseConfig",
+            "eps": 0.1,
+        },
     )
-    assert isinstance(coerced_fair, FairDefense)
-    assert coerced_fair.kwargs["eps"] == 0.1
+    assert isinstance(coerced_fair, DefenseStep)
+    assert isinstance(coerced_fair.defense, FairDefense)
+    assert coerced_fair.defense.kwargs["eps"] == 0.1
 
     monkeypatch.setattr(
         "deckard.model.defense.base.resolve_class",
         lambda name: (_ for _ in ()).throw(RuntimeError(name)),
     )
-    coerced_plain = pipeline._coerce_single_defense(
-        {"name": "fairlearn.reductions.ExponentiatedGradient"},
-    )
-    assert isinstance(coerced_plain, DefenseConfig)
+    with pytest.raises(RuntimeError):
+        pipeline._coerce_single_defense(
+            {
+                "_target_": "deckard.plugins.fairlearn.model.FairlearnDefenseConfig",
+            },
+        )
     with pytest.raises(TypeError, match="Unsupported defense specification"):
         pipeline._coerce_single_defense(3)
 
@@ -575,30 +608,26 @@ def test_pipeline_single_defense_coercion_and_context_inheritance(monkeypatch):
     assert reg_defense.model_params == {"alpha": 1}
 
     assert pipeline.normalize_defenses(None) == []
-    assert (
-        len(
-            pipeline.normalize_defenses(
-                {"name": "art.defences.postprocessor.HighConfidence"},
-            ),
+    with pytest.raises(TypeError, match="Defense specs must use an explicit _target_"):
+        pipeline.normalize_defenses(
+            {"name": "art.defences.postprocessor.HighConfidence"},
         )
-        == 1
-    )
 
 
 def test_pipeline_apply_validation_and_elapsed_fallback(monkeypatch):
-    pipeline = DefensePipelineConfig(defenses=[])
+    pipeline = DefenseConfig(defenses=[])
 
     with pytest.raises(ValueError, match="estimator must be provided"):
-        pipeline.apply(estimator=None, data=object())
+        pipeline.apply(estimator=cast(Any, None), data=cast(Any, object()))
 
     estimator = object()
-    assert pipeline.apply(estimator=estimator, data=object()) is estimator
-    assert pipeline.apply_to(estimator=estimator, data=object()) is estimator
-    assert pipeline.apply_defense(estimator=estimator, data=object()) is estimator
+    assert pipeline.apply(estimator=cast(Any, estimator), data=cast(Any, object())) is estimator
+    assert pipeline.apply_to(estimator=cast(Any, estimator), data=cast(Any, object())) is estimator
+    assert pipeline.apply_defense(estimator=cast(Any, estimator), data=cast(Any, object())) is estimator
 
-    bad_pipeline = DefensePipelineConfig(defenses=[SimpleNamespace(apply_to=1)])
+    bad_pipeline = DefenseConfig(defenses=[SimpleNamespace(apply_to=1)])
     with pytest.raises(TypeError, match="must implement apply_to"):
-        bad_pipeline.apply(estimator=object(), data=object())
+        bad_pipeline.apply(estimator=cast(Any, object()), data=cast(Any, object()))
 
     hook_calls = []
 
@@ -616,7 +645,7 @@ def test_pipeline_apply_validation_and_elapsed_fallback(monkeypatch):
             hook_calls.append("apply")
             return {"wrapped": estimator}
 
-    timed_pipeline = DefensePipelineConfig(defenses=[TimelessDefense()])
+    timed_pipeline = DefenseConfig(defenses=[TimelessDefense()])
     monkeypatch.setattr(
         timed_pipeline,
         "_run_plugin_hook",
@@ -627,7 +656,10 @@ def test_pipeline_apply_validation_and_elapsed_fallback(monkeypatch):
         iter([10.0, 12.5]).__next__,
     )
 
-    result = timed_pipeline.apply(estimator="model", data="payload")
+    result = timed_pipeline.apply(
+        estimator=cast(Any, "model"),
+        data=cast(Any, "payload"),
+    )
     assert result == {"wrapped": "model"}
     assert timed_pipeline.defense_application_time == 2.5
     assert timed_pipeline.defenses[0].data == "payload"

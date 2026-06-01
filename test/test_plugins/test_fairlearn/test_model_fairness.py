@@ -6,7 +6,7 @@ from unittest.mock import Mock
 import pandas as pd
 import pytest
 
-from deckard.model.defense.base import DefenseConfig, DefensePipelineConfig
+from deckard.model.defense.base import DefenseConfig, DefenseConfig
 from deckard.plugins.fairlearn.data import FairlearnDataConfig
 from deckard.plugins.fairlearn.model import (
     FairlearnDefenseConfig,
@@ -111,7 +111,7 @@ class TestFairlearnModelConfig:
         art_defense.apply_to = Mock(return_value=first_estimator)
         fair_defense.apply_to = Mock(return_value=second_estimator)
 
-        model.defense = DefensePipelineConfig(
+        model.defense = DefenseConfig(
             defenses=[art_defense, fair_defense],
         )
         runtime_data = Mock()

@@ -7,7 +7,7 @@ from omegaconf import OmegaConf
 from deckard.data import DataConfig
 from deckard.experiment import ExperimentConfig
 from deckard.file import FileConfig
-from deckard.model import DefensePipelineConfig, ModelConfig
+from deckard.model import DefenseConfig, ModelConfig
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -317,7 +317,7 @@ def test_defense_pipeline_scores_persist_and_reload():
 
 
 def test_defense_pipeline_config_object_pickle_roundtrip():
-    pipeline = DefensePipelineConfig(
+    pipeline = DefenseConfig(
         defenses=[
             _example_defense(
                 "examples/sklearn/config/defense/feature-squeezing.yaml",
@@ -331,5 +331,5 @@ def test_defense_pipeline_config_object_pickle_roundtrip():
         path = Path(td) / "pipeline.pkl"
         pipeline.save_object(pipeline, str(path))
         loaded = pipeline.load_object(str(path))
-    assert isinstance(loaded, DefensePipelineConfig)
+    assert isinstance(loaded, DefenseConfig)
     assert len(loaded.defenses) == 2

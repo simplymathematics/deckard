@@ -18,7 +18,7 @@ import deckard.model as model_module  # noqa: E402
 from deckard.data import PytorchDataConfig  # noqa: E402
 from deckard.score.attack import FairlearnAttackScorerConfig  # noqa: E402
 
-DefensePipelineConfig = model_module.DefensePipelineConfig
+DefensePipelineConfig = model_module.DefenseConfig
 PytorchModelConfig = model_module.PytorchModelConfig
 FairlearnPytorchModelConfig = getattr(
     model_module,

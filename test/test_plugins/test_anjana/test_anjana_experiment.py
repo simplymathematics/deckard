@@ -265,7 +265,7 @@ def test_anjana_data_with_art_model_defense_chain(monkeypatch):
     """
     from deckard.experiment import ExperimentConfig
     from deckard.file import FileConfig
-    from deckard.model import DefensePipelineConfig, ModelConfig
+    from deckard.model import DefenseConfig, ModelConfig
 
     def _stub_k_anon(data, **kwargs):
         _ = kwargs
@@ -281,7 +281,7 @@ def test_anjana_data_with_art_model_defense_chain(monkeypatch):
         defense={"name": "anjana.anonymity.k_anonymity", "k": 2},
     )
 
-    defense_cfg = DefensePipelineConfig(
+    defense_cfg = DefenseConfig(
         defenses=[
             {
                 "name": "art.defences.postprocessor.ClassLabels",
@@ -333,9 +333,9 @@ def test_anjana_art_defense_is_applied_last(monkeypatch):
     This is trivially satisfied when there's only one defense. For mixed chains,
     see test_art_last_ordering tests in test_torch_experiment.py.
     """
-    from deckard.model import DefensePipelineConfig
+    from deckard.model import DefenseConfig
 
-    pipeline = DefensePipelineConfig(
+    pipeline = DefenseConfig(
         defenses=[
             {
                 "name": "art.defences.postprocessor.ClassLabels",
@@ -365,7 +365,7 @@ def test_anjana_fairness_data_and_art_model_chain(monkeypatch):
     )
     from deckard.experiment import ExperimentConfig
     from deckard.file import FileConfig
-    from deckard.model import DefensePipelineConfig, ModelConfig
+    from deckard.model import DefenseConfig, ModelConfig
     from deckard.plugins.anjana.data import AnjanaDataConfig
 
     def _drop_half_rows(data, **kwargs):
@@ -409,7 +409,7 @@ def test_anjana_fairness_data_and_art_model_chain(monkeypatch):
         name="sklearn.linear_model.LogisticRegression",
         classifier=True,
         model_params={"max_iter": 25},
-        defense=DefensePipelineConfig(
+        defense=DefenseConfig(
             defenses=[
                 {
                     "name": "art.defences.postprocessor.ClassLabels",
@@ -449,7 +449,7 @@ def test_art_defense_reordered_last_with_warning(caplog):
     """If ART is placed before non-ART defenses, pipeline reorders and logs a warning."""
     import logging
 
-    from deckard.model.defense.base import DefensePipelineConfig
+    from deckard.model.defense.base import DefenseConfig
 
     call_order = []
 
@@ -471,7 +471,7 @@ def test_art_defense_reordered_last_with_warning(caplog):
             call_order.append("art")
             return estimator
 
-    pipeline = DefensePipelineConfig(
+    pipeline = DefenseConfig(
         defenses=[_StubArtDefense(), _StubFairnessDefense()],
     )
 
@@ -495,7 +495,7 @@ def test_anjana_data_with_fairlearn_model_chain(monkeypatch):
     """
     pytest.importorskip("fairlearn")
 
-    from deckard.model import DefensePipelineConfig
+    from deckard.model import DefenseConfig
     from deckard.plugins.anjana.data import AnjanaDataConfig
 
     def _stub_k_anon(data, **kwargs):
@@ -514,7 +514,7 @@ def test_anjana_data_with_fairlearn_model_chain(monkeypatch):
     # Data type check
     assert isinstance(data_cfg, AnjanaDataConfig)
 
-    pipeline = DefensePipelineConfig(
+    pipeline = DefenseConfig(
         defenses=[
             {
                 "name": "fairlearn.reductions.ExponentiatedGradient",

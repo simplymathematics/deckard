@@ -23,7 +23,7 @@ from art.estimators.classification.scikitlearn import (  # noqa: E402
 from fairlearn.reductions import ExponentiatedGradient  # noqa: E402
 
 DefenseConfig = model_module.DefenseConfig
-DefensePipelineConfig = model_module.DefensePipelineConfig
+DefensePipelineConfig = model_module.DefenseConfig
 FairlearnDefenseConfig = getattr(model_module, "FairlearnDefenseConfig", None)
 FairlearnModelConfig = getattr(model_module, "FairlearnModelConfig", None)
 

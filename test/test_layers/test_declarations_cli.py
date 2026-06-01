@@ -84,3 +84,65 @@ def test_show_missing_selector_exits(monkeypatch, declaration_root):
         )
 
     assert exc.value.code == 2
+
+
+def test_require_full_selector_rejects_short_selectors() -> None:
+    with pytest.raises(SystemExit) as exc:
+        mod._require_full_selector("attack/evasion")
+
+    assert exc.value.code == 2
+
+
+def test_render_supports_tree_and_yaml_fallback() -> None:
+    tree = mod._render(
+        {
+            "kind": "component",
+            "requested": "attack",
+            "items": ["evasion", "poisoning"],
+        },
+        "tree",
+    )
+    fallback = mod._render({"alpha": 1}, "tree")
+
+    assert "kind: component" in tree
+    assert "- evasion" in tree
+    assert "alpha: 1" in fallback
+
+
+def test_list_rejects_three_part_selector(monkeypatch, declaration_root):
+    monkeypatch.setattr(mod.decl, "discover_config_roots", lambda: [declaration_root])
+
+    with pytest.raises(SystemExit) as exc:
+        mod.declarations_main(
+            command="list",
+            selector="attack/evasion/fgm",
+            format="json",
+        )
+
+    assert exc.value.code == 2
+
+
+def test_validate_strict_marks_warnings_invalid(monkeypatch, declaration_root):
+    monkeypatch.setattr(mod.decl, "discover_config_roots", lambda: [declaration_root])
+    monkeypatch.setattr(
+        mod.decl,
+        "validate_declaration",
+        lambda entry: {"valid": True, "warnings": [f"warning:{entry.name}"]},
+    )
+
+    summary = mod.declarations_main(
+        command="validate",
+        selector="attack/evasion/fgm",
+        strict=True,
+        format="json",
+    )
+
+    assert summary["result"]["valid"] is False
+    assert summary["result"]["error"] == "Strict validation failed due to warnings."
+
+
+def test_unsupported_command_exits() -> None:
+    with pytest.raises(SystemExit) as exc:
+        mod.declarations_main(command="unknown", format="json")
+
+    assert exc.value.code == 2

@@ -8,7 +8,7 @@ import torch
 from torch.utils.data import DataLoader, TensorDataset
 
 from deckard.frameworks.pytorch import model as pytorch_module
-from deckard.model.defense.base import DefensePipelineConfig
+from deckard.model.defense.base import DefenseConfig
 
 PytorchModelConfig = pytest.importorskip(
     "deckard.frameworks.pytorch.model",
@@ -369,7 +369,7 @@ def test_pytorch_model_checkpointing_preserves_post_fit_defense_stage():
         y_test=torch.randint(0, 2, (4,)),
     )
     defense = _IdentityDefense()
-    pipeline = DefensePipelineConfig(
+    pipeline = DefenseConfig(
         defenses=[defense],
         plugins=[_StagePlugin("post_fit_pre_predict")],
     )

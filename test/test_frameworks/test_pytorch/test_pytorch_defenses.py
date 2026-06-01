@@ -1,5 +1,6 @@
 from pathlib import Path
 from types import SimpleNamespace
+from typing import Any, cast
 
 import numpy as np
 import pandas as pd
@@ -7,7 +8,10 @@ import pytest
 import yaml
 
 from deckard.model.base import ModelConfig
-from deckard.model.defense.base import DefenseConfig, DefensePipelineConfig
+from deckard.model.defense.base import DefenseConfig
+from deckard.model.defense.detector import DetectorDefenseConfig
+from deckard.model.defense.trainer import TrainerDefenseConfig
+from deckard.model.defense.transformer import TransformerDefenseConfig
 
 DummyDataConfig = SimpleNamespace
 
@@ -23,9 +27,9 @@ class TestRetrainingDefensePipeline:
             "art.defences.postprocessor.GaussianNoise",
             order,
         )
-        pipeline = DefensePipelineConfig(defenses=[retraining, postprocessor])
+        pipeline = DefenseConfig(defenses=[retraining, postprocessor])
 
-        pipeline.apply(estimator=object(), data=object())
+        pipeline.apply(estimator=cast(Any, object()), data=cast(Any, object()))
 
         assert order == [
             "art.defences.postprocessor.GaussianNoise",
@@ -45,13 +49,13 @@ class TestRetrainingDefensePipeline:
             model_params={"max_iter": 20},
         )
         model.train(data.X_train, data.y_train)
-        defense = DefenseConfig(
+        defense = TrainerDefenseConfig(
             name="art.defences.trainer.AdversarialTrainerMadryPGD",
             defense_params={"nb_epochs": 1, "batch_size": 4, "max_iter": 1},
         )
 
         with pytest.raises(ValueError):
-            defense.apply_to(estimator=model.get_model(), data=data)
+            defense.apply_to(estimator=model.get_model(), data=cast(Any, data))
 
     def test_real_adversarial_retraining_executes_with_pytorch_model(self):
         torch = pytest.importorskip("torch")
@@ -81,14 +85,14 @@ class TestRetrainingDefensePipeline:
             / "adversarial_retraining.yaml"
         )
         defense_cfg = yaml.safe_load(config_path.read_text(encoding="utf-8"))
-        defense = DefenseConfig(
+        defense = TrainerDefenseConfig(
             model_name="torch.nn.Linear",
             classifier=True,
             model_params={"in_features": 3, "out_features": 2},
             **defense_cfg,
         )
 
-        defended = defense.apply_to(estimator=TinyLinear(), data=data)
+        defended = defense.apply_to(estimator=TinyLinear(), data=cast(Any, data))
 
         assert hasattr(defended, "predict")
         assert hasattr(defended, "model")
@@ -127,7 +131,7 @@ class TestRetrainingDefensePipeline:
             clip_values=(0.0, 1.0),
             device_type=("gpu" if torch.cuda.is_available() else "cpu"),
         )
-        defense = DefenseConfig(
+        defense = TrainerDefenseConfig(
             name="art.defences.trainer.AdversarialTrainerMadryPGD",
             defense_params={
                 "nb_epochs": 1,
@@ -160,13 +164,13 @@ class TestRetrainingDefensePipeline:
             model_params={"max_iter": 20},
         )
         model.train(data.X_train, data.y_train)
-        defense = DefenseConfig(
+        defense = DetectorDefenseConfig(
             name="art.defences.detector.evasion.BinaryInputDetector",
             defense_params={},
         )
 
         with pytest.raises(ValueError):
-            defense.apply_to(estimator=model.get_model(), data=data)
+            defense.apply_to(estimator=model.get_model(), data=cast(Any, data))
 
     def test_binary_input_detector_handles_raw_torch_model(self):
         torch = pytest.importorskip("torch")
@@ -187,7 +191,7 @@ class TestRetrainingDefensePipeline:
             y_test=torch.randint(0, 2, (8,), dtype=torch.long),
         )
 
-        defense = DefenseConfig(
+        defense = DetectorDefenseConfig(
             name="art.defences.detector.evasion.BinaryInputDetector",
             defense_params={},
             model_name="torch.nn.Linear",
@@ -195,7 +199,7 @@ class TestRetrainingDefensePipeline:
             model_params={"in_features": 3, "out_features": 2},
         )
 
-        defended = defense.apply_to(estimator=TinyLinear(), data=data)
+        defended = defense.apply_to(estimator=TinyLinear(), data=cast(Any, data))
 
         assert hasattr(defended, "predict")
         assert hasattr(defended, "model")
@@ -234,21 +238,21 @@ class TestRetrainingDefensePipeline:
             clip_values=(0.0, 1.0),
             device_type=("gpu" if torch.cuda.is_available() else "cpu"),
         )
-        defense = DefenseConfig(
+        defense = DetectorDefenseConfig(
             name="art.defences.detector.evasion.BinaryInputDetector",
             defense_params={},
             model_name=None,
             classifier=True,
         )
 
-        defended = defense.apply_to(estimator=wrapped, data=data)
+        defended = defense.apply_to(estimator=wrapped, data=cast(Any, data))
 
         assert isinstance(defended, PyTorchClassifier)
         assert hasattr(defended, "_deckard_evasion_detector")
         assert defense.defense_application_time is not None
 
     def test_transformer_defense_name_parses_supported_subtype(self):
-        defense = DefenseConfig(
+        defense = TransformerDefenseConfig(
             name="art.defences.transformer.evasion.DefensiveDistillation",
             defense_params={"batch_size": 8, "nb_epochs": 1},
         )
@@ -270,13 +274,13 @@ class TestRetrainingDefensePipeline:
             model_params={"max_iter": 20},
         )
         model.train(data.X_train, data.y_train)
-        defense = DefenseConfig(
+        defense = TransformerDefenseConfig(
             name="art.defences.transformer.evasion.DefensiveDistillation",
             defense_params={"batch_size": 8, "nb_epochs": 1},
         )
 
         with pytest.raises(ValueError):
-            defense.apply_to(estimator=model.get_model(), data=data)
+            defense.apply_to(estimator=model.get_model(), data=cast(Any, data))
 
     def test_neural_cleanse_rejects_non_neural_network_models(self):
         data = DummyDataConfig(
@@ -291,7 +295,7 @@ class TestRetrainingDefensePipeline:
             model_params={"max_iter": 20},
         )
         model.train(data.X_train, data.y_train)
-        defense = DefenseConfig(
+        defense = TransformerDefenseConfig(
             name="art.defences.transformer.poisoning.NeuralCleanse",
             defense_params={},
         )
@@ -327,14 +331,14 @@ class TestRetrainingDefensePipeline:
             / "defensive_distillation.yaml"
         )
         defense_cfg = yaml.safe_load(config_path.read_text(encoding="utf-8"))
-        defense = DefenseConfig(
+        defense = TransformerDefenseConfig(
             model_name="torch.nn.Linear",
             classifier=True,
             model_params={"in_features": 3, "out_features": 2},
             **defense_cfg,
         )
 
-        defended = defense.apply_to(estimator=TinyLinear(), data=data)
+        defended = defense.apply_to(estimator=TinyLinear(), data=cast(Any, data))
 
         assert hasattr(defended, "predict")
         assert hasattr(defended, "model")
@@ -370,7 +374,7 @@ class TestRetrainingDefensePipeline:
             / "neural_cleanse.yaml"
         )
         defense_cfg = yaml.safe_load(config_path.read_text(encoding="utf-8"))
-        defense = DefenseConfig(
+        defense = TransformerDefenseConfig(
             model_name="torch.nn.Linear",
             classifier=True,
             model_params={"in_features": 3, "out_features": 2},
@@ -378,7 +382,7 @@ class TestRetrainingDefensePipeline:
         )
 
         with pytest.raises(ValueError):
-            defense.apply_to(estimator=TinyLinear(), data=data)
+            defense.apply_to(estimator=TinyLinear(), data=cast(Any, data))
 
 
 class _OrderTrackingDefense:

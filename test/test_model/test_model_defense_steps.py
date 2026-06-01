@@ -1,7 +1,7 @@
 from types import SimpleNamespace
 
 from deckard.model.base import ModelConfig
-from deckard.model.defense.base import DefensePipelineConfig, DefenseStep
+from deckard.model.defense.base import DefenseConfig, DefenseStep
 
 
 class _DummyDefense:
@@ -28,7 +28,7 @@ def test_fairlearn_and_anjana_defense_steps_default_to_fit_and_predict():
 
 
 def test_art_defense_step_accepts_explicit_flags_from_step_payload():
-    pipeline = DefensePipelineConfig(
+    pipeline = DefenseConfig(
         defenses=[
             {
                 "defense": _DummyDefense("art.defences.postprocessor.HighConfidence"),
@@ -39,29 +39,26 @@ def test_art_defense_step_accepts_explicit_flags_from_step_payload():
     )
 
     step = pipeline.defenses[0]
-    assert isinstance(step, _DummyDefense)
+    assert isinstance(step, DefenseStep)
+    assert isinstance(step.defense, _DummyDefense)
     assert step.apply_fit is False
     assert step.apply_predict is True
 
 
 def test_art_defense_flags_can_be_provided_in_defense_params():
-    pipeline = DefensePipelineConfig(
-        defenses=[
-            {
-                "name": "art.defences.postprocessor.ClassLabels",
-                "defense_params": {"apply_fit": True, "apply_predict": False},
-            },
-        ],
+    step = DefenseStep.from_defense(
+        _DummyDefense("art.defences.postprocessor.ClassLabels"),
+        apply_fit=True,
+        apply_predict=False,
     )
 
-    step = pipeline.defenses[0]
     assert step.apply_fit is True
     assert step.apply_predict is False
 
 
 def test_pipeline_stage_gates_defense_execution_by_step_flags():
     defense = _DummyDefense("art.defences.postprocessor.HighConfidence")
-    pipeline = DefensePipelineConfig(
+    pipeline = DefenseConfig(
         defenses=[
             {
                 "defense": defense,
