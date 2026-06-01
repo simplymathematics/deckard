@@ -7,6 +7,7 @@ into markdown links using source-derived symbol/framework/plugin catalogs.
 
 from __future__ import annotations
 
+import argparse
 import ast
 import json
 import os
@@ -23,7 +24,27 @@ EXT_INDEX = DOCS / "overview" / "extensions" / "index"
 DEV_INDEX = DOCS / "developers" / "index"
 DECKARD = ROOT / "deckard"
 INLINE_CODE_PATTERN = re.compile(r"`([^`]+)`")
-BROKEN_LINK_TARGET = "TODO-BROKEN-LINK"
+
+KWARG_LITERAL_TOKENS = frozenset(
+    {
+        "x",
+        "y",
+        "hue",
+        "train",
+        "test",
+        "val",
+        "all",
+        "load",
+        "score",
+        "component",
+        "event",
+        "run",
+    },
+)
+
+KWARG_CONTEXT_PATTERN = re.compile(
+    r"(?i)\b(?:arg|args|kwarg|kwargs|parameter|parameters|keyword|keywords|column|columns|split|stage|mode)\b",
+)
 
 
 def _module_from_path(path: Path) -> str:
@@ -173,17 +194,31 @@ def _build_extension_link_targets(catalog) -> dict[str, Path]:
     return mapping
 
 
-def _todo_link(token: str, kind: str) -> str:
-    comment = (
-        f"<!-- TODO(docs): map '{token}' to a domain-specific {kind} docs page -->"
-    )
-    return f"[{token}]({BROKEN_LINK_TARGET}) {comment}"
+def _fallback_link_target(kind: str) -> Path:
+    if kind == "API":
+        return API_MODULES
+    return EXT_INDEX
 
 
 def _rel_link(from_file: Path, target_no_ext: Path) -> str:
     return Path(
         os.path.relpath(target_no_ext.as_posix(), from_file.parent.as_posix()),
     ).as_posix()
+
+
+def _should_preserve_inline_code(line: str, token: str) -> bool:
+    normalized = token.strip().lower()
+    if not normalized:
+        return True
+    if normalized in KWARG_LITERAL_TOKENS:
+        return True
+    if normalized.endswith("="):
+        return True
+    if re.fullmatch(r"[a-z][a-z0-9_]*", normalized) and KWARG_CONTEXT_PATTERN.search(
+        line,
+    ):
+        return True
+    return False
 
 
 def _rewrite_lines(
@@ -210,17 +245,19 @@ def _rewrite_lines(
             nonlocal changed
             token = match.group(1).strip()
             lowered = token.lower()
+            if _should_preserve_inline_code(line, token):
+                return match.group(0)
             if token in catalog.symbol_tokens:
                 changed = True
                 target = symbol_targets.get(token)
                 if target is None:
-                    return _todo_link(token, "API")
+                    target = _fallback_link_target("API")
                 return f"[{token}]({_rel_link(from_file, target)})"
             if lowered in catalog.framework_tokens or lowered in catalog.plugin_tokens:
                 changed = True
                 target = extension_targets.get(lowered)
                 if target is None:
-                    return _todo_link(token, "extension")
+                    target = _fallback_link_target("extension")
                 return f"[{token}]({_rel_link(from_file, target)})"
             return match.group(0)
 
@@ -284,16 +321,39 @@ def _fix_notebook(
     return changed
 
 
+def _iter_docs_targets(scope: str | None) -> list[Path]:
+    if scope is None:
+        return list(DOCS.rglob("*"))
+
+    target = Path(scope)
+    if not target.is_absolute():
+        target = (ROOT / target).resolve()
+    if target.is_file():
+        return [target]
+    return list(target.rglob("*"))
+
+
 def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--scope",
+        default=None,
+        help="Optional docs file or directory to rewrite instead of scanning docs/.",
+    )
+    args = parser.parse_args()
+
     catalog = build_docs_reference_catalog()
     symbol_targets = _build_symbol_link_targets(catalog)
     extension_targets = _build_extension_link_targets(catalog)
     changed_files: list[str] = []
 
-    for path in DOCS.rglob("*"):
+    for path in _iter_docs_targets(args.scope):
         if not path.is_file() or path.suffix not in {".md", ".ipynb"}:
             continue
-        rel = path.relative_to(ROOT).as_posix()
+        try:
+            rel = path.relative_to(ROOT).as_posix()
+        except ValueError:
+            rel = path.as_posix()
         if "build/" in rel or ".ipynb_checkpoints" in rel:
             continue
 

@@ -6,6 +6,7 @@ Default mode enforces durable, low-noise structural invariants:
 - Default scorer naming conventions for `Default*ScorerDictConfig`
 - `*Config` inheritance chains (direct or indirect `*Config`/`BaseConfig`/`ABC`)
 - Dataclass decoration for mixins that define dataclass-like fields
+- Runtime dataclass fields are distinct from initialization params (opt-in)
 - Docstrings must avoid reStructuredText tokens
 - Docstrings for selected protected mixin hook methods
 - `*Plugin.__call__` signature contract (`*args`, `**kwargs`)
@@ -37,6 +38,15 @@ PROTECTED_MIXIN_HOOK_METHODS = {
     "_merge_plugin_scores",
 }
 
+RUNTIME_FIELD_NAMES = {
+    "score_dict",
+    "_model",
+    "_model_config",
+    "_plugin_objects",
+    "_runtime_defense_state",
+    "_defense_applied_at",
+}
+
 # Rule annotations: keep this map in sync with emitted rule codes below.
 RULE_ANNOTATIONS = {
     # Default mode naming/shape rules
@@ -50,6 +60,10 @@ RULE_ANNOTATIONS = {
     "MIX005": "Docstrings must avoid reStructuredText tokens.",
     "MIX006": "Public mixin methods must include docstrings.",
     "MIX007": "Selected protected mixin hook methods must include docstrings.",
+    "CFG007": "Runtime dataclass fields must use init=False.",
+    "CFG008": "Dataclass field() declarations must include metadata.",
+    "CFG009": "Dataclass field(init=False) declarations except _target_ must also set repr=False.",
+    "CFG010": "Dataclass _target_ fields must preserve init/repr visibility and default to the canonical object path.",
     "PLG001": "Plugin classes must implement __call__.",
     "PLG002": "Plugin __call__ signatures must include *args and **kwargs.",
     # Strict docs/types mode rules
@@ -497,6 +511,103 @@ def _class_field_annotations(node: ast.ClassDef) -> list[ast.AnnAssign]:
     return anns
 
 
+def _is_dataclass_decorated(node: ast.ClassDef) -> bool:
+    decorators = {_decorator_name(d) for d in node.decorator_list}
+    return "dataclass" in decorators
+
+
+def _annotation_is_classvar(annotation: ast.AST | None) -> bool:
+    if annotation is None:
+        return False
+    if isinstance(annotation, ast.Name):
+        return annotation.id == "ClassVar"
+    if isinstance(annotation, ast.Attribute):
+        return annotation.attr == "ClassVar"
+    if isinstance(annotation, ast.Subscript):
+        return _annotation_is_classvar(annotation.value)
+    return False
+
+
+def _field_init_disabled(value: ast.AST | None) -> bool:
+    if not isinstance(value, ast.Call):
+        return False
+    func_name = _decorator_name(value.func)
+    if func_name != "field":
+        return False
+    for kw in value.keywords:
+        if kw.arg == "init":
+            return isinstance(kw.value, ast.Constant) and kw.value.value is False
+    return False
+
+
+def _field_call(value: ast.AST | None) -> ast.Call | None:
+    if not isinstance(value, ast.Call):
+        return None
+    func_name = _decorator_name(value.func)
+    if func_name != "field":
+        return None
+    return value
+
+
+def _field_has_metadata(value: ast.AST | None) -> bool:
+    call = _field_call(value)
+    if call is None:
+        return False
+    for kw in call.keywords:
+        if kw.arg == "metadata":
+            return not (
+                isinstance(kw.value, ast.Constant) and kw.value.value is None
+            )
+    return False
+
+
+def _field_kw_bool(value: ast.AST | None, keyword: str) -> bool | None:
+    call = _field_call(value)
+    if call is None:
+        return None
+    for kw in call.keywords:
+        if kw.arg == keyword:
+            if isinstance(kw.value, ast.Constant) and isinstance(kw.value.value, bool):
+                return bool(kw.value.value)
+            return None
+    return None
+
+
+def _field_repr_disabled(value: ast.AST | None) -> bool:
+    repr_kw = _field_kw_bool(value, "repr")
+    return repr_kw is False
+
+
+def _field_default_string(value: ast.AST | None) -> str | None:
+    call = _field_call(value)
+    if call is None:
+        return None
+    for kw in call.keywords:
+        if kw.arg == "default":
+            if isinstance(kw.value, ast.Constant) and isinstance(kw.value.value, str):
+                return kw.value.value
+            return None
+    return None
+
+
+def _canonical_object_path(path: Path, class_name: str) -> str:
+    try:
+        module_name = _module_from_path(path)
+    except ValueError:
+        module_name = path.with_suffix("").name
+    return f"{module_name}.{class_name}"
+
+
+def _looks_like_runtime_field(field_name: str) -> bool:
+    if field_name == "_target_":
+        return False
+    if field_name in RUNTIME_FIELD_NAMES:
+        return True
+    if field_name.startswith("_") and not field_name.startswith("__"):
+        return True
+    return False
+
+
 def _docstring_lineno(node: ast.AST) -> int:
     """Return the starting line for a node docstring when available."""
     body = getattr(node, "body", None)
@@ -514,6 +625,10 @@ def validate_file(
     *,
     strict_docs_types: bool = False,
     require_attributes_sections: bool = False,
+    enforce_runtime_init_params: bool = False,
+    enforce_field_metadata: bool = False,
+    enforce_runtime_repr: bool = False,
+    enforce_target_field: bool = False,
 ) -> list[Violation]:
     try:
         rel = path.relative_to(ROOT).as_posix()
@@ -701,6 +816,117 @@ def validate_file(
             if isinstance(c, (ast.FunctionDef, ast.AsyncFunctionDef))
         ]
 
+        if enforce_runtime_init_params and _is_dataclass_decorated(node):
+            for ann in _class_field_annotations(node):
+                field_name = ann.target.id
+                if _annotation_is_classvar(ann.annotation):
+                    continue
+                if not _looks_like_runtime_field(field_name):
+                    continue
+                if _field_init_disabled(ann.value):
+                    continue
+                violations.append(
+                    Violation(
+                        rel,
+                        ann.lineno,
+                        "CFG007",
+                        (
+                            f"{class_name}.{field_name} looks like a runtime field "
+                            "and must set field(init=False)"
+                        ),
+                    ),
+                )
+
+        if enforce_field_metadata and _is_dataclass_decorated(node):
+            for ann in _class_field_annotations(node):
+                field_name = ann.target.id
+                if _annotation_is_classvar(ann.annotation):
+                    continue
+                if _field_call(ann.value) is None:
+                    continue
+                if _field_has_metadata(ann.value):
+                    continue
+                violations.append(
+                    Violation(
+                        rel,
+                        ann.lineno,
+                        "CFG008",
+                        (
+                            f"{class_name}.{field_name} uses field() and must set "
+                            "field(metadata={...})"
+                        ),
+                    ),
+                )
+
+        if enforce_runtime_repr and _is_dataclass_decorated(node):
+            for ann in _class_field_annotations(node):
+                field_name = ann.target.id
+                if _annotation_is_classvar(ann.annotation):
+                    continue
+                if field_name == "_target_":
+                    continue
+                if _field_call(ann.value) is None:
+                    continue
+                if not _field_init_disabled(ann.value):
+                    continue
+                if _field_repr_disabled(ann.value):
+                    continue
+                violations.append(
+                    Violation(
+                        rel,
+                        ann.lineno,
+                        "CFG009",
+                        (
+                            f"{class_name}.{field_name} uses field(init=False) and must also set "
+                            "field(repr=False) to match fingerprint/to_yaml behavior"
+                        ),
+                    ),
+                )
+
+        if enforce_target_field and _is_dataclass_decorated(node):
+            for ann in _class_field_annotations(node):
+                field_name = ann.target.id
+                if field_name != "_target_":
+                    continue
+                if _annotation_is_classvar(ann.annotation):
+                    continue
+
+                canonical_target = _canonical_object_path(path, class_name)
+                call = _field_call(ann.value)
+                if call is None:
+                    violations.append(
+                        Violation(
+                            rel,
+                            ann.lineno,
+                            "CFG010",
+                            (
+                                f"{class_name}._target_ must use field(default=\"{canonical_target}\") "
+                                "with init/repr enabled"
+                            ),
+                        ),
+                    )
+                    continue
+
+                init_kw = _field_kw_bool(ann.value, "init")
+                repr_kw = _field_kw_bool(ann.value, "repr")
+                default_value = _field_default_string(ann.value)
+                if (
+                    init_kw is False
+                    or repr_kw is False
+                    or default_value != canonical_target
+                ):
+                    violations.append(
+                        Violation(
+                            rel,
+                            ann.lineno,
+                            "CFG010",
+                            (
+                                f"{class_name}._target_ must default to \"{canonical_target}\" "
+                                "with init=True and repr=True"
+                            ),
+                        ),
+                    )
+
         # PLG001/PLG002: plugin callable contract enforcement.
         if class_name.endswith("Plugin"):
             call = next((m for m in methods if m.name == "__call__"), None)
@@ -849,6 +1075,10 @@ def collect_violations(
     *,
     strict_docs_types: bool = False,
     require_attributes_sections: bool = False,
+    enforce_runtime_init_params: bool = False,
+    enforce_field_metadata: bool = False,
+    enforce_runtime_repr: bool = False,
+    enforce_target_field: bool = False,
 ) -> list[Violation]:
     candidate = Path(scope)
     base = candidate if candidate.is_absolute() else ROOT / scope
@@ -859,6 +1089,10 @@ def collect_violations(
                 base,
                 strict_docs_types=strict_docs_types,
                 require_attributes_sections=require_attributes_sections,
+                enforce_runtime_init_params=enforce_runtime_init_params,
+                enforce_field_metadata=enforce_field_metadata,
+                enforce_runtime_repr=enforce_runtime_repr,
+                enforce_target_field=enforce_target_field,
             ),
         )
         return sorted(violations, key=lambda v: (v.path, v.line, v.code, v.message))
@@ -868,6 +1102,10 @@ def collect_violations(
                 path,
                 strict_docs_types=strict_docs_types,
                 require_attributes_sections=require_attributes_sections,
+                enforce_runtime_init_params=enforce_runtime_init_params,
+                enforce_field_metadata=enforce_field_metadata,
+                enforce_runtime_repr=enforce_runtime_repr,
+                enforce_target_field=enforce_target_field,
             ),
         )
     return sorted(violations, key=lambda v: (v.path, v.line, v.code, v.message))
@@ -973,6 +1211,39 @@ def main() -> int:
         help="Require Google-style 'Attributes:' sections for Config/Mixin/Plugin and related runtime classes",
     )
     parser.add_argument(
+        "--enforce-runtime-init-params",
+        action="store_true",
+        help=(
+            "Enforce that runtime-looking dataclass fields (for example private "
+            "state fields) are marked field(init=False)"
+        ),
+    )
+    parser.add_argument(
+        "--enforce-field-metadata",
+        action="store_true",
+        help=(
+            "Enforce that dataclass field() declarations explicitly provide "
+            "metadata={...}"
+        ),
+    )
+    parser.add_argument(
+        "--enforce-runtime-repr",
+        action="store_true",
+        help=(
+            "Enforce that dataclass field(init=False) declarations also set "
+            "repr=False so repr matches BaseConfig fingerprint/YAML behavior "
+            "for non-_target_ runtime fields"
+        ),
+    )
+    parser.add_argument(
+        "--enforce-target-field",
+        action="store_true",
+        help=(
+            "Enforce that dataclass _target_ fields preserve init/repr visibility "
+            "and default to the canonical Deckard object path"
+        ),
+    )
+    parser.add_argument(
         "--docs-scope",
         default=",".join(DEFAULT_DOCS_SCOPES),
         help=(
@@ -995,6 +1266,10 @@ def main() -> int:
         args.scope,
         strict_docs_types=args.strict_docs_types,
         require_attributes_sections=args.require_attributes_sections,
+        enforce_runtime_init_params=args.enforce_runtime_init_params,
+        enforce_field_metadata=args.enforce_field_metadata,
+        enforce_runtime_repr=args.enforce_runtime_repr,
+        enforce_target_field=args.enforce_target_field,
     )
     docs_scopes = _parse_docs_scopes(args.docs_scope)
     if docs_scopes:

@@ -49,7 +49,7 @@ def _extract_entries(payload: Any) -> list[dict[str, Any]]:
         entries = payload
     else:
         raise ValueError(
-            "Audit JSON must be either a list of entries or a payload with a 'files' list."
+            "Audit JSON must be either a list of entries or a payload with a 'files' list.",
         )
 
     normalized: list[dict[str, Any]] = []
@@ -181,7 +181,7 @@ def main() -> int:
 
     if args.audit_json_input:
         payload = json.loads(
-            _resolve_path(args.audit_json_input).read_text(encoding="utf-8")
+            _resolve_path(args.audit_json_input).read_text(encoding="utf-8"),
         )
         entries = _extract_entries(payload)
     else:
@@ -209,14 +209,18 @@ def main() -> int:
     output_md = _resolve_path(args.output_md)
     _write_json_report(output_json, report_payload)
     _write_markdown_report(
-        output_md, summary, float(args.threshold), top_offenders, docs_scopes
+        output_md,
+        summary,
+        float(args.threshold),
+        top_offenders,
+        docs_scopes,
     )
 
     print(
-        f"Docs coverage: {summary['docs_coverage_percent']:.2f}% (threshold: {args.threshold:.2f}%)"
+        f"Docs coverage: {summary['docs_coverage_percent']:.2f}% (threshold: {args.threshold:.2f}%)",
     )
     print(
-        f"Files checked: {summary['files_checked']}, clean files: {summary['clean_files']}"
+        f"Files checked: {summary['files_checked']}, clean files: {summary['clean_files']}",
     )
     print(f"Wrote JSON report: {output_json}")
     print(f"Wrote markdown report: {output_md}")
