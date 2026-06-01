@@ -387,11 +387,11 @@ class TestRetrainingDefensePipeline:
 
 class _OrderTrackingDefense:
     def __init__(self, defense_name, order):
-        self.defense_name = defense_name
+        self.name = defense_name
         self._order = order
         self.defense_application_time = 0.0
 
     def apply_to(self, estimator, data):
         _ = data
-        self._order.append(self.defense_name)
+        self._order.append(self.name)
         return estimator

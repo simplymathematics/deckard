@@ -430,7 +430,7 @@ class TestModelPostInitScorerBranches:
         assert model.scorer is not None
 
     def test_defense_without_explicit_target_raises_typeerror(self):
-        defense = SimpleNamespace(defense_name=None)
+        defense = SimpleNamespace(name=None)
         model = ModelConfig.__new__(ModelConfig)
         object.__setattr__(model, "defense", defense)
         object.__setattr__(model, "name", "sklearn.tree.DecisionTreeClassifier")

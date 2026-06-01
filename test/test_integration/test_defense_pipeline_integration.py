@@ -113,7 +113,7 @@ def test_model_config_accepts_legacy_single_defense_yaml(
     _, model, wrapped = _apply_defense(str(ROOT / defense_path))
 
     assert len(model.defense.defenses) == 1
-    assert model.defense.defenses[0].defense_name == expected_name
+    assert model.defense.defenses[0].name == expected_name
     assert model.defense_application_time is not None
     _assert_wrapper_defenses(
         wrapped,
@@ -159,7 +159,7 @@ def test_experiment_config_accepts_legacy_single_defense_yaml():
 
     assert len(experiment.defense.defenses) == 1
     assert experiment.model.defense is experiment.defense
-    assert experiment.defense.defenses[0].defense_name == (
+    assert experiment.defense.defenses[0].name == (
         "art.defences.preprocessor.FeatureSqueezing"
     )
 

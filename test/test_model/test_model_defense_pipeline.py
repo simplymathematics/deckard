@@ -152,8 +152,8 @@ class TestDefensePipelineConfigListCoerce:
     def test_list_order_is_preserved(self):
         result = DefenseConfig.coerce([self.spec_a, self.spec_b])
         assert result is not None
-        assert "HighConfidence" in result.defenses[0].defense_name
-        assert "ClassLabels" in result.defenses[1].defense_name
+        assert "HighConfidence" in result.defenses[0].name
+        assert "ClassLabels" in result.defenses[1].name
 
     def test_empty_list_produces_empty_pipeline(self):
         result = DefenseConfig.coerce([])
@@ -548,8 +548,8 @@ def test_pipeline_single_defense_coercion_and_context_inheritance(monkeypatch):
         {"_target_": "pkg.CustomDefense", "x": 1},
     )
     assert isinstance(coerced_target, DefenseStep)
-    assert isinstance(coerced_target.defense, CustomDefense)
-    assert coerced_target.defense.kwargs == {"x": 1}
+    assert coerced_target.name == "pkg.CustomDefense"
+    assert coerced_target.kwargs == {"x": 1}
 
     coerced_fair = pipeline._coerce_single_defense(
         {
@@ -558,8 +558,8 @@ def test_pipeline_single_defense_coercion_and_context_inheritance(monkeypatch):
         },
     )
     assert isinstance(coerced_fair, DefenseStep)
-    assert isinstance(coerced_fair.defense, FairDefense)
-    assert coerced_fair.defense.kwargs["eps"] == 0.1
+    assert coerced_fair.name == "deckard.plugins.fairlearn.model.FairlearnDefenseConfig"
+    assert coerced_fair.kwargs["eps"] == 0.1
 
     monkeypatch.setattr(
         "deckard.model.defense.base.resolve_class",

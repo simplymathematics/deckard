@@ -369,7 +369,7 @@ def test_joblib_launcher_syncs_scores_and_attrs_sklearn(tmp_path):
             "model",
             "attack",
             "defense",
-            "++defense.defense_name",
+            "++defense.name",
         )
     )
     assert score_attr_present or metadata_attr_present
@@ -439,7 +439,7 @@ def test_deckard_optimize_hydra_multirun_syncs_optuna_trial_attrs_sklearn(tmp_pa
             "model",
             "attack",
             "defense",
-            "++defense.defense_name",
+            "++defense.name",
         )
     )
     assert score_attr_present or metadata_attr_present

@@ -40,7 +40,7 @@ def test_art_defense_step_accepts_explicit_flags_from_step_payload():
 
     step = pipeline.defenses[0]
     assert isinstance(step, DefenseStep)
-    assert isinstance(step.defense, _DummyDefense)
+    assert step.name == "art.defences.postprocessor.HighConfidence"
     assert step.apply_fit is False
     assert step.apply_predict is True
 
@@ -90,7 +90,8 @@ def test_defense_step_factory_proxies_flags():
 
     assert step.apply_fit is False
     assert step.apply_predict is True
-    assert step.defense is defense
+    assert step.name == "art.defences.postprocessor.HighConfidence"
+    assert step.apply_to(estimator={"base": 1}, data=None)["name"] == defense.name
 
 
 def test_pretrained_model_with_fit_defense_snapshots_and_retrains(

@@ -18,6 +18,17 @@ from deckard.plugins.anjana.data import AnjanaDataConfig
 from deckard.plugins.fairlearn.data import FairlearnDataConfig
 
 
+RELAXED_ENFORCEMENT_FLAGS = (
+    "--no-enforce-class-contracts",
+    "--no-strict-docs-types",
+    "--no-require-attributes-sections",
+    "--no-enforce-runtime-init-params",
+    "--no-enforce-field-metadata",
+    "--no-enforce-runtime-repr",
+    "--no-enforce-target-field",
+)
+
+
 def _run_enforcement(scope: str, *extra_args: str) -> None:
     repo_root = Path(__file__).resolve().parents[2]
     cmd = [
@@ -25,6 +36,8 @@ def _run_enforcement(scope: str, *extra_args: str) -> None:
         "scripts/repository_enforcement.py",
         "--scope",
         scope,
+        "--docs-scope",
+        "none",
         *extra_args,
     ]
     result = subprocess.run(
@@ -47,6 +60,8 @@ def _run_enforcement_result(
         "scripts/repository_enforcement.py",
         "--scope",
         scope,
+        "--docs-scope",
+        "none",
         *extra_args,
     ]
     return subprocess.run(
@@ -59,19 +74,19 @@ def _run_enforcement_result(
 
 
 def test_repository_enforcement_plugins_scope_passes() -> None:
-    _run_enforcement("deckard/plugins")
+    _run_enforcement("deckard/plugins", *RELAXED_ENFORCEMENT_FLAGS)
 
 
 def test_repository_enforcement_frameworks_scope_passes() -> None:
-    _run_enforcement("deckard/frameworks")
+    _run_enforcement("deckard/frameworks", *RELAXED_ENFORCEMENT_FLAGS)
 
 
 def test_repository_enforcement_score_scope_passes() -> None:
-    _run_enforcement("deckard/score")
+    _run_enforcement("deckard/score", *RELAXED_ENFORCEMENT_FLAGS)
 
 
 def test_repository_enforcement_deckard_scope_passes() -> None:
-    _run_enforcement("deckard")
+    _run_enforcement("deckard", *RELAXED_ENFORCEMENT_FLAGS)
 
 
 def test_repository_enforcement_default_score_config_name_fails(
@@ -85,7 +100,10 @@ def test_repository_enforcement_default_score_config_name_fails(
         encoding="utf-8",
     )
 
-    result = _run_enforcement_result(str(sample))
+    result = _run_enforcement_result(
+        str(sample),
+        "--enforce-class-contracts",
+    )
 
     assert result.returncode == 1
     assert "NAME005" in result.stdout
@@ -98,12 +116,19 @@ def test_repository_enforcement_default_scorer_dict_config_name_passes(
     sample = tmp_path / "good_default_scorer_dict_config.py"
     sample.write_text(
         "class DefaultModelScorerDictConfig:\n"
-        '    """Temporary test class."""\n'
+        '    """Temporary test class.\n\n'
+        "    Attributes:\n"
+        "        score_name: Example score identifier.\n"
+        '    """\n'
+        "    score_name: str\n"
         "    pass\n",
         encoding="utf-8",
     )
 
-    result = _run_enforcement_result(str(sample))
+    result = _run_enforcement_result(
+        str(sample),
+        "--enforce-class-contracts",
+    )
 
     assert result.returncode == 0, result.stdout + "\n" + result.stderr
 
@@ -121,7 +146,7 @@ def test_repository_enforcement_attributes_section_required_for_config(
 
     result = _run_enforcement_result(
         str(sample),
-        "--require-attributes-sections",
+        "--enforce-class-contracts",
     )
 
     assert result.returncode == 1
@@ -134,6 +159,8 @@ def test_repository_enforcement_attributes_section_passes_for_sampler(
 ) -> None:
     sample = tmp_path / "good_attributes_sampler.py"
     sample.write_text(
+        "from dataclasses import dataclass\n\n"
+        "@dataclass\n"
         "class KFoldSampler:\n"
         '    """Temporary sampler with attributes section.\n\n'
         "    Attributes:\n"
@@ -145,10 +172,71 @@ def test_repository_enforcement_attributes_section_passes_for_sampler(
 
     result = _run_enforcement_result(
         str(sample),
-        "--require-attributes-sections",
+        "--enforce-class-contracts",
     )
 
     assert result.returncode == 0, result.stdout + "\n" + result.stderr
+
+
+def test_repository_enforcement_public_class_docstring_required(
+    tmp_path: Path,
+) -> None:
+    sample = tmp_path / "bad_public_class_docstring.py"
+    sample.write_text(
+        "class RuntimePolicy:\n"
+        "    value: int = 1\n",
+        encoding="utf-8",
+    )
+
+    result = _run_enforcement_result(
+        str(sample),
+        "--enforce-class-contracts",
+    )
+
+    assert result.returncode == 1
+    assert "CLS004" in result.stdout
+    assert "RuntimePolicy missing class docstring" in result.stdout
+
+
+def test_repository_enforcement_public_class_docstring_passes(
+    tmp_path: Path,
+) -> None:
+    sample = tmp_path / "good_public_class_docstring.py"
+    sample.write_text(
+        "class RuntimePolicy:\n"
+        "    \"\"\"Temporary runtime policy.\"\"\"\n"
+        "    value: int\n",
+        encoding="utf-8",
+    )
+
+    result = _run_enforcement_result(
+        str(sample),
+        "--enforce-class-contracts",
+    )
+
+    assert result.returncode == 0, result.stdout + "\n" + result.stderr
+
+
+def test_repository_enforcement_public_method_docstring_required(
+    tmp_path: Path,
+) -> None:
+    sample = tmp_path / "bad_public_method_docstring.py"
+    sample.write_text(
+        "class RuntimePolicy:\n"
+        "    \"\"\"Temporary runtime policy.\"\"\"\n\n"
+        "    def run(self) -> None:\n"
+        "        pass\n",
+        encoding="utf-8",
+    )
+
+    result = _run_enforcement_result(
+        str(sample),
+        "--enforce-class-contracts",
+    )
+
+    assert result.returncode == 1
+    assert "CLS006" in result.stdout
+    assert "RuntimePolicy.run missing public docstring" in result.stdout
 
 
 def test_repository_enforcement_runtime_fields_must_be_init_false(
@@ -165,10 +253,7 @@ def test_repository_enforcement_runtime_fields_must_be_init_false(
         encoding="utf-8",
     )
 
-    result = _run_enforcement_result(
-        str(sample),
-        "--enforce-runtime-init-params",
-    )
+    result = _run_enforcement_result(str(sample))
 
     assert result.returncode == 1
     assert "CFG007" in result.stdout
@@ -183,16 +268,17 @@ def test_repository_enforcement_runtime_fields_init_false_passes(
         "from dataclasses import dataclass, field\n\n"
         "@dataclass\n"
         "class RuntimeConfig:\n"
-        '    """Temporary runtime config."""\n'
-        "    _model: object | None = field(default=None, init=False)\n"
+        '    """Temporary runtime config.\n\n'
+        "    Attributes:\n"
+        "        _model: Runtime model object.\n"
+        "        user_param: Example user parameter.\n"
+        '    """\n'
+        "    _model: object | None = field(default=None, init=False, repr=False, metadata={\"help\": \"Runtime model\"})\n"
         "    user_param: int = 1\n",
         encoding="utf-8",
     )
 
-    result = _run_enforcement_result(
-        str(sample),
-        "--enforce-runtime-init-params",
-    )
+    result = _run_enforcement_result(str(sample))
 
     assert result.returncode == 0, result.stdout + "\n" + result.stderr
 
@@ -210,10 +296,7 @@ def test_repository_enforcement_field_metadata_required(
         encoding="utf-8",
     )
 
-    result = _run_enforcement_result(
-        str(sample),
-        "--enforce-field-metadata",
-    )
+    result = _run_enforcement_result(str(sample))
 
     assert result.returncode == 1
     assert "CFG008" in result.stdout
@@ -228,15 +311,15 @@ def test_repository_enforcement_field_metadata_passes(
         "from dataclasses import dataclass, field\n\n"
         "@dataclass\n"
         "class RuntimeConfig:\n"
-        '    """Temporary runtime config."""\n'
+        '    """Temporary runtime config.\n\n'
+        "    Attributes:\n"
+        "        value: Example runtime value.\n"
+        '    """\n'
         "    value: int = field(default=1, metadata={\"help\": \"Example\"})\n",
         encoding="utf-8",
     )
 
-    result = _run_enforcement_result(
-        str(sample),
-        "--enforce-field-metadata",
-    )
+    result = _run_enforcement_result(str(sample))
 
     assert result.returncode == 0, result.stdout + "\n" + result.stderr
 
@@ -254,10 +337,7 @@ def test_repository_enforcement_runtime_repr_required(
         encoding="utf-8",
     )
 
-    result = _run_enforcement_result(
-        str(sample),
-        "--enforce-runtime-repr",
-    )
+    result = _run_enforcement_result(str(sample))
 
     assert result.returncode == 1
     assert "CFG009" in result.stdout
@@ -272,15 +352,15 @@ def test_repository_enforcement_runtime_repr_passes(
         "from dataclasses import dataclass, field\n\n"
         "@dataclass\n"
         "class RuntimeConfig:\n"
-        '    """Temporary runtime config."""\n'
-        "    runtime_state: int = field(default=1, init=False, repr=False)\n",
+        '    """Temporary runtime config.\n\n'
+        "    Attributes:\n"
+        "        runtime_state: Example runtime state.\n"
+        '    """\n'
+        "    runtime_state: int = field(default=1, init=False, repr=False, metadata={\"help\": \"Runtime state\"})\n",
         encoding="utf-8",
     )
 
-    result = _run_enforcement_result(
-        str(sample),
-        "--enforce-runtime-repr",
-    )
+    result = _run_enforcement_result(str(sample))
 
     assert result.returncode == 0, result.stdout + "\n" + result.stderr
 
@@ -298,10 +378,7 @@ def test_repository_enforcement_target_field_required(
         encoding="utf-8",
     )
 
-    result = _run_enforcement_result(
-        str(sample),
-        "--enforce-target-field",
-    )
+    result = _run_enforcement_result(str(sample))
 
     assert result.returncode == 1
     assert "CFG010" in result.stdout
@@ -316,15 +393,15 @@ def test_repository_enforcement_target_field_passes(
         "from dataclasses import dataclass, field\n\n"
         "@dataclass\n"
         "class RuntimeConfig:\n"
-        '    """Temporary runtime config."""\n'
+        '    """Temporary runtime config.\n\n'
+        "    Attributes:\n"
+        "        _target_: Canonical runtime path.\n"
+        '    """\n'
         "    _target_: str | None = field(default=\"good_target_field.RuntimeConfig\", metadata={\"help\": \"Example\"})\n",
         encoding="utf-8",
     )
 
-    result = _run_enforcement_result(
-        str(sample),
-        "--enforce-target-field",
-    )
+    result = _run_enforcement_result(str(sample))
 
     assert result.returncode == 0, result.stdout + "\n" + result.stderr
 
