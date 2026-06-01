@@ -1316,8 +1316,7 @@ class YellowbrickPlotConfig(_YellowbrickPlotterMarker, BaseConfig):
         Artist.set_clip_path = _compat_set_clip_path
         try:
             if ax is None:
-                figure = Figure(figsize=(10, 8))
-                ax = figure.add_axes((0.125, 0.11, 0.775, 0.77))
+                _, ax = plt.subplots(figsize=(10, 8))
 
             if self.plot_type in feature_viz_types:
                 self.visualize_features(ax)
@@ -1363,11 +1362,16 @@ class YellowbrickPlotConfig(_YellowbrickPlotterMarker, BaseConfig):
         if hasattr(visualizer, "finalize"):
             try:
                 visualizer.finalize()
-            except TypeError as exc:
+            except Exception as exc:
                 message = str(exc)
                 if "Legend needs either Axes or FigureBase as parent" in message:
                     logger.warning(
                         "Skipping yellowbrick finalize legend step: %s", message
+                    )
+                elif "The passed figure is not managed by pyplot" in message:
+                    logger.warning(
+                        "Skipping yellowbrick finalize pyplot-close step: %s",
+                        message,
                     )
                 else:
                     raise

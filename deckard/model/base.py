@@ -734,6 +734,9 @@ class ModelConfig(ScoreOrchestratorMixin, BaseConfig):
                 else "post_fit_pre_predict"
             )
             art_model = self.apply_defense(data, stage=stage)
+            if not _is_art_model_instance(art_model):
+                art_class, init_params = self.get_art_class(data)
+                art_model = art_class(art_model, **init_params)
         return art_model
 
     def get_model(self) -> BaseEstimator:
