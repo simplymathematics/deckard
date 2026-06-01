@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import deckard.score as score_mod
 from omegaconf import OmegaConf
-from sklearn.metrics import accuracy_score, mean_squared_error, precision_score
+from sklearn.metrics import accuracy_score
 
 from deckard.score import (
     AttackScorerConfig,
@@ -18,7 +18,6 @@ from deckard.score import (
 )
 from deckard.score.base import (
     DefaultModelScorerDictConfig,
-    _DataScorerMarker,
     coerce_scorer_config,
 )
 from deckard.score.data import DefaultDataScorerDictConfig

@@ -354,7 +354,8 @@ def test_get_art_class_torch_requires_typed_base_estimator(monkeypatch):
             cast(
                 Any,
                 SimpleNamespace(
-                    X_train=np.zeros((4, 3)), y_train=np.array([0, 1, 0, 1])
+                    X_train=np.zeros((4, 3)),
+                    y_train=np.array([0, 1, 0, 1]),
                 ),
             ),
         )
@@ -618,7 +619,8 @@ def test_pipeline_apply_validation_and_elapsed_fallback(monkeypatch):
     )
     assert (
         pipeline.apply_defense(
-            estimator=cast(Any, estimator), data=cast(Any, object())
+            estimator=cast(Any, estimator),
+            data=cast(Any, object()),
         )
         is estimator
     )

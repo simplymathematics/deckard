@@ -6,7 +6,7 @@ from unittest.mock import Mock
 import pandas as pd
 import pytest
 
-from deckard.model.defense.base import DefenseConfig, DefenseConfig
+from deckard.model.defense.base import DefenseConfig
 from deckard.plugins.fairlearn.data import FairlearnDataConfig
 from deckard.plugins.fairlearn.model import (
     FairlearnDefenseConfig,

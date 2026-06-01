@@ -228,7 +228,7 @@ class DVCExperimentConfig:
         init=True,
         repr=True,
         metadata={
-            "help": "Hydra target path used to rehydrate this DVC experiment wrapper."
+            "help": "Hydra target path used to rehydrate this DVC experiment wrapper.",
         },
     )
     _experiment_obj: Any = field(

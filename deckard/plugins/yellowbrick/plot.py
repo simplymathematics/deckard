@@ -13,7 +13,6 @@ from typing import Any, Dict, Final, List, Literal, Optional, Union, get_args
 import matplotlib.pyplot as plt
 from matplotlib.artist import Artist
 from matplotlib.axes import Axes
-from matplotlib.figure import Figure
 from matplotlib.font_manager import FontProperties
 import numpy as np
 from sklearn.base import BaseEstimator, ClassifierMixin
@@ -630,10 +629,12 @@ class YellowbrickPlotConfig(_YellowbrickPlotterMarker, BaseConfig):
     title: str = "Yellowbrick Plot"
     save_path: str = "yellowbrick_plot.png"
     rc_config: Dict[str, Any] = field(
-        default_factory=dict, metadata={"help": "Configuration field: rc_config."}
+        default_factory=dict,
+        metadata={"help": "Configuration field: rc_config."},
     )
     plot_params: Dict[str, Any] = field(
-        default_factory=dict, metadata={"help": "Configuration field: plot_params."}
+        default_factory=dict,
+        metadata={"help": "Configuration field: plot_params."},
     )
 
     def __post_init__(self):
@@ -1458,7 +1459,8 @@ class YellowbrickConfigList(BaseConfig):
     clustering: bool = False
     plot_folder: Optional[str] = None
     rc_config: Dict[str, Any] = field(
-        default_factory=dict, metadata={"help": "Configuration field: rc_config."}
+        default_factory=dict,
+        metadata={"help": "Configuration field: rc_config."},
     )
 
     def __post_init__(self):

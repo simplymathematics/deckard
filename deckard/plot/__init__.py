@@ -132,16 +132,20 @@ class PlotConfig(BaseConfig):
     """
 
     kwargs: dict = field(
-        default_factory=dict, metadata={"help": "Configuration field: kwargs."}
+        default_factory=dict,
+        metadata={"help": "Configuration field: kwargs."},
     )
     files: dict = field(
-        default_factory=dict, metadata={"help": "Configuration field: files."}
+        default_factory=dict,
+        metadata={"help": "Configuration field: files."},
     )
     times: dict = field(
-        default_factory=dict, metadata={"help": "Configuration field: times."}
+        default_factory=dict,
+        metadata={"help": "Configuration field: times."},
     )
     plot_state: dict = field(
-        default_factory=dict, metadata={"help": "Configuration field: plot_state."}
+        default_factory=dict,
+        metadata={"help": "Configuration field: plot_state."},
     )
     config: Union[
         SeabornPlotConfig,
@@ -149,7 +153,9 @@ class PlotConfig(BaseConfig):
         YellowbrickPlotConfig,
         YellowbrickConfigList,
     ] = field(
-        init=False, repr=False, metadata={"help": "Configuration field: config."}
+        init=False,
+        repr=False,
+        metadata={"help": "Configuration field: config."},
     )
 
     @staticmethod

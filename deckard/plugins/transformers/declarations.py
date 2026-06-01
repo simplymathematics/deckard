@@ -33,7 +33,8 @@ class FlexibleHuggingFaceDataset(DataConfig):
     dataset_config_name: str | None = None
     limit: int | None = None
     data_params: dict[str, Any] = field(
-        default_factory=dict, metadata={"help": "Configuration field: data_params."}
+        default_factory=dict,
+        metadata={"help": "Configuration field: data_params."},
     )
 
     def __post_init__(self) -> None:

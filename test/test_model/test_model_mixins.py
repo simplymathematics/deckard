@@ -124,7 +124,7 @@ def test_pretrained_mixin_raises_without_any_loader():
 
     cfg = _ConfigNoLoaders()
 
-    with pytest.raises(NotImplementedError, match="requires a load\(path\) method"):
+    with pytest.raises(NotImplementedError, match=r"requires a load\(path\) method"):
         cfg.load_cached("missing.pkl")
 
 

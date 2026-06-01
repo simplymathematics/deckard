@@ -22,7 +22,6 @@ from deckard.experiment import TorchExperimentConfig
 from deckard.file import FileConfig
 from deckard.frameworks.pytorch.data import PytorchDataConfig
 from deckard.frameworks.pytorch.model import PytorchModelConfig
-from deckard.model import DefenseConfig
 from deckard.model.defense.base import DefenseConfig, DefenseStep
 
 torch = pytest.importorskip("torch")

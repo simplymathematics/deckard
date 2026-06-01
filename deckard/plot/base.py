@@ -122,7 +122,8 @@ class PlotTypePlugin:
         metadata={"help": "Configuration field: excluded_families."},
     )
     init_params: dict[str, Any] = field(
-        default_factory=dict, metadata={"help": "Configuration field: init_params."}
+        default_factory=dict,
+        metadata={"help": "Configuration field: init_params."},
     )
 
     def _resolve_mixin_type(self) -> type:
@@ -238,7 +239,8 @@ class PlotDictConfig(BaseConfig):
     """
 
     plots: dict[str, Any] = field(
-        default_factory=dict, metadata={"help": "Configuration field: plots."}
+        default_factory=dict,
+        metadata={"help": "Configuration field: plots."},
     )
     backend: str = "yellowbrick"
 

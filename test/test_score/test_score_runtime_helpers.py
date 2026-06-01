@@ -60,7 +60,9 @@ def test_series_like_to_float_dict_supports_tuple_index_dataframe_and_callable_v
         "b_y_score": 0.2,
     }
 
-    callback = lambda: 1.0
+    def callback():
+        return 1.0
+
     out = series_like_to_float_dict({"hook": callback})
     assert out["hook"] is callback
 

@@ -271,7 +271,7 @@ class TestAttackConfig:
         assert "attack_score_time" in scores
 
 
-class TestPytorchAttackConfig:
+class TestPytorchAttackConfigPrep:
     def test_prepare_features_for_attack_preserves_tensors_and_coerces_pandas(self):
         torch = pytest.importorskip("torch")
         cfg = PytorchAttackConfig(name="art.attacks.evasion.FastGradientMethod")
@@ -1671,6 +1671,7 @@ class TestGetBenignPreds:
             art_model.predict(attack._prepare_features_for_art(x_sub)),
         )
         assert n == 4
+        assert isinstance(labels, np.ndarray)
 
 
 # ---------------------------------------------------------------------------

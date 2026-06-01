@@ -400,7 +400,8 @@ class DefaultAnjanaDataScorerDictConfig(TaskAwareScorerMixin, ScorerDictConfig):
 
     classifier: bool | None = None
     scorers: dict[str, ScorerConfig] = field(
-        default_factory=dict, metadata={"help": "Configuration field: scorers."}
+        default_factory=dict,
+        metadata={"help": "Configuration field: scorers."},
     )
 
     def _build_default_scorers(self, classifier: bool) -> dict[str, ScorerConfig]:

@@ -138,7 +138,9 @@ def _ensure_field_import(source: str, tree: ast.Module) -> str:
     )
     if dataclasses_from is not None:
         start = _to_offset(
-            offsets, dataclasses_from.lineno, dataclasses_from.col_offset
+            offsets,
+            dataclasses_from.lineno,
+            dataclasses_from.col_offset,
         )
         end_lineno, end_col_offset = _node_end(dataclasses_from)
         end = _to_offset(

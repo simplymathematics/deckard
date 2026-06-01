@@ -77,10 +77,12 @@ class OptimizerConfig:
     """
 
     directions: list[str] = field(
-        default_factory=list, metadata={"help": "Configuration field: directions."}
+        default_factory=list,
+        metadata={"help": "Configuration field: directions."},
     )
     optimizers: list[str] = field(
-        default_factory=list, metadata={"help": "Configuration field: optimizers."}
+        default_factory=list,
+        metadata={"help": "Configuration field: optimizers."},
     )
     study_name: str | None = None
     storage: str | None = None

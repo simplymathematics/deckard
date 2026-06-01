@@ -650,7 +650,8 @@ class FairlearnEvasionAttackScorerConfig:
     group_scorers: dict[str, Any] = field(
         default_factory=lambda: {
             "accuracy": ScorerConfig(
-                score_name="accuracy", score_function="sklearn.metrics.accuracy_score"
+                score_name="accuracy",
+                score_function="sklearn.metrics.accuracy_score",
             ),
             "f1": ScorerConfig(
                 score_name="f1",
@@ -663,7 +664,8 @@ class FairlearnEvasionAttackScorerConfig:
     group_scorers: dict[str, Any] = field(
         default_factory=lambda: {
             "accuracy": ScorerConfig(
-                score_name="accuracy", score_function="sklearn.metrics.accuracy_score"
+                score_name="accuracy",
+                score_function="sklearn.metrics.accuracy_score",
             ),
             "f1": ScorerConfig(
                 score_name="f1",
@@ -678,7 +680,8 @@ class FairlearnEvasionAttackScorerConfig:
     group_scorers: dict[str, Any] = field(
         default_factory=lambda: {
             "accuracy": ScorerConfig(
-                score_name="accuracy", score_function="sklearn.metrics.accuracy_score"
+                score_name="accuracy",
+                score_function="sklearn.metrics.accuracy_score",
             ),
             "f1": ScorerConfig(
                 score_name="f1",
@@ -693,7 +696,8 @@ class FairlearnEvasionAttackScorerConfig:
     group_scorers: dict[str, Any] = field(
         default_factory=lambda: {
             "accuracy": ScorerConfig(
-                score_name="accuracy", score_function="sklearn.metrics.accuracy_score"
+                score_name="accuracy",
+                score_function="sklearn.metrics.accuracy_score",
             ),
             "f1": ScorerConfig(
                 score_name="f1",
@@ -718,7 +722,8 @@ class FairlearnMembershipInferenceAttackScorerConfig:
     group_scorers: dict[str, Any] = field(
         default_factory=lambda: {
             "accuracy": ScorerConfig(
-                score_name="accuracy", score_function="sklearn.metrics.accuracy_score"
+                score_name="accuracy",
+                score_function="sklearn.metrics.accuracy_score",
             ),
             "f1": ScorerConfig(
                 score_name="f1",
@@ -741,7 +746,8 @@ class FairlearnAttributeInferenceAttackScorerConfig:
     group_scorers: dict[str, Any] = field(
         default_factory=lambda: {
             "accuracy": ScorerConfig(
-                score_name="accuracy", score_function="sklearn.metrics.accuracy_score"
+                score_name="accuracy",
+                score_function="sklearn.metrics.accuracy_score",
             ),
             "f1": ScorerConfig(
                 score_name="f1",

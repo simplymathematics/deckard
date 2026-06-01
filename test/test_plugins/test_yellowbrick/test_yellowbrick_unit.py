@@ -13,11 +13,11 @@ matplotlib.use("Agg", force=True)
 
 pytest.importorskip("yellowbrick")
 
-from deckard.data import DataConfig
-from deckard.experiment import ExperimentConfig
-from deckard.file import FileConfig
-from deckard.model import ModelConfig
-from deckard.plugins.yellowbrick import plot as yb_plot
+from deckard.data import DataConfig  # noqa: E402
+from deckard.experiment import ExperimentConfig  # noqa: E402
+from deckard.file import FileConfig  # noqa: E402
+from deckard.model import ModelConfig  # noqa: E402
+from deckard.plugins.yellowbrick import plot as yb_plot  # noqa: E402
 
 
 class _ModelWithName:
@@ -83,11 +83,11 @@ def experiments(temp_dir):
         Path(__file__).resolve().parents[3] / "examples" / "sklearn" / "config"
     )
     data_conf = OmegaConf.load(
-        (config_dir / "data" / "classification.yaml").as_posix()
+        (config_dir / "data" / "classification.yaml").as_posix(),
     )
     model_conf = OmegaConf.load((config_dir / "model" / "logistic.yaml").as_posix())
     reg_data_conf = OmegaConf.load(
-        (config_dir / "data" / "regression.yaml").as_posix()
+        (config_dir / "data" / "regression.yaml").as_posix(),
     )
     reg_model_conf = OmegaConf.load((config_dir / "model" / "ridge.yaml").as_posix())
 
@@ -141,7 +141,7 @@ def test_named_classifier_adapter_preserves_model_name():
 
 def test_adapter_predict_proba_predict_and_score_variants():
     logits_adapter = yb_plot._YellowbrickModelAdapter(
-        _PredictConfig(np.array([-1.0, 1.0]))
+        _PredictConfig(np.array([-1.0, 1.0])),
     )
     probs = logits_adapter.predict_proba(np.array([[0.0], [1.0]]))
     assert probs.shape == (2, 2)
@@ -154,7 +154,7 @@ def test_adapter_predict_proba_predict_and_score_variants():
     assert labels.tolist() == [2, 0]
 
     empty_score_adapter = yb_plot._YellowbrickModelAdapter(
-        _PredictConfig(np.array([]))
+        _PredictConfig(np.array([])),
     )
     assert empty_score_adapter.score(np.array([]), np.array([])) == 0.0
 
@@ -384,9 +384,13 @@ def test_config_list_set_plot_dict_and_len(monkeypatch, experiments, tmp_path):
 
     monkeypatch.setattr(cfg, "_ensure_experiment_prepared", lambda: {"ok": 1})
     monkeypatch.setattr(
-        yb_plot.YellowbrickConfigList, "_set_plot_dict", lambda self: None
+        yb_plot.YellowbrickConfigList,
+        "_set_plot_dict",
+        lambda self: None,
     )
     monkeypatch.setattr(
-        yb_plot.YellowbrickPlotConfig, "__call__", lambda self: {"ok": 1}
+        yb_plot.YellowbrickPlotConfig,
+        "__call__",
+        lambda self: {"ok": 1},
     )
     assert cfg() == {"ok": 1}

@@ -176,7 +176,7 @@ class ModelConfig(ScoreOrchestratorMixin, BaseConfig):
         init=False,
         repr=False,
         metadata={
-            "help": "Instantiated estimator or model object managed by this config."
+            "help": "Instantiated estimator or model object managed by this config.",
         },
     )
     score_dict: ScoreDict = field(
@@ -184,7 +184,7 @@ class ModelConfig(ScoreOrchestratorMixin, BaseConfig):
         init=False,
         repr=False,
         metadata={
-            "help": "Model score payload accumulated during runtime evaluation."
+            "help": "Model score payload accumulated during runtime evaluation.",
         },
     )
     training_time: Union[float, None] = field(
@@ -228,7 +228,7 @@ class ModelConfig(ScoreOrchestratorMixin, BaseConfig):
         init=False,
         repr=False,
         metadata={
-            "help": "Elapsed time in seconds for scoring validation predictions."
+            "help": "Elapsed time in seconds for scoring validation predictions.",
         },
     )
     defense_application_time: Union[float, None] = field(
@@ -242,7 +242,7 @@ class ModelConfig(ScoreOrchestratorMixin, BaseConfig):
         init=False,
         repr=False,
         metadata={
-            "help": "Number of samples used for training predictions or scores."
+            "help": "Number of samples used for training predictions or scores.",
         },
     )
     prediction_n: Union[int, None] = field(
@@ -256,7 +256,7 @@ class ModelConfig(ScoreOrchestratorMixin, BaseConfig):
         init=False,
         repr=False,
         metadata={
-            "help": "Number of samples used for validation predictions or scores."
+            "help": "Number of samples used for validation predictions or scores.",
         },
     )
     training_predictions: Any = field(
@@ -282,7 +282,7 @@ class ModelConfig(ScoreOrchestratorMixin, BaseConfig):
         init=False,
         repr=False,
         metadata={
-            "help": "Cached class probabilities generated for the training split."
+            "help": "Cached class probabilities generated for the training split.",
         },
     )
     probabilities: Any = field(
@@ -296,7 +296,7 @@ class ModelConfig(ScoreOrchestratorMixin, BaseConfig):
         init=False,
         repr=False,
         metadata={
-            "help": "Cached class probabilities generated for the validation split."
+            "help": "Cached class probabilities generated for the validation split.",
         },
     )
     _target_: Union[str, None] = field(
@@ -311,7 +311,7 @@ class ModelConfig(ScoreOrchestratorMixin, BaseConfig):
         repr=False,
         compare=False,
         metadata={
-            "help": "Instantiated plugin objects cached for model hook dispatch."
+            "help": "Instantiated plugin objects cached for model hook dispatch.",
         },
     )
     _defense_pipeline: Any = field(
@@ -320,7 +320,7 @@ class ModelConfig(ScoreOrchestratorMixin, BaseConfig):
         repr=False,
         compare=False,
         metadata={
-            "help": "Resolved defense pipeline cached for runtime model protection."
+            "help": "Resolved defense pipeline cached for runtime model protection.",
         },
     )
     _trainer_obj: Any = field(
@@ -329,7 +329,7 @@ class ModelConfig(ScoreOrchestratorMixin, BaseConfig):
         repr=False,
         compare=False,
         metadata={
-            "help": "Resolved trainer object cached for repeated train and load calls."
+            "help": "Resolved trainer object cached for repeated train and load calls.",
         },
     )
     score_stage_aliases: ClassVar[dict[str, str]] = CANONICAL_MODEL_SCORE_STAGE_ALIASES

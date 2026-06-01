@@ -298,7 +298,7 @@ class AttackConfig(ScoreOrchestratorMixin, BaseConfig):
         init=False,
         repr=False,
         metadata={
-            "help": "Elapsed time in seconds for generating adversarial examples."
+            "help": "Elapsed time in seconds for generating adversarial examples.",
         },
     )
     attack_prediction_time: Union[float, None] = field(
@@ -306,7 +306,7 @@ class AttackConfig(ScoreOrchestratorMixin, BaseConfig):
         init=False,
         repr=False,
         metadata={
-            "help": "Elapsed time in seconds for model predictions on attacked inputs."
+            "help": "Elapsed time in seconds for model predictions on attacked inputs.",
         },
     )
     attack_score_time: Union[float, None] = field(
@@ -350,7 +350,7 @@ class AttackConfig(ScoreOrchestratorMixin, BaseConfig):
         init=False,
         repr=False,
         metadata={
-            "help": "Selected target-class index for targeted attack workflows."
+            "help": "Selected target-class index for targeted attack workflows.",
         },
     )
     _attack_family: Union[str, None] = field(
@@ -370,7 +370,7 @@ class AttackConfig(ScoreOrchestratorMixin, BaseConfig):
         init=False,
         repr=False,
         metadata={
-            "help": "Attack score payload accumulated during runtime evaluation."
+            "help": "Attack score payload accumulated during runtime evaluation.",
         },
     )
     _target_: Union[str, None] = field(
@@ -385,7 +385,7 @@ class AttackConfig(ScoreOrchestratorMixin, BaseConfig):
         repr=False,
         compare=False,
         metadata={
-            "help": "Instantiated plugin objects cached for attack hook dispatch."
+            "help": "Instantiated plugin objects cached for attack hook dispatch.",
         },
     )
 

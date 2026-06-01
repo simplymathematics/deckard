@@ -70,7 +70,7 @@ def test_runtime_base_caches_instantiated_plugins(
 
 def test_runtime_base_run_plugin_hook_only_calls_matching_hooks() -> None:
     runtime = _RuntimeHarness(
-        _plugin_objects=[_PluginWithHook(), _PluginWithoutHook()]
+        _plugin_objects=[_PluginWithHook(), _PluginWithoutHook()],
     )
 
     outputs = runtime._run_plugin_hook("before_score", flag=True)
@@ -136,7 +136,7 @@ def test_stage_hook_token_and_expand_stage_aliases() -> None:
                 "configured_scorers": {
                     "a": _ScorerCfg(stage="all"),
                     "b": _ScorerCfg(stage="auto"),
-                }
+                },
             },
         )(),
     )
@@ -167,8 +167,8 @@ def test_configure_score_orchestration_plugins_populates_hook_plugins() -> None:
             (),
             {
                 "configured_scorers": {
-                    "a": _ScorerCfg(stage=["pre-sample", "post-pipeline"])
-                }
+                    "a": _ScorerCfg(stage=["pre-sample", "post-pipeline"]),
+                },
             },
         )(),
     )
@@ -232,7 +232,8 @@ def test_score_orchestration_hook_merges_plugin_scores_and_updates_score_dict() 
     runtime = _OrchestratorHarness(score_dict={"existing": {"x": 1}})
 
     result = runtime._score_orchestration_hook(
-        "post-pipeline", score_kwargs={"mode": "ignored"}
+        "post-pipeline",
+        score_kwargs={"mode": "ignored"},
     )
 
     assert result["base_metric"] == 1.0
@@ -291,7 +292,8 @@ def test_run_score_stage_hooks_rejects_invalid_event() -> None:
     runtime = _OrchestratorHarness()
 
     with pytest.raises(
-        ValueError, match="Score hook event must be 'before' or 'after'"
+        ValueError,
+        match="Score hook event must be 'before' or 'after'",
     ):
         runtime._run_score_stage_hooks("during", "post-pipeline")
 

@@ -128,7 +128,7 @@ class FairlearnPytorchDataConfig(FairlearnDataConfig, PytorchCustomDataConfig):
         init=True,
         repr=True,
         metadata={
-            "help": "Hydra target path used to rehydrate this Fairlearn PyTorch data config."
+            "help": "Hydra target path used to rehydrate this Fairlearn PyTorch data config.",
         },
     )
     scorer: Any = None

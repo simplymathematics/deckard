@@ -325,7 +325,7 @@ class DefenseStep:
         return {
             "name": object.__getattribute__(self, "name"),
             "defense_params": dict(
-                object.__getattribute__(self, "defense_params") or {}
+                object.__getattribute__(self, "defense_params") or {},
             ),
             "apply_fit": bool(object.__getattribute__(self, "apply_fit")),
             "apply_predict": bool(object.__getattribute__(self, "apply_predict")),
@@ -502,7 +502,7 @@ class DefensePipelineConfigBehaviorMixin(DefenseHookRuntimeMixin):
                 return DefenseConfig(
                     defenses=[
                         DefenseStep.from_defense(
-                            resolve_class(target)(**defense_dict)
+                            resolve_class(target)(**defense_dict),
                         ),
                     ],
                 )
@@ -1234,7 +1234,7 @@ class ARTDefenseBehaviorMixin(DefenseHookRuntimeMixin):
         init=True,
         repr=True,
         metadata={
-            "help": "Hydra target path used when this defense behavior mixin is serialized through a concrete config."
+            "help": "Hydra target path used when this defense behavior mixin is serialized through a concrete config.",
         },
     )
     _model_config: Union[ModelConfig, None] = field(
@@ -1994,7 +1994,8 @@ class DefenseConfig(
     """
 
     defenses: list = field(
-        default_factory=list, metadata={"help": "Configuration field: defenses."}
+        default_factory=list,
+        metadata={"help": "Configuration field: defenses."},
     )
     name: InitVar[StringifiedClass | None] = None
     defense_params: InitVar[dict | None] = None
@@ -2017,7 +2018,8 @@ class DefenseConfig(
         metadata={"help": "Configuration field: plugins."},
     )
     alias: str = field(
-        default_factory=str, metadata={"help": "Configuration field: alias."}
+        default_factory=str,
+        metadata={"help": "Configuration field: alias."},
     )
     score_dict: ScoreDict = field(
         default_factory=ScoreDict,
@@ -2067,7 +2069,7 @@ class DefenseConfig(
         legacy_defense_name = name
         legacy_defense_params = dict(defense_params or {})
         if not getattr(self, "defenses", None) and _looks_like_defense_class_path(
-            legacy_defense_name
+            legacy_defense_name,
         ):
             apply_fit = legacy_defense_params.pop("apply_fit", None)
             apply_predict = legacy_defense_params.pop("apply_predict", None)

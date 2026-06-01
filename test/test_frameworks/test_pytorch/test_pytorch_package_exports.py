@@ -106,12 +106,16 @@ def test_pytorch_package_getattr_resolves_lazy_symbols(
             "TorchShuffleSampler",
         ):
             setattr(
-                module, alias, sentinel if alias == attr_name else type(alias, (), {})
+                module,
+                alias,
+                sentinel if alias == attr_name else type(alias, (), {}),
             )
     if module_name.endswith(".data"):
         for alias in ("PytorchDataConfig", "PytorchCustomDataConfig"):
             setattr(
-                module, alias, sentinel if alias == attr_name else type(alias, (), {})
+                module,
+                alias,
+                sentinel if alias == attr_name else type(alias, (), {}),
             )
 
     monkeypatch.setitem(sys.modules, module_name, module)

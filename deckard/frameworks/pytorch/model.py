@@ -143,11 +143,13 @@ class PytorchModelConfig(ModelConfig):
 
     name: ModelType = "torch.nn.Linear"
     model_params: dict = field(
-        default_factory=dict, metadata={"help": "Configuration field: model_params."}
+        default_factory=dict,
+        metadata={"help": "Configuration field: model_params."},
     )
     classifier: bool = True
     fit_params: dict = field(
-        default_factory=dict, metadata={"help": "Configuration field: fit_params."}
+        default_factory=dict,
+        metadata={"help": "Configuration field: fit_params."},
     )
     library: str = "pytorch"
     device: Any = None
@@ -156,7 +158,8 @@ class PytorchModelConfig(ModelConfig):
         metadata={"help": "Configuration field: criterion."},
     )
     optimizer: Any = field(
-        default="torch.optim.SGD", metadata={"help": "Configuration field: optimizer."}
+        default="torch.optim.SGD",
+        metadata={"help": "Configuration field: optimizer."},
     )
     clip_values: Union[tuple, None] = None
     random_seed: int = 42

@@ -104,7 +104,8 @@ class DetectorScorerConfig(TaskAwareScorerMixin, ScorerDictConfig):
 
     classifier: Union[bool, str] = True
     scorers: dict[str, Union[ScorerConfig, dict[str, Any]]] = field(
-        default_factory=dict, metadata={"help": "Configuration field: scorers."}
+        default_factory=dict,
+        metadata={"help": "Configuration field: scorers."},
     )
 
     def _build_default_scorers(
@@ -138,7 +139,8 @@ class DetectorConfig(ScoreOrchestratorMixin, BaseConfig):
         metadata={"help": "Configuration field: detector_params."},
     )
     fit_params: dict[str, Any] = field(
-        default_factory=dict, metadata={"help": "Configuration field: fit_params."}
+        default_factory=dict,
+        metadata={"help": "Configuration field: fit_params."},
     )
     mode: str = "train"
     filter_mode: str = "auto"
@@ -150,7 +152,8 @@ class DetectorConfig(ScoreOrchestratorMixin, BaseConfig):
         None,
     ] = None
     alias: str = field(
-        default_factory=str, metadata={"help": "Configuration field: alias."}
+        default_factory=str,
+        metadata={"help": "Configuration field: alias."},
     )
     plugins: list = field(
         default_factory=list,

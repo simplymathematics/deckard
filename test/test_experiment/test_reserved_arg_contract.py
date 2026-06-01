@@ -9,7 +9,7 @@ from deckard.data import DataConfig
 from deckard.detector import DetectorConfig
 from deckard.experiment import ExperimentConfig
 from deckard.model import ModelConfig
-from deckard.model.defense.base import DefenseConfig, DefenseConfig
+from deckard.model.defense.base import DefenseConfig
 from deckard.score.base import ScorerDictConfig
 
 

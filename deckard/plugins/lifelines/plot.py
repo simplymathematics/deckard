@@ -580,13 +580,16 @@ class SurvivalSeabornPlotConfigList(BaseConfig):
     """Container for multiple survival model plots from SurvivalSeabornPlotterConfig."""
 
     plots_by_model: dict[str, list[Any]] = field(
-        default_factory=dict, metadata={"help": "Configuration field: plots_by_model."}
+        default_factory=dict,
+        metadata={"help": "Configuration field: plots_by_model."},
     )
     models: dict[str, Any] = field(
-        default_factory=dict, metadata={"help": "Configuration field: models."}
+        default_factory=dict,
+        metadata={"help": "Configuration field: models."},
     )
     t0s: dict[str, float] = field(
-        default_factory=dict, metadata={"help": "Configuration field: t0s."}
+        default_factory=dict,
+        metadata={"help": "Configuration field: t0s."},
     )
     runtime_data: Any = None
 

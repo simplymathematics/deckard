@@ -944,7 +944,8 @@ class FairlearnScorerDictConfig(FairnessScorerMixin, ScorerDictConfig):
             Callable[..., Any],
         ],
     ] = field(
-        default_factory=dict, metadata={"help": "Configuration field: group_scorers."}
+        default_factory=dict,
+        metadata={"help": "Configuration field: group_scorers."},
     )
     group_reduction: Literal["difference", "ratio", "none"] = "difference"
     group_reduction_method: Literal["between_groups", "to_overall"] = "between_groups"
@@ -1369,7 +1370,8 @@ class DefaultFairlearnScorerDictConfig(
 
     classifier: Union[bool, str, None] = None
     scorers: dict[str, ScorerConfig] = field(
-        default_factory=dict, metadata={"help": "Configuration field: scorers."}
+        default_factory=dict,
+        metadata={"help": "Configuration field: scorers."},
     )
 
     def _build_default_scorers(self, classifier: bool) -> dict:

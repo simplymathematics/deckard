@@ -38,7 +38,8 @@ class DefenseTypePlugin:
         metadata={"help": "Configuration field: excluded_subtypes."},
     )
     init_params: dict[str, Any] = field(
-        default_factory=dict, metadata={"help": "Configuration field: init_params."}
+        default_factory=dict,
+        metadata={"help": "Configuration field: init_params."},
     )
 
     def _resolve_mixin_type(self) -> type:
