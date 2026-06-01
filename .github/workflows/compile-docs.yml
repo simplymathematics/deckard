@@ -64,10 +64,15 @@ jobs:
         # Keep notebook extras explicit so Hugging Face notebook imports are available even if extras resolution drifts.
         python -m pip install --no-cache-dir 'transformers>=4.40.0' 'datasets>=2.19.0'
         python -m pip install --no-cache-dir 'docutils==0.21.2' 'pycanon==1.0.3' 'anjana==1.1.0'
-        # Install a matching CPU-only torch stack from the official PyTorch index.
-        # Avoid hard version pins here to prevent resolver conflicts with the
-        # evolving docs/notebook dependency graph.
-        python -m pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cpu 'torch' 'torchvision' 'torchaudio'
+        # Prefer GPU torch wheels when a CUDA-capable runner is available,
+        # with CPU fallback for non-GPU runners.
+        if command -v nvidia-smi >/dev/null 2>&1; then
+          echo "GPU detected; installing CUDA torch wheels (cu121)."
+          python -m pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cu121 'torch' 'torchvision' 'torchaudio'
+        else
+          echo "No GPU detected; installing CPU torch wheels."
+          python -m pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cpu 'torch' 'torchvision' 'torchaudio'
+        fi
     - name: verify optional notebook imports
       run: |
         python - <<'PY'
