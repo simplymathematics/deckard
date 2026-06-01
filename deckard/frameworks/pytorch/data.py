@@ -49,7 +49,9 @@ logger = logging.getLogger(__name__)
 
 
 def _persist_pickle_cache(
-    save_fn: Callable[[], None], cache_path: str, label: str
+    save_fn: Callable[[], None],
+    cache_path: str,
+    label: str,
 ) -> None:
     """Persist an optional pickle cache without failing the enclosing pipeline."""
     try:
@@ -79,14 +81,14 @@ class PytorchDataConfig(DataConfig):
     name: DatasetLike = "torchvision.datasets.MNIST"
     device: Union[str, None] = None
     data_dir: str = "./raw_data"
-    pipeline: dict[str, Any] = field(default_factory=dict)
+    pipeline: dict[str, Any] = field(default_factory=dict, metadata={'help': 'Configuration field: pipeline.'})
     classifier: bool = True
     target: Optional[str] = None
-    data_params: dict = field(default_factory=dict)
-    drop: List[str] = field(default_factory=list)
-    keep: List[str] = field(default_factory=list)
+    data_params: dict = field(default_factory=dict, metadata={'help': 'Configuration field: data_params.'})
+    drop: List[str] = field(default_factory=list, metadata={'help': 'Configuration field: drop.'})
+    keep: List[str] = field(default_factory=list, metadata={'help': 'Configuration field: keep.'})
     sampler: Union[str, dict, Callable[..., Any], None] = "split"
-    sampler_params: dict[str, Any] = field(default_factory=dict)
+    sampler_params: dict[str, Any] = field(default_factory=dict, metadata={'help': 'Configuration field: sampler_params.'})
     dataset_type: Union[str, None] = None
     n_splits: int = 5
 
@@ -653,15 +655,15 @@ class PytorchCustomDataConfig(PytorchDataConfig):
     """
 
     val: bool = False
-    dataset_params: dict = field(default_factory=dict)
-    dataset: str = field(default_factory=str)
-    test_transform: str | None = field(default_factory=str)
-    train_transform: str | None = field(default_factory=str)
-    loaders: list = field(init=False, repr=False)
+    dataset_params: dict = field(default_factory=dict, metadata={'help': 'Configuration field: dataset_params.'})
+    dataset: str = field(default_factory=str, metadata={'help': 'Configuration field: dataset.'})
+    test_transform: str | None = field(default_factory=str, metadata={'help': 'Configuration field: test_transform.'})
+    train_transform: str | None = field(default_factory=str, metadata={'help': 'Configuration field: train_transform.'})
+    loaders: list = field(init=False, repr=False, metadata={'help': 'Configuration field: loaders.'})
     data_load_time: Union[float, None] = None
     data_sample_time: Union[float, None] = None
-    transform_params: dict = field(default_factory=dict)
-    score_dict: ScoreDict = field(init=False, repr=False)
+    transform_params: dict = field(default_factory=dict, metadata={'help': 'Configuration field: transform_params.'})
+    score_dict: ScoreDict = field(init=False, repr=False, metadata={'help': 'Configuration field: score_dict.'})
 
     def __hash__(self):
         return super().__hash__()

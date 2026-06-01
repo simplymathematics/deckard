@@ -14,7 +14,12 @@ class DefaultClusterScorerDictConfig(ScorerDictConfig):
     """
 
     scoring_type: str = "model"
-    scorers: dict[str, ScorerConfig] = field(default_factory=dict)
+    scorers: dict[str, ScorerConfig] = field(
+        default_factory=dict,
+        metadata={
+            "help": "Optional clustering scorer overrides keyed by metric name.",
+        },
+    )
 
     def __post_init__(self):
         if not self.scorers:

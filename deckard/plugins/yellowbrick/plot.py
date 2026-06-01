@@ -11,7 +11,10 @@ from pathlib import Path
 from typing import Any, Dict, Final, List, Literal, Optional, Union, get_args
 
 import matplotlib.pyplot as plt
+from matplotlib.artist import Artist
 from matplotlib.axes import Axes
+from matplotlib.figure import Figure
+from matplotlib.font_manager import FontProperties
 import numpy as np
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.model_selection import (
@@ -92,12 +95,12 @@ from ...utils import BaseConfig
 
 try:
     from torch.utils.data import Subset
-except ImportError:
+except Exception:
     Subset = None
 
 try:
     import torch
-except ImportError:
+except Exception:
     torch = None
 
 feature_viz_types: Final = (
@@ -626,8 +629,8 @@ class YellowbrickPlotConfig(_YellowbrickPlotterMarker, BaseConfig):
     classes: Union[List[str], Literal["all"]] = "all"
     title: str = "Yellowbrick Plot"
     save_path: str = "yellowbrick_plot.png"
-    rc_config: Dict[str, Any] = field(default_factory=dict)
-    plot_params: Dict[str, Any] = field(default_factory=dict)
+    rc_config: Dict[str, Any] = field(default_factory=dict, metadata={'help': 'Configuration field: rc_config.'})
+    plot_params: Dict[str, Any] = field(default_factory=dict, metadata={'help': 'Configuration field: plot_params.'})
 
     def __post_init__(self):
         self._experiment_prepared = False
@@ -1287,31 +1290,58 @@ class YellowbrickPlotConfig(_YellowbrickPlotterMarker, BaseConfig):
         Raises:
             ValueError: If plot_type is unsupported.
         """
-        # Validate that either ax is provided or otherwise create a new figure
-        if ax is None:
-            _, ax = plt.subplots(figsize=(10, 8))
         Path(self.save_path).parent.mkdir(parents=True, exist_ok=True)
-        if self.plot_type in feature_viz_types:
-            self.visualize_features(ax)
-        elif self.plot_type in target_viz_types:
-            self.visualize_targets(ax)
-        elif self.plot_type in regressor_viz_types:
-            self.visualize_regressors(ax)
-        elif self.plot_type in classifier_viz_types:
-            self.visualize_classifiers(ax)
-        elif self.plot_type in cluster_viz_types:
-            self.visualize_clusters(ax)
-        elif self.plot_type in [
-            "validation_curve",
-            "learning_curve",
-            "cv_scores",
-            "feature_importances",
-            "rfecv",
-            "dropping_curve",
-        ]:
-            self.visualize_model_selection(ax)
-        else:
-            raise ValueError(f"Unsupported plot type: {self.plot_type}")
+
+        original_set_clip_path = Artist.set_clip_path
+
+        def _compat_set_clip_path(artist, path, transform=None):
+            try:
+                return original_set_clip_path(artist, path, transform)
+            except TypeError as exc:
+                message = str(exc)
+                if (
+                    "set_clip_path" in message
+                    and transform is None
+                    and getattr(type(path), "__name__", "") == "Rectangle"
+                    and hasattr(path, "get_path")
+                    and hasattr(path, "get_transform")
+                ):
+                    return original_set_clip_path(
+                        artist,
+                        path.get_path(),
+                        path.get_transform(),
+                    )
+                raise
+
+        Artist.set_clip_path = _compat_set_clip_path
+        try:
+            if ax is None:
+                figure = Figure(figsize=(10, 8))
+                ax = figure.add_axes((0.125, 0.11, 0.775, 0.77))
+
+            if self.plot_type in feature_viz_types:
+                self.visualize_features(ax)
+            elif self.plot_type in target_viz_types:
+                self.visualize_targets(ax)
+            elif self.plot_type in regressor_viz_types:
+                self.visualize_regressors(ax)
+            elif self.plot_type in classifier_viz_types:
+                self.visualize_classifiers(ax)
+            elif self.plot_type in cluster_viz_types:
+                self.visualize_clusters(ax)
+            elif self.plot_type in [
+                "validation_curve",
+                "learning_curve",
+                "cv_scores",
+                "feature_importances",
+                "rfecv",
+                "dropping_curve",
+            ]:
+                self.visualize_model_selection(ax)
+            else:
+                raise ValueError(f"Unsupported plot type: {self.plot_type}")
+        finally:
+            Artist.set_clip_path = original_set_clip_path
 
     def show(self, visualizer: BaseEstimator) -> None:
         """Finalize and save a fitted Yellowbrick visualizer to disk.
@@ -1331,7 +1361,16 @@ class YellowbrickPlotConfig(_YellowbrickPlotterMarker, BaseConfig):
         # Yellowbrick applies default titles in finalize(); run finalize first,
         # then enforce any user-specified title before saving.
         if hasattr(visualizer, "finalize"):
-            visualizer.finalize()
+            try:
+                visualizer.finalize()
+            except TypeError as exc:
+                message = str(exc)
+                if "Legend needs either Axes or FigureBase as parent" in message:
+                    logger.warning(
+                        "Skipping yellowbrick finalize legend step: %s", message
+                    )
+                else:
+                    raise
 
         if getattr(self, "title", None):
             if hasattr(visualizer, "ax") and visualizer.ax is not None:
@@ -1344,7 +1383,33 @@ class YellowbrickPlotConfig(_YellowbrickPlotterMarker, BaseConfig):
                 except Exception:
                     pass
 
-        plt.savefig(self.save_path)
+        figure = None
+        if hasattr(visualizer, "ax") and visualizer.ax is not None:
+            figure = getattr(visualizer.ax, "figure", None)
+        elif hasattr(visualizer, "axes") and visualizer.axes is not None:
+            try:
+                axes = np.ravel(visualizer.axes)
+                if axes.size > 0 and axes[0] is not None:
+                    figure = getattr(axes[0], "figure", None)
+            except Exception:
+                figure = None
+
+        original_from_any = FontProperties._from_any
+
+        @classmethod
+        def _fontprops_from_any_compat(cls, arg):
+            if getattr(type(arg), "__name__", "") == "FontProperties":
+                return arg
+            return original_from_any(arg)
+
+        FontProperties._from_any = _fontprops_from_any_compat
+        try:
+            if figure is not None:
+                figure.savefig(self.save_path)
+            else:
+                plt.savefig(self.save_path)
+        finally:
+            FontProperties._from_any = original_from_any
 
     def __len__(self):
         return 1
@@ -1380,7 +1445,7 @@ class YellowbrickConfigList(BaseConfig):
     ) = "all"
     clustering: bool = False
     plot_folder: Optional[str] = None
-    rc_config: Dict[str, Any] = field(default_factory=dict)
+    rc_config: Dict[str, Any] = field(default_factory=dict, metadata={'help': 'Configuration field: rc_config.'})
 
     def __post_init__(self):
         self._experiment_prepared = False

@@ -76,8 +76,8 @@ class OptimizerConfig:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
 
-    directions: list[str] = field(default_factory=list)
-    optimizers: list[str] = field(default_factory=list)
+    directions: list[str] = field(default_factory=list, metadata={'help': 'Configuration field: directions.'})
+    optimizers: list[str] = field(default_factory=list, metadata={'help': 'Configuration field: optimizers.'})
     study_name: str | None = None
     storage: str | None = None
     report_trial_attrs: bool = True

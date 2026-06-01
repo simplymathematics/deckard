@@ -123,9 +123,7 @@ class FairlearnPytorchDataConfig(FairlearnDataConfig, PytorchCustomDataConfig):
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
 
-    _target_: str = (
-        "deckard.frameworks.pytorch.fairness_data.FairlearnPytorchDataConfig"
-    )
+    _target_: str = field(default='deckard.frameworks.pytorch.fairness_data.FairlearnPytorchDataConfig', init=True, repr=True, metadata={'help': 'Hydra target path used to rehydrate this Fairlearn PyTorch data config.'})
     scorer: Any = None
 
     def _ensure_data_scorer_default(self) -> None:

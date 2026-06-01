@@ -268,46 +268,171 @@ class DataConfig(OrchestratorBase, BaseConfig):
 
     # Configuration fields
     name: DatasetLike = "adult"
-    data_params: dict[str, Any] = field(default_factory=dict)
+    data_params: dict[str, Any] = field(
+        default_factory=dict,
+        metadata={"help": "Keyword arguments forwarded to the dataset loader."},
+    )
     split: Union[int, None] = None
     sampler: Union["BaseSampler", Literal["split", "shuffle", "fold"], dict, None] = (
         "split"
     )
     classifier: Union[bool, str] = True
     target: Union[str, None] = None
-    drop: list[str] = field(default_factory=list)
-    keep: list[str] = field(default_factory=list)
-    plugins: list[Any] = field(default_factory=list)
+    drop: list[str] = field(
+        default_factory=list,
+        metadata={"help": "Feature columns dropped before scoring or sampling."},
+    )
+    keep: list[str] = field(
+        default_factory=list,
+        metadata={"help": "Optional allowlist of feature columns retained from the dataset."},
+    )
+    plugins: list[Any] = field(
+        default_factory=list,
+        metadata={"help": "Resolved data plugins attached to this runtime config."},
+    )
     alias: Union[str, None] = None
     scorer: Any = AUTO_SCORER
     score_mode: str = "test"
     score_stage: str = DEFAULT_DATA_SCORE_STAGE
     pipeline: "DataPipeline | None" = None
-    files: DataFiles = field(default_factory=lambda: {})
+    files: DataFiles = field(
+        default_factory=lambda: {},
+        metadata={"help": "Declared input and output file paths for this dataset runtime."},
+    )
 
     # Runtime state fields
-    score_dict: ScoreDict = field(default_factory=ScoreDict, init=False, repr=True)
-    times: dict[str, Any] = field(default_factory=dict, init=False)
-    data_load_time: Union[float, None] = field(default=None, init=False)
-    data_sample_time: Union[float, None] = field(default=None, init=False)
-    _X: Union[TabularLike, None] = field(default=None, init=False)
-    _y: Union[pd.Series, None] = field(default=None, init=False)
-    train_indices: Union[IndexLike, None] = field(default=None, init=False)
-    test_indices: Union[IndexLike, None] = field(default=None, init=False)
-    val_indices: Union[IndexLike, None] = field(default=None, init=False)
-    X_train: Union[TabularLike, None] = field(default=None, init=False)
-    y_train: Union[pd.Series, None] = field(default=None, init=False)
-    X_test: Union[TabularLike, None] = field(default=None, init=False)
-    y_test: Union[pd.Series, None] = field(default=None, init=False)
-    X_val: Union[TabularLike, None] = field(default=None, init=False)
-    y_val: Union[pd.Series, None] = field(default=None, init=False)
-    train_n: Union[int, None] = field(default=None, init=False)
-    test_n: Union[int, None] = field(default=None, init=False)
-    val_n: Union[int, None] = field(default=None, init=False)
-    _target_: Union[str, None] = None
-    _plugin_objects: Union[list[Any], None] = None
-    _sampler_obj: Union[Callable[..., Any], None] = None
-    _score_orchestration_active: bool = field(default=False, init=False, repr=False)
+    score_dict: ScoreDict = field(
+        default_factory=ScoreDict,
+        init=False,
+        repr=False,
+        metadata={"help": "Dataset-level score payload accumulated during runtime."},
+    )
+    times: dict[str, Any] = field(
+        default_factory=dict,
+        init=False,
+        repr=False,
+        metadata={"help": "Timing measurements collected for dataset load and sample stages."},
+    )
+    data_load_time: Union[float, None] = field(
+        default=None,
+        init=False,
+        repr=False,
+        metadata={"help": "Elapsed time in seconds for the dataset load stage."},
+    )
+    data_sample_time: Union[float, None] = field(
+        default=None,
+        init=False,
+        repr=False,
+        metadata={"help": "Elapsed time in seconds for the dataset sampling stage."},
+    )
+    _X: Union[TabularLike, None] = field(
+        default=None,
+        init=False,
+        repr=False,
+        metadata={"help": "Cached full feature matrix for the loaded dataset."},
+    )
+    _y: Union[pd.Series, None] = field(
+        default=None,
+        init=False,
+        repr=False,
+        metadata={"help": "Cached full target vector for the loaded dataset."},
+    )
+    train_indices: Union[IndexLike, None] = field(
+        default=None,
+        init=False,
+        repr=False,
+        metadata={"help": "Indices selected for the training split."},
+    )
+    test_indices: Union[IndexLike, None] = field(
+        default=None,
+        init=False,
+        repr=False,
+        metadata={"help": "Indices selected for the test split."},
+    )
+    val_indices: Union[IndexLike, None] = field(
+        default=None,
+        init=False,
+        repr=False,
+        metadata={"help": "Indices selected for the validation split."},
+    )
+    X_train: Union[TabularLike, None] = field(
+        default=None,
+        init=False,
+        repr=False,
+        metadata={"help": "Cached training feature matrix."},
+    )
+    y_train: Union[pd.Series, None] = field(
+        default=None,
+        init=False,
+        repr=False,
+        metadata={"help": "Cached training target vector."},
+    )
+    X_test: Union[TabularLike, None] = field(
+        default=None,
+        init=False,
+        repr=False,
+        metadata={"help": "Cached test feature matrix."},
+    )
+    y_test: Union[pd.Series, None] = field(
+        default=None,
+        init=False,
+        repr=False,
+        metadata={"help": "Cached test target vector."},
+    )
+    X_val: Union[TabularLike, None] = field(
+        default=None,
+        init=False,
+        repr=False,
+        metadata={"help": "Cached validation feature matrix."},
+    )
+    y_val: Union[pd.Series, None] = field(
+        default=None,
+        init=False,
+        repr=False,
+        metadata={"help": "Cached validation target vector."},
+    )
+    train_n: Union[int, None] = field(
+        default=None,
+        init=False,
+        repr=False,
+        metadata={"help": "Number of samples in the training split."},
+    )
+    test_n: Union[int, None] = field(
+        default=None,
+        init=False,
+        repr=False,
+        metadata={"help": "Number of samples in the test split."},
+    )
+    val_n: Union[int, None] = field(
+        default=None,
+        init=False,
+        repr=False,
+        metadata={"help": "Number of samples in the validation split."},
+    )
+    _target_: Union[str, None] = field(
+        default="deckard.data.base.DataConfig",
+        init=True,
+        repr=True,
+        metadata={"help": "Hydra target path used to rehydrate this data config."},
+    )
+    _plugin_objects: Union[list[Any], None] = field(
+        default=None,
+        init=False,
+        repr=False,
+        metadata={"help": "Instantiated plugin objects cached for runtime hook dispatch."},
+    )
+    _sampler_obj: Union[Callable[..., Any], None] = field(
+        default=None,
+        init=False,
+        repr=False,
+        metadata={"help": "Resolved sampler object cached for repeated split generation."},
+    )
+    _score_orchestration_active: bool = field(
+        default=False,
+        init=False,
+        repr=False,
+        metadata={"help": "Internal guard indicating score orchestration is currently active."},
+    )
 
     def _normalize_score_mode(self, mode: str) -> str:
         return normalize_data_score_mode(mode)
@@ -386,8 +511,8 @@ class DataConfig(OrchestratorBase, BaseConfig):
                 self.times[key] = getattr(self, key)
             setattr(self, key, self.times.get(key))
 
-        if not hasattr(self, "_target_") or self._target_ is None:
-            self._target_ = "deckard.data.DataConfig"
+        if not hasattr(self, "_target_") or self._target_ in {None, ""}:
+            self._target_ = "deckard.data.base.DataConfig"
         if not self.data_params:
             self.data_params = {}
 

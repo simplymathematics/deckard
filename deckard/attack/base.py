@@ -285,28 +285,98 @@ class AttackConfig(ScoreOrchestratorMixin, BaseConfig):
     )
     scorer: Union["AttackScorerConfig", None] = None
     alias: Union[str, None] = None
-    plugins: list = field(default_factory=list)
+    plugins: list = field(
+        default_factory=list,
+        metadata={"help": "Resolved attack plugins attached to this runtime config."},
+    )
     device: Union[str, None] = None
     mode: Literal["auto", "train", "test", "val"] = "auto"
 
     # Runtime state fields
-    attack_time: Union[float, None] = field(default=None, init=False)
-    attack_prediction_time: Union[float, None] = field(default=None, init=False)
-    attack_score_time: Union[float, None] = field(default=None, init=False)
-    attack: Union[object, None] = field(default=None, init=False)
-    attack_predictions: Union[object, None] = field(default=None, init=False)
-    attacked_labels: Union[object, None] = field(default=None, init=False)
-    score_y_pred: Union[object, None] = field(default=None, init=False)
-    score_y_proba: Union[object, None] = field(default=None, init=False)
-    target_index: Union[int, None] = field(default=None, init=False)
-    _attack_family: Union[str, None] = field(default=None, init=False)
-    _attack_sub_family: Union[str, None] = field(default=None, init=False)
-    score_dict: ScoreDict = field(default_factory=ScoreDict, init=False)
-    _target_: Union[str, None] = None
+    attack_time: Union[float, None] = field(
+        default=None,
+        init=False,
+        repr=False,
+        metadata={"help": "Elapsed time in seconds for generating adversarial examples."},
+    )
+    attack_prediction_time: Union[float, None] = field(
+        default=None,
+        init=False,
+        repr=False,
+        metadata={"help": "Elapsed time in seconds for model predictions on attacked inputs."},
+    )
+    attack_score_time: Union[float, None] = field(
+        default=None,
+        init=False,
+        repr=False,
+        metadata={"help": "Elapsed time in seconds for scoring the attack outputs."},
+    )
+    attack: Union[object, None] = field(
+        default=None,
+        init=False,
+        repr=False,
+        metadata={"help": "Instantiated attack object used for the current runtime."},
+    )
+    attack_predictions: Union[object, None] = field(
+        default=None,
+        init=False,
+        repr=False,
+        metadata={"help": "Predictions produced on attacked samples."},
+    )
+    attacked_labels: Union[object, None] = field(
+        default=None,
+        init=False,
+        repr=False,
+        metadata={"help": "Labels or targets associated with attacked samples."},
+    )
+    score_y_pred: Union[object, None] = field(
+        default=None,
+        init=False,
+        repr=False,
+        metadata={"help": "Prediction payload forwarded into attack scoring."},
+    )
+    score_y_proba: Union[object, None] = field(
+        default=None,
+        init=False,
+        repr=False,
+        metadata={"help": "Probability payload forwarded into attack scoring."},
+    )
+    target_index: Union[int, None] = field(
+        default=None,
+        init=False,
+        repr=False,
+        metadata={"help": "Selected target-class index for targeted attack workflows."},
+    )
+    _attack_family: Union[str, None] = field(
+        default=None,
+        init=False,
+        repr=False,
+        metadata={"help": "Resolved canonical attack family for runtime dispatch."},
+    )
+    _attack_sub_family: Union[str, None] = field(
+        default=None,
+        init=False,
+        repr=False,
+        metadata={"help": "Resolved canonical attack subtype for runtime dispatch."},
+    )
+    score_dict: ScoreDict = field(
+        default_factory=ScoreDict,
+        init=False,
+        repr=False,
+        metadata={"help": "Attack score payload accumulated during runtime evaluation."},
+    )
+    _target_: Union[str, None] = field(
+        default="deckard.attack.base.AttackConfig",
+        init=True,
+        repr=True,
+        metadata={"help": "Hydra target path used to rehydrate this attack config."},
+    )
     _plugin_objects: Union[list, None] = field(
         default=None,
+        init=False,
         repr=False,
         compare=False,
+        metadata={"help": "Instantiated plugin objects cached for attack hook dispatch."},
     )
 
     def __hash__(self):
@@ -324,7 +394,8 @@ class AttackConfig(ScoreOrchestratorMixin, BaseConfig):
             raise ValueError("AttackConfig.name must be a non-empty attack class path")
 
         self.name = attack_name
-        self._target_ = "deckard.attack.AttackConfig"
+        if self._target_ in {None, ""}:
+            self._target_ = "deckard.attack.base.AttackConfig"
         attack_scorer_cls = resolve_class(
             "deckard.score.attack.AttackScorerConfig",
         )

@@ -103,9 +103,7 @@ class DetectorScorerConfig(TaskAwareScorerMixin, ScorerDictConfig):
     """
 
     classifier: Union[bool, str] = True
-    scorers: dict[str, Union[ScorerConfig, dict[str, Any]]] = field(
-        default_factory=dict,
-    )
+    scorers: dict[str, Union[ScorerConfig, dict[str, Any]]] = field(default_factory=dict, metadata={'help': 'Configuration field: scorers.'})
 
     def _build_default_scorers(
         self,
@@ -133,8 +131,8 @@ class DetectorConfig(ScoreOrchestratorMixin, BaseConfig):
     """
 
     detector_type: str = "art.defences.detector.evasion.BinaryInputDetector"
-    detector_params: dict[str, Any] = field(default_factory=dict)
-    fit_params: dict[str, Any] = field(default_factory=dict)
+    detector_params: dict[str, Any] = field(default_factory=dict, metadata={'help': 'Configuration field: detector_params.'})
+    fit_params: dict[str, Any] = field(default_factory=dict, metadata={'help': 'Configuration field: fit_params.'})
     mode: str = "train"
     filter_mode: str = "auto"
     detector_model: Union[ModelConfig, dict, str, None] = None
@@ -144,16 +142,16 @@ class DetectorConfig(ScoreOrchestratorMixin, BaseConfig):
         dict[str, Any],
         None,
     ] = None
-    alias: str = field(default_factory=str)
-    plugins: list = field(default_factory=list)
+    alias: str = field(default_factory=str, metadata={'help': 'Configuration field: alias.'})
+    plugins: list = field(default_factory=list, init=False, repr=False, metadata={'help': 'Configuration field: plugins.'})
 
-    detector: Any = field(default=None, init=False)
-    detector_predictions: Any = field(default=None, init=False)
-    score_dict: ScoreDict = field(default_factory=ScoreDict, init=False)
-    detector_training_time: Union[float, None] = field(default=None, init=False)
-    detector_detection_time: Union[float, None] = field(default=None, init=False)
-    _target_: Union[str, None] = None
-    _plugin_objects: Union[list, None] = field(default=None, repr=False, compare=False)
+    detector: Any = field(default=None, init=False, repr=False, metadata={'help': 'Configuration field: detector.'})
+    detector_predictions: Any = field(default=None, init=False, repr=False, metadata={'help': 'Configuration field: detector_predictions.'})
+    score_dict: ScoreDict = field(default_factory=ScoreDict, init=False, repr=False, metadata={'help': 'Configuration field: score_dict.'})
+    detector_training_time: Union[float, None] = field(default=None, init=False, repr=False, metadata={'help': 'Configuration field: detector_training_time.'})
+    detector_detection_time: Union[float, None] = field(default=None, init=False, repr=False, metadata={'help': 'Configuration field: detector_detection_time.'})
+    _target_: Union[str, None] = field(default='deckard.detector.base.DetectorConfig', init=True, repr=True, metadata={'help': 'Hydra target path used to rehydrate this detector config.'})
+    _plugin_objects: Union[list, None] = field(default=None, init=False, repr=False, compare=False, metadata={'help': 'Configuration field: _plugin_objects.'})
     score_stage_aliases: ClassVar[dict[str, str]] = (
         CANONICAL_DETECTOR_SCORE_STAGE_ALIASES
     )
@@ -175,8 +173,8 @@ class DetectorConfig(ScoreOrchestratorMixin, BaseConfig):
 
     def _initialize_target_reference(self) -> None:
         """Set canonical runtime target path."""
-        if self._target_ is None:
-            self._target_ = "deckard.detector.DetectorConfig"
+        if self._target_ in {None, ""}:
+            self._target_ = "deckard.detector.base.DetectorConfig"
 
     def _initialize_runtime_defaults(self) -> None:
         """Normalize mutable runtime defaults."""

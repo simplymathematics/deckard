@@ -353,8 +353,18 @@ class ScorerTypePlugin:
     mixin_type: Any
     scoring_type: str
     scoring_subtype: Union[str, None] = None
-    excluded_subtypes: tuple[str, ...] = field(default_factory=tuple)
-    init_params: dict[str, Any] = field(default_factory=dict)
+    excluded_subtypes: tuple[str, ...] = field(
+        default_factory=tuple,
+        metadata={
+            "help": "Optional scoring subtypes that this plugin should not handle.",
+        },
+    )
+    init_params: dict[str, Any] = field(
+        default_factory=dict,
+        metadata={
+            "help": "Keyword arguments used when instantiating the scorer mixin or handler.",
+        },
+    )
 
     def _resolve_mixin_type(self) -> type:
         if isinstance(self.mixin_type, str):
@@ -581,9 +591,14 @@ class ScorerConfig:
 
     score_name: str
     score_function: Any
-    score_params: dict[str, Any] = field(default_factory=dict)
+    score_params: dict[str, Any] = field(
+        default_factory=dict,
+        metadata={
+            "help": "Keyword arguments forwarded to the scorer function during evaluation.",
+        },
+    )
     metric_scope: str = "auto"
-    stage: List[str] = field(default_factory=list)
+    stage: List[str] = field(default_factory=list, metadata={'help': 'Configuration field: stage.'})
     greater_is_better: bool = True
     needs_labels: Union[bool, None] = True
     needs_proba: Union[bool, None] = None
@@ -878,10 +893,13 @@ class ScorerDictConfig(BaseConfig):
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
 
-    scorers: dict[str, ScorerConfig] = field(
-        default_factory=dict,
+    scorers: dict[str, ScorerConfig] = field(default_factory=dict, metadata={'help': 'Configuration field: scorers.'})
+    stage: List[str] = field(
+        default_factory=list,
+        metadata={
+            "help": "Optional runtime stages where this scorer is allowed to execute.",
+        },
     )
-    stage: List[str] = field(default_factory=list)
 
     def _is_data_profile_scorer(self) -> bool:
         if isinstance(self, _DataScorerMarker):
@@ -1894,7 +1912,7 @@ class DefaultModelScorerDictConfig(TaskAwareScorerMixin, ScorerDictConfig):
 
     classifier: Union[bool, str, None] = None
     scoring_type: str = "model"
-    scorers: dict[str, ScorerConfig] = field(default_factory=dict)
+    scorers: dict[str, ScorerConfig] = field(default_factory=dict, metadata={'help': 'Configuration field: scorers.'})
 
     def _build_default_scorers(self, classifier: bool) -> dict[str, ScorerConfig]:
         return (
@@ -1940,7 +1958,7 @@ class DefaultPytorchScorerDictConfig(TaskAwareScorerMixin, ScorerDictConfig):
 
     classifier: Union[bool, str, None] = None
     scoring_type: str = "model"
-    scorers: dict[str, ScorerConfig] = field(default_factory=dict)
+    scorers: dict[str, ScorerConfig] = field(default_factory=dict, metadata={'help': 'Configuration field: scorers.'})
 
     def _build_default_scorers(self, classifier: bool) -> dict[str, ScorerConfig]:
         return (

@@ -338,7 +338,12 @@ class DefaultDataScorerDictConfig(
 
     classifier: Union[bool, str, None] = None
     scoring_type: str = "data"
-    scorers: dict[str, Union[ScorerConfig, KwargMap]] = field(default_factory=dict)
+    scorers: dict[str, Union[ScorerConfig, KwargMap]] = field(
+        default_factory=dict,
+        metadata={
+            "help": "Optional scorer overrides keyed by score name for dataset analysis.",
+        },
+    )
 
     def _build_default_scorers(
         self,
@@ -458,7 +463,12 @@ class DefaultPytorchDataScorerDictConfig(
 
     classifier: Union[bool, str, None] = None
     scoring_type: str = "data"
-    scorers: dict[str, Union[ScorerConfig, KwargMap]] = field(default_factory=dict)
+    scorers: dict[str, Union[ScorerConfig, KwargMap]] = field(
+        default_factory=dict,
+        metadata={
+            "help": "Optional scorer overrides keyed by score name for tensor-aware dataset analysis.",
+        },
+    )
 
     def _build_default_scorers(
         self,

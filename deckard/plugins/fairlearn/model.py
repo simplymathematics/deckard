@@ -163,7 +163,12 @@ class FairlearnModelConfig(
     """
 
     data: Union[FairlearnDataConfig, None] = None
-    fit_params: dict = field(default_factory=dict)
+    fit_params: dict = field(
+        default_factory=dict,
+        metadata={
+            "help": "Keyword arguments forwarded to the wrapped fairness model fit method.",
+        },
+    )
 
 
 @dataclass(eq=False, kw_only=True)

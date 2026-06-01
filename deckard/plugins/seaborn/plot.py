@@ -159,15 +159,15 @@ class SeabornPlotConfig(_SeabornPlotterMarker, BaseConfig):
 
     x: str
     y: str
-    kwargs: dict = field(default_factory=dict)
-    rc_config: dict = field(default_factory=dict)
+    kwargs: dict = field(default_factory=dict, metadata={'help': 'Configuration field: kwargs.'})
+    rc_config: dict = field(default_factory=dict, metadata={'help': 'Configuration field: rc_config.'})
     plot_type: Literal["scatter", "line", "hist", "cat", "bar", "heatmap"] = "scatter"
     data_file: Optional[str] = None
     data_config: Optional["DataConfig"] = None
     optuna_storage: Optional[str] = None
     optuna_study_name: Optional[str] = None
     optuna_schema: Optional[Union[dict[str, Any], str]] = None
-    optuna_query: dict[str, Any] = field(default_factory=dict)
+    optuna_query: dict[str, Any] = field(default_factory=dict, metadata={'help': 'Configuration field: optuna_query.'})
     title: Optional[str] = None
     xlabel: Optional[str] = None
     ylabel: Optional[str] = None
@@ -332,7 +332,7 @@ class SeabornPlotConfigList(BaseConfig):
     instances, including shared data-file validation and subplot layout.
     """
 
-    plots: List[SeabornPlotConfig] = field(default_factory=list)
+    plots: List[SeabornPlotConfig] = field(default_factory=list, metadata={'help': 'Configuration field: plots.'})
     data_file: Optional[str] = None
     data_config: Optional["DataConfig"] = None
     optuna_storage: Optional[str] = None

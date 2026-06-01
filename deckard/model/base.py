@@ -159,40 +159,159 @@ class ModelConfig(ScoreOrchestratorMixin, BaseConfig):
     probability: bool = False
     alias: Union[str, None] = None
     defense: Any = None
-    plugins: Union[list, None] = None
+    plugins: Union[list, None] = field(
+        default=None,
+        init=False,
+        repr=False,
+        metadata={"help": "Resolved model plugins attached to this runtime config."},
+    )
     scorer: Any = AUTO_SCORER
     score_mode: Literal["train", "test", "val"] = "test"
     trainer: Any = "sklearn"
     trainer_params: dict = None
 
     # Runtime/model state fields
-    _model: Any = field(default=None, init=False)
-    score_dict: ScoreDict = field(default_factory=ScoreDict, init=False)
-    training_time: Union[float, None] = field(default=None, init=False)
-    prediction_time: Union[float, None] = field(default=None, init=False)
-    val_prediction_time: Union[float, None] = field(default=None, init=False)
-    training_prediction_time: Union[float, None] = field(default=None, init=False)
-    training_score_time: Union[float, None] = field(default=None, init=False)
-    prediction_score_time: Union[float, None] = field(default=None, init=False)
-    val_score_time: Union[float, None] = field(default=None, init=False)
-    defense_application_time: Union[float, None] = field(default=None, init=False)
-    training_n: Union[int, None] = field(default=None, init=False)
-    prediction_n: Union[int, None] = field(default=None, init=False)
-    val_n: Union[int, None] = field(default=None, init=False)
-    training_predictions: Any = field(default=None, init=False)
-    predictions: Any = field(default=None, init=False)
-    val_predictions: Any = field(default=None, init=False)
-    training_probabilities: Any = field(default=None, init=False)
-    probabilities: Any = field(default=None, init=False)
-    val_probabilities: Any = field(default=None, init=False)
-    _target_: Union[str, None] = None
+    _model: Any = field(
+        default=None,
+        init=False,
+        repr=False,
+        metadata={"help": "Instantiated estimator or model object managed by this config."},
+    )
+    score_dict: ScoreDict = field(
+        default_factory=ScoreDict,
+        init=False,
+        repr=False,
+        metadata={"help": "Model score payload accumulated during runtime evaluation."},
+    )
+    training_time: Union[float, None] = field(
+        default=None,
+        init=False,
+        repr=False,
+        metadata={"help": "Elapsed time in seconds for the training stage."},
+    )
+    prediction_time: Union[float, None] = field(
+        default=None,
+        init=False,
+        repr=False,
+        metadata={"help": "Elapsed time in seconds for test predictions."},
+    )
+    val_prediction_time: Union[float, None] = field(
+        default=None,
+        init=False,
+        repr=False,
+        metadata={"help": "Elapsed time in seconds for validation predictions."},
+    )
+    training_prediction_time: Union[float, None] = field(
+        default=None,
+        init=False,
+        repr=False,
+        metadata={"help": "Elapsed time in seconds for predictions on training data."},
+    )
+    training_score_time: Union[float, None] = field(
+        default=None,
+        init=False,
+        repr=False,
+        metadata={"help": "Elapsed time in seconds for scoring training predictions."},
+    )
+    prediction_score_time: Union[float, None] = field(
+        default=None,
+        init=False,
+        repr=False,
+        metadata={"help": "Elapsed time in seconds for scoring test predictions."},
+    )
+    val_score_time: Union[float, None] = field(
+        default=None,
+        init=False,
+        repr=False,
+        metadata={"help": "Elapsed time in seconds for scoring validation predictions."},
+    )
+    defense_application_time: Union[float, None] = field(
+        default=None,
+        init=False,
+        repr=False,
+        metadata={"help": "Elapsed time in seconds for applying model defenses."},
+    )
+    training_n: Union[int, None] = field(
+        default=None,
+        init=False,
+        repr=False,
+        metadata={"help": "Number of samples used for training predictions or scores."},
+    )
+    prediction_n: Union[int, None] = field(
+        default=None,
+        init=False,
+        repr=False,
+        metadata={"help": "Number of samples used for test predictions or scores."},
+    )
+    val_n: Union[int, None] = field(
+        default=None,
+        init=False,
+        repr=False,
+        metadata={"help": "Number of samples used for validation predictions or scores."},
+    )
+    training_predictions: Any = field(
+        default=None,
+        init=False,
+        repr=False,
+        metadata={"help": "Cached predictions generated for the training split."},
+    )
+    predictions: Any = field(
+        default=None,
+        init=False,
+        repr=False,
+        metadata={"help": "Cached predictions generated for the test split."},
+    )
+    val_predictions: Any = field(
+        default=None,
+        init=False,
+        repr=False,
+        metadata={"help": "Cached predictions generated for the validation split."},
+    )
+    training_probabilities: Any = field(
+        default=None,
+        init=False,
+        repr=False,
+        metadata={"help": "Cached class probabilities generated for the training split."},
+    )
+    probabilities: Any = field(
+        default=None,
+        init=False,
+        repr=False,
+        metadata={"help": "Cached class probabilities generated for the test split."},
+    )
+    val_probabilities: Any = field(
+        default=None,
+        init=False,
+        repr=False,
+        metadata={"help": "Cached class probabilities generated for the validation split."},
+    )
+    _target_: Union[str, None] = field(
+        default="deckard.model.base.ModelConfig",
+        init=True,
+        repr=True,
+        metadata={"help": "Hydra target path used to rehydrate this model config."},
+    )
     _plugin_objects: Union[list, None] = field(
         default=None,
+        init=False,
         repr=False,
         compare=False,
+        metadata={"help": "Instantiated plugin objects cached for model hook dispatch."},
     )
-    _defense_pipeline: Any = field(default=None, repr=False, compare=False)
-    _trainer_obj: Any = field(default=None, repr=False, compare=False)
+    _defense_pipeline: Any = field(
+        default=None,
+        init=False,
+        repr=False,
+        compare=False,
+        metadata={"help": "Resolved defense pipeline cached for runtime model protection."},
+    )
+    _trainer_obj: Any = field(
+        default=None,
+        init=False,
+        repr=False,
+        compare=False,
+        metadata={"help": "Resolved trainer object cached for repeated train and load calls."},
+    )
     score_stage_aliases: ClassVar[dict[str, str]] = CANONICAL_MODEL_SCORE_STAGE_ALIASES
     score_stage_order: ClassVar[tuple[str, ...]] = tuple(
         stage for stage in CANONICAL_MODEL_SCORE_STAGES if stage not in {"all", "auto"}
@@ -229,8 +348,8 @@ class ModelConfig(ScoreOrchestratorMixin, BaseConfig):
 
     def _initialize_target_reference(self) -> None:
         """Ensure the canonical runtime target path is set."""
-        if not hasattr(self, "_target_") or self._target_ is None:
-            self._target_ = "deckard.model.ModelConfig"
+        if not hasattr(self, "_target_") or self._target_ in {None, ""}:
+            self._target_ = "deckard.model.base.ModelConfig"
 
     def _normalize_classifier_flag(self) -> None:
         """Normalize classifier/regressor selector to a strict boolean."""

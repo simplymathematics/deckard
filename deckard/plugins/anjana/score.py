@@ -364,25 +364,7 @@ class DefaultAnjanaScorerDictConfig(AnjanaScorerMixin, ScorerDictConfig):
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
 
-    scorers: dict[str, ScorerConfig] = field(
-        default_factory=lambda: {
-            "k_anonymity": ScorerConfig(
-                score_name="anjana.anonymity.k_anonymity",
-                score_function=anjana_k_anonymity_score,
-                greater_is_better=True,
-            ),
-            "l_diversity": ScorerConfig(
-                score_name="anjana.anonymity.l_diversity",
-                score_function=anjana_l_diversity_score,
-                greater_is_better=True,
-            ),
-            "t_closeness": ScorerConfig(
-                score_name="anjana.anonymity.t_closeness",
-                score_function=anjana_t_closeness_score,
-                greater_is_better=True,
-            ),
-        },
-    )
+    scorers: dict[str, ScorerConfig] = field(default_factory=lambda : {'k_anonymity': ScorerConfig(score_name='anjana.anonymity.k_anonymity', score_function=anjana_k_anonymity_score, greater_is_better=True), 'l_diversity': ScorerConfig(score_name='anjana.anonymity.l_diversity', score_function=anjana_l_diversity_score, greater_is_better=True), 't_closeness': ScorerConfig(score_name='anjana.anonymity.t_closeness', score_function=anjana_t_closeness_score, greater_is_better=True)}, metadata={'help': 'Configuration field: scorers.'})
 
 
 @dataclass(eq=False, kw_only=True)
@@ -398,7 +380,7 @@ class DefaultAnjanaDataScorerDictConfig(TaskAwareScorerMixin, ScorerDictConfig):
     """
 
     classifier: bool | None = None
-    scorers: dict[str, ScorerConfig] = field(default_factory=dict)
+    scorers: dict[str, ScorerConfig] = field(default_factory=dict, metadata={'help': 'Configuration field: scorers.'})
 
     def _build_default_scorers(self, classifier: bool) -> dict[str, ScorerConfig]:
         from ...score.data import (

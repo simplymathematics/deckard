@@ -30,7 +30,7 @@ class DataPipeline(dict):
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
 
-    pipeline: dict[str, Any] = field(default_factory=dict)
+    pipeline: dict[str, Any] = field(default_factory=dict, metadata={'help': 'Configuration field: pipeline.'})
 
     def __post_init__(self) -> None:
         mapping = dict(self.pipeline or {})

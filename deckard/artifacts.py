@@ -381,7 +381,12 @@ class ArtifactLoaderMixin:
     id: str = ""
     path: str = ""
     payload_kind: str = "data"
-    metadata: dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(
+        default_factory=dict,
+        metadata={
+            "help": "Auxiliary metadata stored alongside the serialized artifact payload.",
+        },
+    )
 
     @staticmethod
     def _build_init_signature(dataclass_fields: dict[str, Any]) -> inspect.Signature:

@@ -38,7 +38,7 @@ class DatasetDeclaration:
     provider: str
     target: str
     optional_dependency: str | None = None
-    aliases: tuple[str, ...] = field(default_factory=tuple)
+    aliases: tuple[str, ...] = field(default_factory=tuple, metadata={'help': 'Configuration field: aliases.'})
     notes: str = ""
 
 

@@ -39,7 +39,7 @@ from ...utils import coerce_to_list, is_default_config_value, merge_list_of_dict
 
 try:
     from fairlearn.metrics import MetricFrame
-except ImportError:  # pragma: no cover
+except Exception:  # pragma: no cover - optional dependency import may fail at runtime
     MetricFrame = None
 
 try:
@@ -47,7 +47,7 @@ try:
         demographic_parity_difference,
         equalized_odds_difference,
     )
-except ImportError:  # pragma: no cover
+except Exception:  # pragma: no cover - optional dependency import may fail at runtime
     demographic_parity_difference = None
     equalized_odds_difference = None
 
@@ -943,7 +943,7 @@ class FairlearnScorerDictConfig(FairnessScorerMixin, ScorerDictConfig):
             str,
             Callable[..., Any],
         ],
-    ] = field(default_factory=dict)
+    ] = field(default_factory=dict, metadata={'help': 'Configuration field: group_scorers.'})
     group_reduction: Literal["difference", "ratio", "none"] = "difference"
     group_reduction_method: Literal["between_groups", "to_overall"] = "between_groups"
     include_group_overall: bool = False
@@ -1366,7 +1366,7 @@ class DefaultFairlearnScorerDictConfig(
     """
 
     classifier: Union[bool, str, None] = None
-    scorers: dict[str, ScorerConfig] = field(default_factory=dict)
+    scorers: dict[str, ScorerConfig] = field(default_factory=dict, metadata={'help': 'Configuration field: scorers.'})
 
     def _build_default_scorers(self, classifier: bool) -> dict:
         # Use the same default scorer configs as ModelConfig (via score.base)

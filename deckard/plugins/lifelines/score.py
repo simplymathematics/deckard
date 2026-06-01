@@ -71,24 +71,7 @@ class DefaultLifelinesConfig(ScorerDictConfig):
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
 
-    scorers: dict[str, Union[ScorerConfig, dict[str, Any]]] = field(
-        default_factory=lambda: {
-            "concordance": ScorerConfig(
-                score_name="concordance",
-                score_function="deckard.plugins.lifelines.score.survival_concordance_score",
-            ),
-            "aic": ScorerConfig(
-                score_name="aic",
-                score_function="deckard.plugins.lifelines.score.survival_aic_score",
-                greater_is_better=False,
-            ),
-            "bic": ScorerConfig(
-                score_name="bic",
-                score_function="deckard.plugins.lifelines.score.survival_bic_score",
-                greater_is_better=False,
-            ),
-        },
-    )
+    scorers: dict[str, Union[ScorerConfig, dict[str, Any]]] = field(default_factory=lambda : {'concordance': ScorerConfig(score_name='concordance', score_function='deckard.plugins.lifelines.score.survival_concordance_score'), 'aic': ScorerConfig(score_name='aic', score_function='deckard.plugins.lifelines.score.survival_aic_score', greater_is_better=False), 'bic': ScorerConfig(score_name='bic', score_function='deckard.plugins.lifelines.score.survival_bic_score', greater_is_better=False)}, metadata={'help': 'Configuration field: scorers.'})
 
 
 safe_store(group="score", name="lifelines", node=DefaultLifelinesConfig)

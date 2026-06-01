@@ -914,7 +914,7 @@ class BaseConfig(ArtifactLoaderMixin):
     """
 
     # _target_: str = "deckard.utils.BaseConfig"
-    score_dict: ScoreDict = field(default_factory=ScoreDict)
+    score_dict: ScoreDict = field(default_factory=ScoreDict, init=False, metadata={'help': 'Configuration field: score_dict.'}, repr=False)
     HASH_EXCLUDE_FIELDS = {
         "args",
         "score_dict",

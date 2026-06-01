@@ -6,7 +6,7 @@ import time
 import warnings
 from dataclasses import dataclass, field
 from functools import lru_cache
-from typing import Any, Union, cast, Final
+from typing import Any, Union, cast, ClassVar, Final
 
 from omegaconf import DictConfig, ListConfig, OmegaConf
 from sklearn.base import BaseEstimator
@@ -842,7 +842,7 @@ class DefensePipelineConfigBehaviorMixin(DefenseHookRuntimeMixin):
 def _is_torch_model_instance(model_obj) -> bool:
     try:
         import torch
-    except ImportError:  # pragma: no cover
+    except Exception:  # pragma: no cover - optional dependency import may fail at runtime
         return False
     return isinstance(model_obj, torch.nn.Module)
 
@@ -995,6 +995,7 @@ class PassthroughDefenseMixin(DefenseMixin):
         return None, defended_estimator
 
 
+@dataclass(init=False, eq=False)
 class ARTDefenseBehaviorMixin(DefenseHookRuntimeMixin):
     """Single-defense dispatch behavior mixed into concrete defense config dataclasses.
 
@@ -1013,14 +1014,14 @@ class ARTDefenseBehaviorMixin(DefenseHookRuntimeMixin):
     defense_name: Union[str, None]
     defense_params: dict
     model_name: StringifiedClass | None
-    _model: Union[BaseEstimator, None]
-    score_dict: ScoreDict
-    _target_: Union[str, None]
-    _model_config: Union[ModelConfig, None]
-    plugins: list
-    _plugin_objects: Union[list, None]
+    _model: Union[BaseEstimator, None] = field(default=None, init=False, repr=False, compare=False, metadata={'help': 'Configuration field: _model.'})
+    score_dict: ScoreDict = field(default_factory=ScoreDict, init=False, repr=False, metadata={'help': 'Configuration field: score_dict.'})
+    _target_: Union[str, None] = field(default='deckard.model.defense.base.ARTDefenseBehaviorMixin', init=True, repr=True, metadata={'help': 'Hydra target path used when this defense behavior mixin is serialized through a concrete config.'})
+    _model_config: Union[ModelConfig, None] = field(default=None, init=False, repr=False, compare=False, metadata={'help': 'Configuration field: _model_config.'})
+    plugins: list = field(default_factory=list, init=False, repr=False, metadata={'help': 'Configuration field: plugins.'})
+    _plugin_objects: Union[list, None] = field(default=None, init=False, repr=False, compare=False, metadata={'help': 'Configuration field: _plugin_objects.'})
 
-    _BUILTIN_DEFENSE_HANDLER_TYPES: Final[dict[str, str]] = {
+    _BUILTIN_DEFENSE_HANDLER_TYPES: ClassVar[dict[str, str]] = {
         "detector": "deckard.model.defense.detector.DetectorDefenseConfig",
         "preprocessor": "deckard.model.defense.preprocessor.PreprocessorDefenseConfig",
         "postprocessor": "deckard.model.defense.postprocessor.PostprocessorDefenseConfig",
@@ -1165,8 +1166,9 @@ class ARTDefenseBehaviorMixin(DefenseHookRuntimeMixin):
 
         if not hasattr(self, "score_dict") or self.score_dict is None:
             self.score_dict = ScoreDict()
-        if not hasattr(self, "_target_") or self._target_ is None:
-            self._target_ = "deckard.DefenseConfig"
+        if not hasattr(self, "_target_") or self._target_ in {None, ""}:
+            cls = type(self)
+            self._target_ = f"{cls.__module__}.{cls.__name__}"
 
         self.defense_training_time = None
         self.defense_application_time = None
@@ -1557,7 +1559,7 @@ class ARTDefenseBehaviorMixin(DefenseHookRuntimeMixin):
         ):
             try:
                 import torch
-            except ImportError as exc:  # pragma: no cover
+            except Exception as exc:  # pragma: no cover - optional dependency import may fail at runtime
                 raise ImportError(
                     "Torch model defenses require optional dependency deckard[torch]",
                 ) from exc
@@ -1674,25 +1676,21 @@ class DefensePipelineConfig(DefensePipelineConfigBehaviorMixin, BaseConfig):
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
 
-    defenses: list = field(default_factory=list)
-    plugins: list = field(default_factory=list)
-    alias: str = field(default_factory=str)
-    score_dict: ScoreDict = field(default_factory=ScoreDict)
+    defenses: list = field(default_factory=list, metadata={'help': 'Configuration field: defenses.'})
+    plugins: list = field(default_factory=list, init=False, repr=False, metadata={'help': 'Configuration field: plugins.'})
+    alias: str = field(default_factory=str, metadata={'help': 'Configuration field: alias.'})
+    score_dict: ScoreDict = field(default_factory=ScoreDict, init=False, repr=False, metadata={'help': 'Configuration field: score_dict.'})
     defense_application_time: Union[float, None] = None
-    _target_: Union[str, None] = None
-    _plugin_objects: Union[list, None] = field(
-        default=None,
-        repr=False,
-        compare=False,
-    )
+    _target_: Union[str, None] = field(default='deckard.model.defense.base.DefensePipelineConfig', init=True, repr=True, metadata={'help': 'Hydra target path used to rehydrate this defense pipeline config.'})
+    _plugin_objects: Union[list, None] = field(default=None, init=False, repr=False, compare=False, metadata={'help': 'Configuration field: _plugin_objects.'})
 
     def __post_init__(self):
         if not hasattr(self, "score_dict") or self.score_dict is None:
             self.score_dict = ScoreDict()
         else:
             self.score_dict = ScoreDict.from_payload(self.score_dict)
-        if not hasattr(self, "_target_") or self._target_ is None:
-            self._target_ = "deckard.model.DefensePipelineConfig"
+        if not hasattr(self, "_target_") or self._target_ in {None, ""}:
+            self._target_ = "deckard.model.defense.base.DefensePipelineConfig"
         self.defenses = self.normalize_defenses(self.defenses)
 
     def __hash__(self) -> int:
@@ -1728,28 +1726,18 @@ class DefenseConfig(ARTDefenseBehaviorMixin, BaseConfig):
             "help": "Tuple of the form (min, max) to clip input features.",
         },
     )
-    defense_name: Union[str, None] = field(default=None, repr=False)
+    defense_name: Union[str, None] = field(default=None, repr=False, metadata={'help': 'Configuration field: defense_name.'})
     defense_params: dict = field(
         default_factory=dict,
         metadata={"help": "Parameters for the defense."},
     )
-    alias: str = field(default_factory=str)
-    plugins: list = field(default_factory=list)
-    _model: Union[BaseEstimator, None] = field(default=None, repr=False)
-    score_dict: ScoreDict = field(default_factory=ScoreDict)
-    _target_: Union[str, None] = field(default=None, repr=False)
-    _plugin_objects: Union[list, None] = field(
-        default=None,
-        init=False,
-        repr=False,
-        compare=False,
-    )
-    _model_config: Union[ModelConfig, None] = field(
-        default=None,
-        init=False,
-        repr=False,
-        compare=False,
-    )
+    alias: str = field(default_factory=str, metadata={'help': 'Configuration field: alias.'})
+    plugins: list = field(default_factory=list, init=False, repr=False, metadata={'help': 'Configuration field: plugins.'})
+    _model: Union[BaseEstimator, None] = field(default=None, init=False, repr=False, metadata={'help': 'Configuration field: _model.'})
+    score_dict: ScoreDict = field(default_factory=ScoreDict, init=False, repr=False, metadata={'help': 'Configuration field: score_dict.'})
+    _target_: Union[str, None] = field(default='deckard.model.defense.base.DefenseConfig', init=True, repr=True, metadata={'help': 'Hydra target path used to rehydrate this defense config.'})
+    _plugin_objects: Union[list, None] = field(default=None, init=False, repr=False, compare=False, metadata={'help': 'Configuration field: _plugin_objects.'})
+    _model_config: Union[ModelConfig, None] = field(default=None, init=False, repr=False, compare=False, metadata={'help': 'Configuration field: _model_config.'})
 
     def __hash__(self) -> int:
         return super().__hash__()

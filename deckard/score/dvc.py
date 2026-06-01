@@ -168,7 +168,12 @@ class DVCSystemScorerDictConfig(_DataScorerMarker, ScorerDictConfig):
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
 
-    scorers: dict[str, ScorerConfig] = field(default_factory=dict)
+    scorers: dict[str, ScorerConfig] = field(
+        default_factory=dict,
+        metadata={
+            "help": "Optional stage-scoped DVC scorer overrides keyed by component name.",
+        },
+    )
 
     def __post_init__(self) -> None:
         if not getattr(self, "scorers", None):

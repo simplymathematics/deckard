@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import inspect
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, ClassVar
 
 from . import HookPlugin
@@ -156,7 +156,7 @@ class OrchestratorBase(RuntimeBase):
         "post-sample": "after_sample",
         "post-pipeline": "after_pipeline",
     }
-    _score_orchestration_active: bool = True
+    _score_orchestration_active: bool = field(default=True, init=False, metadata={'help': 'Configuration field: _score_orchestration_active.'}, repr=False)
 
     def _normalize_score_mode(self, mode: str) -> str:
         return str(mode)

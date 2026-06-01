@@ -131,16 +131,16 @@ class PlotConfig(BaseConfig):
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
 
-    kwargs: dict = field(default_factory=dict)
-    files: dict = field(default_factory=dict)
-    times: dict = field(default_factory=dict)
-    plot_state: dict = field(default_factory=dict)
+    kwargs: dict = field(default_factory=dict, metadata={'help': 'Configuration field: kwargs.'})
+    files: dict = field(default_factory=dict, metadata={'help': 'Configuration field: files.'})
+    times: dict = field(default_factory=dict, metadata={'help': 'Configuration field: times.'})
+    plot_state: dict = field(default_factory=dict, metadata={'help': 'Configuration field: plot_state.'})
     config: Union[
         SeabornPlotConfig,
         SeabornPlotConfigList,
         YellowbrickPlotConfig,
         YellowbrickConfigList,
-    ] = field(init=False, repr=False)
+    ] = field(init=False, repr=False, metadata={'help': 'Configuration field: config.'})
 
     @staticmethod
     def _resolve_requested_backend(kwargs: dict) -> str | None:

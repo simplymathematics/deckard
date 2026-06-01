@@ -8,7 +8,7 @@ import json
 import logging
 import os
 import subprocess
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Iterable, Mapping, Literal, cast
 
@@ -223,8 +223,8 @@ class DVCExperimentConfig:
 
     experiment: Any
     dvc_plugin: Any = None
-    _target_: str | None = None
-    _experiment_obj: Any = None
+    _target_: str | None = field(default='deckard.experiment.dvc.DVCExperimentConfig', init=True, repr=True, metadata={'help': 'Hydra target path used to rehydrate this DVC experiment wrapper.'})
+    _experiment_obj: Any = field(default=None, init=False, repr=False, metadata={'help': 'Configuration field: _experiment_obj.'})
 
     def __post_init__(self) -> None:
         if self._target_ in [None, ""]:
