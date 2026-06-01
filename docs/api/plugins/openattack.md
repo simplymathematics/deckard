@@ -32,10 +32,10 @@ surface.
 Current family scope:
 
 - OpenAttack names map to the `evasion` family.
-- [inference](../attack/index#inference-attacks),
-  [poisoning](../attack/index#poisoning-attacks),
-  [extraction](../attack/index#extraction-attacks), and
-  [reconstruction](../attack/index#reconstruction-attacks) families are not
+- {ref}`inference attacks <inference-attacks>`,
+  {ref}`poisoning attacks <poisoning-attacks>`,
+  {ref}`extraction attacks <extraction-attacks>`, and
+  {ref}`reconstruction attacks <reconstruction-attacks>` families are not
   currently provided by OpenAttack runtime handlers.
 
 External references:

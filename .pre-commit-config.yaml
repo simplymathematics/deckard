@@ -34,3 +34,10 @@ repos:
   - id: flake8
     additional_dependencies:
           - flake8-pyproject
+- repo: local
+  hooks:
+  - id: sync-deckard-version
+    name: sync deckard version
+    entry: python scripts/sync_deckard_version.py --check
+    language: system
+    pass_filenames: false

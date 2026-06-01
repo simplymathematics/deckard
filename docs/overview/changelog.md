@@ -1,6 +1,6 @@
 # Changelog
 
-## .98.3
+## 0.98.3
 
 - Improved documentation quality, cross-linking, licensing information, and developer workflow guidance.
 - Refreshed and stabilized notebooks, examples, and documentation build pipelines.
@@ -13,7 +13,7 @@
 - Expanded automated validation with broader PyTorch coverage, regression testing, compose-contract testing, and fail-fast verification workflows.
 - Reduced technical debt through removal of legacy compatibility paths, module responsibility cleanup, runtime consistency fixes, and general codebase hardening.
 
-## .98.2
+## 0.98.2
 
 - Finalized repository enforcement pass for core scope checks and verified no baseline violations in `deckard/` via `scripts/repository_enforcement.py --scope deckard/`.
 - Updated core runtime architecture so base config objects expose public methods, a documented execution order, and separate plugin/scoring hooks.
@@ -29,7 +29,7 @@
 - Reworked [fairlearn](extensions/index) and [anjana](extensions/index) integration to use the plugin architecture.
 - Drafted {class}`deckard.experiment.dvc.DVCExperimentConfig` for reproducible experiment generation, `dvclive` monitoring integration, training-flow updates, and `Vega-lite` plotting support (WIP).
 
-## .98.1
+## 0.98.1
 
 - Core package updates in `deckard/` (entrypoints, config/declaration handling,
 data/experiment utilities, and fairlearn scoring).

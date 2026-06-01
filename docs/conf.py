@@ -15,7 +15,7 @@ sys.path.insert(0, os.path.abspath(".."))
 project = "deckard"
 copyright = "2026, simplymathematics"
 author = "simplymathematics"
-release = "0.98.2"
+release = "0.98.3"
 
 # ---------------------------------------------------------------------------
 # General configuration

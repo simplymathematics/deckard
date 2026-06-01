@@ -32,10 +32,10 @@ surface.
 Current family scope:
 
 - TextAttack names map to the `evasion` family.
-- [inference](/api/attack/index#inference-attacks),
-  [poisoning](/api/attack/index#poisoning-attacks),
-  [extraction](/api/attack/index#extraction-attacks), and
-  [reconstruction](/api/attack/index#reconstruction-attacks) families are not
+- {ref}`inference attacks <inference-attacks>`,
+  {ref}`poisoning attacks <poisoning-attacks>`,
+  {ref}`extraction attacks <extraction-attacks>`, and
+  {ref}`reconstruction attacks <reconstruction-attacks>` families are not
   currently provided by TextAttack runtime handlers.
 
 External references:

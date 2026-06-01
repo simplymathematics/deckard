@@ -1,0 +1,50 @@
+_target_: deckard.experiment.dvc.DVCExperimentConfig
+experiment:
+  experiment_name: demo-exp
+  library: sklearn
+  classifier: true
+  evaluation_mode: standard
+  score_mode: test
+  random_state: 1
+  dvclive_enabled: false
+  _target_: deckard.experiment.ExperimentConfig
+dvc_plugin:
+  enabled: false
+  dvclive_dir: null
+  mode: single
+  pull_dependencies: true
+  push_outputs: true
+  make_summary: true
+  make_report: true
+  make_dvcyaml: false
+  report_mode: html
+  resume: true
+  save_dvc_exp: false
+  cache_images: false
+  monitor_system: false
+  fail_on_dvc_error: false
+  dvc_file: dvc.yaml
+  params_file: params.yaml
+_dvc:
+  stage_selection: all
+  run_mode: single
+  params_manifest:
+    experiment_name: demo-exp
+    library: sklearn
+    classifier: true
+    evaluation_mode: standard
+    score_mode: test
+    random_state: 1
+    data: null
+    model: null
+    defense: null
+    attack: null
+    detector: null
+    score: null
+    schema_version: deckard.experiment.runtime.v1
+  dvclive:
+    enabled: false
+  pruning:
+    enabled: false
+    pruner_configured: false
+    active: false

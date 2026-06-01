@@ -90,20 +90,24 @@ stages:
     deps:
     - path: ./config/default.yaml
       hash: md5
-      md5: 002bf6827b00f3b03f86171069e122f9
-      size: 1341
+      md5: b38d95025d639d92ad9f4bf62ac89361
+      size: 1448
     params:
       config/default.yaml:
         defaults:
         - _self_
         - data: adult
+        - sampler@data.sampler: split
         - model: rf
+        - trainer@model.trainer: sklearn
         - defense: class-labels
         - attack: hsj
         - score: classification
-        - search/models: ${model}
-        - search/defenses: ${defense}
-        - search/attacks: ${attack}
+        - search/models: ${oc.select:model,rf}
+        - search/samplers: split
+        - search/trainers: sklearn
+        - search/defenses: ${oc.select:defense,class-labels}
+        - search/attacks: ${oc.select:attack,hsj}
         - files:
         - override hydra/sweeper: optuna
         - override hydra/sweeper/sampler: random
@@ -129,16 +133,12 @@ stages:
           callbacks:
             deckard_optuna:
               _target_: deckard.layers.optimize.DefaultOptimizerCallback
-              storage: ${hydra.sweeper.storage}
-              study_name: ${hydra.sweeper.study_name}
-              directions: ${directions}
-              optimizers: ${optimizers}
     outs:
     - path: outputs/logs/defended_adult_rf_gaussian-noise_boundary_evasion/
       hash: md5
-      md5: 292d053a43a36c68d8ae8fe4a6bfce47.dir
-      size: 1761019
-      nfiles: 500
+      md5: c116f6eeb5ccf796d890ab04871aba1a.dir
+      size: 938038
+      nfiles: 400
   defend_evasion@adult-rf-high-confidence-boundary:
     cmd: "deckard optimize data=adult  +files.data_file=outputs/data/adult.pkl model=rf
       attack=boundary defense=high-confidence experiment_name=* hydra.sweeper.study_name=defended_adult_rf_high-confidence_boundary_evasion
@@ -202,20 +202,24 @@ stages:
     deps:
     - path: ./config/default.yaml
       hash: md5
-      md5: 002bf6827b00f3b03f86171069e122f9
-      size: 1341
+      md5: b38d95025d639d92ad9f4bf62ac89361
+      size: 1448
     params:
       config/default.yaml:
         defaults:
         - _self_
         - data: adult
+        - sampler@data.sampler: split
         - model: rf
+        - trainer@model.trainer: sklearn
         - defense: class-labels
         - attack: hsj
         - score: classification
-        - search/models: ${model}
-        - search/defenses: ${defense}
-        - search/attacks: ${attack}
+        - search/models: ${oc.select:model,rf}
+        - search/samplers: split
+        - search/trainers: sklearn
+        - search/defenses: ${oc.select:defense,class-labels}
+        - search/attacks: ${oc.select:attack,hsj}
         - files:
         - override hydra/sweeper: optuna
         - override hydra/sweeper/sampler: random
@@ -241,17 +245,13 @@ stages:
           callbacks:
             deckard_optuna:
               _target_: deckard.layers.optimize.DefaultOptimizerCallback
-              storage: ${hydra.sweeper.storage}
-              study_name: ${hydra.sweeper.study_name}
-              directions: ${directions}
-              optimizers: ${optimizers}
     outs:
     - path: 
         outputs/logs/defended_adult_rf_gaussian-augmentation_boundary_evasion/
       hash: md5
-      md5: 15055c799c3370ba9214d6965e28b021.dir
-      size: 1856864
-      nfiles: 500
+      md5: e592a0aa004bbcd2fc4fbc581111c260.dir
+      size: 990638
+      nfiles: 400
   defend_evasion@adult-rf-label-smoothing-boundary:
     cmd: "deckard optimize data=adult  +files.data_file=outputs/data/adult.pkl model=rf
       attack=boundary defense=label-smoothing experiment_name=* hydra.sweeper.study_name=defended_adult_rf_label-smoothing_boundary_evasion
@@ -372,20 +372,24 @@ stages:
     deps:
     - path: ./config/default.yaml
       hash: md5
-      md5: 002bf6827b00f3b03f86171069e122f9
-      size: 1341
+      md5: b38d95025d639d92ad9f4bf62ac89361
+      size: 1448
     params:
       config/default.yaml:
         defaults:
         - _self_
         - data: adult
+        - sampler@data.sampler: split
         - model: rf
+        - trainer@model.trainer: sklearn
         - defense: class-labels
         - attack: hsj
         - score: classification
-        - search/models: ${model}
-        - search/defenses: ${defense}
-        - search/attacks: ${attack}
+        - search/models: ${oc.select:model,rf}
+        - search/samplers: split
+        - search/trainers: sklearn
+        - search/defenses: ${oc.select:defense,class-labels}
+        - search/attacks: ${oc.select:attack,hsj}
         - files:
         - override hydra/sweeper: optuna
         - override hydra/sweeper/sampler: random
@@ -411,17 +415,13 @@ stages:
           callbacks:
             deckard_optuna:
               _target_: deckard.layers.optimize.DefaultOptimizerCallback
-              storage: ${hydra.sweeper.storage}
-              study_name: ${hydra.sweeper.study_name}
-              directions: ${directions}
-              optimizers: ${optimizers}
     outs:
     - path: 
         outputs/logs/defended_adult_logistic_high-confidence_boundary_evasion/
       hash: md5
-      md5: f7b08cd5dc7e387da8d3b795d790a308.dir
-      size: 1803124
-      nfiles: 500
+      md5: e55e82d8baf1bebe51130c677c1a7dbb.dir
+      size: 972946
+      nfiles: 400
   defend_evasion@adult-logistic-gaussian-augmentation-boundary:
     cmd: "deckard optimize data=adult  +files.data_file=outputs/data/adult.pkl model=logistic
       attack=boundary defense=gaussian-augmentation experiment_name=* hydra.sweeper.study_name=defended_adult_logistic_gaussian-augmentation_boundary_evasion
@@ -429,20 +429,24 @@ stages:
     deps:
     - path: ./config/default.yaml
       hash: md5
-      md5: 002bf6827b00f3b03f86171069e122f9
-      size: 1341
+      md5: b38d95025d639d92ad9f4bf62ac89361
+      size: 1448
     params:
       config/default.yaml:
         defaults:
         - _self_
         - data: adult
+        - sampler@data.sampler: split
         - model: rf
+        - trainer@model.trainer: sklearn
         - defense: class-labels
         - attack: hsj
         - score: classification
-        - search/models: ${model}
-        - search/defenses: ${defense}
-        - search/attacks: ${attack}
+        - search/models: ${oc.select:model,rf}
+        - search/samplers: split
+        - search/trainers: sklearn
+        - search/defenses: ${oc.select:defense,class-labels}
+        - search/attacks: ${oc.select:attack,hsj}
         - files:
         - override hydra/sweeper: optuna
         - override hydra/sweeper/sampler: random
@@ -468,17 +472,13 @@ stages:
           callbacks:
             deckard_optuna:
               _target_: deckard.layers.optimize.DefaultOptimizerCallback
-              storage: ${hydra.sweeper.storage}
-              study_name: ${hydra.sweeper.study_name}
-              directions: ${directions}
-              optimizers: ${optimizers}
     outs:
     - path: 
         outputs/logs/defended_adult_logistic_gaussian-augmentation_boundary_evasion/
       hash: md5
-      md5: 04b0d2360539a3d81a64f8de5498e685.dir
-      size: 1857084
-      nfiles: 500
+      md5: be81650c7e26c227b8574068b8276ee9.dir
+      size: 1023822
+      nfiles: 400
   defend_evasion@adult-logistic-label-smoothing-boundary:
     cmd: "deckard optimize data=adult  +files.data_file=outputs/data/adult.pkl model=logistic
       attack=boundary defense=label-smoothing experiment_name=* hydra.sweeper.study_name=defended_adult_logistic_label-smoothing_boundary_evasion
@@ -486,20 +486,24 @@ stages:
     deps:
     - path: ./config/default.yaml
       hash: md5
-      md5: 002bf6827b00f3b03f86171069e122f9
-      size: 1341
+      md5: b38d95025d639d92ad9f4bf62ac89361
+      size: 1448
     params:
       config/default.yaml:
         defaults:
         - _self_
         - data: adult
+        - sampler@data.sampler: split
         - model: rf
+        - trainer@model.trainer: sklearn
         - defense: class-labels
         - attack: hsj
         - score: classification
-        - search/models: ${model}
-        - search/defenses: ${defense}
-        - search/attacks: ${attack}
+        - search/models: ${oc.select:model,rf}
+        - search/samplers: split
+        - search/trainers: sklearn
+        - search/defenses: ${oc.select:defense,class-labels}
+        - search/attacks: ${oc.select:attack,hsj}
         - files:
         - override hydra/sweeper: optuna
         - override hydra/sweeper/sampler: random
@@ -525,17 +529,13 @@ stages:
           callbacks:
             deckard_optuna:
               _target_: deckard.layers.optimize.DefaultOptimizerCallback
-              storage: ${hydra.sweeper.storage}
-              study_name: ${hydra.sweeper.study_name}
-              directions: ${directions}
-              optimizers: ${optimizers}
     outs:
     - path: 
         outputs/logs/defended_adult_logistic_label-smoothing_boundary_evasion/
       hash: md5
-      md5: b370ee3d453f970bca970fe00ad2d60d.dir
-      size: 1804401
-      nfiles: 500
+      md5: 2e2bf36d83cab611e5062352eb0798b0.dir
+      size: 973946
+      nfiles: 400
   defend_attribute-inference@adult-rf-gaussian-noise:
     cmd: "deckard optimize data=adult  +files.data_file=outputs/data/adult.pkl model=rf
       attack=attribute-bb defense=gaussian-noise experiment_name=defended_adult_rf_gaussian-noise/*
