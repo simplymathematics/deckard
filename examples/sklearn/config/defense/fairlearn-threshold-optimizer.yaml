@@ -1,6 +1,7 @@
 name: fairlearn.postprocessing.ThresholdOptimizer
 defense_params:
-  constraints: demographic_parity
+  constraints: fairlearn.postprocessing.demographic_parity
   prefit: true
   predict_method: auto
+_target_: deckard.DefenseConfig
 alias: fairlearn-threshold-optimizer

@@ -2,6 +2,6 @@ name: art.defences.postprocessor.ReverseSigmoid
 defense_params:
     beta: 1.0
     gamma: .1
-    apply_fit : False
-    apply_predict : True
+    apply_fit: False
+    apply_predict: True
 alias: reverse-sigmoid

@@ -3,4 +3,5 @@ defense_params:
   constraints: fairlearn.reductions.DemographicParity
   eps: 0.05
   max_iter: 50
+_target_: deckard.DefenseConfig
 alias: fairlearn-exponentiated-gradient

@@ -1,6 +1,5 @@
-name: null
+name: anjana.anonymity.k_anonymity
 defense_params:
-  name: anjana.anonymity.k_anonymity
   k: 2
 _target_: deckard.DefenseConfig
 alias: anjana

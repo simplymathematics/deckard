@@ -1,8 +1,8 @@
 name: art.defences.preprocessor.FeatureSqueezing
 defense_params:
-    apply_fit : False
-    apply_predict : True
+    apply_fit: False
+    apply_predict: True
     bit_depth: 8
     clip_values: [0, 255]
-_target_ : deckard.DefenseConfig
+_target_: deckard.DefenseConfig
 alias: feature-squeezing

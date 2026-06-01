@@ -1,7 +1,7 @@
 name: art.defences.preprocessor.GaussianAugmentation
 defense_params:
-    apply_fit : True
-    apply_predict : False
+    apply_fit: True
+    apply_predict: False
     sigma: 1.0
     ratio: 1.0
     augmentation: True

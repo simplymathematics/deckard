@@ -3,4 +3,5 @@ defense_params:
   constraints: fairlearn.reductions.DemographicParity
   grid_size: 20
   grid_limit: 2
+_target_: deckard.DefenseConfig
 alias: fairlearn-grid-search

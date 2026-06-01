@@ -1,7 +1,7 @@
 name: art.defences.preprocessor.CutMix
 defense_params:
-    apply_fit : True
-    apply_predict : False
+    apply_fit: True
+    apply_predict: False
     alpha: 1.0
     probability: .5
     num_classes: 2 #adult dataset
