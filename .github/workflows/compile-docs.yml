@@ -56,7 +56,7 @@ jobs:
         python -m pip install --upgrade pip
         # Install docs + required notebook stacks, then pin anjana/pycanon to
         # versions compatible with the current Sphinx/docutils toolchain.
-        pip install --no-cache-dir '.[lifelines,fairlearn,seaborn,yellowbrick,docs,datasets]'
+        pip install --no-cache-dir '.[lifelines,fairlearn,seaborn,yellowbrick,docs,datasets,transformers]'
         pip install --no-cache-dir 'docutils==0.21.2' 'pycanon==1.0.3' 'anjana==1.1.0'
         pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cpu 'torch==2.4.1' 'torchvision==0.19.1' 'torchaudio==2.4.1'
     - name : build docs
