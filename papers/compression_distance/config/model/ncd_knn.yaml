@@ -1,4 +1,4 @@
-model_type: sklearn.neighbors.KNeighborsClassifier
+name: sklearn.neighbors.KNeighborsClassifier
 classifier: true
 alias: knn
 model_params:

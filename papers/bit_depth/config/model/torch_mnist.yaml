@@ -1,0 +1,18 @@
+_target_: deckard.frameworks.pytorch.model.PytorchModelConfig
+name: torch_example.py:ResNet18
+classifier: true
+alias: torch_mnist
+model_params:
+    num_channels: 1
+    num_classes: 10
+fit_params:
+    nb_epochs: 1
+    batch_size: 1024
+    verbose: true
+library: pytorch
+criterion: CrossEntropyLoss
+optimizer:
+    name: SGD
+    lr: 0.01
+    momentum: 0.9
+clip_values: [0, 255]

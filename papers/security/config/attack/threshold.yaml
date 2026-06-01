@@ -1,4 +1,4 @@
-attack_type: art.attacks.evasion.ThresholdAttack
+name: art.attacks.evasion.ThresholdAttack
 attack_params:
   th: 1
   batch_size: 100

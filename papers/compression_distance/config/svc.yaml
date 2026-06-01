@@ -1,6 +1,5 @@
 defaults:
   - default
-  - data: kdd_nsl
-  - model: ncd_svc
-  - data/pipeline: svc
-  - search/models: svc
+  - override model: ncd_svc
+  - override search/models: svc
+  - override data/pipeline: svc

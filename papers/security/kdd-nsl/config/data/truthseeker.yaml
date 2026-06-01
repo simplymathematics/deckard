@@ -1,7 +1,0 @@
-_target_: deckard.data.DataConfig
-dataset_name: https://gist.githubusercontent.com/simplymathematics/8c6c04bd151950d5ea9e62825db97fdd/raw/379b679bdea30724e9fa188931f0109ff422cce0/kdd_nsl.csv
-sampler:
-  random_state: 0
-  stratify: true
-  train_size: 10000
-  test_size: 1000

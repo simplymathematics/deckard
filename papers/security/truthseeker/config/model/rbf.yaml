@@ -1,8 +1,0 @@
-_target_: deckard.model.ModelConfig
-model_type: sklearn.svm.SVC
-model_params:
-  C: 1.0
-  kernel: rbf
-  probability: true
-  random_state: 0
-  max_iter: 10

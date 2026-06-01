@@ -1,4 +1,4 @@
-attack_type: art.attacks.evasion.DeepFool
+name: art.attacks.evasion.DeepFool
 attack_params:
   max_iter: 10
   nb_grads: 10

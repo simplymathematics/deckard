@@ -6,31 +6,35 @@ stages:
     deps:
     - path: ./config/default.yaml
       hash: md5
-      md5: 002bf6827b00f3b03f86171069e122f9
-      size: 1341
+      md5: b38d95025d639d92ad9f4bf62ac89361
+      size: 1448
     params:
       config/default.yaml:
-        attack_alias: ${attack.alias}
+        attack_alias: ${oc.select:attack.alias,no_attack}
         data_alias: ${data.alias}
         defaults:
         - _self_
         - data: adult
+        - sampler@data.sampler: split
         - model: rf
+        - trainer@model.trainer: sklearn
         - defense: class-labels
         - attack: hsj
         - score: classification
-        - search/models: ${model}
-        - search/defenses: ${defense}
-        - search/attacks: ${attack}
+        - search/models: ${oc.select:model,rf}
+        - search/samplers: split
+        - search/trainers: sklearn
+        - search/defenses: ${oc.select:defense,class-labels}
+        - search/attacks: ${oc.select:attack,hsj}
         - files:
         - override hydra/sweeper: optuna
         - override hydra/sweeper/sampler: random
-        defense_alias: ${defense.alias}
+        defense_alias: ${oc.select:defense.alias,no_defense}
         directions:
         - maximize
         - maximize
         - maximize
-        experiment_name: ${hash:${data},${model},${attack}}
+        experiment_name: ${hash:${stage_params:${oc.select:stage,???}}}
         hydra:
           run:
             dir: outputs/logs/${experiment_name}
@@ -53,15 +57,13 @@ stages:
           callbacks:
             deckard_optuna:
               _target_: deckard.layers.optimize.DefaultOptimizerCallback
-              storage: ${hydra.sweeper.storage}
-              study_name: ${hydra.sweeper.study_name}
-              directions: ${directions}
-              optimizers: ${optimizers}
-        model_alias: ${model.alias}
+        model_alias: ${oc.select:model.alias,no_model}
         optimizers:
         - accuracy
         - evasion_accuracy
         - attack_generation_time
+        pruning_enabled: false
+        report_trial_attrs: true
     outs:
     - path: .deckard_rc
       hash: md5
@@ -72,13 +74,13 @@ stages:
     deps:
     - path: ../../deckard
       hash: md5
-      md5: a32b335ce985f3314074fe830750b4ea.dir
-      size: 1596647
-      nfiles: 132
+      md5: b33f9ebb8ed0d0e115b64710e8ef100b.dir
+      size: 3942976
+      nfiles: 363
     - path: ./config/default.yaml
       hash: md5
-      md5: 002bf6827b00f3b03f86171069e122f9
-      size: 1341
+      md5: b38d95025d639d92ad9f4bf62ac89361
+      size: 1448
     - path: .deckard_rc
       hash: md5
       md5: 19021154ecc61513bd7a0f05b88e1a95

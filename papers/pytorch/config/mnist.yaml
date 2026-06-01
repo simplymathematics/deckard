@@ -1,30 +1,29 @@
 defaults:
-    - _self_
-    - data: torch_mnist
-    - model: torch_mnist
-    - attack: default
-    - files: mnist
-    - score: default
-    - override hydra/sweeper : optuna
-    - override hydra/sweeper/sampler : grid
-    - override hydra/launcher : joblib
-def_name : control
-atk_name : hsj
-dataset : mnist
-model_name : ResNet18
-device_id : gpu
-stage : '???'
-direction : 
+  - _self_
+  - data: torch_mnist
+  - model: torch_mnist
+  - attack: default
+  - files: mnist
+  - score: default
+  - override hydra/sweeper: optuna
+  - override hydra/sweeper/sampler: grid
+  - override hydra/launcher: joblib
+def_name: control
+atk_name: hsj
+dataset: mnist
+model_name: ResNet18
+device_id: gpu
+stage: ???
+direction:
   -  "maximize"
-_target_ : deckard.base.experiment.Experiment
-optimizers : 
+optimizers:
   - accuracy
 hydra:
   run:
     dir: ${files.directory}/logs/${stage}/
   sweep:
-    dir: ${files.directory}/logs/${stage}/${model_name}/${atk_name}/${model.trainer.nb_epochs}/
-    subdir : ${def_name}/${hydra.job.num}
+    dir: ${files.directory}/logs/${stage}/${model_name}/${atk_name}/${model.fit_params.nb_epochs}/
+    subdir: ${def_name}/${hydra.job.num}
   sweeper:
     sampler:
       _target_: optuna.samplers.GridSampler
@@ -35,10 +34,8 @@ hydra:
     n_trials: ${oc.env:HYDRA_SWEEPER_N_TRIALS, 128}
     max_failure_rate: 1.0
     params:
-      ++model.art.initialize.optimizer.lr: choice( 0.1, 0.01, 0.001, .0001, .00001, 0.000001)
-      ++model.art.initialize.optimizer.momentum: choice(0.1, 0.9, 0.95, 0.99)
-      ++model.trainer.nb_epochs: choice(1, 10, 30, 50, 100)
-      ++model.trainer.batch_size: choice(128, 256, 512, 1024)
+      ++model.fit_params.nb_epochs: choice(1, 10, 30, 50, 100)
+      ++model.fit_params.batch_size: choice(128, 256, 512, 1024)
     _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
   launcher:
     _target_: hydra_plugins.hydra_joblib_launcher.joblib_launcher.JoblibLauncher

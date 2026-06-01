@@ -7,20 +7,19 @@ defaults:
   - score: default
   - override hydra/sweeper: optuna
   - override hydra/sweeper/sampler: tpe
-    # - override hydra/launcher : rq
 device_id: ${oc.env:DECKARD_DEVICE,cpu}
 stage: ???
-experiment_name: power_torch_cifar100
+experiment_name: bit_depth_torch_cifar100
 direction:
   - maximize
   - minimize
   - minimize
   - minimize
 optimizers:
-   - accuracy
-   - train_time
-   - adv_accuracy
-   - adv_fit_time
+  - accuracy
+  - train_time
+  - adv_accuracy
+  - adv_fit_time
 hydra:
   run:
     dir: output/logs/${experiment_name}

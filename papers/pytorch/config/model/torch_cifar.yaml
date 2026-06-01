@@ -1,5 +1,5 @@
 _target_: deckard.model.PytorchModelConfig
-model_type: torch_example.ResNet18
+name: torch_example.ResNet18
 model_params:
   num_channels: 3
   num_classes: 10

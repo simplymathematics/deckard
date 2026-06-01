@@ -1,12 +1,5 @@
 defaults:
   - default
-  - data: kdd_nsl
-  - model: ncd_logistic
-  - data/pipeline: logistic
-  - search/models: logistic
-defaults:
-  - default
-  - data: kdd_nsl
-  - model: ncd_knn
-  - data/pipeline: knn
-  - search/models: knn
+  - override model: ncd_logistic
+  - override search/models: logistic
+  - override data/pipeline: logistic

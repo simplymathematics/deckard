@@ -1,4 +1,4 @@
-attack_type: art.attacks.evasion.ProjectedGradientDescent
+name: art.attacks.evasion.ProjectedGradientDescent
 attack_params:
   eps: 0.1
   eps_step: 0.01

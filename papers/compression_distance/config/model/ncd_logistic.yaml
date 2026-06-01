@@ -1,4 +1,4 @@
-model_type: sklearn.linear_model.LogisticRegression
+name: sklearn.linear_model.LogisticRegression
 classifier: true
 alias: logistic
 model_params:

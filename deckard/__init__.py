@@ -75,15 +75,6 @@ DECKARD_DEFAULT_CONFIG_FILE = os.environ.get(
     "default.yaml",
 )
 
-# those imports can transitively import sklearn/art and emit warnings.
-warnings.filterwarnings("ignore", module=r"^sklearn(\.|$)")
-warnings.filterwarnings("ignore", module=r"^art(\.|$)")
-warnings.filterwarnings(
-    "ignore",
-    category=UserWarning,
-    message=r"PyTorch not found\. Not importing DeepZ or Interval Bound Propagation functionality",
-)
-
 
 def _load_yaml_file(path: Path):
     """Load a YAML file from disk and return the parsed Python object."""
@@ -132,9 +123,8 @@ def _file_resolver(arg: str):
                     f"file resolver: key '{key_part}' not found in {path}",
                 )
         data = cur
-    data = OmegaConf.create(data)
     # Return as an OmegaConf node so structured content is preserved
-    return data
+    return OmegaConf.create(data)
 
 
 # Register resolver with OmegaConf (Hydra will pick up this plugin module automatically)

@@ -1,5 +1,5 @@
 _target_: deckard.model.ModelConfig
-model_type: sklearn.svm.SVC
+name: sklearn.svm.SVC
 classifier: true
 model_params:
   kernel: rbf

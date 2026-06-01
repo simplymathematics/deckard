@@ -1040,6 +1040,18 @@ def optimize_main(
         dict,
     ), f"cfg must resolve to a dictionary. Got {type(cfg_dict)}"
 
+    # Hydra group removal overrides (e.g. `~model`) can still leave a partial
+    # `model` mapping from defaults (commonly `trainer` only). Treat these as
+    # unset so data-only optimize runs do not instantiate invalid ModelConfig
+    # objects lacking a required `name`.
+    model_cfg = cfg_dict.get("model")
+    if isinstance(model_cfg, dict):
+        meaningful_model_keys = {
+            key for key, value in model_cfg.items() if value not in (None, {}, [], ())
+        }
+        if not meaningful_model_keys or meaningful_model_keys <= {"trainer"}:
+            cfg_dict["model"] = None
+
     # Path/file enforcement for multirun is now callback-owned in on_compose_config.
     _ = hydra_cfg
 

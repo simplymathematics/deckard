@@ -1,4 +1,4 @@
-attack_type: art.attacks.evasion.CarliniL0Method
+name: art.attacks.evasion.CarliniL0Method
 attack_params:
   confidence: 1
   max_iter: 10

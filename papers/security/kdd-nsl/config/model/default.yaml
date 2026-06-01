@@ -1,7 +1,0 @@
-_target_: deckard.model.ModelConfig
-model_type: sklearn.svm.SVC
-classifier: true
-model_params:
-  kernel: rbf
-  probability: true
-  random_state: 0

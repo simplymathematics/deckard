@@ -1,4 +1,4 @@
-attack_type: art.attacks.evasion.PixelAttack
+name: art.attacks.evasion.PixelAttack
 attack_params:
   th: 1
   batch_size: 100

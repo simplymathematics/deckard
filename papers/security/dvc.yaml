@@ -43,3 +43,38 @@ stages:
       - ./config/default.yaml:
           - defaults
           - hydra
+
+  compile_results:
+    cmd: >
+      python -m deckard.layers.compile_results
+      --output_file outputs/security_results.csv
+      --optuna_db sqlite:///optuna.db
+    deps:
+      - optuna.db
+      - ../../deckard
+      - ./config/default.yaml
+    outs:
+      - outputs/security_results.csv
+
+  retrain:
+    cmd: python retrain.py
+    deps:
+      - retrain.py
+      - outputs/logs/
+      - outputs/security_results.csv
+      - ./config/data/classification.yaml
+      - ./config/model/linear.yaml
+      - ./config/model/poly.yaml
+      - ./config/model/rbf.yaml
+    outs:
+      - retrain/
+
+  plot_results:
+    cmd: python plots.py
+    deps:
+      - plots.py
+      - outputs/logs/
+      - outputs/security_results.csv
+      - retrain/
+    outs:
+      - plots/

@@ -1,3 +1,0 @@
-name: art.defences.preprocessor.FeatureSqueezing 
-bit_depth: 32
-clip_values: [0, 255]
