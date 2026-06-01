@@ -56,9 +56,51 @@ jobs:
         python -m pip install --upgrade pip
         # Install docs + required notebook stacks, then pin anjana/pycanon to
         # versions compatible with the current Sphinx/docutils toolchain.
-        pip install --no-cache-dir '.[lifelines,fairlearn,seaborn,yellowbrick,docs,datasets,transformers]'
-        pip install --no-cache-dir 'docutils==0.21.2' 'pycanon==1.0.3' 'anjana==1.1.0'
-        pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cpu 'torch==2.4.1' 'torchvision==0.19.1' 'torchaudio==2.4.1'
+        python -m pip install --no-cache-dir '.[lifelines,fairlearn,seaborn,yellowbrick,docs,datasets,transformers]'
+        # Keep notebook extras explicit so Hugging Face notebook imports are available even if extras resolution drifts.
+        python -m pip install --no-cache-dir 'transformers>=4.40.0' 'datasets>=2.19.0'
+        python -m pip install --no-cache-dir 'docutils==0.21.2' 'pycanon==1.0.3' 'anjana==1.1.0'
+        python -m pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cpu 'torch==2.4.1' 'torchvision==0.19.1' 'torchaudio==2.4.1'
+    - name: verify optional notebook imports
+      run: |
+        python - <<'PY'
+        import importlib
+        import sys
+
+        required_modules = {
+            "lifelines": "lifelines",
+            "fairlearn": "fairlearn",
+            "seaborn": "seaborn",
+            "yellowbrick": "yellowbrick",
+            "transformers": "transformers",
+            "datasets": "datasets",
+            "pycanon": "pycanon",
+            "anjana": "anjana",
+            "torch": "torch",
+            "torchvision": "torchvision",
+            "torchaudio": "torchaudio",
+        }
+
+        missing = []
+        for dep_name, module_name in required_modules.items():
+            try:
+                importlib.import_module(module_name)
+            except Exception as exc:
+                missing.append(f"{dep_name} ({module_name}): {exc}")
+
+        if missing:
+            sys.stderr.write(
+                "Optional dependency import check failed:\n- "
+                + "\n- ".join(missing)
+                + "\n"
+            )
+            raise SystemExit(1)
+
+        print(
+            "Optional dependency import check passed for:",
+            ", ".join(sorted(required_modules.keys())),
+        )
+        PY
     - name : build docs
       run: |
         cd docs
