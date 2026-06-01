@@ -6,7 +6,6 @@ This subpackage exposes the attack-side configuration objects used by
 
 from .base import AttackConfig, SensitiveFeaturesWrapper
 
-
 __all__ = [
     "AttackConfig",
     "SensitiveFeaturesWrapper",
