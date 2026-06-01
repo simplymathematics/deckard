@@ -1,11 +1,16 @@
 import shutil
+import os
 from pathlib import Path
 from tempfile import mkdtemp
 from unittest.mock import patch
 
+import matplotlib
 import pytest
 from omegaconf import OmegaConf
 from sklearn.model_selection import KFold, StratifiedKFold
+
+os.environ.setdefault("MPLBACKEND", "Agg")
+matplotlib.use("Agg", force=True)
 
 try:
     import yellowbrick  # noqa: F401
@@ -18,29 +23,16 @@ try:
         YellowbrickConfigList,
         YellowbrickPlotConfig,
         cluster_viz_types,
-        model_selection_viz_types,
     )
-except Exception:
+except ImportError:
     pytest.skip(
         "yellowbrick is required for yellowbrick plot tests",
         allow_module_level=True,
     )
 
-expensive_viz_types = [
-    "manifold",
-    "rfecv",
-    "validation_curve",
-    "learning_curve",
-    "dropping_curve",
-    "intercluster_distance",
-    "feature_importances",
-    "cv_scores",
-    "silhouette",
-]
-expensive_viz_types += list(model_selection_viz_types)
-
 
 class TestYellowbrickPlots:
+
     def _make_classification_experiment(self):
         files = FileConfig(data_file="", model_file="")
         data_conf = OmegaConf.load(self.classification_data_config)
@@ -56,6 +48,33 @@ class TestYellowbrickPlots:
         data = DataConfig(**OmegaConf.to_container(data_conf, resolve=True))
         model = ModelConfig(**OmegaConf.to_container(model_conf, resolve=True))
         return ExperimentConfig(data=data, model=model, files=files, classifier=False)
+
+    def _make_classification_experiment_with_persisted_files(self, stem: str):
+        classification_data = OmegaConf.load(self.classification_data_config)
+        classification_model = OmegaConf.load(self.classification_model_config)
+        files = FileConfig(
+            data_file=f"{self.temp_dir}/data/{stem}.pkl",
+            model_file=f"{self.temp_dir}/models/{stem}.pkl",
+        )
+        return ExperimentConfig(
+            data=classification_data,
+            model=classification_model,
+            files=files,
+        )
+
+    def _make_clustering_experiment(self, *, persisted_files: bool = False):
+        if persisted_files:
+            files = FileConfig(
+                data_file=f"{self.temp_dir}/data/cluster_data.pkl",
+                model_file=f"{self.temp_dir}/models/kmeans_model.pkl",
+            )
+        else:
+            files = FileConfig(data_file="", model_file="")
+
+        cluster_data = OmegaConf.load(self.cluster_data_config)
+        cluster_model = OmegaConf.load(self.cluster_model_config)
+        cluster_model["scorer"] = None
+        return ExperimentConfig(data=cluster_data, model=cluster_model, files=files)
 
     def test_parse_cv_defaults_to_stratifiedkfold_for_classifier(self):
         plot_cfg = YellowbrickPlotConfig(
@@ -101,12 +120,7 @@ class TestYellowbrickPlots:
         assert cv.n_splits == 3
 
     def test_one_classification_plot(self):
-        files = FileConfig(data_file="", model_file="")
-        data_conf = OmegaConf.load(self.classification_data_config)
-        model_conf = OmegaConf.load(self.classification_model_config)
-        data = DataConfig(**OmegaConf.to_container(data_conf, resolve=True))
-        model = ModelConfig(**OmegaConf.to_container(model_conf, resolve=True))
-        experiment = ExperimentConfig(data=data, model=model, files=files)
+        experiment = self._make_classification_experiment()
         experiment()
         plot_type = "roc_auc"  # Example classification plot
         plot_cfg = YellowbrickPlotConfig(
@@ -160,43 +174,8 @@ class TestYellowbrickPlots:
         plot_cfg()
         assert Path(f"{self.temp_dir}/{plot_type}_regression.png").exists()
 
-    def test_one_clustering_plot(self):
-        cluster_files = FileConfig(data_file="", model_file="")
-        cluster_data = OmegaConf.load(self.cluster_data_config)
-        cluster_model = OmegaConf.load(self.cluster_model_config)
-        cluster_model["scorer"] = None
-        experiment = ExperimentConfig(
-            data=cluster_data,
-            model=cluster_model,
-            files=cluster_files,
-        )
-        plot_type = "k_elbow"  # Example clustering plot
-        plot_cfg = YellowbrickPlotConfig(
-            experiment=experiment,
-            plot_type=plot_type,
-            features="all",
-            classes="all",
-            title=plot_type.replace("_", " ").title() + " (Clustering)",
-            save_path=f"{self.temp_dir}/{plot_type}_clustering.png",
-        )
-        plot_cfg()
-        assert Path(f"{self.temp_dir}/{plot_type}_clustering.png").exists()
-
     def test_clustering_plots(self):
-        cluster_data_file = f"{self.temp_dir}/data/cluster_data.pkl"
-        cluster_model_file = f"{self.temp_dir}/models/kmeans_model.pkl"
-        cluster_files = FileConfig(
-            data_file=cluster_data_file,
-            model_file=cluster_model_file,
-        )
-        cluster_data = OmegaConf.load(self.cluster_data_config)
-        cluster_model = OmegaConf.load(self.cluster_model_config)
-        cluster_model["scorer"] = None
-        experiment = ExperimentConfig(
-            data=cluster_data,
-            model=cluster_model,
-            files=cluster_files,
-        )
+        experiment = self._make_clustering_experiment(persisted_files=True)
         for plot_type in cluster_viz_types:
             if plot_type in ["intercluster_distance"]:
                 continue
@@ -213,18 +192,12 @@ class TestYellowbrickPlots:
                 plot_cfg()
                 assert Path(filepath).exists()
 
+            assert Path(f"{self.temp_dir}/k_elbow_clustering.png").exists()
+
     def test_single_plot_prepares_experiment_only_once(self):
-        classification_data = OmegaConf.load(self.classification_data_config)
-        classification_model = OmegaConf.load(self.classification_model_config)
-        files = FileConfig(
-            data_file=f"{self.temp_dir}/data/single_prepare.pkl",
-            model_file=f"{self.temp_dir}/models/single_prepare.pkl",
-        )
         plot_cfg = YellowbrickPlotConfig(
-            experiment=ExperimentConfig(
-                data=classification_data,
-                model=classification_model,
-                files=files,
+            experiment=self._make_classification_experiment_with_persisted_files(
+                "single_prepare",
             ),
             plot_type="roc_auc",
             save_path=f"{self.temp_dir}/single_prepare.png",
@@ -256,35 +229,10 @@ class TestYellowbrickPlots:
         assert first_scores == {"accuracy": 0.9}
         assert second_scores == {"accuracy": 0.9}
 
-    def test_plot_list_reuses_prepared_experiment_for_children(self):
-        classification_data = OmegaConf.load(self.classification_data_config)
-        classification_model = OmegaConf.load(self.classification_model_config)
-        files = FileConfig(
-            data_file=f"{self.temp_dir}/data/list_prepare.pkl",
-            model_file=f"{self.temp_dir}/models/list_prepare.pkl",
-        )
-        _ = YellowbrickConfigList(
-            experiment=ExperimentConfig(
-                data=classification_data,
-                model=classification_model,
-                files=files,
-            ),
-            plots=["roc_auc", "precision_recall_curve"],
-            plot_folder=self.temp_dir,
-        )
-
     def test_single_plot_applies_rc_config(self):
-        classification_data = OmegaConf.load(self.classification_data_config)
-        classification_model = OmegaConf.load(self.classification_model_config)
-        files = FileConfig(
-            data_file=f"{self.temp_dir}/data/rc_single.pkl",
-            model_file=f"{self.temp_dir}/models/rc_single.pkl",
-        )
         plot_cfg = YellowbrickPlotConfig(
-            experiment=ExperimentConfig(
-                data=classification_data,
-                model=classification_model,
-                files=files,
+            experiment=self._make_classification_experiment_with_persisted_files(
+                "rc_single",
             ),
             plot_type="roc_auc",
             rc_config={"figure.figsize": (7, 5)},
@@ -307,17 +255,9 @@ class TestYellowbrickPlots:
         mock_rc_update.assert_called_once_with({"figure.figsize": (7, 5)})
 
     def test_plot_list_applies_rc_config(self):
-        classification_data = OmegaConf.load(self.classification_data_config)
-        classification_model = OmegaConf.load(self.classification_model_config)
-        files = FileConfig(
-            data_file=f"{self.temp_dir}/data/rc_list.pkl",
-            model_file=f"{self.temp_dir}/models/rc_list.pkl",
-        )
         plot_cfg = YellowbrickConfigList(
-            experiment=ExperimentConfig(
-                data=classification_data,
-                model=classification_model,
-                files=files,
+            experiment=self._make_classification_experiment_with_persisted_files(
+                "rc_list",
             ),
             plots=["roc_auc"],
             rc_config={"figure.figsize": (8, 6)},

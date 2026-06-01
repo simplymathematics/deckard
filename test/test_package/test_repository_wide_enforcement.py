@@ -151,6 +151,184 @@ def test_repository_enforcement_attributes_section_passes_for_sampler(
     assert result.returncode == 0, result.stdout + "\n" + result.stderr
 
 
+def test_repository_enforcement_runtime_fields_must_be_init_false(
+    tmp_path: Path,
+) -> None:
+    sample = tmp_path / "bad_runtime_fields.py"
+    sample.write_text(
+        "from dataclasses import dataclass, field\n\n"
+        "@dataclass\n"
+        "class RuntimeConfig:\n"
+        '    """Temporary runtime config."""\n'
+        "    _model: object | None = None\n"
+        "    user_param: int = 1\n",
+        encoding="utf-8",
+    )
+
+    result = _run_enforcement_result(
+        str(sample),
+        "--enforce-runtime-init-params",
+    )
+
+    assert result.returncode == 1
+    assert "CFG007" in result.stdout
+    assert "RuntimeConfig._model" in result.stdout
+
+
+def test_repository_enforcement_runtime_fields_init_false_passes(
+    tmp_path: Path,
+) -> None:
+    sample = tmp_path / "good_runtime_fields.py"
+    sample.write_text(
+        "from dataclasses import dataclass, field\n\n"
+        "@dataclass\n"
+        "class RuntimeConfig:\n"
+        '    """Temporary runtime config."""\n'
+        "    _model: object | None = field(default=None, init=False)\n"
+        "    user_param: int = 1\n",
+        encoding="utf-8",
+    )
+
+    result = _run_enforcement_result(
+        str(sample),
+        "--enforce-runtime-init-params",
+    )
+
+    assert result.returncode == 0, result.stdout + "\n" + result.stderr
+
+
+def test_repository_enforcement_field_metadata_required(
+    tmp_path: Path,
+) -> None:
+    sample = tmp_path / "bad_field_metadata.py"
+    sample.write_text(
+        "from dataclasses import dataclass, field\n\n"
+        "@dataclass\n"
+        "class RuntimeConfig:\n"
+        '    """Temporary runtime config."""\n'
+        "    value: int = field(default=1)\n",
+        encoding="utf-8",
+    )
+
+    result = _run_enforcement_result(
+        str(sample),
+        "--enforce-field-metadata",
+    )
+
+    assert result.returncode == 1
+    assert "CFG008" in result.stdout
+    assert "RuntimeConfig.value" in result.stdout
+
+
+def test_repository_enforcement_field_metadata_passes(
+    tmp_path: Path,
+) -> None:
+    sample = tmp_path / "good_field_metadata.py"
+    sample.write_text(
+        "from dataclasses import dataclass, field\n\n"
+        "@dataclass\n"
+        "class RuntimeConfig:\n"
+        '    """Temporary runtime config."""\n'
+        "    value: int = field(default=1, metadata={\"help\": \"Example\"})\n",
+        encoding="utf-8",
+    )
+
+    result = _run_enforcement_result(
+        str(sample),
+        "--enforce-field-metadata",
+    )
+
+    assert result.returncode == 0, result.stdout + "\n" + result.stderr
+
+
+def test_repository_enforcement_runtime_repr_required(
+    tmp_path: Path,
+) -> None:
+    sample = tmp_path / "bad_runtime_repr.py"
+    sample.write_text(
+        "from dataclasses import dataclass, field\n\n"
+        "@dataclass\n"
+        "class RuntimeConfig:\n"
+        '    """Temporary runtime config."""\n'
+        "    runtime_state: int = field(default=1, init=False)\n",
+        encoding="utf-8",
+    )
+
+    result = _run_enforcement_result(
+        str(sample),
+        "--enforce-runtime-repr",
+    )
+
+    assert result.returncode == 1
+    assert "CFG009" in result.stdout
+    assert "RuntimeConfig.runtime_state" in result.stdout
+
+
+def test_repository_enforcement_runtime_repr_passes(
+    tmp_path: Path,
+) -> None:
+    sample = tmp_path / "good_runtime_repr.py"
+    sample.write_text(
+        "from dataclasses import dataclass, field\n\n"
+        "@dataclass\n"
+        "class RuntimeConfig:\n"
+        '    """Temporary runtime config."""\n'
+        "    runtime_state: int = field(default=1, init=False, repr=False)\n",
+        encoding="utf-8",
+    )
+
+    result = _run_enforcement_result(
+        str(sample),
+        "--enforce-runtime-repr",
+    )
+
+    assert result.returncode == 0, result.stdout + "\n" + result.stderr
+
+
+def test_repository_enforcement_target_field_required(
+    tmp_path: Path,
+) -> None:
+    sample = tmp_path / "bad_target_field.py"
+    sample.write_text(
+        "from dataclasses import dataclass, field\n\n"
+        "@dataclass\n"
+        "class RuntimeConfig:\n"
+        '    """Temporary runtime config."""\n'
+        "    _target_: str | None = field(default=\"deckard.alias.RuntimeConfig\", init=False, repr=False, metadata={\"help\": \"Example\"})\n",
+        encoding="utf-8",
+    )
+
+    result = _run_enforcement_result(
+        str(sample),
+        "--enforce-target-field",
+    )
+
+    assert result.returncode == 1
+    assert "CFG010" in result.stdout
+    assert "bad_target_field.RuntimeConfig" in result.stdout
+
+
+def test_repository_enforcement_target_field_passes(
+    tmp_path: Path,
+) -> None:
+    sample = tmp_path / "good_target_field.py"
+    sample.write_text(
+        "from dataclasses import dataclass, field\n\n"
+        "@dataclass\n"
+        "class RuntimeConfig:\n"
+        '    """Temporary runtime config."""\n'
+        "    _target_: str | None = field(default=\"good_target_field.RuntimeConfig\", metadata={\"help\": \"Example\"})\n",
+        encoding="utf-8",
+    )
+
+    result = _run_enforcement_result(
+        str(sample),
+        "--enforce-target-field",
+    )
+
+    assert result.returncode == 0, result.stdout + "\n" + result.stderr
+
+
 def test_plugin_orchestration_is_deterministic() -> None:
     class _Runtime:
         def __init__(self) -> None:

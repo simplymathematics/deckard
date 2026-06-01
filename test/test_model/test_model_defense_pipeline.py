@@ -1,4 +1,5 @@
 from types import SimpleNamespace
+import builtins
 
 import numpy as np
 import pandas as pd
@@ -172,7 +173,7 @@ def test_defense_behavior_defaults_signature_and_apply_to_paths(monkeypatch):
 
     assert defense._model is None
     assert defense.score_dict == {}
-    assert defense._target_ == "deckard.DefenseConfig"
+    assert defense._target_ == "deckard.model.defense.base.DefenseConfig"
     assert defense.defense_params == {}
 
     defense.defense_params = OmegaConf.create(
@@ -349,6 +350,52 @@ def test_get_art_class_torch_requires_typed_base_estimator(monkeypatch):
         )
 
 
+def test_is_torch_model_instance_handles_runtime_import_error(monkeypatch):
+    import deckard.model.defense.base as defend_module
+
+    original_import = builtins.__import__
+
+    def _failing_torch_import(name, *args, **kwargs):
+        if name == "torch":
+            raise RuntimeError("torch init failed")
+        return original_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", _failing_torch_import)
+
+    assert defend_module._is_torch_model_instance(object()) is False
+
+
+def test_get_art_class_torch_runtime_import_error_wrapped(monkeypatch):
+    defense = DefenseConfig(
+        name="art.defences.postprocessor.HighConfidence",
+        classifier=True,
+    )
+    defense.name = "torch.nn.Linear"
+    defense._model = object()
+
+    monkeypatch.setattr(
+        "deckard.model.defense.base._is_torch_model_instance",
+        lambda _obj: True,
+    )
+
+    original_import = builtins.__import__
+
+    def _failing_torch_import(name, *args, **kwargs):
+        if name == "torch":
+            raise RuntimeError("torch init failed")
+        return original_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", _failing_torch_import)
+
+    with pytest.raises(
+        ImportError,
+        match="Torch model defenses require optional dependency deckard\\[torch\\]",
+    ):
+        defense.get_art_class(
+            SimpleNamespace(X_train=np.zeros((2, 3)), y_train=np.array([0, 1])),
+        )
+
+
 def test_pipeline_coerce_plugin_context_and_stage_helpers(monkeypatch):
     pipeline = DefensePipelineConfig.__new__(DefensePipelineConfig)
     pipeline.defenses = []
@@ -357,7 +404,7 @@ def test_pipeline_coerce_plugin_context_and_stage_helpers(monkeypatch):
     pipeline._target_ = None
     pipeline.__post_init__()
     assert pipeline.score_dict == {}
-    assert pipeline._target_ == "deckard.model.DefensePipelineConfig"
+    assert pipeline._target_ == "deckard.model.defense.base.DefensePipelineConfig"
 
     assert not DefensePipelineConfig._is_pipeline_target(7)
     assert not DefensePipelineConfig._looks_like_single_defense_spec({"defenses": []})
@@ -382,7 +429,7 @@ def test_pipeline_coerce_plugin_context_and_stage_helpers(monkeypatch):
         len(
             DefensePipelineConfig.coerce(
                 {
-                    "_target_": "deckard.model.DefensePipelineConfig",
+                    "_target_": "deckard.model.defense.base.DefensePipelineConfig",
                     "defenses": [],
                 },
             ).defenses,

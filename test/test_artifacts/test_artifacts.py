@@ -8,6 +8,13 @@ import pandas as pd
 import pytest
 
 from deckard.artifacts import ArtifactLoaderMixin, ScoreDict
+from deckard.artifacts import (
+    SCORE_PAYLOAD_SCHEMA,
+    _deserialize_scores_payload,
+    _flat_by_scope,
+    _flatten_score_payload,
+    _serialize_scores_payload,
+)
 from deckard.utils import BaseConfig, load_data, save_data
 
 
@@ -327,3 +334,53 @@ def test_top_level_save_data_converts_non_dataframe(tmp_path):
     path = tmp_path / "data.csv"
     save_data({"a": [1, 2], "b": [3, 4]}, path)
     assert path.exists()
+
+
+def test_scoredict_contract_envelope_includes_flattened_views():
+    scores = ScoreDict({"eval": {"test": {"acc": 0.9}}})
+    envelope = scores.to_contract_envelope()
+
+    assert envelope["_schema"] == SCORE_PAYLOAD_SCHEMA
+    assert envelope["payload"]["eval"]["test"]["acc"] == 0.9
+    assert envelope["flat"]["eval.test.acc"] == 0.9
+    assert envelope["flat_by_scope"]["eval"]["test.acc"] == 0.9
+    assert "eval.test.acc=0.9" in envelope["dotlist_items"]
+
+
+def test_flatten_helper_with_prefix_and_scope_groups():
+    payload = {"a": {"b": 1}, "root": 2}
+    flat = _flatten_score_payload(payload, prefix="stage")
+
+    assert flat["stage.a.b"] == 1
+    assert flat["stage.root"] == 2
+
+    grouped = _flat_by_scope(flat)
+    assert grouped["stage"]["a.b"] == 1
+    assert grouped["stage"]["root"] == 2
+
+
+def test_serialize_and_deserialize_score_payload_round_trip():
+    raw = {"eval": {"test": {"acc": 0.97}}}
+    envelope = _serialize_scores_payload(raw)
+    restored = _deserialize_scores_payload(dict(envelope))
+
+    assert envelope["_schema"] == SCORE_PAYLOAD_SCHEMA
+    assert restored == raw
+
+
+def test_deserialize_legacy_payload_preserves_files_and_params():
+    raw = {
+        "accuracy": 0.9,
+        "files": {"score_file": "scores.json"},
+        "params": {"mode": "test"},
+    }
+
+    restored = _deserialize_scores_payload(dict(raw))
+
+    assert restored["accuracy"] == 0.9
+    assert restored["files"] == {"score_file": "scores.json"}
+    assert restored["params"] == {"mode": "test"}
+
+
+def test_deserialize_non_mapping_payload_wraps_in_data_key():
+    assert _deserialize_scores_payload(3) == {"data": 3}

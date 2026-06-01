@@ -1,3 +1,5 @@
+import builtins
+import importlib
 import numpy as np
 import pandas as pd
 import pytest
@@ -227,3 +229,39 @@ def test_default_fairlearn_regression_config():
     assert cfg.classifier is False
     assert "mse" in cfg.scorers
     assert isinstance(cfg, FairlearnScorerDictConfig)
+
+
+def test_fairlearn_score_import_survives_torch_runtime_failure(monkeypatch):
+    original_import = builtins.__import__
+
+    def _failing_torch_import(name, *args, **kwargs):
+        if name == "torch":
+            raise RuntimeError("torch init failed")
+        return original_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", _failing_torch_import)
+    importlib.reload(fairness)
+
+    try:
+        assert fairness.torch is None
+    finally:
+        importlib.reload(fairness)
+
+
+def test_fairlearn_score_import_survives_metric_runtime_failure(monkeypatch):
+    original_import = builtins.__import__
+
+    def _failing_fairlearn_metrics_import(name, *args, **kwargs):
+        if name == "fairlearn.metrics" or name.startswith("fairlearn.metrics."):
+            raise RuntimeError("fairlearn metrics init failed")
+        return original_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", _failing_fairlearn_metrics_import)
+    importlib.reload(fairness)
+
+    try:
+        assert fairness.MetricFrame is None
+        assert fairness.demographic_parity_difference is None
+        assert fairness.equalized_odds_difference is None
+    finally:
+        importlib.reload(fairness)
