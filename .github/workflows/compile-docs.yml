@@ -39,8 +39,8 @@ jobs:
       with:
         python-version: '3.10'
         cache: 'pip'
-    - name: Cache DVC artifacts and notebooks
-      uses: actions/cache@v4
+    - name: Restore DVC artifacts and notebooks cache
+      uses: actions/cache/restore@v4
       with:
         path: |
           docs/notebooks/build/
@@ -49,8 +49,12 @@ jobs:
           ~/.cache/huggingface/hub/
           ~/.cache/huggingface/transformers/
           ~/.cache/huggingface/datasets/
-        # Invalidate cache whenever notebook stage lockfile changes.
-        key: dvc-cache-${{ runner.os }}-${{ hashFiles('docs/notebooks/dvc.lock') }}
+        # Prefer branch-local cache keyed by lockfile, then fall back to latest branch/main cache.
+        key: dvc-cache-${{ runner.os }}-${{ github.ref_name }}-${{ hashFiles('docs/notebooks/dvc.lock') }}
+        restore-keys: |
+          dvc-cache-${{ runner.os }}-${{ github.ref_name }}-
+          dvc-cache-${{ runner.os }}-main-
+          dvc-cache-${{ runner.os }}-
     - name : install dependencies
       run: |
         python -m pip install --upgrade pip
@@ -60,7 +64,10 @@ jobs:
         # Keep notebook extras explicit so Hugging Face notebook imports are available even if extras resolution drifts.
         python -m pip install --no-cache-dir 'transformers>=4.40.0' 'datasets>=2.19.0'
         python -m pip install --no-cache-dir 'docutils==0.21.2' 'pycanon==1.0.3' 'anjana==1.1.0'
-        python -m pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cpu 'torch==2.4.1' 'torchvision==0.19.1' 'torchaudio==2.4.1'
+        # Install a matching CPU-only torch stack from the official PyTorch index.
+        # Avoid hard version pins here to prevent resolver conflicts with the
+        # evolving docs/notebook dependency graph.
+        python -m pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cpu 'torch' 'torchvision' 'torchaudio'
     - name: verify optional notebook imports
       run: |
         python - <<'PY'
@@ -110,6 +117,19 @@ jobs:
       run: |
         cd docs/notebooks
         dvc push || echo "DVC push: remote not configured; artifacts managed via GitHub Actions cache"
+    - name: Save DVC artifacts and notebooks cache
+      if: ${{ always() && env.SKIP_DVC != '1' }}
+      uses: actions/cache/save@v4
+      with:
+        path: |
+          docs/notebooks/build/
+          docs/notebooks/.dvc/cache/
+          ~/.cache/huggingface/
+          ~/.cache/huggingface/hub/
+          ~/.cache/huggingface/transformers/
+          ~/.cache/huggingface/datasets/
+        # Include run id so partially completed notebook stages are persisted even on failed runs.
+        key: dvc-cache-${{ runner.os }}-${{ github.ref_name }}-${{ hashFiles('docs/notebooks/dvc.lock') }}-${{ github.run_id }}-${{ github.run_attempt }}
     - name: Upload Pages artifact
       uses: actions/upload-pages-artifact@v3
       with:
