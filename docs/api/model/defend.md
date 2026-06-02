@@ -82,11 +82,11 @@ External ART references:
 Use `_target_` to initialize the surrounding defense config, then use `name`
 and `defense_params` for each defense step.
 
-You can also attach multiple plugin defenses to the same `DefenseConfig` through run-time composed defense-chains. 
+You can also attach multiple plugin defenses to the same {class}`deckard.model.defense.base.DefenseConfig` through run-time composed defense-chains.
 
 Art defenses, if chosen, will be applied last for compatibility with downstream ART attacks.
 
-Anjana defenses, if chosen, are applied on pre-sampled data by default, but can be configured more precisely using a `HookPlugin`. 
+Anjana defenses, if chosen, are applied on pre-sampled data by default, but can be configured more precisely using a {class}`deckard.plugins.HookPlugin`.
 
 ```yaml
 data:

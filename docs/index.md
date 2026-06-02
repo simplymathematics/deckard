@@ -44,20 +44,27 @@ Visualization, diagnostics, and explainability available through plugin extensio
 Choose your own adventure:
 
 ### Core Concepts:
-	[Overview](overview/index) -> [Quickstart](overview/quickstart) ->
-	[Core Modules](overview/core) -> [Experiment Workflow](overview/experiment) ->
-	[Notebooks](notebooks/index) -> [sklearn notebook](notebooks/sklearn),
-	[pytorch notebook](notebooks/pytorch), or
-	[huggingface notebook](notebooks/huggingface)
+1. [Overview](overview/index)
+2. [Quickstart](overview/quickstart)
+3. [Core Modules](overview/core)
+4. [Experiment Workflow](overview/experiment)
+5. [Notebooks](notebooks/index)
+6. [sklearn notebook](notebooks/sklearn)
+7. [pytorch notebook](notebooks/pytorch)
+8. [huggingface notebook](notebooks/huggingface)
 
 ### CLI and Optimization Workflow:
-	[Overview](overview/index) -> [Core Modules](overview/core) ->
-	[Hydra](overview/hydra) -> [Optimization](overview/optimize) ->
-	[dvc notebook](notebooks/dvc) -> [optuna notebook](notebooks/optuna)
+1. [Overview](overview/index)
+2. [Core Modules](overview/core)
+3. [Hydra](overview/hydra)
+4. [Optimization](overview/optimize)
+5. [dvc notebook](notebooks/dvc)
+6. [optuna notebook](notebooks/optuna)
 
 ### API + Developer Docs flow (extension and maintenance work):
-	[Core API](api/modules) -> [Extensions](overview/extensions/index) ->
-	[Developer Docs](developers/index)
+1. [Core API](api/modules)
+2. [Extensions](overview/extensions/index)
+3. [Developer Docs](developers/index)
 
 ## Licensing
 
@@ -78,14 +85,6 @@ overview/index
 :hidden:
 
 api/modules
-```
-
-```{toctree}
-:maxdepth: 2
-:caption: Extensions
-:hidden:
-
-api/plugins/index
 ```
 
 ```{toctree}

@@ -23,11 +23,11 @@ These decisions are now treated as stable runtime and contributor policy:
 - Unknown init kwargs remain warning-first (duck-typed passthrough allowed where needed).
 - Legacy aliases (`dataset_name`, `model_type`, `attack_type`) are removed in favor of `name`.
 - Defense runtime naming is standardized on `name` (not `defense_name`) for active consolidation paths.
-- `DefenseConfig` carries the default runtime target and can host multiple plugin defenses on the same object.
+- {class}`deckard.model.defense.base.DefenseConfig` carries the default runtime target and can host multiple plugin defenses on the same object.
 - Defense configs require explicit `name` for runtime defense instantiation, while `_target_` is reserved for Hydra `*Config` initialization; raw `defense_name` fallback and shape inference are removed.
-- ArtifactLoaderConfig is replaced by ArtifactLoaderMixin without compatibility shims.
+- ArtifactLoaderConfig is replaced by {class}`deckard.artifacts.ArtifactLoaderMixin` without compatibility shims.
 - Experiment stage-component mapping is unified to canonical component/sub-component ownership.
-- BaseConfig.fingerprint includes all reproducibility-critical components and runs at post-init finalization.
+- {meth}`deckard.utils.BaseConfig.fingerprint` includes all reproducibility-critical components and runs at post-init finalization.
 - Canonical command names are `deckard plugins` and `deckard frameworks`.
 - Plugin/framework list mode is non-installing and reports environment-dependent availability.
 - Unknown plugin names hard-fail with exit code `2`.

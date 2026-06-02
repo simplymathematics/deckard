@@ -113,6 +113,28 @@ Metrics and report policy:
 2. optimizer-aware naming is used for plot token generation
 3. summary and report generation are mode-aware (`.html`, `.ipynb`, `.md`)
 
+## Pretrained Workflow Profiles
+
+Canonical compose-first pretrained profiles are now available in example roots:
+
+1. `examples/sklearn/config/pretrained-default.yaml`
+2. `examples/pytorch/config/pretrained-default.yaml`
+
+These profiles intentionally pin:
+
+1. a pretrained trainer (`trainer@model.trainer=pretrained`)
+2. a framework-default attack and defense
+3. file persistence aliases via `files: default`
+
+Hydra override patterns for migration validation:
+
+1. with attacks and defenses: compose `pretrained-default` directly
+2. without attacks and defenses: compose with `~attack` and `~defense`
+3. without pretrained trainer: compose with `trainer@model.trainer=sklearn` (sklearn) or `trainer@model.trainer=pytorch` (pytorch)
+
+Compose coverage is enforced in
+`test/test_integration/test_compose_pretrained_defaults.py`.
+
 ## Validation Checklist Mapping
 
 Phase 7 validation is covered by targeted tests in:

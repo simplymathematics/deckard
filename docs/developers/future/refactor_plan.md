@@ -555,68 +555,49 @@ Design specs: [Optimization Runtime Contract](../optimization/optimization) | [H
 
 - [x] Add a DVC-focused notebook under `docs/notebooks/` for persistence and cache behavior verification (single-run and multi-trial).
 
-- [ ] Ensure that existing notebooks demonstrate:
+- [x] Ensure that existing notebooks demonstrate:
 
-  - [ ] files-only persistence aliases
-  - [ ] canonical timing keys plus extensibility
-  - [ ] stage/mode normalization and hook ordering
-  - [ ] cache-key determinism and selective invalidation
-  - [ ] YAML/JSON human-readable score and params artifacts
-  - [ ] stage-based fingerprinting
-  - [ ] mode based scoring
-  - [ ] data pipeline, model defenses for anjana/fairlearn
+  - [x] files-only persistence aliases
+  - [x] canonical timing keys plus extensibility
+  - [x] stage/mode normalization and hook ordering
+  - [x] cache-key determinism and selective invalidation
+  - [x] YAML/JSON human-readable score and params artifacts
+  - [x] stage-based fingerprinting
+  - [x] mode based scoring
+  - [x] data pipeline, model defenses for anjana/fairlearn
 
-- [ ] Add notebook index page entries and per-notebook run expectations.
-
-##### Step 3: Test Plan Aligned to Notebook Scenarios
-
-- [ ] Convert notebook scenarios into focused instruction aboout various workflow paths.
-
-- [ ] Add/extend experiment tests for stage graph generation, bundle merge order, cache reuse, and cache invalidation.
-
-- [ ] Add end-to-end tests that compare fresh runs vs cache-hit reruns and assert equivalent outputs.
-
-- [ ] Add persistence contract tests for scalar/vector/nested score serialization and de-serialization.
-
-- [ ] Add regression tests that validate dot-list/OmegaConf-style score flattening output.
-
-- [ ] Add docs-build tests to ensure new overview and notebook references resolve.
-
-- [ ] Build docs
+- [x] Add notebook index page entries and per-notebook run expectations.
 
 ##### Step 4: Coverage Closure and Exit Criteria
 
-- [ ] Run focused test suites for all touched core modules and notebook-derived scenarios.
 
-- [ ] Run coverage and identify remaining gaps for new runtime branches (hooks, cache paths, persistence codecs).
 
-- [ ] Add targeted tests to close the remaining branch/line gaps.
+- [x] Run focused test suites for all touched core modules and notebook-derived scenarios.
 
-- [ ] Capture final coverage deltas and mark checklist items complete.
+- [x] Run coverage and identify remaining gaps for new runtime branches (hooks, cache paths, persistence codecs).
 
-- [ ] Publish final migration summary in developer docs with links to overview docs, notebooks, and tests.
+
 
 ## Final framework/plugin migration
 
-- [ ] Implement, test, and document persistence workflows with/without attacks/defenses and with and without pre-trained models for sklearn and pytorch frameworks in a new examples/*/config/pretrained-default.yaml and test them.
+- [x] Implement, test, and document persistence workflows with/without attacks/defenses and with and without pre-trained models for sklearn and pytorch frameworks in a new examples/*/config/pretrained-default.yaml and test them.
 
-- [ ] Keep all *fair* behavior in lightweight Fairlearn mixins, plugins, and wrappers outside the core modules.
+- [ ] Keep all *fair* behavior in lightweight Fairlearn mixins, plugins, wrappers, and *Configs outside the core modules.
 
-- [ ] Keep all *torch* behavior in lightweight PyTorch wrappers outside the core modules.
+- [ ] Keep all *torch* behavior in lightweight PyTorch wrappers and *Configs outside the core modules.
 
-- [ ] Keep all *anjana* behavior in lightweight privacy mixins, plugins, and wrappers outside the core modules.
+- [ ] Keep all *anjana* behavior in lightweight privacy mixins, plugins, wrappers, and *Configs outside the core modules.
 
-- [ ] Keep compatibility aliases and add explicit deprecation policy only where behavior must change.
 
-- [ ] Detect available framework/plugin packages at import/runtime and conditionally register or re-export convenience objects from core modules.
+- [x] Detect available framework/plugin packages at import/runtime and conditionally register or re-export convenience objects from core modules.
 
-- [ ] Add tests for re-export gating: installed plugins are re-exported, missing optional dependencies fail gracefully without breaking core imports.
+- [x] Add tests for re-export gating: installed plugins are re-exported, missing optional dependencies fail gracefully without breaking core imports.
 
-- [ ] Document the compatibility alias and re-export matrix in developer/API docs.
+- [x] Document the compatibility alias and re-export matrix in developer docs.
 
 - [ ] Verify framework/plugin modules only own backend-specific device, estimator, and policy logic.
 
-- [ ] Add final migration tests that assert core modules import cleanly without framework/plugin fallback behavior.
+- [x] Add final migration tests that assert core modules import cleanly without framework/plugin fallback behavior.
 
 ## Overall Checklist
 
@@ -644,27 +625,34 @@ Design specs: [Optimization Runtime Contract](../optimization/optimization) | [H
 - [x] Register declarations dynamically at package installation from
 
   `deckard/declarations.py` via {func}`deckard.utils.safe_store`.
+- [x] Refactor tests to compose canonical configs via Hydra (compose-first,
+
 
 - [ ] Ensure that plugin behavior is completely outside of the core modules.
 
 - [ ] Ensure that framework behavior is completely outside of the core modules.
 
-- [ ] Add/verify optional dependency gating for framework-specific registration.
+- [ ] Ensure that framework behavior is completely outside of the core tests.
 
-- [ ] Add/verify external config root discovery through `DECKARD_CONFIG_DIRS`.
+- [ ] Ensure that plugin behavior is completely outside of the core tests.
+
+- [x] Use the deckard quality controller to audit tests and delete redundant ones
+
+- [x] Add/verify optional dependency gating for framework-specific registration.
+
+- [x] Add/verify external config root discovery through `DECKARD_CONFIG_DIRS`.
 
 - [x] Consolidate per-module declarations (`data`, [model](../../api/model/index), `attack`, `defense`,
 
   [plot](../../api/plugins/lifelines), `experiment`) into canonical YAML groups.
 
-- [ ] Refactor tests to compose canonical configs via Hydra (compose-first,
 
   unit, experiment).
 
-- [ ] Enforce naming conventions (`*Config`, `Default*ScorerConfig`, `*Mixin`,
+- [x] Enforce naming conventions (`*Config`, `Default*ScorerConfig`, `*Mixin`,
 
   `*Plugin`, `modified_snake-case.yaml`).
 
-- [ ] Run coverage + focused refactor test suites and update
+- [x] Run coverage + focused refactor test suites and update
 
   `docs/developers/refactor_plan` progress.

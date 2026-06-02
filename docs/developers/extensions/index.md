@@ -61,6 +61,7 @@ from the root developer index if needed.
 :hidden:
 :maxdepth: 1
 
+compatibility
 pytorch
 transformers
 anjana
