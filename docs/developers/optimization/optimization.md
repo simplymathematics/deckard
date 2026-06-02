@@ -166,10 +166,7 @@ Primary config source:
 
 - `examples/sklearn/config/default.yaml`
 
-Primary demonstration notebooks:
-
-- `docs/notebooks/hydra.ipynb`
-- `docs/notebooks/optimize.ipynb`
+b`
 
 ## Runtime Contract Checks
 

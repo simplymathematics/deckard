@@ -1,16 +1,4 @@
 stages:
-  # notebook_deckard:
-  #   cmd: >
-  #     mkdir -p build/notebook_artifacts && if [[ ! -s deckard.ipynb ]]; then echo '{"cells": [], "metadata": {}, "nbformat": 4, "nbformat_minor": 5}' > build/notebook_./build/deckard.executed.ipynb; else python -m jupyter nbconvert --to notebook --execute --ExecutePreprocessor.timeout=1800 --output deckard.executed.ipynb --output-dir build/notebook_artifacts deckard.ipynb; fi
-  #   deps:
-  #     - deckard.ipynb
-  #     - .deckard/__main__.py
-  #     - .deckard/experiment/
-  #     - .deckard/file.py
-  #     - .deckard/utils.py
-  #   outs:
-  #     - ./build/notebook_./build/deckard.executed.ipynb
-
   notebook_seaborn:
     cmd: jupyter nbconvert --to notebook --execute --inplace seaborn.ipynb
     deps:
@@ -200,27 +188,27 @@ stages:
     - ../../deckard/utils.py
     # No outs/metrics: hydra.ipynb does not persist outputs
 
-  notebook_optimize:
-    cmd: jupyter nbconvert --to notebook --execute --inplace optimize.ipynb
-    deps:
-    - optimize.ipynb
-    - ../../deckard/layers/
-    - ../../deckard/experiment/
-    - ../../deckard/file.py
-    - ../../deckard/utils.py
-    - ../../examples/sklearn/config/
-    outs:
-    - ./build/optimize_notebook/
+  # notebook_optimize:
+  #   cmd: jupyter nbconvert --to notebook --execute --inplace optimize.ipynb
+  #   deps:
+  #   - optimize.ipynb
+  #   - ../../deckard/layers/
+  #   - ../../deckard/experiment/
+  #   - ../../deckard/file.py
+  #   - ../../deckard/utils.py
+  #   - ../../examples/sklearn/config/
+  #   outs:
+  #   - ./build/optimize_notebook/
 
-  notebook_deckard:
-    cmd: jupyter nbconvert --to notebook --execute --inplace deckard.ipynb
-    deps:
-    - deckard.ipynb
-    - ../../deckard/__main__.py
-    - ../../deckard/experiment/
-    - ../../deckard/file.py
-    - ../../deckard/utils.py
-    # No outs/metrics: deckard.ipynb is a walkthrough notebook
+  # notebook_deckard:
+  #   cmd: jupyter nbconvert --to notebook --execute --inplace deckard.ipynb
+  #   deps:
+  #   - deckard.ipynb
+  #   - ../../deckard/__main__.py
+  #   - ../../deckard/experiment/
+  #   - ../../deckard/file.py
+  #   - ../../deckard/utils.py
+  #   # No outs/metrics: deckard.ipynb is a walkthrough notebook
 
   notebook_scoring:
     cmd: jupyter nbconvert --to notebook --execute --inplace scoring.ipynb
@@ -232,38 +220,38 @@ stages:
     - ../../deckard/utils.py
     # No outs/metrics: scoring.ipynb demonstrates in-memory score contract behavior
 
-  notebook_dvc:
-    cmd: jupyter nbconvert --to notebook --execute --inplace dvc.ipynb
-    deps:
-    - dvc.ipynb
-    - ../../deckard/experiment/
-    - ../../deckard/layers/
-    - ../../deckard/file.py
-    - ../../deckard/utils.py
-    - ../../examples/sklearn/config/default.yaml
-    - ../../examples/sklearn/config/files/default.yaml
-    - ../../examples/sklearn/config/attack/hsj.yaml
-    - ../../examples/sklearn/config/defense/class-labels.yaml
-    - ../../examples/sklearn/config/plot/
-    # No outs/metrics: dvc.ipynb is stage-plan inspection only.
-    # DVCLive runtime features plus artifact/metrics/plot persistence checks
-    # are covered by notebook_dvclive.
+  # notebook_dvc:
+  #   cmd: jupyter nbconvert --to notebook --execute --inplace dvc.ipynb
+  #   deps:
+  #   - dvc.ipynb
+  #   - ../../deckard/experiment/
+  #   - ../../deckard/layers/
+  #   - ../../deckard/file.py
+  #   - ../../deckard/utils.py
+  #   - ../../examples/sklearn/config/default.yaml
+  #   - ../../examples/sklearn/config/files/default.yaml
+  #   - ../../examples/sklearn/config/attack/hsj.yaml
+  #   - ../../examples/sklearn/config/defense/class-labels.yaml
+  #   - ../../examples/sklearn/config/plot/
+  #   # No outs/metrics: dvc.ipynb is stage-plan inspection only.
+  #   # DVCLive runtime features plus artifact/metrics/plot persistence checks
+  #   # are covered by notebook_dvclive.
 
-  notebook_dvclive:
-    cmd: jupyter nbconvert --to notebook --execute --inplace dvclive.ipynb
-    deps:
-    - dvclive.ipynb
-    - ../../deckard/experiment/
-    - ../../deckard/score/
-    - ../../deckard/artifacts.py
-    - ../../deckard/file.py
-    - ../../deckard/utils.py
-    - ../../examples/sklearn/config/default.yaml
-    - ../../examples/sklearn/config/score/classification.yaml
-    outs:
-    - ./build/dvclive/params.runtime_cache.pkl
-    - ./build/dvclive/params.yaml
-    - ./build/dvclive/scores.json
+  # notebook_dvclive:
+  #   cmd: jupyter nbconvert --to notebook --execute --inplace dvclive.ipynb
+  #   deps:
+  #   - dvclive.ipynb
+  #   - ../../deckard/experiment/
+  #   - ../../deckard/score/
+  #   - ../../deckard/artifacts.py
+  #   - ../../deckard/file.py
+  #   - ../../deckard/utils.py
+  #   - ../../examples/sklearn/config/default.yaml
+  #   - ../../examples/sklearn/config/score/classification.yaml
+  #   outs:
+  #   - ./build/dvclive/params.runtime_cache.pkl
+  #   - ./build/dvclive/params.yaml
+  #   - ./build/dvclive/scores.json
 
   notebook_optuna:
     cmd: jupyter nbconvert --to notebook --execute --inplace optuna.ipynb

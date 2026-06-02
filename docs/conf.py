@@ -50,6 +50,8 @@ exclude_patterns = [
     "notebooks/deckard.log",
     "notebooks/optimize.ipynb",
     "notebooks/dvclive.ipynb",
+    "notebooks/deckard.ipynb",
+    "notebooks/dvc.ipynb",
 ]
 
 root_doc = "index"
