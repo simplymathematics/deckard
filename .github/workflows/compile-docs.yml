@@ -39,22 +39,6 @@ jobs:
       with:
         python-version: '3.10'
         cache: 'pip'
-    - name: Restore DVC artifacts and notebooks cache
-      uses: actions/cache/restore@v4
-      with:
-        path: |
-          docs/notebooks/build/
-          docs/notebooks/.dvc/cache/
-          ~/.cache/huggingface/
-          ~/.cache/huggingface/hub/
-          ~/.cache/huggingface/transformers/
-          ~/.cache/huggingface/datasets/
-        # Prefer branch-local cache keyed by lockfile, then fall back to latest branch/main cache.
-        key: dvc-cache-${{ runner.os }}-${{ github.ref_name }}-${{ hashFiles('docs/notebooks/dvc.lock') }}
-        restore-keys: |
-          dvc-cache-${{ runner.os }}-${{ github.ref_name }}-
-          dvc-cache-${{ runner.os }}-main-
-          dvc-cache-${{ runner.os }}-
     - name : install dependencies
       run: |
         python -m pip install --upgrade pip
@@ -121,20 +105,7 @@ jobs:
       if: ${{ env.SKIP_DVC != '1' }}
       run: |
         cd docs/notebooks
-        dvc push || echo "DVC push: remote not configured; artifacts managed via GitHub Actions cache"
-    - name: Save DVC artifacts and notebooks cache
-      if: ${{ always() && env.SKIP_DVC != '1' }}
-      uses: actions/cache/save@v4
-      with:
-        path: |
-          docs/notebooks/build/
-          docs/notebooks/.dvc/cache/
-          ~/.cache/huggingface/
-          ~/.cache/huggingface/hub/
-          ~/.cache/huggingface/transformers/
-          ~/.cache/huggingface/datasets/
-        # Include run id so partially completed notebook stages are persisted even on failed runs.
-        key: dvc-cache-${{ runner.os }}-${{ github.ref_name }}-${{ hashFiles('docs/notebooks/dvc.lock') }}-${{ github.run_id }}-${{ github.run_attempt }}
+        dvc push || echo "DVC push skipped: remote not configured"
     - name: Upload Pages artifact
       uses: actions/upload-pages-artifact@v3
       with:
