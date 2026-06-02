@@ -1,4 +1,4 @@
-name: adult
+name: sklearn.adult
 sampler:
   name: deckard.data.sample.SplitSampler
   test_size: 0.2

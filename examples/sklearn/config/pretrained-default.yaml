@@ -1,0 +1,15 @@
+defaults:
+- _self_
+- data: adult
+- sampler@data.sampler: split
+- model: rf
+- trainer@model.trainer: pretrained
+- defense: class-labels
+- attack: hsj
+- files: default
+
+experiment_name: sklearn_pretrained_default
+
+hydra:
+  run:
+    dir: outputs/logs/${experiment_name}
