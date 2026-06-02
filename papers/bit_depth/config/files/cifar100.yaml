@@ -1,8 +1,0 @@
-_target_: deckard.file.FileConfig
-data_file: output/data/torch_cifar100.pkl
-model_file: output/models/${experiment_name}.pkl
-score_file: output/scores/${experiment_name}.json
-attack_file: output/attacks/${experiment_name}.pkl
-params_file: output/params/${experiment_name}.yaml
-predictions_file: output/predictions/${experiment_name}.json
-adv_predictions_file: output/attacks/${experiment_name}_pred.json

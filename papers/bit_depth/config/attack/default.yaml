@@ -1,9 +1,0 @@
-_target_: deckard.attack.AttackConfig
-name: art.attacks.evasion.FastGradientMethod
-attack_params:
-    eps: 0.99
-    batch_size: ${model.fit_params.batch_size}
-    targeted: false
-    minimal: true
-attack_size: 10
-alias: fgm

@@ -772,8 +772,8 @@ stages:
       size: 15181
     - path: ../../deckard/layers/
       hash: md5
-      md5: a79016bcf4e27aa722a5ac45d1260f53.dir
-      size: 286649
+      md5: 14aab29c1b61fbc22813a7e59577b54d.dir
+      size: 287568
       nfiles: 28
     - path: ../../deckard/utils.py
       hash: md5
@@ -781,8 +781,8 @@ stages:
       size: 58971
     - path: optuna.ipynb
       hash: md5
-      md5: ac990c143abf2152fd0af29b78b44d6b
-      size: 22506
+      md5: 94b952852ca559eaa5f2d520827e7d06
+      size: 22519
     outs:
     - path: ./build/notebook_artifacts/optuna/db_summary.json
       hash: md5
@@ -794,7 +794,7 @@ stages:
       size: 58
     - path: ./build/notebook_artifacts/optuna/multi_study.pkl
       hash: md5
-      md5: 50b58eebaf7abd7a11e9d6e66cf72404
+      md5: 8d5c1b92307fdcbf6e2c92883f00cd62
       size: 15441
     - path: ./build/notebook_artifacts/optuna/single_best_params.json
       hash: md5
@@ -802,7 +802,7 @@ stages:
       size: 29
     - path: ./build/notebook_artifacts/optuna/single_study.pkl
       hash: md5
-      md5: 379386bede502d66527b271376c0233a
+      md5: 87f330596b395b3dadb7af9163525b08
       size: 13427
   notebook_lifelines:
     cmd: jupyter nbconvert --to notebook --execute --inplace lifelines.ipynb
@@ -957,8 +957,8 @@ stages:
       size: 15181
     - path: ../../deckard/layers/
       hash: md5
-      md5: a79016bcf4e27aa722a5ac45d1260f53.dir
-      size: 286649
+      md5: 14aab29c1b61fbc22813a7e59577b54d.dir
+      size: 287568
       nfiles: 28
     - path: ../../deckard/utils.py
       hash: md5

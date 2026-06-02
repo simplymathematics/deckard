@@ -32,6 +32,7 @@ stages:
       attack=${item.attack}
       experiment_name=security_${item.data}_${item.model}_${item.attack}/*
       hydra.sweeper.study_name=security_${item.data}_${item.model}_${item.attack}
+      hydra.sweeper.n_trials=20
       --multirun
     deps:
       - .deckard_rc

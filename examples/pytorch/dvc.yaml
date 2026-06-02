@@ -9,7 +9,7 @@ stages:
       deps:
         - ./config/
   simple_example:
-      cmd: deckard && echo "deckard ran successfully!" > deckard.log
+      cmd: deckard optimize && echo "deckard ran successfully!" > deckard.log
       outs:
         - deckard.log
       deps:
@@ -22,6 +22,7 @@ stages:
       do:
         cmd: >
           deckard
+          optimize
           data=${item} 
           ~model
           ~attack
@@ -34,7 +35,7 @@ stages:
           - output/scores/${item}.json
         deps:
           - .deckard_rc
-          - ../../deckard/data/pytorch.py
+          - ../../deckard/frameworks/pytorch/data.py
         params:
           - ./config/data/${item}.yaml:
           ################################################
@@ -54,6 +55,7 @@ stages:
     do:
       cmd: >
         deckard 
+        optimize
         data=${item.data} 
         ~attack
         files.attack_file=null
@@ -64,8 +66,8 @@ stages:
         - output/models/${item.data}_resnet18_training.pkl
       deps:
         - .deckard_rc
-        - ../../deckard/data/pytorch.py
-        - ../../deckard/model/pytorch.py
+        - ../../deckard/frameworks/pytorch/data.py
+        - ../../deckard/frameworks/pytorch/model.py
       metrics:
         - output/scores/${item.data}_resnet18_training.json
       params:
@@ -99,6 +101,7 @@ stages:
           - threshold
     cmd: >
       deckard 
+      optimize
       data=${item.data.name} 
       attack=${item.attack}
       files.model_file=output/models/${item.data.name}_resnet18_training.pkl
@@ -109,8 +112,8 @@ stages:
       - output/attacks/${item.data.name}_torch_resnet18_${item.attack}.pkl
     deps:
       - .deckard_rc
-      - ../../deckard/data/pytorch.py
-      - ../../deckard/model/pytorch.py
+      - ../../deckard/frameworks/pytorch/data.py
+      - ../../deckard/frameworks/pytorch/model.py
       - ../../deckard/attack/__init__.py
     metrics:
       - output/scores/${item.data.name}_torch_resnet18_${item.attack}.json
@@ -152,6 +155,7 @@ stages:
           - spatial_smoothing
     cmd: >
       deckard 
+      optimize
       data=${item.data.name} 
       +defense=${item.defense}
       files.model_file=output/models/${item.data.name}_resnet18_${item.defense}.pkl
@@ -165,8 +169,8 @@ stages:
       - output/models/${item.data.name}_resnet18_${item.defense}.pkl
     deps:
       - .deckard_rc
-      - ../../deckard/data/pytorch.py
-      - ../../deckard/model/pytorch.py
+      - ../../deckard/frameworks/pytorch/data.py
+      - ../../deckard/frameworks/pytorch/model.py
     metrics:
       - output/scores/${item.data.name}_resnet18_${item.defense}.json
     params:
@@ -186,6 +190,7 @@ stages:
     cmd: >
       source .deckard_rc &&
       deckard
+      optimize 
       data=fairlearn_celeba
       ~attack
       files.attack_file=null
@@ -198,8 +203,8 @@ stages:
       - output/models/fairlearn_celeba_resnet18_training.pkl
     deps:
       - .deckard_rc
-      - ../../deckard/data/pytorch.py
-      - ../../deckard/model/pytorch.py
+      - ../../deckard/frameworks/pytorch/data.py
+      - ../../deckard/frameworks/pytorch/model.py
       - ./torch_fairness_dataset.py
       - ./config/data/fairlearn_celeba.yaml
     metrics:

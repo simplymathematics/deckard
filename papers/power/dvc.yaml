@@ -1,74 +1,65 @@
 stages:
-  install_deckard:
-    cmd: python -m pip install -e ../../ && python -m pip install torch==1.8.1+cu101 torchvision==0.9.1+cu101 torchaudio==0.8.1 -f https://download.pytorch.org/whl/torch_stable.html
-    deps:
-      - ../../setup.py
+  set_config_paths:
+    cmd: >
+      echo "export DECKARD_CONFIG_DIR=./config" > .deckard_rc &&
+      echo "export DECKARD_DEFAULT_CONFIG_FILE=torch_mnist.yaml" >> .deckard_rc &&
+      echo "export DECKARD_NJOBS=1" >> .deckard_rc
     outs:
-      - ../../deckard.egg-info:
-          cache: False
-          persist: True
-  # install_redis:
-  #   cmd: bash redis.sh
-  #   outs: 
-  #     - .bashrc
-  #   # params:
-  #   #  - oc.
-  parse_params:
-    cmd: python -m deckard.layers.parse --config_file ${data.generate.name}.yaml
+      - .deckard_rc
     deps:
-      - conf/
-      - ../../deckard.egg-info
-    outs:
-      - params.yaml:
-          cache: True
-          persist: True
-  train:
-    cmd: python -m deckard.layers.experiment train --config_file ${data.generate.name}.yaml
-    params:
-      - data
-      - model
-      - scorers
-      - files
-      - device_id
-    # outs:
-      # - ${files.directory}/${files.data_dir}/${files.data_file}${files.data_type}
-      # - ${files.directory}/${files.model_dir}/${files.model_file}${files.model_type}
-      # - ${files.directory}/${files.model_dir}/${files.model_file}.optimizer${files.model_type}
-      # - ${files.directory}/${files.reports}/train/${files.name}/${files.score_dict_file}
-      # - ${files.directory}/${files.reports}/train/${files.name}/${files.test_labels_file} # Omit to save space
-      # - ${files.directory}/${files.reports}/train/${files.name}/${files.predictions_file}  # logit outputs for our model
-      # - ${files.directory}/${files.reports}/train/${files.name}/${files.probabilities_file} # Omit to save space
-    metrics:
-      - ${files.directory}/${files.reports}/train/${files.name}/${files.score_dict_file}:
-          cache : false
-  attack:
-    cmd: python -m deckard.layers.experiment attack --config_file ${data.generate.name}.yaml
-    params:
-      - data
-      - model
-      - attack
-      - scorers
-      - files
-      - device_id
-    outs:
-      - ${files.directory}/${files.attack_dir}/${files.attack_file}${files.attack_type}:
-          cache : false
-      - ${files.directory}/${files.reports}/attack/${files.name}/${files.adv_predictions_file}:
-          cache : false
-      - ${files.directory}/${files.data_dir}/${files.data_file}${files.data_type}:
-          cache : false
-      - ${files.directory}/${files.reports}/attack/${files.name}/${files.predictions_file}:  # logit outputs for our model
-          cache : false 
+      - ./config/torch_mnist.yaml
+
+  power_search:
+    cmd: >
+      deckard optimize
+      stage=attack
+      experiment_name=power_torch_mnist
+      hydra.sweeper.study_name=power_torch_mnist
+      ++hydra.sweeper.storage=sqlite:///output/optuna.db
+      --multirun
+      ++attack.attack_size=100
+      ++attack.init.eps=interval(0.01,1.0)
+      --config-name torch_mnist.yaml
+      &&
+      deckard optimize
+      stage=attack
+      experiment_name=power_torch_cifar10
+      hydra.sweeper.study_name=power_torch_cifar10
+      ++hydra.sweeper.storage=sqlite:///output/optuna.db
+      --multirun
+      ++attack.attack_size=100
+      ++attack.init.eps=interval(0.01,1.0)
+      --config-name torch_cifar10.yaml
+      &&
+      deckard optimize
+      stage=attack
+      experiment_name=power_torch_cifar100
+      hydra.sweeper.study_name=power_torch_cifar100
+      ++hydra.sweeper.storage=sqlite:///output/optuna.db
+      --multirun
+      ++attack.attack_size=100
+      ++attack.init.eps=interval(0.01,1.0)
+      --config-name torch_cifar100.yaml
     deps:
-        - params.yaml
-    metrics:
-      - ${files.directory}/${files.reports}/attack/${files.name}/${files.score_dict_file}:
-          cache: false
-  attacks:
-    cmd: python -m deckard.layers.optimise  --multirun ++attack.attack_size=100 ++attack.init.eps=interval(0.01, 1.0) stage=attack ++hydra.sweeper.storage=sqlite:///${files.directory}/${device_id}.db  --config-name ${data.generate.name}.yaml
-    deps:
-      - ${files.directory}/${files.reports}/attack/${files.name}/${files.score_dict_file} # This is here just to ensure it runs after the attack stage
+      - .deckard_rc
+      - ./config/torch_mnist.yaml
+      - ./config/torch_cifar10.yaml
+      - ./config/torch_cifar100.yaml
+      - ../../deckard
     outs:
-       # This outputs a database file for each model
-      - ${files.directory}/${data.generate.name}.db:
-          cache: false
+      - output/logs/
+      - output/optuna.db
+
+  compile_results:
+    cmd: >
+      python -m deckard.layers.compile_results
+      --output_file output/combined/power_results.csv
+      --optuna_db sqlite:///output/optuna.db
+    deps:
+      - output/optuna.db
+      - ./config/torch_mnist.yaml
+      - ./config/torch_cifar10.yaml
+      - ./config/torch_cifar100.yaml
+      - ../../deckard
+    outs:
+      - output/combined/power_results.csv

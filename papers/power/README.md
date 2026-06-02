@@ -1,14 +1,21 @@
 # Power Experiment
 
-To reproduce this experiment locally, run which will parse the specified config from the `conf/` folder to params.yaml, then run `dvc repro`:
+The power paper now uses `deckard optimize` sweeps plus `compile_results` to merge all studies into one table.
+
+To reproduce locally from this directory:
 
 ```bash
-python -m deckard --config_file torch_mnist.yaml
-python -m deckard --config_file torch_cifar10.yaml
-python -m deckard --config_file torch_cifar100.yaml
+cd papers/power
+dvc repro
 ```
 
-To see the dashboard, find a *.db file. They should be in something like `mnist/reports/attack/torch_mnist.db`.
+The compiled results are written to:
+
+```bash
+output/combined/power_results.csv
+```
+
+To inspect the Optuna study database:
 
 ```bash
 sudo apt install python3.10-venv
@@ -16,7 +23,7 @@ python -m venv optuna
 source optuna/bin/activate
 python -m pip install git+https://github.com/simplymathematics/deckard.git
 python -m pip install optuna-dashboard
-optuna-dashboard sqlite:///torch_mnist.db
+optuna-dashboard sqlite:///output/optuna.db
 ```
 
 You will either need to open ports or connect to the filestore vm via vscode (recommended).

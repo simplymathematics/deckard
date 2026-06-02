@@ -7,8 +7,8 @@ stages:
     deps:
     - path: ./config/default.yaml
       hash: md5
-      md5: 61803de7b46f696ad1969ddf1483813f
-      size: 1395
+      md5: 37df802033cc336ebcadaad033d8d9c7
+      size: 2871
     params:
       config/default.yaml:
         attack_alias: ${attack.alias}
@@ -53,9 +53,7 @@ stages:
             n_trials: ???
           callbacks:
             deckard_optuna:
-              _target_: deckard.layers.optimize.OptunaStudyCallback
-              storage: ${hydra.sweeper.storage}
-              study_name: ${hydra.sweeper.study_name}
+              _target_: deckard.layers.optimize.DefaultOptimizerCallback
               directions: ${directions}
               optimizers: ${optimizers}
         model_alias: ${model.alias}
@@ -134,3 +132,592 @@ stages:
       md5: 98f02953bb7b0d60bbb6b48b99e7c939.dir
       size: 151352
       nfiles: 80
+  security_matrix@classification-linear-pgd:
+    cmd: "deckard optimize data=classification model=linear defense=baseline attack=pgd
+      experiment_name=security_classification_linear_pgd/* hydra.sweeper.study_name=security_classification_linear_pgd
+      hydra.sweeper.n_trials=20 --multirun\n"
+    deps:
+    - path: ../../deckard
+      hash: md5
+      md5: 24d989ccf40640e1ff1fade589b39d73.dir
+      size: 3942511
+      nfiles: 363
+    - path: ./config/default.yaml
+      hash: md5
+      md5: 37df802033cc336ebcadaad033d8d9c7
+      size: 2871
+    - path: .deckard_rc
+      hash: md5
+      md5: 51b9f507f812f5128c13536c1d2d61aa
+      size: 106
+    params:
+      config/default.yaml:
+        defaults:
+        - _self_
+        - data: classification
+        - model: rbf
+        - defense: baseline
+        - attack: hsj
+        - search/data: ${data}
+        - search/models: ${model}
+        - search/defenses: ${defense}
+        - search/attacks: ${attack}
+        - files: default
+        - plot: default
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: grid
+        - override hydra/launcher: joblib
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: 
+              security_${data_alias}_${model_alias}_${defense_alias}_${attack_alias}
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            max_failure_rate: 1.0
+            sampler:
+              _target_: optuna.samplers.GridSampler
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: ???
+          callbacks:
+            deckard_optuna:
+              _target_: deckard.layers.optimize.DefaultOptimizerCallback
+              directions: ${directions}
+              optimizers: ${optimizers}
+    outs:
+    - path: outputs/logs/security_classification_linear_pgd/
+      hash: md5
+      md5: 98453d963dc1ccf1d92cfba96e57ac9e.dir
+      size: 167408
+      nfiles: 80
+  security_matrix@classification-rbf-pgd:
+    cmd: "deckard optimize data=classification model=rbf defense=baseline attack=pgd
+      experiment_name=security_classification_rbf_pgd/* hydra.sweeper.study_name=security_classification_rbf_pgd
+      hydra.sweeper.n_trials=20 --multirun\n"
+    deps:
+    - path: ../../deckard
+      hash: md5
+      md5: 24d989ccf40640e1ff1fade589b39d73.dir
+      size: 3942511
+      nfiles: 363
+    - path: ./config/default.yaml
+      hash: md5
+      md5: 37df802033cc336ebcadaad033d8d9c7
+      size: 2871
+    - path: .deckard_rc
+      hash: md5
+      md5: 51b9f507f812f5128c13536c1d2d61aa
+      size: 106
+    params:
+      config/default.yaml:
+        defaults:
+        - _self_
+        - data: classification
+        - model: rbf
+        - defense: baseline
+        - attack: hsj
+        - search/data: ${data}
+        - search/models: ${model}
+        - search/defenses: ${defense}
+        - search/attacks: ${attack}
+        - files: default
+        - plot: default
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: grid
+        - override hydra/launcher: joblib
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: 
+              security_${data_alias}_${model_alias}_${defense_alias}_${attack_alias}
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            max_failure_rate: 1.0
+            sampler:
+              _target_: optuna.samplers.GridSampler
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: ???
+          callbacks:
+            deckard_optuna:
+              _target_: deckard.layers.optimize.DefaultOptimizerCallback
+              directions: ${directions}
+              optimizers: ${optimizers}
+    outs:
+    - path: outputs/logs/security_classification_rbf_pgd/
+      hash: md5
+      md5: ef9b2e92b0fcf400f6ac39b2f1decc25.dir
+      size: 171160
+      nfiles: 80
+  security_matrix@classification-poly-pgd:
+    cmd: "deckard optimize data=classification model=poly defense=baseline attack=pgd
+      experiment_name=security_classification_poly_pgd/* hydra.sweeper.study_name=security_classification_poly_pgd
+      hydra.sweeper.n_trials=20 --multirun\n"
+    deps:
+    - path: ../../deckard
+      hash: md5
+      md5: 24d989ccf40640e1ff1fade589b39d73.dir
+      size: 3942511
+      nfiles: 363
+    - path: ./config/default.yaml
+      hash: md5
+      md5: 37df802033cc336ebcadaad033d8d9c7
+      size: 2871
+    - path: .deckard_rc
+      hash: md5
+      md5: 51b9f507f812f5128c13536c1d2d61aa
+      size: 106
+    params:
+      config/default.yaml:
+        defaults:
+        - _self_
+        - data: classification
+        - model: rbf
+        - defense: baseline
+        - attack: hsj
+        - search/data: ${data}
+        - search/models: ${model}
+        - search/defenses: ${defense}
+        - search/attacks: ${attack}
+        - files: default
+        - plot: default
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: grid
+        - override hydra/launcher: joblib
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: 
+              security_${data_alias}_${model_alias}_${defense_alias}_${attack_alias}
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            max_failure_rate: 1.0
+            sampler:
+              _target_: optuna.samplers.GridSampler
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: ???
+          callbacks:
+            deckard_optuna:
+              _target_: deckard.layers.optimize.DefaultOptimizerCallback
+              directions: ${directions}
+              optimizers: ${optimizers}
+    outs:
+    - path: outputs/logs/security_classification_poly_pgd/
+      hash: md5
+      md5: 318e06481c449965d18f9f86d82eaf2b.dir
+      size: 174819
+      nfiles: 80
+  security_matrix@kdd-nsl-linear-pgd:
+    cmd: "deckard optimize data=kdd-nsl model=linear defense=baseline attack=pgd experiment_name=security_kdd-nsl_linear_pgd/*
+      hydra.sweeper.study_name=security_kdd-nsl_linear_pgd hydra.sweeper.n_trials=20
+      --multirun\n"
+    deps:
+    - path: ../../deckard
+      hash: md5
+      md5: 24d989ccf40640e1ff1fade589b39d73.dir
+      size: 3942511
+      nfiles: 363
+    - path: ./config/default.yaml
+      hash: md5
+      md5: 37df802033cc336ebcadaad033d8d9c7
+      size: 2871
+    - path: .deckard_rc
+      hash: md5
+      md5: 51b9f507f812f5128c13536c1d2d61aa
+      size: 106
+    params:
+      config/default.yaml:
+        defaults:
+        - _self_
+        - data: classification
+        - model: rbf
+        - defense: baseline
+        - attack: hsj
+        - search/data: ${data}
+        - search/models: ${model}
+        - search/defenses: ${defense}
+        - search/attacks: ${attack}
+        - files: default
+        - plot: default
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: grid
+        - override hydra/launcher: joblib
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: 
+              security_${data_alias}_${model_alias}_${defense_alias}_${attack_alias}
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            max_failure_rate: 1.0
+            sampler:
+              _target_: optuna.samplers.GridSampler
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: ???
+          callbacks:
+            deckard_optuna:
+              _target_: deckard.layers.optimize.DefaultOptimizerCallback
+              directions: ${directions}
+              optimizers: ${optimizers}
+    outs:
+    - path: outputs/logs/security_kdd-nsl_linear_pgd/
+      hash: md5
+      md5: 7b1eca3a38ac9cc4553710762661e257.dir
+      size: 153938
+      nfiles: 80
+  security_matrix@kdd-nsl-rbf-pgd:
+    cmd: "deckard optimize data=kdd-nsl model=rbf defense=baseline attack=pgd experiment_name=security_kdd-nsl_rbf_pgd/*
+      hydra.sweeper.study_name=security_kdd-nsl_rbf_pgd hydra.sweeper.n_trials=20
+      --multirun\n"
+    deps:
+    - path: ../../deckard
+      hash: md5
+      md5: 24d989ccf40640e1ff1fade589b39d73.dir
+      size: 3942511
+      nfiles: 363
+    - path: ./config/default.yaml
+      hash: md5
+      md5: 37df802033cc336ebcadaad033d8d9c7
+      size: 2871
+    - path: .deckard_rc
+      hash: md5
+      md5: 51b9f507f812f5128c13536c1d2d61aa
+      size: 106
+    params:
+      config/default.yaml:
+        defaults:
+        - _self_
+        - data: classification
+        - model: rbf
+        - defense: baseline
+        - attack: hsj
+        - search/data: ${data}
+        - search/models: ${model}
+        - search/defenses: ${defense}
+        - search/attacks: ${attack}
+        - files: default
+        - plot: default
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: grid
+        - override hydra/launcher: joblib
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: 
+              security_${data_alias}_${model_alias}_${defense_alias}_${attack_alias}
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            max_failure_rate: 1.0
+            sampler:
+              _target_: optuna.samplers.GridSampler
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: ???
+          callbacks:
+            deckard_optuna:
+              _target_: deckard.layers.optimize.DefaultOptimizerCallback
+              directions: ${directions}
+              optimizers: ${optimizers}
+    outs:
+    - path: outputs/logs/security_kdd-nsl_rbf_pgd/
+      hash: md5
+      md5: c347b11a4cc8c1264d6bf5a785ce9a9c.dir
+      size: 157793
+      nfiles: 80
+  security_matrix@kdd-nsl-poly-pgd:
+    cmd: "deckard optimize data=kdd-nsl model=poly defense=baseline attack=pgd experiment_name=security_kdd-nsl_poly_pgd/*
+      hydra.sweeper.study_name=security_kdd-nsl_poly_pgd hydra.sweeper.n_trials=20
+      --multirun\n"
+    deps:
+    - path: ../../deckard
+      hash: md5
+      md5: 24d989ccf40640e1ff1fade589b39d73.dir
+      size: 3942511
+      nfiles: 363
+    - path: ./config/default.yaml
+      hash: md5
+      md5: 37df802033cc336ebcadaad033d8d9c7
+      size: 2871
+    - path: .deckard_rc
+      hash: md5
+      md5: 51b9f507f812f5128c13536c1d2d61aa
+      size: 106
+    params:
+      config/default.yaml:
+        defaults:
+        - _self_
+        - data: classification
+        - model: rbf
+        - defense: baseline
+        - attack: hsj
+        - search/data: ${data}
+        - search/models: ${model}
+        - search/defenses: ${defense}
+        - search/attacks: ${attack}
+        - files: default
+        - plot: default
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: grid
+        - override hydra/launcher: joblib
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: 
+              security_${data_alias}_${model_alias}_${defense_alias}_${attack_alias}
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            max_failure_rate: 1.0
+            sampler:
+              _target_: optuna.samplers.GridSampler
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: ???
+          callbacks:
+            deckard_optuna:
+              _target_: deckard.layers.optimize.DefaultOptimizerCallback
+              directions: ${directions}
+              optimizers: ${optimizers}
+    outs:
+    - path: outputs/logs/security_kdd-nsl_poly_pgd/
+      hash: md5
+      md5: f424c1aa76ecd61f3b79d45280cf948c.dir
+      size: 161518
+      nfiles: 80
+  security_matrix@truthseeker-linear-pgd:
+    cmd: "deckard optimize data=truthseeker model=linear defense=baseline attack=pgd
+      experiment_name=security_truthseeker_linear_pgd/* hydra.sweeper.study_name=security_truthseeker_linear_pgd
+      hydra.sweeper.n_trials=20 --multirun\n"
+    deps:
+    - path: ../../deckard
+      hash: md5
+      md5: 24d989ccf40640e1ff1fade589b39d73.dir
+      size: 3942511
+      nfiles: 363
+    - path: ./config/default.yaml
+      hash: md5
+      md5: 37df802033cc336ebcadaad033d8d9c7
+      size: 2871
+    - path: .deckard_rc
+      hash: md5
+      md5: 51b9f507f812f5128c13536c1d2d61aa
+      size: 106
+    params:
+      config/default.yaml:
+        defaults:
+        - _self_
+        - data: classification
+        - model: rbf
+        - defense: baseline
+        - attack: hsj
+        - search/data: ${data}
+        - search/models: ${model}
+        - search/defenses: ${defense}
+        - search/attacks: ${attack}
+        - files: default
+        - plot: default
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: grid
+        - override hydra/launcher: joblib
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: 
+              security_${data_alias}_${model_alias}_${defense_alias}_${attack_alias}
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            max_failure_rate: 1.0
+            sampler:
+              _target_: optuna.samplers.GridSampler
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: ???
+          callbacks:
+            deckard_optuna:
+              _target_: deckard.layers.optimize.DefaultOptimizerCallback
+              directions: ${directions}
+              optimizers: ${optimizers}
+    outs:
+    - path: outputs/logs/security_truthseeker_linear_pgd/
+      hash: md5
+      md5: f2f0d3346c75c4fb61b01d4427fed009.dir
+      size: 154938
+      nfiles: 80
+  security_matrix@truthseeker-rbf-pgd:
+    cmd: "deckard optimize data=truthseeker model=rbf defense=baseline attack=pgd
+      experiment_name=security_truthseeker_rbf_pgd/* hydra.sweeper.study_name=security_truthseeker_rbf_pgd
+      hydra.sweeper.n_trials=20 --multirun\n"
+    deps:
+    - path: ../../deckard
+      hash: md5
+      md5: 24d989ccf40640e1ff1fade589b39d73.dir
+      size: 3942511
+      nfiles: 363
+    - path: ./config/default.yaml
+      hash: md5
+      md5: 37df802033cc336ebcadaad033d8d9c7
+      size: 2871
+    - path: .deckard_rc
+      hash: md5
+      md5: 51b9f507f812f5128c13536c1d2d61aa
+      size: 106
+    params:
+      config/default.yaml:
+        defaults:
+        - _self_
+        - data: classification
+        - model: rbf
+        - defense: baseline
+        - attack: hsj
+        - search/data: ${data}
+        - search/models: ${model}
+        - search/defenses: ${defense}
+        - search/attacks: ${attack}
+        - files: default
+        - plot: default
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: grid
+        - override hydra/launcher: joblib
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: 
+              security_${data_alias}_${model_alias}_${defense_alias}_${attack_alias}
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            max_failure_rate: 1.0
+            sampler:
+              _target_: optuna.samplers.GridSampler
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: ???
+          callbacks:
+            deckard_optuna:
+              _target_: deckard.layers.optimize.DefaultOptimizerCallback
+              directions: ${directions}
+              optimizers: ${optimizers}
+    outs:
+    - path: outputs/logs/security_truthseeker_rbf_pgd/
+      hash: md5
+      md5: d763bfcece377a765a1815674aa3be4b.dir
+      size: 158793
+      nfiles: 80
+  security_matrix@truthseeker-poly-pgd:
+    cmd: "deckard optimize data=truthseeker model=poly defense=baseline attack=pgd
+      experiment_name=security_truthseeker_poly_pgd/* hydra.sweeper.study_name=security_truthseeker_poly_pgd
+      hydra.sweeper.n_trials=20 --multirun\n"
+    deps:
+    - path: ../../deckard
+      hash: md5
+      md5: 24d989ccf40640e1ff1fade589b39d73.dir
+      size: 3942511
+      nfiles: 363
+    - path: ./config/default.yaml
+      hash: md5
+      md5: 37df802033cc336ebcadaad033d8d9c7
+      size: 2871
+    - path: .deckard_rc
+      hash: md5
+      md5: 51b9f507f812f5128c13536c1d2d61aa
+      size: 106
+    params:
+      config/default.yaml:
+        defaults:
+        - _self_
+        - data: classification
+        - model: rbf
+        - defense: baseline
+        - attack: hsj
+        - search/data: ${data}
+        - search/models: ${model}
+        - search/defenses: ${defense}
+        - search/attacks: ${attack}
+        - files: default
+        - plot: default
+        - override hydra/sweeper: optuna
+        - override hydra/sweeper/sampler: grid
+        - override hydra/launcher: joblib
+        hydra:
+          run:
+            dir: outputs/logs/${experiment_name}
+          sweep:
+            dir: outputs/logs/
+            subdir: ${hydra.sweeper.study_name}/${hydra.job.num}
+          sweeper:
+            study_name: 
+              security_${data_alias}_${model_alias}_${defense_alias}_${attack_alias}
+            storage: sqlite:///optuna.db
+            direction: ${directions}
+            max_failure_rate: 1.0
+            sampler:
+              _target_: optuna.samplers.GridSampler
+            _target_: 
+              hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+            n_trials: ???
+          callbacks:
+            deckard_optuna:
+              _target_: deckard.layers.optimize.DefaultOptimizerCallback
+              directions: ${directions}
+              optimizers: ${optimizers}
+    outs:
+    - path: outputs/logs/security_truthseeker_poly_pgd/
+      hash: md5
+      md5: 5b45a399f237b98216cc56ad06abb4ef.dir
+      size: 162518
+      nfiles: 80
+  compile_results:
+    cmd: "python -m deckard.layers.compile_results --output_file outputs/security_results.csv
+      --optuna_db sqlite:///optuna.db\n"
+    deps:
+    - path: ../../deckard
+      hash: md5
+      md5: 24d989ccf40640e1ff1fade589b39d73.dir
+      size: 3942511
+      nfiles: 363
+    - path: ./config/default.yaml
+      hash: md5
+      md5: 37df802033cc336ebcadaad033d8d9c7
+      size: 2871
+    - path: optuna.db
+      hash: md5
+      md5: 6bbb424dfff68d34c09cd29acfc726b0
+      size: 561152
+    outs:
+    - path: outputs/security_results.csv
+      hash: md5
+      md5: 5ec96e45417345db44b8a9972ad0295f
+      size: 477

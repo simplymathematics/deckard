@@ -1,0 +1,47 @@
+data:
+  _target_: deckard.data.DataConfig
+  name: make_classification
+  classifier: true
+  target: adv_failures
+
+model: weibull
+
+target: adv_failures
+event_col: adv_failures
+duration_col: adv_fit_time
+
+plots_folder: plots/survival
+dataset: sqlite:///optuna.db
+calculate_attack_failures: false
+
+covariates:
+  - adv_fit_time
+  - accuracy
+  - train_time
+  - atk_value
+  - def_value
+  - Epochs
+  - model_layers
+  - id
+  - atk_gen
+  - def_gen
+  - adv_failures
+  - adv_accuracy
+  - predict_time
+
+dummies:
+  atk_gen: "Atk:"
+  def_gen: "Def:"
+  id: "Data:"
+
+plot:
+  summary_plot: ${model}_summary_plot.pdf
+  summary_file: ${model}_summary.csv
+  plot: ${model}_aft.pdf
+  qq_file: ${model}_qq.pdf
+
+labels:
+  xlabel: log(theta)
+  ylabel: ''
+
+t0: 10.0

@@ -9,7 +9,7 @@ stages:
       deps:
         - ./config/
   simple_example:
-      cmd: deckard && echo "deckard ran successfully!" > deckard.log
+      cmd: deckard optimize && echo "deckard ran successfully!" > deckard.log
       outs:
         - deckard.log
       deps:
@@ -21,6 +21,7 @@ stages:
       do:
         cmd: >
           deckard
+          optimize
           data=${item} 
           ~model
           ~attack
@@ -33,7 +34,8 @@ stages:
           - output/scores/${item}.json
         deps:
           - .deckard_rc
-          - ../../deckard/data/pytorch.py
+          - ../../deckard/frameworks/pytorch/data.py
+          - ../pytorch/torch_fairness_dataset.py
         params:
           - ./config/data/${item}.yaml:
           ################################################
@@ -52,6 +54,7 @@ stages:
     do:
       cmd: >
         deckard 
+        optimize
         data=${item.data} 
         ~attack
         files.attack_file=null
@@ -62,8 +65,10 @@ stages:
         - output/models/${item.data}_resnet18_training.pkl
       deps:
         - .deckard_rc
-        - ../../deckard/data/pytorch.py
-        - ../../deckard/model/pytorch.py
+        - ../../deckard/frameworks/pytorch/data.py
+        - ../../deckard/frameworks/pytorch/model.py
+        - ../pytorch/torch_fairness_dataset.py
+        - ../pytorch/torch_example.py
       metrics:
         - output/scores/${item.data}_resnet18_training.json
       params:
@@ -82,8 +87,7 @@ stages:
   attack:
     matrix:
       data:
-        - {name: torch_mnist, num_channels: 1, num_classes: 10}
-        - {name: torch_cifar10, num_channels: 3, num_classes: 10}
+        - {name: celebA, num_channels: 3, num_classes: 2}
       attack:
           # - carlini_l0
           - carlini_l2
@@ -97,6 +101,7 @@ stages:
           - threshold
     cmd: >
       deckard 
+      optimize
       data=${item.data.name} 
       attack=${item.attack}
       files.model_file=output/models/${item.data.name}_resnet18_training.pkl
@@ -107,9 +112,11 @@ stages:
       - output/attacks/${item.data.name}_torch_resnet18_${item.attack}.pkl
     deps:
       - .deckard_rc
-      - ../../deckard/data/pytorch.py
-      - ../../deckard/model/pytorch.py
+      - ../../deckard/frameworks/pytorch/data.py
+      - ../../deckard/frameworks/pytorch/model.py
       - ../../deckard/attack/__init__.py
+      - ../pytorch/torch_fairness_dataset.py
+      - ../pytorch/torch_example.py
     metrics:
       - output/scores/${item.data.name}_torch_resnet18_${item.attack}.json
     params:
@@ -129,8 +136,7 @@ stages:
   defend:
     matrix:
       data:
-        - {name: torch_mnist, num_channels: 1, num_classes: 10}
-        - {name: torch_cifar10, num_channels: 3, num_classes: 10}
+        - {name: celebA, num_channels: 3, num_classes: 2}
       defense:
           # Postprocessing defenses
           - class-labels
@@ -150,6 +156,7 @@ stages:
           - spatial_smoothing
     cmd: >
       deckard 
+      optimize
       data=${item.data.name} 
       +defense=${item.defense}
       files.model_file=output/models/${item.data.name}_resnet18_${item.defense}.pkl
@@ -163,8 +170,10 @@ stages:
       - output/models/${item.data.name}_resnet18_${item.defense}.pkl
     deps:
       - .deckard_rc
-      - ../../deckard/data/pytorch.py
-      - ../../deckard/model/pytorch.py
+      - ../../deckard/frameworks/pytorch/data.py
+      - ../../deckard/frameworks/pytorch/model.py
+      - ../pytorch/torch_fairness_dataset.py
+      - ../pytorch/torch_example.py
     metrics:
       - output/scores/${item.data.name}_resnet18_${item.defense}.json
     params:

@@ -15,12 +15,12 @@ stages:
       md5: f80e8817bc0f38954d61017cd6363c13
       size: 89
   simple_example:
-    cmd: deckard && echo "Deckard ran successfully!" > deckard.log
+    cmd: deckard optimize && echo "deckard ran successfully!" > deckard.log
     deps:
     - path: ../../deckard/__main__.py
       hash: md5
-      md5: 9b0073b4bdc9f5bb5c39f02a531e6a3f
-      size: 23884
+      md5: 29094bdc655c41c1a05db24d99752ff0
+      size: 12361
     - path: .deckard_rc
       hash: md5
       md5: f80e8817bc0f38954d61017cd6363c13
@@ -28,40 +28,42 @@ stages:
     outs:
     - path: deckard.log
       hash: md5
-      md5: ac96bb25847dd3d698d84a7b4b7ffd1c
+      md5: fff6fc3a53784d7202f68d4416bee28b
       size: 26
   generate_data@torch_mnist:
-    cmd: "deckard data=torch_mnist  ~model ~attack files.model_file=null files.attack_file=null
-      experiment_name=torch_mnist\n"
+    cmd: "deckard optimize data=torch_mnist  ~model ~attack files.model_file=null
+      files.attack_file=null experiment_name=torch_mnist\n"
     deps:
-    - path: ../../deckard/data/pytorch.py
+    - path: ../../deckard/frameworks/pytorch/data.py
       hash: md5
-      md5: f00a44ac18924c5b5537d1d87d8057d3
-      size: 22759
+      md5: c2425dc765c5d333d0207297e8631fe3
+      size: 38730
     - path: .deckard_rc
       hash: md5
       md5: f80e8817bc0f38954d61017cd6363c13
       size: 89
     params:
       config/data/torch_mnist.yaml:
-        _target_: deckard.data.pytorch.PytorchDataConfig
+        _target_: deckard.frameworks.pytorch.data.PytorchDataConfig
         alias: torch_mnist
         classifier: true
         data_dir: raw_data/torch_mnist
-        dataset_name: torch_mnist
-        random_state: 42
-        stratify: true
-        test_size: 128
-        train_size: 128
+        name: torchvision.datasets.MNIST
+        sampler:
+          name: deckard.frameworks.pytorch.sample.PytorchSplitSampler
+          train_size: 128
+          test_size: 128
+          random_state: 42
+          stratify: true
     outs:
     - path: output/data/torch_mnist.pkl
       hash: md5
-      md5: 3eadc203dae8cb38f89981b8a3ee923a
-      size: 220887457
+      md5: 58e617ae2550a6e251ad121d7aaa0f82
+      size: 237307393
     - path: output/scores/torch_mnist.json
       hash: md5
-      md5: 3fbf1a764099682bed874d0e423a6915
-      size: 287
+      md5: 5f1874a9ac1adc3e0afc12c16e5bced2
+      size: 3839
   generate_data@torch_cifar:
     cmd: "deckard  data=torch_cifar  +files.data_file=data/torch_cifar.pkl  +files.score_file=scores/data/torch_cifar.json
       ~model  ~attack\n"
@@ -95,34 +97,36 @@ stages:
       md5: 96f127d0e1f159072b409d559443a307
       size: 209
   train@0:
-    cmd: "deckard  data=torch_mnist  ~attack files.attack_file=null experiment_name=torch_mnist_resnet18_training
+    cmd: "deckard  optimize data=torch_mnist  ~attack files.attack_file=null experiment_name=torch_mnist_resnet18_training
       ++model.model_params.num_channels=1 ++model.model_params.num_classes=10\n"
     deps:
-    - path: ../../deckard/data/pytorch.py
+    - path: ../../deckard/frameworks/pytorch/data.py
       hash: md5
-      md5: 7fcddabdc256bf8a9471eb54a1335c24
-      size: 17495
-    - path: ../../deckard/model/pytorch.py
+      md5: c2425dc765c5d333d0207297e8631fe3
+      size: 38730
+    - path: ../../deckard/frameworks/pytorch/model.py
       hash: md5
-      md5: e9ed74d01a8bd8369314818cd268eb55
-      size: 20766
+      md5: 6f62d80c320db6d1c3ad2318f5f2b966
+      size: 49492
     - path: .deckard_rc
       hash: md5
       md5: f80e8817bc0f38954d61017cd6363c13
       size: 89
     params:
       config/data/torch_mnist.yaml:
-        _target_: deckard.data.pytorch.PytorchDataConfig
+        _target_: deckard.frameworks.pytorch.data.PytorchDataConfig
         alias: torch_mnist
         classifier: true
         data_dir: raw_data/torch_mnist
-        dataset_name: torch_mnist
-        random_state: 42
-        stratify: true
-        test_size: 128
-        train_size: 128
+        name: torchvision.datasets.MNIST
+        sampler:
+          name: deckard.frameworks.pytorch.sample.PytorchSplitSampler
+          train_size: 128
+          test_size: 128
+          random_state: 42
+          stratify: true
       config/model/default.yaml:
-        _target_: deckard.model.pytorch.PytorchModelConfig
+        _target_: deckard.frameworks.pytorch.model.PytorchModelConfig
         alias: torch_resnet18
         classifier: true
         clip_values:
@@ -135,12 +139,12 @@ stages:
         fit_params:
           nb_epochs: 3
           batch_size: 1024
-          verbose: true
+          verbose: false
         library: pytorch
         model_params:
           num_channels: 1
           num_classes: 10
-        model_type: torch_example.ResNet18
+        name: torch_example.py:ResNet18
         optimizer:
           name: SGD
           lr: 0.01
@@ -148,73 +152,77 @@ stages:
     outs:
     - path: output/models/torch_mnist_resnet18_training.pkl
       hash: md5
-      md5: 5464c03b4f2a9d32e347773e8e0e2c30
-      size: 89513278
+      md5: 2f0fab02c5a604f40577cd1ab7fd746d
+      size: 44781775
     - path: output/scores/torch_mnist_resnet18_training.json
       hash: md5
-      md5: c4f1a512466c7c07d5e412f33ec52025
-      size: 576
+      md5: 403f2d0f83caa9eb565aa0b54066805f
+      size: 49212
   generate_data@torch_cifar10:
-    cmd: "deckard data=torch_cifar10  ~model ~attack files.model_file=null files.attack_file=null
-      experiment_name=torch_cifar10\n"
+    cmd: "deckard optimize data=torch_cifar10  ~model ~attack files.model_file=null
+      files.attack_file=null experiment_name=torch_cifar10\n"
     deps:
-    - path: ../../deckard/data/pytorch.py
+    - path: ../../deckard/frameworks/pytorch/data.py
       hash: md5
-      md5: f00a44ac18924c5b5537d1d87d8057d3
-      size: 22759
+      md5: c2425dc765c5d333d0207297e8631fe3
+      size: 38730
     - path: .deckard_rc
       hash: md5
       md5: f80e8817bc0f38954d61017cd6363c13
       size: 89
     params:
       config/data/torch_cifar10.yaml:
-        _target_: deckard.data.pytorch.PytorchDataConfig
+        _target_: deckard.frameworks.pytorch.data.PytorchDataConfig
         alias: torch_cifar10
         classifier: true
         data_dir: raw_data/torch_cifar10
-        dataset_name: torch_cifar10
-        random_state: 42
-        stratify: true
-        test_size: 128
-        train_size: 128
+        name: torchvision.datasets.CIFAR10
+        sampler:
+          name: deckard.frameworks.pytorch.sample.PytorchSplitSampler
+          train_size: 128
+          test_size: 128
+          random_state: 42
+          stratify: true
     outs:
     - path: output/data/torch_cifar10.pkl
       hash: md5
-      md5: cc0b83ea19aa3ba6b0a451d1741572a9
-      size: 740910369
+      md5: a9a347d2ef405b11c2b64bf0f8053828
+      size: 769457233
     - path: output/scores/torch_cifar10.json
       hash: md5
-      md5: 4768e58cdee0f34c4612285a23d9c30b
-      size: 278
+      md5: bacbff13e98ccbdba52613d816b14b77
+      size: 3784
   train@1:
-    cmd: "deckard  data=torch_cifar10  ~attack files.attack_file=null experiment_name=torch_cifar10_resnet18_training
+    cmd: "deckard  optimize data=torch_cifar10  ~attack files.attack_file=null experiment_name=torch_cifar10_resnet18_training
       ++model.model_params.num_channels=3 ++model.model_params.num_classes=10\n"
     deps:
-    - path: ../../deckard/data/pytorch.py
+    - path: ../../deckard/frameworks/pytorch/data.py
       hash: md5
-      md5: 7fcddabdc256bf8a9471eb54a1335c24
-      size: 17495
-    - path: ../../deckard/model/pytorch.py
+      md5: c2425dc765c5d333d0207297e8631fe3
+      size: 38730
+    - path: ../../deckard/frameworks/pytorch/model.py
       hash: md5
-      md5: e9ed74d01a8bd8369314818cd268eb55
-      size: 20766
+      md5: 6f62d80c320db6d1c3ad2318f5f2b966
+      size: 49492
     - path: .deckard_rc
       hash: md5
       md5: f80e8817bc0f38954d61017cd6363c13
       size: 89
     params:
       config/data/torch_cifar10.yaml:
-        _target_: deckard.data.pytorch.PytorchDataConfig
+        _target_: deckard.frameworks.pytorch.data.PytorchDataConfig
         alias: torch_cifar10
         classifier: true
         data_dir: raw_data/torch_cifar10
-        dataset_name: torch_cifar10
-        random_state: 42
-        stratify: true
-        test_size: 128
-        train_size: 128
+        name: torchvision.datasets.CIFAR10
+        sampler:
+          name: deckard.frameworks.pytorch.sample.PytorchSplitSampler
+          train_size: 128
+          test_size: 128
+          random_state: 42
+          stratify: true
       config/model/default.yaml:
-        _target_: deckard.model.pytorch.PytorchModelConfig
+        _target_: deckard.frameworks.pytorch.model.PytorchModelConfig
         alias: torch_resnet18
         classifier: true
         clip_values:
@@ -227,12 +235,12 @@ stages:
         fit_params:
           nb_epochs: 3
           batch_size: 1024
-          verbose: true
+          verbose: false
         library: pytorch
         model_params:
           num_channels: 1
           num_classes: 10
-        model_type: torch_example.ResNet18
+        name: torch_example.py:ResNet18
         optimizer:
           name: SGD
           lr: 0.01
@@ -240,29 +248,29 @@ stages:
     outs:
     - path: output/models/torch_cifar10_resnet18_training.pkl
       hash: md5
-      md5: ed0052dc6f7d04dba5b84fd8c97cc721
-      size: 89563463
+      md5: fdb69e325baeb8e3ad0c4384a3f07a02
+      size: 44806863
     - path: output/scores/torch_cifar10_resnet18_training.json
       hash: md5
-      md5: 280f5dcda47247f4453ba97aa24025c8
-      size: 577
+      md5: 32cc0493bacf2dbf86707076b59d8c9d
+      size: 49032
   attack@data0-deepfool:
-    cmd: "deckard  data=torch_mnist  attack=deepfool files.model_file=output/models/torch_mnist_resnet18_training.pkl
+    cmd: "deckard  optimize data=torch_mnist  attack=deepfool files.model_file=output/models/torch_mnist_resnet18_training.pkl
       experiment_name=torch_mnist_torch_resnet18_deepfool ++model.model_params.num_channels=1
       ++model.model_params.num_classes=10\n"
     deps:
     - path: ../../deckard/attack/__init__.py
       hash: md5
-      md5: 1285b69c9d0ad42050771aedea7427a0
-      size: 38600
-    - path: ../../deckard/data/pytorch.py
+      md5: f80751e91f4b07360ae915595a8fc90e
+      size: 288
+    - path: ../../deckard/frameworks/pytorch/data.py
       hash: md5
-      md5: 7fcddabdc256bf8a9471eb54a1335c24
-      size: 17495
-    - path: ../../deckard/model/pytorch.py
+      md5: c2425dc765c5d333d0207297e8631fe3
+      size: 38730
+    - path: ../../deckard/frameworks/pytorch/model.py
       hash: md5
-      md5: e9ed74d01a8bd8369314818cd268eb55
-      size: 20766
+      md5: 6f62d80c320db6d1c3ad2318f5f2b966
+      size: 49492
     - path: .deckard_rc
       hash: md5
       md5: f80e8817bc0f38954d61017cd6363c13
@@ -275,19 +283,21 @@ stages:
           max_iter: 10
           batch_size: 100
           nb_grads: 10
-        attack_type: art.attacks.evasion.DeepFool
+        name: art.attacks.evasion.DeepFool
       config/data/torch_mnist.yaml:
-        _target_: deckard.data.pytorch.PytorchDataConfig
+        _target_: deckard.frameworks.pytorch.data.PytorchDataConfig
         alias: torch_mnist
         classifier: true
         data_dir: raw_data/torch_mnist
-        dataset_name: torch_mnist
-        random_state: 42
-        stratify: true
-        test_size: 128
-        train_size: 128
+        name: torchvision.datasets.MNIST
+        sampler:
+          name: deckard.frameworks.pytorch.sample.PytorchSplitSampler
+          train_size: 128
+          test_size: 128
+          random_state: 42
+          stratify: true
       config/model/default.yaml:
-        _target_: deckard.model.pytorch.PytorchModelConfig
+        _target_: deckard.frameworks.pytorch.model.PytorchModelConfig
         alias: torch_resnet18
         classifier: true
         clip_values:
@@ -300,12 +310,12 @@ stages:
         fit_params:
           nb_epochs: 3
           batch_size: 1024
-          verbose: true
+          verbose: false
         library: pytorch
         model_params:
           num_channels: 1
           num_classes: 10
-        model_type: torch_example.ResNet18
+        name: torch_example.py:ResNet18
         optimizer:
           name: SGD
           lr: 0.01
@@ -313,29 +323,29 @@ stages:
     outs:
     - path: output/attacks/torch_mnist_torch_resnet18_deepfool.pkl
       hash: md5
-      md5: b2046c5ca1c953055462596b8ce411b7
-      size: 6960
+      md5: 2e05b701ce9bf4ec9229aed510de8404
+      size: 60582
     - path: output/scores/torch_mnist_torch_resnet18_deepfool.json
       hash: md5
-      md5: 2a62c5f6c0238e682d6fd6e91e26916b
-      size: 896
+      md5: e9a52a41a8f9e7685eaa9d5592b37f24
+      size: 139414
   attack@data0-fgm:
-    cmd: "deckard  data=torch_mnist  attack=fgm files.model_file=output/models/torch_mnist_resnet18_training.pkl
+    cmd: "deckard  optimize data=torch_mnist  attack=fgm files.model_file=output/models/torch_mnist_resnet18_training.pkl
       experiment_name=torch_mnist_torch_resnet18_fgm ++model.model_params.num_channels=1
       ++model.model_params.num_classes=10\n"
     deps:
     - path: ../../deckard/attack/__init__.py
       hash: md5
-      md5: 1285b69c9d0ad42050771aedea7427a0
-      size: 38600
-    - path: ../../deckard/data/pytorch.py
+      md5: f80751e91f4b07360ae915595a8fc90e
+      size: 288
+    - path: ../../deckard/frameworks/pytorch/data.py
       hash: md5
-      md5: 7fcddabdc256bf8a9471eb54a1335c24
-      size: 17495
-    - path: ../../deckard/model/pytorch.py
+      md5: c2425dc765c5d333d0207297e8631fe3
+      size: 38730
+    - path: ../../deckard/frameworks/pytorch/model.py
       hash: md5
-      md5: e9ed74d01a8bd8369314818cd268eb55
-      size: 20766
+      md5: 6f62d80c320db6d1c3ad2318f5f2b966
+      size: 49492
     - path: .deckard_rc
       hash: md5
       md5: f80e8817bc0f38954d61017cd6363c13
@@ -350,20 +360,22 @@ stages:
           targeted: false
           eps: 1
           minimal: false
-          batch_size: ${data.data_params.batch_size}
-        attack_type: art.attacks.evasion.FastGradientMethod
+          batch_size: ${model.fit_params.batch_size}
+        name: art.attacks.evasion.FastGradientMethod
       config/data/torch_mnist.yaml:
-        _target_: deckard.data.pytorch.PytorchDataConfig
+        _target_: deckard.frameworks.pytorch.data.PytorchDataConfig
         alias: torch_mnist
         classifier: true
         data_dir: raw_data/torch_mnist
-        dataset_name: torch_mnist
-        random_state: 42
-        stratify: true
-        test_size: 128
-        train_size: 128
+        name: torchvision.datasets.MNIST
+        sampler:
+          name: deckard.frameworks.pytorch.sample.PytorchSplitSampler
+          train_size: 128
+          test_size: 128
+          random_state: 42
+          stratify: true
       config/model/default.yaml:
-        _target_: deckard.model.pytorch.PytorchModelConfig
+        _target_: deckard.frameworks.pytorch.model.PytorchModelConfig
         alias: torch_resnet18
         classifier: true
         clip_values:
@@ -376,12 +388,12 @@ stages:
         fit_params:
           nb_epochs: 3
           batch_size: 1024
-          verbose: true
+          verbose: false
         library: pytorch
         model_params:
           num_channels: 1
           num_classes: 10
-        model_type: torch_example.ResNet18
+        name: torch_example.py:ResNet18
         optimizer:
           name: SGD
           lr: 0.01
@@ -389,12 +401,12 @@ stages:
     outs:
     - path: output/attacks/torch_mnist_torch_resnet18_fgm.pkl
       hash: md5
-      md5: f2cc29b10a9c39ae5031797f952f4e68
-      size: 7191
+      md5: 622468fafff9b70add41e337fca57fca
+      size: 60854
     - path: output/scores/torch_mnist_torch_resnet18_fgm.json
       hash: md5
-      md5: a6ccf97a87b17502de2f9aa0bd1bcca6
-      size: 899
+      md5: efe7487c961078edddd7bce9b129743d
+      size: 139434
   attack@data0-patch:
     cmd: "deckard  data=torch_mnist  attack=patch files.model_file=output/models/torch_mnist_resnet18_training.pkl
       experiment_name=torch_mnist_torch_resnet18_patch ++model.model_params.num_channels=1
@@ -995,22 +1007,22 @@ stages:
       md5: f77581a10bb49f5b6fe4c91892e98478
       size: 905
   attack@data0-carlini_l2:
-    cmd: "deckard  data=torch_mnist  attack=carlini_l2 files.model_file=output/models/torch_mnist_resnet18_training.pkl
+    cmd: "deckard  optimize data=torch_mnist  attack=carlini_l2 files.model_file=output/models/torch_mnist_resnet18_training.pkl
       experiment_name=torch_mnist_torch_resnet18_carlini_l2 ++model.model_params.num_channels=1
       ++model.model_params.num_classes=10\n"
     deps:
     - path: ../../deckard/attack/__init__.py
       hash: md5
-      md5: 1285b69c9d0ad42050771aedea7427a0
-      size: 38600
-    - path: ../../deckard/data/pytorch.py
+      md5: f80751e91f4b07360ae915595a8fc90e
+      size: 288
+    - path: ../../deckard/frameworks/pytorch/data.py
       hash: md5
-      md5: 7fcddabdc256bf8a9471eb54a1335c24
-      size: 17495
-    - path: ../../deckard/model/pytorch.py
+      md5: c2425dc765c5d333d0207297e8631fe3
+      size: 38730
+    - path: ../../deckard/frameworks/pytorch/model.py
       hash: md5
-      md5: e9ed74d01a8bd8369314818cd268eb55
-      size: 20766
+      md5: 6f62d80c320db6d1c3ad2318f5f2b966
+      size: 49492
     - path: .deckard_rc
       hash: md5
       md5: f80e8817bc0f38954d61017cd6363c13
@@ -1023,24 +1035,26 @@ stages:
           batch_size: 2
           max_iter: 1
           confidence: 0.99
-          verbose: true
+          verbose: false
           binary_search_steps: 1
           max_halving: 1
           max_doubling: 1
         attack_size: 4
-        attack_type: art.attacks.evasion.CarliniL2Method
+        name: art.attacks.evasion.CarliniL2Method
       config/data/torch_mnist.yaml:
-        _target_: deckard.data.pytorch.PytorchDataConfig
+        _target_: deckard.frameworks.pytorch.data.PytorchDataConfig
         alias: torch_mnist
         classifier: true
         data_dir: raw_data/torch_mnist
-        dataset_name: torch_mnist
-        random_state: 42
-        stratify: true
-        test_size: 128
-        train_size: 128
+        name: torchvision.datasets.MNIST
+        sampler:
+          name: deckard.frameworks.pytorch.sample.PytorchSplitSampler
+          train_size: 128
+          test_size: 128
+          random_state: 42
+          stratify: true
       config/model/default.yaml:
-        _target_: deckard.model.pytorch.PytorchModelConfig
+        _target_: deckard.frameworks.pytorch.model.PytorchModelConfig
         alias: torch_resnet18
         classifier: true
         clip_values:
@@ -1053,12 +1067,12 @@ stages:
         fit_params:
           nb_epochs: 3
           batch_size: 1024
-          verbose: true
+          verbose: false
         library: pytorch
         model_params:
           num_channels: 1
           num_classes: 10
-        model_type: torch_example.ResNet18
+        name: torch_example.py:ResNet18
         optimizer:
           name: SGD
           lr: 0.01
@@ -1066,29 +1080,29 @@ stages:
     outs:
     - path: output/attacks/torch_mnist_torch_resnet18_carlini_l2.pkl
       hash: md5
-      md5: 1f42db00f1cad9e90b93ea17bec42ddf
-      size: 2325
+      md5: 01749de0d591f4044993732575180252
+      size: 9188
     - path: output/scores/torch_mnist_torch_resnet18_carlini_l2.json
       hash: md5
-      md5: 4db3b75c3964ac1fa3ed796a669ecac1
-      size: 888
+      md5: 532d5cf9fb7c891bc002d1fe1b0a5f3a
+      size: 137549
   attack@data0-carlini_linf:
-    cmd: "deckard  data=torch_mnist  attack=carlini_linf files.model_file=output/models/torch_mnist_resnet18_training.pkl
+    cmd: "deckard  optimize data=torch_mnist  attack=carlini_linf files.model_file=output/models/torch_mnist_resnet18_training.pkl
       experiment_name=torch_mnist_torch_resnet18_carlini_linf ++model.model_params.num_channels=1
       ++model.model_params.num_classes=10\n"
     deps:
     - path: ../../deckard/attack/__init__.py
       hash: md5
-      md5: 1285b69c9d0ad42050771aedea7427a0
-      size: 38600
-    - path: ../../deckard/data/pytorch.py
+      md5: f80751e91f4b07360ae915595a8fc90e
+      size: 288
+    - path: ../../deckard/frameworks/pytorch/data.py
       hash: md5
-      md5: 7fcddabdc256bf8a9471eb54a1335c24
-      size: 17495
-    - path: ../../deckard/model/pytorch.py
+      md5: c2425dc765c5d333d0207297e8631fe3
+      size: 38730
+    - path: ../../deckard/frameworks/pytorch/model.py
       hash: md5
-      md5: e9ed74d01a8bd8369314818cd268eb55
-      size: 20766
+      md5: 6f62d80c320db6d1c3ad2318f5f2b966
+      size: 49492
     - path: .deckard_rc
       hash: md5
       md5: f80e8817bc0f38954d61017cd6363c13
@@ -1101,21 +1115,23 @@ stages:
           max_iter: 1
           confidence: 0.99
           batch_size: 2
-          verbose: true
+          verbose: false
         attack_size: 4
-        attack_type: art.attacks.evasion.CarliniLInfMethod
+        name: art.attacks.evasion.CarliniLInfMethod
       config/data/torch_mnist.yaml:
-        _target_: deckard.data.pytorch.PytorchDataConfig
+        _target_: deckard.frameworks.pytorch.data.PytorchDataConfig
         alias: torch_mnist
         classifier: true
         data_dir: raw_data/torch_mnist
-        dataset_name: torch_mnist
-        random_state: 42
-        stratify: true
-        test_size: 128
-        train_size: 128
+        name: torchvision.datasets.MNIST
+        sampler:
+          name: deckard.frameworks.pytorch.sample.PytorchSplitSampler
+          train_size: 128
+          test_size: 128
+          random_state: 42
+          stratify: true
       config/model/default.yaml:
-        _target_: deckard.model.pytorch.PytorchModelConfig
+        _target_: deckard.frameworks.pytorch.model.PytorchModelConfig
         alias: torch_resnet18
         classifier: true
         clip_values:
@@ -1128,12 +1144,12 @@ stages:
         fit_params:
           nb_epochs: 3
           batch_size: 1024
-          verbose: true
+          verbose: false
         library: pytorch
         model_params:
           num_channels: 1
           num_classes: 10
-        model_type: torch_example.ResNet18
+        name: torch_example.py:ResNet18
         optimizer:
           name: SGD
           lr: 0.01
@@ -1141,12 +1157,12 @@ stages:
     outs:
     - path: output/attacks/torch_mnist_torch_resnet18_carlini_linf.pkl
       hash: md5
-      md5: 23f4829f091f91de8d888e1fffedda14
-      size: 2097
+      md5: 1adca7fa4b02f7b66291c7b144203a8a
+      size: 8895
     - path: output/scores/torch_mnist_torch_resnet18_carlini_linf.json
       hash: md5
-      md5: e48c3394f21d10dbdf90f175b1ab7ada
-      size: 890
+      md5: 2049c418a0afee87db0665e7a786c389
+      size: 137439
   attack@data0-hsj:
     cmd: "deckard  data=torch_mnist  attack=hsj files.model_file=output/models/torch_mnist_resnet18_training.pkl
       experiment_name=torch_mnist_torch_resnet18_hsj ++model.model_params.num_channels=1

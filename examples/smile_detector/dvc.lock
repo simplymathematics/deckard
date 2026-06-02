@@ -1,0 +1,16 @@
+schema: '2.0'
+stages:
+  set_config_paths:
+    cmd: "echo \"export DECKARD_CONFIG_DIR=./config\" > .deckard_rc && echo \"export
+      DECKARD_DEFAULT_CONFIG_FILE=torch_default.yaml\" >> .deckard_rc && source .deckard_rc\n"
+    deps:
+    - path: ./config/
+      hash: md5
+      md5: eb176e2df99a664536cae8ced4cd052f.dir
+      size: 6570
+      nfiles: 32
+    outs:
+    - path: .deckard_rc
+      hash: md5
+      md5: f80e8817bc0f38954d61017cd6363c13
+      size: 89
