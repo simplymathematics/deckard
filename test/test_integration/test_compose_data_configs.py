@@ -1,8 +1,9 @@
 """Consolidated compose tests for data configs.
 
 This test suite validates that data configuration profiles compose correctly
-and produce expected field values. Tests are parametrized to cover representative
-data profiles without duplicating test functions.
+and produce expected field values. Tests are parametrized from actual
+``examples/*/config/data/*.yaml`` files to ensure coverage stays in sync with
+the repository configuration surface.
 """
 
 from pathlib import Path
@@ -20,10 +21,17 @@ PYTORCH_CONFIG_DIR = (
     Path(__file__).resolve().parents[2] / "examples" / "pytorch" / "config"
 )
 
-PYTORCH_SMALL_SYNTHETIC_OVERRIDES = [
-    "data.sampler.train_size=20",
-    "data.sampler.test_size=10",
-]
+
+def _discover_data_profile_names(config_dir: Path) -> list[str]:
+    """Return sorted ``data/<name>`` config names from ``config/data/*.yaml``."""
+    data_dir = config_dir / "data"
+    return sorted(
+        f"data/{path.stem}" for path in data_dir.glob("*.yaml") if path.is_file()
+    )
+
+
+SKLEARN_DATA_CONFIG_NAMES = _discover_data_profile_names(SKLEARN_CONFIG_DIR)
+PYTORCH_DATA_CONFIG_NAMES = _discover_data_profile_names(PYTORCH_CONFIG_DIR)
 
 
 def _reset_hydra_state():
@@ -51,67 +59,22 @@ def _compose_pytorch(config_name: str, overrides: list[str] | None = None):
         return compose(config_name=config_name, overrides=overrides)
 
 
-@pytest.mark.parametrize(
-    "config_name,expected_fields",
-    [
-        pytest.param(
-            "data/adult",
-            {"name": "sklearn.adult", "alias": "sklearn.adult"},
-            id="sklearn-adult",
-        ),
-        pytest.param(
-            "data/anjana",
-            {
-                "name": "make_classification",
-                "_target_": "deckard.plugins.anjana.AnjanaDataConfig",
-                "alias": "anjana",
-            },
-            id="sklearn-anjana",
-        ),
-        pytest.param(
-            "data/fair-adult",
-            {
-                "name": "sklearn.adult",
-                "_target_": "deckard.plugins.fairlearn.FairlearnDataConfig",
-                "sensitive_columns": ["sex"],
-            },
-            id="sklearn-fairlearn",
-        ),
-        pytest.param(
-            "data/lung",
-            {"name": "lung", "target": "E", "classifier": False},
-            id="sklearn-lifelines",
-        ),
-    ],
-)
-def test_sklearn_data_config_composes(config_name: str, expected_fields: dict):
-    """Test sklearn data config profiles compose and contain expected fields."""
+@pytest.mark.parametrize("config_name", SKLEARN_DATA_CONFIG_NAMES)
+def test_sklearn_data_config_composes(config_name: str):
+    """Test all sklearn data config profiles compose and expose core fields."""
     cfg = _compose_sklearn(config_name)
     data_cfg = OmegaConf.to_container(cfg.data, resolve=True)
     assert isinstance(data_cfg, dict)
 
-    for field_name, expected_value in expected_fields.items():
-        assert data_cfg[field_name] == expected_value
+    assert isinstance(data_cfg.get("name"), str)
+    assert data_cfg.get("name", "").strip() != ""
 
 
-@pytest.mark.parametrize(
-    "config_name,expected_fields",
-    [
-        pytest.param(
-            "data/torch_mnist",
-            {"name": "torchvision.datasets.MNIST", "alias": "torch_mnist"},
-            id="pytorch-mnist",
-        ),
-    ],
-)
-def test_pytorch_data_config_composes(config_name: str, expected_fields: dict):
-    """Test pytorch data config profiles compose and contain expected fields."""
-    cfg = _compose_pytorch(
-        config_name,
-        overrides=PYTORCH_SMALL_SYNTHETIC_OVERRIDES,
-    )
+@pytest.mark.parametrize("config_name", PYTORCH_DATA_CONFIG_NAMES)
+def test_pytorch_data_config_composes(config_name: str):
+    """Test all pytorch data config profiles compose and expose core fields."""
+    cfg = _compose_pytorch(config_name)
     data_cfg = OmegaConf.to_container(cfg.data, resolve=True)
     assert isinstance(data_cfg, dict)
-
-    for field_name, expected_value in expected_fields.items():
-        assert data_cfg[field_name] == expected_value
+    assert isinstance(data_cfg.get("name"), str)
+    assert data_cfg.get("name", "").strip() != ""

@@ -39,7 +39,7 @@ def test_sklearn_data_profile_fairlearn_composes():
     cfg = _compose_sklearn("data/fair-adult")
     data_cfg = OmegaConf.to_container(cfg.data, resolve=True)
 
-    assert data_cfg["name"] == "sklearn.adult"
+    assert data_cfg["name"].endswith("raw_data/adult_income/adult_income_dataset.csv")
     assert data_cfg["_target_"] == "deckard.plugins.fairlearn.FairlearnDataConfig"
     assert data_cfg["sensitive_columns"] == ["sex"]
 

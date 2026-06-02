@@ -1,0 +1,21 @@
+name: make_regression
+_target_: deckard.frameworks.pytorch.data.PytorchDataConfig
+data_params:
+  n_samples: 10000
+  n_features: 20
+  n_informative: 10
+  noise: 0.1
+  random_state: 42
+pipeline:
+  imputer:
+    name: sklearn.impute.SimpleImputer
+    strategy: mean
+  scaler:
+    name: sklearn.preprocessing.StandardScaler
+sampler:
+  name: deckard.frameworks.pytorch.sample.PytorchSplitSampler
+  test_size: 0.2
+  random_state: 42
+  stratify: false
+classifier: false
+alias: make_regression

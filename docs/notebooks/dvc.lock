@@ -937,47 +937,44 @@ stages:
       nfiles: 28
     - path: dvc.ipynb
       hash: md5
-      md5: 176b85d863fc1756112fd2d16ca73a85
-      size: 7819
+      md5: 52bba64bc30d28c2bb20d0cdd07378c2
+      size: 9462
   notebook_optimize:
     cmd: jupyter nbconvert --to notebook --execute --inplace optimize.ipynb
     deps:
     - path: ../../deckard/experiment/
       hash: md5
-      md5: 852dc1041b7b31fc1eaa4c062646b130.dir
-      size: 353177
-      nfiles: 15
+      md5: 846b8c22b0359bef9b07c75a9e51b33f.dir
+      size: 413602
+      nfiles: 17
     - path: ../../deckard/file.py
       hash: md5
-      md5: ed5b8e05e4335875d2d4c9fae6bbbe1e
-      size: 11194
+      md5: 96487a825dc8b4a0ca01f207c44725a6
+      size: 15181
     - path: ../../deckard/layers/
       hash: md5
-      md5: 5ac397488552409ceea356a53f5c53ae.dir
-      size: 256815
-      nfiles: 24
+      md5: 6dd4b51b1d5ce0865f1e474397e336e3.dir
+      size: 315453
+      nfiles: 30
     - path: ../../deckard/utils.py
       hash: md5
-      md5: ad1c82ede7a441c015653e9f02dc49c1
-      size: 53288
+      md5: 18a0f7f49976546f33c1625871bf51b2
+      size: 58971
     - path: ../../examples/sklearn/config/
       hash: md5
-      md5: a09d5d0a787a2cee14e9aff49a78174a.dir
-      size: 48231
-      nfiles: 148
+      md5: 12d310e8accd6d408042c087289a8feb.dir
+      size: 53101
+      nfiles: 192
     - path: optimize.ipynb
       hash: md5
-      md5: 6d6d0fa777e00e8e536d4d4eea8b9a6b
-      size: 465210
+      md5: 617182e7e9642af6f8cdd486a696a598
+      size: 34329
     outs:
-    - path: ./build/optimize_notebook/multirun_params.yaml
+    - path: ./build/optimize_notebook/
       hash: md5
-      md5: c3ed8308f7eab6faaf754ae5d586705a
-      size: 166
-    - path: ./build/optimize_notebook/run_params.yaml
-      hash: md5
-      md5: 989ebc34748f4c8f86a8eedc19d60432
-      size: 154
+      md5: d5dfad37448d995ab9f0b54aceccbc66.dir
+      size: 211521
+      nfiles: 19
   notebook_vega:
     cmd: jupyter nbconvert --to notebook --execute --inplace vega.ipynb
     deps:
@@ -1117,8 +1114,8 @@ stages:
       nfiles: 20
     - path: ../../deckard/data/
       hash: md5
-      md5: 585cf2474d4b7701c7593c58ca6f2928.dir
-      size: 372243
+      md5: 2d7e968227d22429e0de56f4d598ba37.dir
+      size: 380204
       nfiles: 35
     - path: ../../deckard/experiment/
       hash: md5
@@ -1150,10 +1147,61 @@ stages:
       size: 58971
     - path: fairlearn.ipynb
       hash: md5
-      md5: 210412086a84177260cb66dc9850541a
-      size: 119228
+      md5: 08e69076cdf3be11a745f97fad5dca6e
+      size: 119760
     outs:
-    - path: ./build/fairlearn/torch_fair_data.pkl
+    - path: ./build/fairlearn/
       hash: md5
-      md5: ebc4f04fee57b26d32998a117fbe039c
-      size: 10768
+      md5: 85ffdca35b869722c69f2b60028e1890.dir
+      size: 256072013
+      nfiles: 8
+  notebook_dvclive:
+    cmd: jupyter nbconvert --to notebook --execute --inplace dvclive.ipynb
+    deps:
+    - path: ../../deckard/artifacts.py
+      hash: md5
+      md5: cb26c92ee7b0a03d1994de2e48006d8e
+      size: 36702
+    - path: ../../deckard/experiment/
+      hash: md5
+      md5: 846b8c22b0359bef9b07c75a9e51b33f.dir
+      size: 413602
+      nfiles: 17
+    - path: ../../deckard/file.py
+      hash: md5
+      md5: 96487a825dc8b4a0ca01f207c44725a6
+      size: 15181
+    - path: ../../deckard/score/
+      hash: md5
+      md5: fb9de949b64436f9f41aaaf52b675772.dir
+      size: 294068
+      nfiles: 29
+    - path: ../../deckard/utils.py
+      hash: md5
+      md5: 18a0f7f49976546f33c1625871bf51b2
+      size: 58971
+    - path: ../../examples/sklearn/config/default.yaml
+      hash: md5
+      md5: b38d95025d639d92ad9f4bf62ac89361
+      size: 1448
+    - path: ../../examples/sklearn/config/score/classification.yaml
+      hash: md5
+      md5: 31f3ed2a1f5c2c80004374156cc0d22c
+      size: 621
+    - path: dvclive.ipynb
+      hash: md5
+      md5: f776efd3a06bd7f9d439fee2b48dfb51
+      size: 21951
+    outs:
+    - path: ./build/dvclive/params.runtime_cache.pkl
+      hash: md5
+      md5: 202fb19f60f740d5cb12d1fa9d4d0625
+      size: 785530
+    - path: ./build/dvclive/params.yaml
+      hash: md5
+      md5: bb999c07b6502a97e95cf19f02eaff7d
+      size: 30867
+    - path: ./build/dvclive/scores.json
+      hash: md5
+      md5: 7e2e0c290536093db42461491d901176
+      size: 14295

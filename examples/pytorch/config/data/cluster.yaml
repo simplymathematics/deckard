@@ -1,0 +1,23 @@
+name: make_classification
+_target_: deckard.frameworks.pytorch.data.PytorchDataConfig
+data_params:
+  n_samples: 10000
+  n_features: 20
+  n_informative: 15
+  n_redundant: 5
+  n_classes: 2
+  n_clusters_per_class: 3
+  random_state: 42
+pipeline:
+  imputer:
+    name: sklearn.impute.SimpleImputer
+    strategy: mean
+  scaler:
+    name: sklearn.preprocessing.StandardScaler
+sampler:
+  name: deckard.frameworks.pytorch.sample.PytorchSplitSampler
+  test_size: 0.2
+  random_state: 42
+  stratify: true
+classifier: true
+alias: make_cluster

@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any, Callable, List, Optional, Union, cast
 
 import numpy as np
+import pandas as pd
 from sklearn.model_selection import KFold, StratifiedKFold, train_test_split
 
 # PyTorch
@@ -37,9 +38,12 @@ from tqdm.auto import tqdm
 from ...data.base import DataConfig
 from ...data.base import AUTO_SCORER
 from ...data.canon import DataFiles, merge_data_files
+from ...data.declarations import build_loader_registry
+from ...data.pipeline.base import DataPipeline
 from ...artifacts import ScoreDict
 from ...types import DatasetLike
 from .sample import PytorchBaseSampler
+from .pipeline import TorchDataPipelineMixin
 
 # deckard
 from ...utils import load_class, resolve_torch_device
@@ -67,7 +71,7 @@ def _persist_pickle_cache(
 
 
 @dataclass(eq=False, kw_only=True)
-class PytorchDataConfig(DataConfig):
+class PytorchDataConfig(TorchDataPipelineMixin, DataConfig):
     """Configuration for PyTorch datasets.
 
     Attributes:
@@ -380,6 +384,125 @@ class PytorchDataConfig(DataConfig):
     def __hash__(self):
         return super().__hash__()
 
+    def _coerce_feature_tensor(self, value: Any) -> Tensor:
+        if isinstance(value, Tensor):
+            tensor = value
+        elif isinstance(value, pd.DataFrame):
+            tensor = torch.as_tensor(value.to_numpy(copy=False))
+        elif isinstance(value, pd.Series):
+            tensor = torch.as_tensor(value.to_numpy(copy=False))
+        else:
+            tensor = torch.as_tensor(value)
+
+        if tensor.dtype == torch.uint8:
+            tensor = tensor.float().div(255.0)
+        elif not torch.is_floating_point(tensor):
+            tensor = tensor.float()
+        return tensor
+
+    def _coerce_target_tensor(self, value: Any) -> Tensor:
+        if isinstance(value, Tensor):
+            tensor = value
+        elif isinstance(value, pd.Series):
+            tensor = torch.as_tensor(value.to_numpy(copy=False))
+        else:
+            tensor = torch.as_tensor(value)
+
+        if tensor.ndim > 1 and tensor.shape[-1] == 1:
+            tensor = tensor.squeeze(-1)
+
+        if bool(self.classifier):
+            if torch.is_floating_point(tensor):
+                tensor = tensor.round()
+            return tensor.long()
+
+        if not torch.is_floating_point(tensor):
+            tensor = tensor.float()
+        return tensor
+
+    @staticmethod
+    def _tensor_to_numpy(value: Tensor) -> np.ndarray:
+        return value.detach().cpu().numpy()
+
+    @staticmethod
+    def _to_tabular_frame(array_like: Any) -> pd.DataFrame:
+        arr = np.asarray(array_like)
+        if arr.ndim == 1:
+            arr = arr.reshape(-1, 1)
+        cols = [f"feature_{i}" for i in range(arr.shape[1])]
+        return pd.DataFrame(arr, columns=cols)
+
+    def create_pipeline(self) -> Callable[[Tensor], Tensor] | None:
+        pipeline_cfg = getattr(self, "pipeline", None)
+        if pipeline_cfg is None:
+            return None
+
+        if isinstance(pipeline_cfg, DataPipeline):
+            x_steps = pipeline_cfg._collect_x_steps(stage="X")
+            y_steps = pipeline_cfg._collect_y_steps(stage="y")
+            xy_steps = pipeline_cfg._collect_x_steps(stage="Xy")
+
+            x_pipeline = pipeline_cfg._build_x_pipeline(x_steps)
+            xy_pipeline = pipeline_cfg._build_x_pipeline(xy_steps)
+
+            if x_pipeline is not None:
+
+                def _x_transform(X: Tensor) -> Tensor:
+                    X_df = self._to_tabular_frame(self._tensor_to_numpy(X))
+                    transformed = x_pipeline.fit_transform(X_df)
+                    return self._coerce_feature_tensor(transformed)
+
+                self.X_transform = _x_transform
+
+            if len(y_steps) > 0:
+
+                def _y_transform(y: Tensor) -> Tensor:
+                    y_series = pd.Series(self._tensor_to_numpy(y).reshape(-1))
+                    transformed = pipeline_cfg._fit_transform_target(y_steps, y_series)
+                    return self._coerce_target_tensor(transformed)
+
+                self.y_transform = _y_transform
+
+            if xy_pipeline is not None:
+
+                def _xy_transform(X: Tensor) -> Tensor:
+                    X_df = self._to_tabular_frame(self._tensor_to_numpy(X))
+                    transformed = xy_pipeline.fit_transform(X_df)
+                    return self._coerce_feature_tensor(transformed)
+
+                return _xy_transform
+
+            return None
+
+        if callable(pipeline_cfg):
+            return pipeline_cfg
+
+        return None
+
+    def apply_pipeline(
+        self,
+        pipeline: Callable[[Tensor], Tensor] | Tensor | None,
+    ) -> "PytorchDataConfig":
+        if self._X is None or self._y is None:
+            return self
+
+        X = self._coerce_feature_tensor(self._X)
+        y = self._coerce_target_tensor(self._y)
+
+        X, y = self.fit_presample(X, y)
+        X, y = self.fit_X(X, y)
+        X, y = self.fit_y(X, y)
+
+        if pipeline is not None:
+            self.pipeline = pipeline
+        X, y = self.fit_Xy(X, y)
+
+        self._X = X
+        self._y = y
+        self.dataset_obj = TensorDataset(self._X, self._y)
+        self.dataset_type = "tensor"
+        return self
+
     def load_dataset(self) -> "PytorchDataConfig":
         """Materialize runtime torch dataset payload into ``_X``/``_y``.
 
@@ -404,6 +527,29 @@ class PytorchDataConfig(DataConfig):
         start = time.perf_counter()
 
         try:
+            default_loader_registry = build_loader_registry(self)
+            if dataset_name in default_loader_registry:
+                default_loader_registry[dataset_name](**(self.data_params or {}))
+                self._X = self._coerce_feature_tensor(self._X)
+                self._y = self._coerce_target_tensor(self._y)
+                self.dataset_obj = TensorDataset(self._X, self._y)
+                self.dataset_type = "tensor"
+
+                if getattr(self, "pipeline", None):
+                    self.run_pipeline(self.build_pipeline())
+
+                end = time.perf_counter()
+                if getattr(self, "data_load_time", None) is None:
+                    self._set_time("data_load_time", end - start)
+                logger.info(
+                    "Loaded declaration dataset %s in %.2f seconds. Shape: %s, Labels: %s",
+                    self.name,
+                    self.data_load_time,
+                    self._X.shape,
+                    self._y.shape,
+                )
+                return
+
             # If using torchvision image datasets, ensure transform=ToTensor() if not set
             if dataset_name.startswith("torchvision.datasets."):
                 try:
@@ -503,6 +649,9 @@ class PytorchDataConfig(DataConfig):
                         "Sensitive metadata length must match labels length for fairness workflows.",
                     )
                 self._sensitive = sensitive_values
+
+            if getattr(self, "pipeline", None):
+                self.run_pipeline(self.build_pipeline())
 
             end = time.perf_counter()
             self._set_time("data_load_time", end - start)

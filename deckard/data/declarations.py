@@ -18,6 +18,7 @@ import importlib.util
 import logging
 import time
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any, Callable, TYPE_CHECKING
 
 import pandas as pd
@@ -25,6 +26,22 @@ from sklearn.datasets import fetch_openml, make_classification, make_regression
 from ..types import StringifiedClass
 
 logger = logging.getLogger(__name__)
+
+_ADULT_ALIAS_TOKENS = {
+    "",
+    "adult",
+    "sklearn.adult",
+    "sklearn_adult",
+    "openml.adult",
+    "openml_adult",
+    "adult.openml",
+}
+
+_ADULT_REPO_PATH_CANDIDATES = (
+    Path("raw_data/adult_income/adult_income_dataset.csv"),
+    Path("raw_data/adult_income/adult.csv"),
+    Path("raw_data/adult_income/adult_income.csv"),
+)
 
 if TYPE_CHECKING:  # pragma: no cover
     from .base import DataConfig
@@ -147,11 +164,21 @@ def discover_dataset_declarations() -> dict[str, DatasetDeclaration]:
     # sklearn / core datasets handled by DataConfig.
     declarations.update(
         {
-            "openml.adult": DatasetDeclaration(
-                name="openml.adult",
-                provider="openml",
-                target="sklearn.datasets.fetch_openml",
-                aliases=("openml_adult",),
+            "sklearn.adult": DatasetDeclaration(
+                name="sklearn.adult",
+                provider="sklearn",
+                target="deckard.data.declarations.load_adult_income_data",
+                aliases=(
+                    "adult",
+                    "sklearn_adult",
+                    "openml.adult",
+                    "openml_adult",
+                    "adult.openml",
+                ),
+                notes=(
+                    "Defaults to repository-local Kaggle Adult Income CSV at "
+                    "raw_data/adult_income/adult_income_dataset.csv."
+                ),
             ),
             "diabetes": DatasetDeclaration(
                 name="diabetes",
@@ -329,16 +356,133 @@ def discover_dataset_declarations() -> dict[str, DatasetDeclaration]:
     return declarations
 
 
+def _repo_root_for_data_declarations() -> Path:
+    return Path(__file__).resolve().parents[2]
+
+
+def _resolve_repo_adult_copy_path(explicit_path: str | None = None) -> Path | None:
+    repo_root = _repo_root_for_data_declarations()
+
+    if explicit_path not in [None, ""]:
+        candidate = Path(str(explicit_path)).expanduser()
+        if not candidate.is_absolute():
+            candidate = (repo_root / candidate).resolve()
+        if candidate.exists():
+            return candidate
+
+    for relative_path in _ADULT_REPO_PATH_CANDIDATES:
+        candidate = repo_root / relative_path
+        if candidate.exists():
+            return candidate
+
+    return None
+
+
+def _canonicalize_adult_columns(frame: pd.DataFrame) -> pd.DataFrame:
+    normalized_columns = {
+        column: str(column).strip().lower().replace("_", "-")
+        for column in frame.columns
+    }
+    frame = frame.rename(columns=normalized_columns)
+
+    if "educational-num" in frame.columns and "education-num" not in frame.columns:
+        frame = frame.rename(columns={"educational-num": "education-num"})
+    if "gender" in frame.columns and "sex" not in frame.columns:
+        frame = frame.rename(columns={"gender": "sex"})
+
+    return frame
+
+
+def _load_repo_adult_income_data(cfg: Any, **loader_params: Any) -> Any:
+    explicit_path = loader_params.pop("repo_dataset_path", None)
+    csv_kwargs = loader_params.pop("repo_csv_kwargs", {})
+    if not isinstance(csv_kwargs, dict):
+        raise TypeError("repo_csv_kwargs must be a dict of pandas.read_csv kwargs")
+
+    if loader_params:
+        logger.debug(
+            "Ignoring unsupported loader params for repository adult copy: %s",
+            sorted(loader_params.keys()),
+        )
+
+    csv_kwargs.setdefault("skipinitialspace", True)
+
+    dataset_path = _resolve_repo_adult_copy_path(explicit_path)
+    if dataset_path is None:
+        repo_root = _repo_root_for_data_declarations()
+        expected = " or ".join(str(path) for path in _ADULT_REPO_PATH_CANDIDATES)
+        raise FileNotFoundError(
+            "Local Adult dataset copy is required but was not found. "
+            f"Place the Kaggle dataset file under {repo_root} at {expected}.",
+        )
+
+    frame = pd.read_csv(dataset_path, **csv_kwargs)
+    if frame.empty:
+        raise ValueError(f"Adult dataset file is empty: {dataset_path}")
+
+    frame = _canonicalize_adult_columns(frame)
+
+    target_column = "income" if "income" in frame.columns else "class"
+    if target_column not in frame.columns:
+        raise ValueError(
+            "Adult dataset must include an income target column named 'income' or 'class'.",
+        )
+
+    y_raw = pd.Series(frame.pop(target_column), name="target").copy()
+    y_token = (
+        y_raw.astype(str).str.strip().str.replace(".", "", regex=False).str.upper()
+    )
+    y = cfg._encode_binary_series(
+        y_token,
+        {"<=50K": 0, ">50K": 1},
+    )
+
+    if "sex" not in frame.columns:
+        raise ValueError("Adult dataset must include a 'sex' (or 'gender') column")
+
+    sex = cfg._encode_binary_series(
+        frame.pop("sex").astype(str).str.strip().str.capitalize(),
+        {"Male": 0, "Female": 1},
+    )
+
+    for column in [
+        "age",
+        "education-num",
+        "hours-per-week",
+        "capital-gain",
+        "capital-loss",
+        "fnlwgt",
+    ]:
+        if column in frame.columns:
+            frame[column] = pd.to_numeric(frame[column], errors="coerce")
+
+    categorical_columns = frame.select_dtypes(
+        include=["object", "category"],
+    ).columns.tolist()
+    X = pd.get_dummies(
+        frame,
+        columns=categorical_columns,
+        drop_first=True,
+        dummy_na=True,
+        dtype=int,
+    )
+    X["sex"] = sex.astype(int)
+
+    cfg._X = X.apply(pd.to_numeric, errors="coerce")
+    cfg._y = pd.Series(y)
+    return cfg
+
+
 def load_adult_income_data(cfg: Any, **loader_params: Any) -> Any:
     """Load and preprocess Adult Income data into ``cfg._X``/``cfg._y``."""
     start_time = time.process_time()
     dataset_token = str(cfg.resolve_name(default="") or "").strip().lower()
-    if dataset_token in {"", "adult", "sklearn.adult", "sklearn_adult"}:
-        openml_name = "adult"
-    elif dataset_token in {"openml.adult", "openml_adult", "adult.openml"}:
-        openml_name = "adult"
-    else:
-        openml_name = str(cfg.resolve_name(default=None) or cfg.name)
+    if dataset_token in _ADULT_ALIAS_TOKENS:
+        cfg = _load_repo_adult_income_data(cfg, **loader_params)
+        cfg.data_load_time = time.process_time() - start_time
+        return cfg
+
+    openml_name = str(cfg.resolve_name(default=None) or cfg.name)
 
     adult = fetch_openml(
         name=openml_name,

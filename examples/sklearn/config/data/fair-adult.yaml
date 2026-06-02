@@ -1,7 +1,7 @@
-name: sklearn.adult
 _target_: deckard.plugins.fairlearn.FairlearnDataConfig
 classifier: true
 alias: fair-adult-fairlearn
+name: ../../raw_data/adult_income/adult_income_dataset.csv
 sensitive_columns:
 - sex
 fairness_defense:

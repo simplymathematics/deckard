@@ -8,6 +8,7 @@ from helpers import load_canonical_data_profile
 try:
     import fairlearn  # noqa: F401
 
+    from deckard.data.base import DataConfig
     from deckard.plugins.fairlearn.data import FairlearnDataConfig
 except Exception:
     pytest.skip(
@@ -112,24 +113,26 @@ class TestLoadData:
         assert "gender" in config._X.columns
 
     @patch.object(FairlearnDataConfig, "__post_init__")
-    def test_load_data_missing_X_raises_assertion(self, mock_post_init):
+    @patch.object(DataConfig, "load_dataset", autospec=True, return_value=None)
+    def test_load_data_missing_X_raises_assertion(
+        self,
+        mock_load_dataset,
+        mock_post_init,
+    ):
         """Test that _load_data raises assertion when _X is missing."""
         config = _fairlearn_config(sensitive_columns="sex")
-        config._X = pd.DataFrame(
-            {
-                "feature1": [1, 2, 3, 4],
-                "feature2": [5, 6, 7, 8],
-                "gender": [0, 1, 1, 0],
-            },
-        )
         config._y = pd.Series([0, 1, 0, 1])
-        config.data_params = {}
 
         with pytest.raises(AssertionError):
             config.load_dataset()
 
     @patch.object(FairlearnDataConfig, "__post_init__")
-    def test_load_data_missing_y_raises_assertion(self, mock_post_init):
+    @patch.object(DataConfig, "load_dataset", autospec=True, return_value=None)
+    def test_load_data_missing_y_raises_assertion(
+        self,
+        mock_load_dataset,
+        mock_post_init,
+    ):
         """Test that _load_data raises assertion when _y is missing."""
         df = pd.DataFrame(
             {
@@ -140,7 +143,6 @@ class TestLoadData:
         )
         config = _fairlearn_config(sensitive_columns="gender")
         config._X = df
-        config.data_params = {}
 
         with pytest.raises(AssertionError):
             config.load_dataset()
