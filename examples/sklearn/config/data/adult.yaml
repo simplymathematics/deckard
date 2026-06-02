@@ -1,6 +1,6 @@
 name: sklearn.adult
 data_params:
-  repo_dataset_path: ../../raw_data/adult_income/adult_income_dataset.csv
+  repo_dataset_path: https://github.com/simplymathematics/Adult-Census-Income/blob/master/adult.csv
 sampler:
   name: deckard.data.sample.SplitSampler
   test_size: 0.2
