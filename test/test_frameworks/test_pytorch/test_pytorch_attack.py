@@ -272,6 +272,18 @@ class TestAttackConfig:
 
 
 class TestPytorchAttackConfigPrep:
+    def _load_pytorch_model_inversion_config(self):
+        config_path = (
+            Path(__file__).resolve().parents[3]
+            / "examples"
+            / "pytorch"
+            / "config"
+            / "attack"
+            / "model-inversion.yaml"
+        )
+        config = yaml.safe_load(config_path.read_text(encoding="utf-8"))
+        return PytorchAttackConfig(**config)
+
     def test_prepare_features_for_attack_preserves_tensors_and_coerces_pandas(self):
         torch = pytest.importorskip("torch")
         cfg = PytorchAttackConfig(name="art.attacks.evasion.FastGradientMethod")

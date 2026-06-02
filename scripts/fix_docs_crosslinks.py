@@ -56,6 +56,17 @@ def _is_public_name(name: str) -> bool:
     return (not name.startswith("_")) or name == "__call__"
 
 
+def _resolve_target(base_dir: Path, fallback: Path, *slugs: str) -> Path:
+    for slug in slugs:
+        flat = base_dir / f"{slug}.md"
+        nested = base_dir / slug / "index.md"
+        if flat.exists():
+            return base_dir / slug
+        if nested.exists():
+            return base_dir / slug / "index"
+    return fallback
+
+
 def _resolve_api_target(*slugs: str) -> Path:
     for slug in slugs:
         flat = DOCS / "api" / f"{slug}.md"
@@ -68,14 +79,7 @@ def _resolve_api_target(*slugs: str) -> Path:
 
 
 def _resolve_developer_target(*slugs: str) -> Path:
-    for slug in slugs:
-        flat = DOCS / "developers" / f"{slug}.md"
-        nested = DOCS / "developers" / slug / "index.md"
-        if flat.exists():
-            return DOCS / "developers" / slug
-        if nested.exists():
-            return DOCS / "developers" / slug / "index"
-    return DEV_INDEX
+    return _resolve_target(DOCS / "developers", DEV_INDEX, *slugs)
 
 
 def _api_target_for_source(path: Path) -> Path:
@@ -214,11 +218,10 @@ def _should_preserve_inline_code(line: str, token: str) -> bool:
         return True
     if normalized.endswith("="):
         return True
-    if re.fullmatch(r"[a-z][a-z0-9_]*", normalized) and KWARG_CONTEXT_PATTERN.search(
-        line,
-    ):
-        return True
-    return False
+    return bool(
+        re.fullmatch(r"[a-z][a-z0-9_]*", normalized)
+        and KWARG_CONTEXT_PATTERN.search(line),
+    )
 
 
 def _rewrite_lines(

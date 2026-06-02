@@ -15,6 +15,7 @@ from .extensions_cli import (
     plugins_main,
     plugins_parser,
 )
+from .find_best import find_best_main, find_best_parser
 from .optimize import hydra_parser, optimize_main
 from .plot import plot_main, plot_parser
 from .progress_bar import progress_bar_main, progress_bar_parser
@@ -41,6 +42,7 @@ layer_dict: dict[str, list[Callable[..., object]]] = {
     "optimize": [hydra_parser, optimize_main],
     "plugins": [plugins_parser, plugins_main],
     "frameworks": [frameworks_parser, frameworks_main],
+    "find_best": [find_best_parser, find_best_main],
     "rerun_failed_studies": [
         rerun_failed_studies_parser,
         rerun_failed_studies_main,
@@ -68,6 +70,8 @@ __all__ = [
     "plugins_parser",
     "frameworks_main",
     "frameworks_parser",
+    "find_best_main",
+    "find_best_parser",
     "rerun_failed_studies_main",
     "rerun_failed_studies_parser",
     "layer_dict",
