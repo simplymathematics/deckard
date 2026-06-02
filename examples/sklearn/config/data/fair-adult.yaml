@@ -1,4 +1,4 @@
-name: adult
+name: sklearn.adult
 _target_: deckard.plugins.fairlearn.FairlearnDataConfig
 classifier: true
 alias: fair-adult-fairlearn

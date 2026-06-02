@@ -57,6 +57,60 @@ class SensitiveColumnsMixin:
             return [cols]
         return [str(col) for col in cols]
 
+    @staticmethod
+    def _resolve_sensitive_column_matches(
+        frame_columns: list[str],
+        sensitive_column: str,
+    ) -> list[str]:
+        """Return matching transformed columns for a configured sensitive column."""
+        token = str(sensitive_column)
+        token_dash = token.replace(".", "-")
+        matches: list[str] = []
+        for column in frame_columns:
+            if (
+                column == token
+                or column.startswith(f"{token}_")
+                or column == token_dash
+                or column.startswith(f"{token_dash}_")
+            ):
+                matches.append(column)
+        return matches
+
+    def _sensitive_features_from_frame(
+        self,
+        frame: Optional[Union[pd.DataFrame, "pd.Series"]],
+    ) -> pd.Series | pd.DataFrame:
+        """Resolve sensitive payload from frame, preserving one-hot expansions."""
+        if frame is None:
+            raise ValueError("_sensitive_features_from_frame: frame must not be None")
+        if not isinstance(frame, pd.DataFrame):
+            frame = pd.DataFrame(frame)
+
+        cols = self._normalize_sensitive_columns()
+        if len(cols) == 0:
+            raise ValueError("sensitive_columns must be configured")
+
+        frame_columns = [str(col) for col in frame.columns]
+        selected: list[str] = []
+        missing: list[str] = []
+        for col in cols:
+            matches = self._resolve_sensitive_column_matches(frame_columns, col)
+            if len(matches) == 0:
+                missing.append(col)
+                continue
+            selected.extend(matches)
+
+        if missing:
+            raise KeyError(
+                f"Sensitive feature columns not found: {missing}. "
+                f"Available columns: {list(frame.columns)}",
+            )
+
+        deduped = list(dict.fromkeys(selected))
+        if len(deduped) == 1:
+            return frame[deduped[0]]
+        return frame[deduped].copy()
+
     def _resolve_post_transform_feature_names(
         self,
         frame: pd.DataFrame,
@@ -112,6 +166,65 @@ class SensitiveColumnsMixin:
             if col_name not in seen:
                 transformed_order.append(col_name)
         return transformed_order
+
+    def _resolve_post_transform_feature_names_preview(
+        self,
+        frame: pd.DataFrame,
+    ) -> list[str] | None:
+        """Try to infer real post-transform feature names from a fitted preview.
+
+        This is primarily used to resolve sensitive feature ids when typed
+        preprocessing (for example object dtype + ``OneHotEncoder``) expands
+        source columns into multiple transformed columns.
+        """
+        pipeline_runtime = getattr(self, "pipeline", None)
+        if pipeline_runtime is None:
+            return None
+
+        try:
+            from .pipeline.base import DataPipeline
+        except Exception:
+            return None
+
+        if isinstance(pipeline_runtime, DataPipeline):
+            pipeline_cfg = dict(pipeline_runtime.pipeline or {})
+        elif isinstance(pipeline_runtime, Mapping):
+            pipeline_cfg = dict(pipeline_runtime)
+        else:
+            return None
+
+        preview_runtime = DataPipeline(pipeline=pipeline_cfg)
+        x_steps = preview_runtime._collect_x_steps(stage="X")
+        if len(x_steps) == 0:
+            return list(frame.columns)
+
+        preview_pipeline = preview_runtime._build_x_pipeline(x_steps)
+        if preview_pipeline is None:
+            return list(frame.columns)
+
+        y_fit = getattr(self, "_y", None)
+        try:
+            if (
+                y_fit is not None
+                and hasattr(y_fit, "__len__")
+                and len(y_fit) == len(frame)
+            ):
+                preview_pipeline.fit(frame, y_fit)
+            else:
+                preview_pipeline.fit(frame)
+        except Exception:
+            return None
+
+        try:
+            names = list(preview_pipeline.get_feature_names_out(frame.columns))
+            return [str(name) for name in names]
+        except Exception:
+            try:
+                transformed = preview_pipeline.transform(frame)
+            except Exception:
+                return None
+            width = np.asarray(transformed).shape[1]
+            return [f"feature_{i}" for i in range(width)]
 
     def _pipeline_uses_typed_preprocessing(self) -> bool:
         """Return True when pipeline config includes dtype-targeted X steps."""
@@ -169,6 +282,10 @@ class SensitiveColumnsMixin:
         uses_typed_preprocess = self._pipeline_uses_typed_preprocessing()
         if not uses_typed_preprocess:
             return list(cols)
+
+        preview_columns = self._resolve_post_transform_feature_names_preview(frame)
+        if preview_columns is not None and len(preview_columns) > 0:
+            post_columns = preview_columns
 
         resolved_indices: list[int] = []
         unresolved: list[str] = []
@@ -232,6 +349,18 @@ class SensitiveColumnsMixin:
                 fallback = self._sensitive_labels_from_targets(frame)
                 if fallback is not None:
                     return fallback
+                matches = self._resolve_sensitive_column_matches(
+                    [str(c) for c in frame.columns],
+                    cols[0],
+                )
+                if len(matches) > 0:
+                    if len(matches) == 1:
+                        return frame[matches[0]].astype(str)
+                    labels_df = frame[matches].astype(str)
+                    return labels_df.apply(
+                        lambda row: tuple(row.values.tolist()),
+                        axis=1,
+                    )
             raise KeyError(
                 f"Sensitive feature columns not found: {missing_cols}. "
                 f"Available columns: {list(frame.columns)}",
@@ -243,10 +372,21 @@ class SensitiveColumnsMixin:
 
     def _validate_sensitive_runtime(
         self,
-        sensitive: pd.Series,
+        sensitive: pd.Series | pd.DataFrame | Any,
         context: str,
-    ) -> pd.Series:
+    ) -> pd.Series | pd.DataFrame:
         """Validate that *sensitive* is non-empty and non-null."""
+        if isinstance(sensitive, pd.DataFrame):
+            if len(sensitive) == 0 or sensitive.shape[1] == 0:
+                raise ValueError(f"Sensitive features are empty during {context}")
+            if sensitive.dropna(how="all").empty:
+                raise ValueError(
+                    f"Sensitive features are all null during {context}",
+                )
+            if sensitive.astype(str).apply(lambda c: c.str.strip().eq("")).all().all():
+                raise ValueError(f"Sensitive features are blank during {context}")
+            return sensitive.reset_index(drop=True)
+
         sensitive_series = pd.Series(sensitive)
         if len(sensitive_series) == 0:
             raise ValueError(f"Sensitive features are empty during {context}")
@@ -309,17 +449,23 @@ class SensitiveColumnsMixin:
             return None
 
         sensitive = self._resolve_runtime_sensitive_source(resolved_split)
-        sensitive_series = self._validate_sensitive_series(sensitive, "runtime")
-        if sensitive_series is None or len(sensitive_series) != n_rows:
+        sensitive_payload = self._validate_sensitive_series(sensitive, "runtime")
+        if sensitive_payload is None or len(sensitive_payload) != n_rows:
             return None
         if batch_index is not None:
             try:
-                aligned = sensitive_series.reindex(batch_index)
-                if len(aligned) == n_rows and aligned.notna().all():
+                aligned = sensitive_payload.reindex(batch_index)
+                if isinstance(aligned, pd.DataFrame):
+                    valid = len(aligned) == n_rows and aligned.notna().all().all()
+                else:
+                    valid = len(aligned) == n_rows and aligned.notna().all()
+                if valid:
                     return aligned.reset_index(drop=True)
             except Exception:
                 return None
-        return sensitive_series.reset_index(drop=True)
+        if hasattr(sensitive_payload, "reset_index"):
+            return sensitive_payload.reset_index(drop=True)
+        return sensitive_payload
 
     def _method_accepts_sensitive_features(self, method) -> bool:
         try:

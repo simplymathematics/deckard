@@ -129,6 +129,43 @@ def test_apply_defense_resolves_sensitive_ids_for_typed_pipeline():
     assert fairness_step["sensitive_feature_ids"] == [2]
 
 
+def test_apply_defense_resolves_onehot_sensitive_ids_from_post_transform_columns():
+    cfg = _cfg()
+    cfg._X = pd.DataFrame(
+        {
+            "age": [25, 42, 33, 51],
+            "marital.status": [
+                "Never-married",
+                "Married-civ-spouse",
+                "Divorced",
+                "Never-married",
+            ],
+        },
+    )
+    cfg.sensitive_columns = ["marital.status"]
+    cfg.fairness_defense = {"name": "fairlearn.preprocessing.CorrelationRemover"}
+    cfg.pipeline = {
+        "imputer": {
+            "name": "sklearn.impute.SimpleImputer",
+            "strategy": "mean",
+            "dtype": "numeric",
+        },
+        "categorical_encoder": {
+            "name": "sklearn.preprocessing.OneHotEncoder",
+            "handle_unknown": "ignore",
+            "sparse_output": False,
+            "dtype": "object",
+        },
+    }
+
+    cfg.apply_defense()
+
+    fairness_step = cfg.pipeline["fairness_correlation_remover"]
+    sensitive_ids = fairness_step["sensitive_feature_ids"]
+    assert isinstance(sensitive_ids, list)
+    assert len(sensitive_ids) >= 3
+
+
 def test_load_data_validates_sensitive_columns(monkeypatch):
     cfg = _cfg()
 
@@ -169,6 +206,55 @@ def test_sample_populates_sensitive_val_when_present(monkeypatch):
     assert cfg._sensitive_train.tolist() == ["a", "b"]
     assert cfg._sensitive_test.tolist() == ["b"]
     assert cfg._sensitive_val.tolist() == ["a"]
+
+
+def test_sample_prefers_post_transform_sensitive_columns(monkeypatch):
+    cfg = _cfg()
+    cfg.sensitive_columns = ["marital.status"]
+
+    def _noop_fit(self, run_hooks: bool = True):
+        _ = run_hooks
+        self._X = pd.DataFrame(
+            {
+                "marital.status": [
+                    "Never-married",
+                    "Married-civ-spouse",
+                    "Divorced",
+                ],
+                "age": [21, 47, 36],
+            },
+        )
+        self.train_indices = [0, 1]
+        self.test_indices = [2]
+        self.val_indices = None
+        self.X_train = pd.DataFrame(
+            {
+                "marital.status_Never-married": [1, 0],
+                "marital.status_Married-civ-spouse": [0, 1],
+                "marital.status_Divorced": [0, 0],
+                "age": [21, 47],
+            },
+        )
+        self.X_test = pd.DataFrame(
+            {
+                "marital.status_Never-married": [0],
+                "marital.status_Married-civ-spouse": [0],
+                "marital.status_Divorced": [1],
+                "age": [36],
+            },
+        )
+        self.y_train = pd.Series([0, 1])
+        self.y_test = pd.Series([1])
+        self.y_val = None
+
+    monkeypatch.setattr(DataConfig, "fit", _noop_fit)
+
+    cfg.fit()
+
+    assert isinstance(cfg._sensitive_train, pd.DataFrame)
+    assert isinstance(cfg._sensitive_test, pd.DataFrame)
+    assert cfg._sensitive_train.shape[1] >= 3
+    assert cfg._sensitive_test.shape[1] >= 3
 
 
 def test_score_none_and_non_callable_paths():

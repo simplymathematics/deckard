@@ -258,6 +258,24 @@ def validate_sensitive_features(sensitive: Any, y_true: Any, context: str) -> An
             f"Sensitive features are None during {context}; "
             "ensure the dataset exposes a '_sensitive' attribute.",
         )
+    if isinstance(sensitive, pd.DataFrame):
+        if len(sensitive) == 0 or sensitive.shape[1] == 0:
+            raise ValueError(f"Sensitive features are empty during {context}")
+        if sensitive.dropna(how="all").empty:
+            raise ValueError(f"Sensitive features are all-null during {context}")
+        if sensitive.astype(str).apply(lambda c: c.str.strip().eq("")).all().all():
+            raise ValueError(f"Sensitive features are all-blank during {context}")
+        if (
+            y_true is not None
+            and hasattr(y_true, "__len__")
+            and len(sensitive) != len(y_true)
+        ):
+            raise ValueError(
+                f"Sensitive features length ({len(sensitive)}) != y_true length ({len(y_true)}) "
+                f"during {context}",
+            )
+        return sensitive
+
     s = pd.Series(sensitive)
     if len(s) == 0:
         raise ValueError(f"Sensitive features are empty during {context}")

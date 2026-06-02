@@ -72,32 +72,33 @@ class FairnessBehaviorMixin(SensitiveColumnsMixin):
             self._sensitive_val = getattr(self, "_sensitive_val", None)
             return self
 
-        self._sensitive_train = self._sensitive_labels_from_frame(
+        def _extract_sensitive(runtime_frame, fallback_frame, context: str):
+            try:
+                sensitive_payload = self._sensitive_features_from_frame(runtime_frame)
+            except Exception:
+                sensitive_payload = self._sensitive_labels_from_frame(fallback_frame)
+            return self._validate_sensitive_runtime(sensitive_payload, context)
+
+        self._sensitive_train = _extract_sensitive(
+            self.X_train,
             self._X.iloc[train_indices].reset_index(drop=True),
-        )
-        self._sensitive_test = self._sensitive_labels_from_frame(
-            self._X.iloc[test_indices].reset_index(drop=True),
-        )
-        self._sensitive_all = self._sensitive_labels_from_frame(self._X)
-        self._sensitive_train = self._validate_sensitive_runtime(
-            self._sensitive_train,
             "train sampling",
         )
-        self._sensitive_test = self._validate_sensitive_runtime(
-            self._sensitive_test,
+        self._sensitive_test = _extract_sensitive(
+            self.X_test,
+            self._X.iloc[test_indices].reset_index(drop=True),
             "test sampling",
         )
-        self._sensitive_all = self._validate_sensitive_runtime(
-            self._sensitive_all,
+        self._sensitive_all = _extract_sensitive(
+            self.X,
+            self._X,
             "full-data sampling",
         )
         val_indices = getattr(self, "val_indices", None)
         if val_indices is not None and len(val_indices) > 0:
-            self._sensitive_val = self._sensitive_labels_from_frame(
+            self._sensitive_val = _extract_sensitive(
+                self.X_val,
                 self._X.iloc[val_indices].reset_index(drop=True),
-            )
-            self._sensitive_val = self._validate_sensitive_runtime(
-                self._sensitive_val,
                 "val sampling",
             )
         else:
@@ -202,7 +203,11 @@ class FairlearnDataConfig(
         if self.sensitive_columns is None:
             raise ValueError("sensitive_columns must be configured")
         for col in self.sensitive_columns:
-            assert col in self._X.columns
+            matches = self._resolve_sensitive_column_matches(
+                [str(c) for c in self._X.columns],
+                str(col),
+            )
+            assert len(matches) > 0
         return self
 
 

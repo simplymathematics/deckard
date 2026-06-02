@@ -56,7 +56,7 @@ def _compose_pytorch(config_name: str, overrides: list[str] | None = None):
     [
         pytest.param(
             "data/adult",
-            {"name": "adult", "alias": "adult"},
+            {"name": "sklearn.adult", "alias": "sklearn.adult"},
             id="sklearn-adult",
         ),
         pytest.param(
@@ -71,7 +71,7 @@ def _compose_pytorch(config_name: str, overrides: list[str] | None = None):
         pytest.param(
             "data/fair-adult",
             {
-                "name": "adult",
+                "name": "sklearn.adult",
                 "_target_": "deckard.plugins.fairlearn.FairlearnDataConfig",
                 "sensitive_columns": ["sex"],
             },

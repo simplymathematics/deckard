@@ -332,8 +332,16 @@ def discover_dataset_declarations() -> dict[str, DatasetDeclaration]:
 def load_adult_income_data(cfg: Any, **loader_params: Any) -> Any:
     """Load and preprocess Adult Income data into ``cfg._X``/``cfg._y``."""
     start_time = time.process_time()
+    dataset_token = str(cfg.resolve_name(default="") or "").strip().lower()
+    if dataset_token in {"", "adult", "sklearn.adult", "sklearn_adult"}:
+        openml_name = "adult"
+    elif dataset_token in {"openml.adult", "openml_adult", "adult.openml"}:
+        openml_name = "adult"
+    else:
+        openml_name = str(cfg.resolve_name(default=None) or cfg.name)
+
     adult = fetch_openml(
-        name=str(cfg.resolve_name(default=None) or cfg.name),
+        name=openml_name,
         version=2,
         as_frame=True,
         **loader_params,

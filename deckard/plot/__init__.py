@@ -7,6 +7,7 @@ dependencies.
 """
 
 import logging
+import inspect
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -148,6 +149,30 @@ class PlotConfig(BaseConfig):
             return normalize_plot_backend(raw_backend)
         return None
 
+    @staticmethod
+    def _filter_backend_kwargs(config_cls, kwargs: dict) -> dict:
+        """Keep only constructor-accepted kwargs for backend config classes."""
+        signature = inspect.signature(config_cls)
+        parameters = signature.parameters
+
+        if any(
+            parameter.kind is inspect.Parameter.VAR_KEYWORD
+            for parameter in parameters.values()
+        ):
+            return kwargs
+
+        allowed = {
+            name
+            for name, parameter in parameters.items()
+            if name != "self"
+            and parameter.kind
+            in {
+                inspect.Parameter.POSITIONAL_OR_KEYWORD,
+                inspect.Parameter.KEYWORD_ONLY,
+            }
+        }
+        return {key: value for key, value in kwargs.items() if key in allowed}
+
     def __post_init__(self):
         # Merge any extra attributes set by BaseConfig into kwargs
         known_fields = {"kwargs", "files", "times", "plot_state", "config"}
@@ -181,29 +206,45 @@ class PlotConfig(BaseConfig):
                 raise ValueError(
                     "Experiment source requires yellowbrick backend.",
                 )
-            _refresh_yellowbrick_configs()
-            if YellowbrickPlotConfig is None or YellowbrickConfigList is None:
-                raise ImportError(
-                    "Yellowbrick plotting requires optional dependency deckard[yellowbrick]",
-                )
-            config_cls = (
-                YellowbrickConfigList
-                if "plots" in self.kwargs
-                else YellowbrickPlotConfig
-            )
+            wants_list = "plots" in self.kwargs
+            if wants_list:
+                if YellowbrickConfigList is None:
+                    _refresh_yellowbrick_configs()
+                if YellowbrickConfigList is None:
+                    raise ImportError(
+                        "Yellowbrick plotting requires optional dependency deckard[yellowbrick]",
+                    )
+                config_cls = YellowbrickConfigList
+            else:
+                if YellowbrickPlotConfig is None:
+                    _refresh_yellowbrick_configs()
+                if YellowbrickPlotConfig is None:
+                    raise ImportError(
+                        "Yellowbrick plotting requires optional dependency deckard[yellowbrick]",
+                    )
+                config_cls = YellowbrickPlotConfig
         else:
             if backend != "seaborn":
                 raise ValueError(
                     "Seaborn data source requires seaborn backend.",
                 )
-            _refresh_seaborn_configs()
-            if SeabornPlotConfig is None or SeabornPlotConfigList is None:
-                raise ImportError(
-                    "Seaborn plotting requires optional dependency deckard[seaborn]",
-                )
-            config_cls = (
-                SeabornPlotConfigList if "plots" in self.kwargs else SeabornPlotConfig
-            )
+            wants_list = "plots" in self.kwargs
+            if wants_list:
+                if SeabornPlotConfigList is None:
+                    _refresh_seaborn_configs()
+                if SeabornPlotConfigList is None:
+                    raise ImportError(
+                        "Seaborn plotting requires optional dependency deckard[seaborn]",
+                    )
+                config_cls = SeabornPlotConfigList
+            else:
+                if SeabornPlotConfig is None:
+                    _refresh_seaborn_configs()
+                if SeabornPlotConfig is None:
+                    raise ImportError(
+                        "Seaborn plotting requires optional dependency deckard[seaborn]",
+                    )
+                config_cls = SeabornPlotConfig
 
         self.plot_state["backend"] = backend
         self.plot_state["configured"] = True
@@ -215,7 +256,9 @@ class PlotConfig(BaseConfig):
 
         config_kwargs = dict(self.kwargs)
         config_kwargs.pop("backend", None)
-        self.config = config_cls(**config_kwargs)
+        self.config = config_cls(
+            **self._filter_backend_kwargs(config_cls, config_kwargs),
+        )
 
     def __call__(self, *args, **kwargs) -> Union[dict, "Axes"]:
         """Render the resolved plotting backend and return its runtime output.

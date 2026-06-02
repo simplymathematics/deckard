@@ -423,7 +423,7 @@ def test_experiment_config_with_attack_end_to_end():
 def adult_base_data():
     return _load_or_skip(
         DataConfig(
-            name="adult",
+            name="sklearn.adult",
             sampler={
                 "name": "split",
                 "train_size": 160,
