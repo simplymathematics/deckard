@@ -12,7 +12,7 @@ duration_col: adv_fit_time
 
 plots_folder: plots/survival
 dataset: sqlite:///optuna.db
-calculate_attack_failures: false
+calculate_attack_failures: true
 
 covariates:
   - adv_fit_time
