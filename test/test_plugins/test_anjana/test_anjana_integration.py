@@ -273,6 +273,7 @@ def test_joblib_launcher_syncs_scores_and_attrs_sklearn(tmp_path):
     pytest.importorskip("hydra_plugins.hydra_joblib_launcher")
 
     study_name = f"joblib_sync_{uuid.uuid4().hex[:8]}"
+    experiment_name = f"joblib_sync_{uuid.uuid4().hex[:8]}"
     db_path = tmp_path / "joblib_sync.db"
     storage = f"sqlite:///{db_path}"
 
@@ -303,6 +304,7 @@ def test_joblib_launcher_syncs_scores_and_attrs_sklearn(tmp_path):
         "hydra.sweeper.n_jobs=1",
         f"hydra.sweeper.study_name={study_name}",
         f"hydra.sweeper.storage={storage}",
+        f"experiment_name={experiment_name}",
         "~data_alias",
         "~model_alias",
         "~attack_alias",
