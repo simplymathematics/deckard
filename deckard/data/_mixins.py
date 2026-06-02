@@ -11,6 +11,7 @@ plugin runtime call signatures to avoid duplicate local protocol declarations.
 from __future__ import annotations
 
 import inspect
+from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any, Dict, Optional, Protocol, Union
 
@@ -47,6 +48,148 @@ class SensitiveColumnsMixin:
     sensitive_columns: Optional[Union[str, list]] = None
     fairness_defense: Union[None, bool, Dict[str, Any], list] = None
 
+    def _normalize_sensitive_columns(self) -> list[str]:
+        """Return configured sensitive columns as a normalized string list."""
+        cols = self.sensitive_columns
+        if cols is None:
+            return []
+        if isinstance(cols, str):
+            return [cols]
+        return [str(col) for col in cols]
+
+    def _resolve_post_transform_feature_names(
+        self,
+        frame: pd.DataFrame,
+    ) -> list[str]:
+        """Best-effort feature-name ordering after typed preprocessing.
+
+        Mirrors the ordering behavior of ``DataPipeline._build_x_pipeline`` for
+        typed steps (numeric/object selectors followed by passthrough columns).
+        """
+        pipeline_cfg = getattr(self, "pipeline", None)
+        if pipeline_cfg is None:
+            return list(frame.columns)
+        if hasattr(pipeline_cfg, "pipeline"):
+            pipeline_cfg = getattr(pipeline_cfg, "pipeline", None)
+        if isinstance(pipeline_cfg, Mapping):
+            pipeline_cfg = dict(pipeline_cfg)
+        if not isinstance(pipeline_cfg, dict):
+            return list(frame.columns)
+
+        typed_groups: list[list[str]] = []
+        for _, raw_step in pipeline_cfg.items():
+            if isinstance(raw_step, Mapping):
+                raw_step = dict(raw_step)
+            if not isinstance(raw_step, dict):
+                continue
+            dtype = raw_step.get("dtype", None)
+            if dtype is None:
+                continue
+            dtype_text = str(dtype).strip().lower()
+            if dtype_text in {"num", "numeric", "float", "int"}:
+                selected = list(frame.select_dtypes(include=np.number).columns)
+            elif dtype_text in {"object", "string", "category"}:
+                selected = list(
+                    frame.select_dtypes(
+                        include=["object", "string", "category"],
+                    ).columns,
+                )
+            else:
+                continue
+            typed_groups.append([str(col) for col in selected])
+
+        if len(typed_groups) == 0:
+            return list(frame.columns)
+
+        transformed_order: list[str] = []
+        seen: set[str] = set()
+        for group in typed_groups:
+            for col in group:
+                transformed_order.append(col)
+                seen.add(col)
+        for col in frame.columns:
+            col_name = str(col)
+            if col_name not in seen:
+                transformed_order.append(col_name)
+        return transformed_order
+
+    def _pipeline_uses_typed_preprocessing(self) -> bool:
+        """Return True when pipeline config includes dtype-targeted X steps."""
+        pipeline_cfg = getattr(self, "pipeline", None)
+        if pipeline_cfg is None:
+            return False
+        if hasattr(pipeline_cfg, "pipeline"):
+            pipeline_cfg = getattr(pipeline_cfg, "pipeline", None)
+        if isinstance(pipeline_cfg, Mapping):
+            pipeline_cfg = dict(pipeline_cfg)
+        if not isinstance(pipeline_cfg, dict):
+            return False
+        for _, raw_step in pipeline_cfg.items():
+            if isinstance(raw_step, Mapping):
+                raw_step = dict(raw_step)
+            if not isinstance(raw_step, dict):
+                continue
+            dtype = raw_step.get("dtype", None)
+            if dtype is None:
+                continue
+            dtype_text = str(dtype).strip().lower()
+            if dtype_text in {
+                "num",
+                "numeric",
+                "float",
+                "int",
+                "object",
+                "string",
+                "category",
+            }:
+                return True
+        return False
+
+    def _resolve_sensitive_feature_ids_for_pipeline(
+        self,
+        frame: pd.DataFrame,
+    ):
+        """Resolve sensitive feature identifiers compatible with pipeline runtime.
+
+        Returns column names for direct DataFrame flows and integer indices when
+        typed preprocessing is configured (post-transform pipeline internals use
+        numpy arrays where fairlearn expects positional feature ids).
+        """
+        cols = self._normalize_sensitive_columns()
+        if len(cols) == 0:
+            raise ValueError("sensitive_columns must be configured")
+
+        missing_input = [col for col in cols if col not in frame.columns]
+        if missing_input:
+            raise RuntimeError(
+                f"Sensitive features not found for {cols}.",
+            )
+
+        post_columns = self._resolve_post_transform_feature_names(frame)
+        uses_typed_preprocess = self._pipeline_uses_typed_preprocessing()
+        if not uses_typed_preprocess:
+            return list(cols)
+
+        resolved_indices: list[int] = []
+        unresolved: list[str] = []
+        for col in cols:
+            matches = [
+                idx
+                for idx, name in enumerate(post_columns)
+                if name == col or name.startswith(f"{col}_")
+            ]
+            if len(matches) == 0:
+                unresolved.append(col)
+                continue
+            resolved_indices.extend(matches)
+
+        if unresolved:
+            raise RuntimeError(
+                "Sensitive features not found in transformed feature space for "
+                f"{unresolved}. Available transformed columns: {post_columns}",
+            )
+        return sorted(set(resolved_indices))
+
     def _sensitive_labels_from_targets(
         self,
         frame: pd.DataFrame,
@@ -77,10 +220,8 @@ class SensitiveColumnsMixin:
             )
         if not isinstance(frame, pd.DataFrame):
             frame = pd.DataFrame(frame)
-        cols = self.sensitive_columns
-        if isinstance(cols, str):
-            cols = [cols]
-        if cols is None:
+        cols = self._normalize_sensitive_columns()
+        if len(cols) == 0:
             fallback = self._sensitive_labels_from_targets(frame)
             if fallback is not None:
                 return fallback

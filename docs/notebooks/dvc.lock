@@ -595,56 +595,6 @@ stages:
       md5: ab3353d41bd7a24a20a31f29b64e3b3c.dir
       size: 66544770
       nfiles: 8
-  notebook_fairlearn:
-    cmd: jupyter nbconvert --to notebook --execute --inplace fairlearn.ipynb
-    deps:
-    - path: ../../deckard/attack/
-      hash: md5
-      md5: 844891556b6f3d7b730d480f6f4f35c7.dir
-      size: 257061
-      nfiles: 20
-    - path: ../../deckard/data/
-      hash: md5
-      md5: ae9f71e1d9791c6cc9e4ce1e86c0bf2f.dir
-      size: 353708
-      nfiles: 35
-    - path: ../../deckard/experiment/
-      hash: md5
-      md5: 05750eeaef8d37a9d6cce59880e48926.dir
-      size: 413063
-      nfiles: 17
-    - path: ../../deckard/file.py
-      hash: md5
-      md5: 96487a825dc8b4a0ca01f207c44725a6
-      size: 15181
-    - path: ../../deckard/model/
-      hash: md5
-      md5: 880b8e41aea7516ff8cb176ff7ddf0e0.dir
-      size: 484818
-      nfiles: 45
-    - path: ../../deckard/plot/
-      hash: md5
-      md5: b7de27afbcec346f3d1ae5d2419e485a.dir
-      size: 77029
-      nfiles: 16
-    - path: ../../deckard/score/
-      hash: md5
-      md5: b8ea17d8132a828b81ea2b6d2877adfd.dir
-      size: 294163
-      nfiles: 29
-    - path: ../../deckard/utils.py
-      hash: md5
-      md5: 18a0f7f49976546f33c1625871bf51b2
-      size: 58971
-    - path: fairlearn.ipynb
-      hash: md5
-      md5: 87c2dc4068711f88d58938bd33f87db8
-      size: 121740
-    outs:
-    - path: ./build/fairlearn/torch_fair_data.pkl
-      hash: md5
-      md5: 78620e11733e62d2d982a87a31904b90
-      size: 10762
   notebook_anjana:
     cmd: jupyter nbconvert --to notebook --execute --inplace anjana.ipynb
     deps:
@@ -1157,3 +1107,53 @@ stages:
       hash: md5
       md5: 89c8ad0c8c921c58d378c82a4c28ad5b
       size: 73960
+  notebook_fairlearn:
+    cmd: jupyter nbconvert --to notebook --execute --inplace fairlearn.ipynb
+    deps:
+    - path: ../../deckard/attack/
+      hash: md5
+      md5: 844891556b6f3d7b730d480f6f4f35c7.dir
+      size: 257061
+      nfiles: 20
+    - path: ../../deckard/data/
+      hash: md5
+      md5: a00fa812e0d376732955bae419df6709.dir
+      size: 362846
+      nfiles: 35
+    - path: ../../deckard/experiment/
+      hash: md5
+      md5: 05750eeaef8d37a9d6cce59880e48926.dir
+      size: 413063
+      nfiles: 17
+    - path: ../../deckard/file.py
+      hash: md5
+      md5: 96487a825dc8b4a0ca01f207c44725a6
+      size: 15181
+    - path: ../../deckard/model/
+      hash: md5
+      md5: 880b8e41aea7516ff8cb176ff7ddf0e0.dir
+      size: 484818
+      nfiles: 45
+    - path: ../../deckard/plot/
+      hash: md5
+      md5: b7de27afbcec346f3d1ae5d2419e485a.dir
+      size: 77029
+      nfiles: 16
+    - path: ../../deckard/score/
+      hash: md5
+      md5: b8ea17d8132a828b81ea2b6d2877adfd.dir
+      size: 294163
+      nfiles: 29
+    - path: ../../deckard/utils.py
+      hash: md5
+      md5: 18a0f7f49976546f33c1625871bf51b2
+      size: 58971
+    - path: fairlearn.ipynb
+      hash: md5
+      md5: 22366c5d20595d432838858804752ff3
+      size: 121618
+    outs:
+    - path: ./build/fairlearn/torch_fair_data.pkl
+      hash: md5
+      md5: 1827b282dd84c3580b86f819684ba56b
+      size: 10762

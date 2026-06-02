@@ -104,6 +104,31 @@ def test_apply_defense_branch_paths():
     assert cfg.pipeline["prototype_step"]["max_iter"] == 1
 
 
+def test_apply_defense_resolves_sensitive_ids_for_typed_pipeline():
+    cfg = _cfg()
+    cfg._X = pd.DataFrame(
+        {
+            "age": [25, 42],
+            "hours_per_week": [40, 50],
+            "sex": ["Male", "Female"],
+        },
+    )
+    cfg.sensitive_columns = ["sex"]
+    cfg.fairness_defense = {"name": "fairlearn.preprocessing.CorrelationRemover"}
+    cfg.pipeline = {
+        "imputer": {
+            "name": "sklearn.impute.SimpleImputer",
+            "strategy": "mean",
+            "dtype": "numeric",
+        },
+    }
+
+    cfg.apply_defense()
+
+    fairness_step = cfg.pipeline["fairness_correlation_remover"]
+    assert fairness_step["sensitive_feature_ids"] == [2]
+
+
 def test_load_data_validates_sensitive_columns(monkeypatch):
     cfg = _cfg()
 

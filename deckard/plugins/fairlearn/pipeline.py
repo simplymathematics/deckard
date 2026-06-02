@@ -77,16 +77,12 @@ class FairlearnPipelineHooksMixin:
         ):
             return
 
-        sensitive_columns = [
-            col for col in self.sensitive_columns if col in self._X.columns
-        ]
-        if not sensitive_columns:
-            raise RuntimeError(
-                f"Sensitive features not found for {self.sensitive_columns}.",
-            )
+        sensitive_feature_ids = self._resolve_sensitive_feature_ids_for_pipeline(
+            self._X,
+        )
 
         step_config: dict[str, Any] = {
-            "sensitive_feature_ids": list(sensitive_columns),
+            "sensitive_feature_ids": list(sensitive_feature_ids),
         }
         step_name = "fairness_correlation_remover"
         custom = dict(self.fairness_defense)

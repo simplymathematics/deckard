@@ -151,12 +151,7 @@ def discover_dataset_declarations() -> dict[str, DatasetDeclaration]:
                 name="openml.adult",
                 provider="openml",
                 target="sklearn.datasets.fetch_openml",
-                aliases=(
-                    "adult",
-                    "openml_adult",
-                    "sklearn.adult",
-                    "sklearn_adult",
-                ),
+                aliases=("openml_adult",),
             ),
             "diabetes": DatasetDeclaration(
                 name="diabetes",
@@ -187,6 +182,15 @@ def discover_dataset_declarations() -> dict[str, DatasetDeclaration]:
             ),
             "make_regression": DatasetDeclaration(
                 name="make_regression",
+                provider="sklearn",
+                target="sklearn.datasets.make_regression",
+                aliases=(
+                    "sklearn.make_regression",
+                    "sklearn_make_regression",
+                ),
+            ),
+            "adult": DatasetDeclaration(
+                name="adult",
                 provider="sklearn",
                 target="sklearn.datasets.make_regression",
                 aliases=(

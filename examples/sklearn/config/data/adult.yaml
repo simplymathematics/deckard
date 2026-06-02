@@ -10,3 +10,7 @@ pipeline:
   imputer:
     name: sklearn.impute.SimpleImputer
     strategy: mean
+    dtype: numeric
+  encoder:
+    name: sklearn.preprocessing.OrdinalEncoder
+    dtype: string
