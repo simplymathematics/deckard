@@ -3,6 +3,10 @@ import importlib
 import pytest
 
 import deckard.data as data_package
+import deckard.experiment as experiment_package
+import deckard.model as model_package
+import deckard.score as score_package
+import deckard.declarations as declarations_mod
 import deckard.plugins as plugin_namespace
 
 
@@ -25,17 +29,10 @@ def test_get_plugin_rejects_missing_optional_dependencies(monkeypatch):
 
 
 def test_data_reexports_follow_plugin_availability(monkeypatch):
-    original = plugin_namespace.is_plugin_available
-
-    def _fake_is_plugin_available(name: str) -> bool:
-        if name in {"fairlearn", "anjana"}:
-            return False
-        return original(name)
-
     monkeypatch.setattr(
-        plugin_namespace,
-        "is_plugin_available",
-        _fake_is_plugin_available,
+        declarations_mod,
+        "is_package_available",
+        lambda name: False if name in {"fairlearn", "anjana", "pycanon"} else True,
     )
 
     reloaded = importlib.reload(data_package)
@@ -78,3 +75,58 @@ def test_top_level_lifelines_alias_matches_module_export():
     from deckard.plugins.lifelines.experiment import SurvivalExperimentConfig
 
     assert lifelines_package.SurvivalExperimentConfig is SurvivalExperimentConfig
+
+
+@pytest.mark.parametrize(
+    ("package", "missing_exports"),
+    [
+        (
+            model_package,
+            (
+                "FairlearnModelConfig",
+                "AnjanaModelConfig",
+                "PytorchModelConfig",
+                "SurvivalModelConfig",
+            ),
+        ),
+        (
+            experiment_package,
+            (
+                "TorchExperimentConfig",
+                "SurvivalExperimentConfig",
+            ),
+        ),
+    ],
+)
+def test_core_reexports_follow_optional_availability(
+    monkeypatch,
+    package,
+    missing_exports: tuple[str, ...],
+):
+    monkeypatch.setattr(plugin_namespace, "is_plugin_available", lambda name: False)
+    monkeypatch.setattr(declarations_mod, "is_package_available", lambda name: False)
+
+    reloaded = importlib.reload(package)
+    try:
+        for export_name in missing_exports:
+            assert export_name not in reloaded.__all__
+    finally:
+        importlib.reload(package)
+
+
+def test_score_exports_follow_plugin_availability(monkeypatch):
+    monkeypatch.setattr(
+        declarations_mod,
+        "is_package_available",
+        lambda name: (
+            False if name in {"fairlearn", "anjana", "pycanon", "lifelines"} else True
+        ),
+    )
+
+    reloaded = importlib.reload(score_package)
+    try:
+        assert "DefaultFairlearnScorerDictConfig" not in reloaded.__all__
+        assert "DefaultAnjanaScorerDictConfig" not in reloaded.__all__
+        assert "DefaultLifelinesConfig" not in reloaded.__all__
+    finally:
+        importlib.reload(score_package)

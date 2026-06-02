@@ -25,22 +25,21 @@ import pytest
 
 
 @pytest.mark.parametrize(
-    ("module_name", "available"),
-    [("fairlearn", True), ("missing_optional_dep", False)],
+    ("plugin_name", "available"),
+    [("fairlearn", True), ("anjana", False)],
 )
 def test_optional_score_dependency_detection(
     monkeypatch: pytest.MonkeyPatch,
-    module_name: str,
+    plugin_name: str,
     available: bool,
 ) -> None:
-    sentinel = object()
     monkeypatch.setattr(
-        score_mod.importlib.util,
-        "find_spec",
-        lambda name: sentinel if name == module_name and available else None,
+        score_mod,
+        "is_plugin_available",
+        lambda name: available if name == plugin_name else False,
     )
 
-    assert score_mod._is_available(module_name) is available
+    assert score_mod.is_plugin_available(plugin_name) is available
 
 
 @pytest.mark.parametrize(

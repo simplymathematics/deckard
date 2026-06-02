@@ -19,6 +19,7 @@ import pytest
 import yaml
 
 from deckard.declarations import (
+    _discover_builtin_config_roots,
     _get_config_group_and_name,
     _should_register_config,
     discover_config_roots,
@@ -31,6 +32,21 @@ from deckard.declarations import (
 
 class TestDiscoverConfigRoots:
     """Test config root discovery."""
+
+    def test_builtin_roots_are_discovered_from_examples_directory(self):
+        """Built-in roots should come from examples/*/config discovery."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_root = Path(tmpdir)
+            (repo_root / "examples" / "alpha" / "config").mkdir(parents=True)
+            (repo_root / "examples" / "beta").mkdir(parents=True)
+            (repo_root / "examples" / "gamma" / "config").mkdir(parents=True)
+
+            roots = _discover_builtin_config_roots(repo_root)
+
+            assert roots == [
+                (repo_root / "examples" / "alpha" / "config").resolve(),
+                (repo_root / "examples" / "gamma" / "config").resolve(),
+            ]
 
     def test_builtin_roots_exist(self):
         """Verify built-in roots are discovered when they exist."""
@@ -81,6 +97,35 @@ class TestDiscoverConfigRoots:
             roots = discover_config_roots()
             # Should only have built-in roots
             assert len(roots) >= 0  # May be 0 if built-in roots don't exist
+
+    def test_external_roots_precede_builtin_roots(self):
+        """External config roots should come before built-ins."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            ext_dir = Path(tmpdir) / "ext-priority"
+            ext_dir.mkdir()
+            with mock.patch.dict(
+                os.environ,
+                {"DECKARD_CONFIG_DIRS": str(ext_dir)},
+            ):
+                roots = discover_config_roots()
+                assert roots, "Expected at least one discovered config root"
+                assert roots[0] == ext_dir.resolve()
+
+    def test_discover_config_roots_dedupes_first_seen(self):
+        """Duplicate roots from env and built-ins should be returned once."""
+        deckard_root = Path(__file__).resolve().parents[1]
+        sklearn_root = (deckard_root / "examples" / "sklearn" / "config").resolve()
+        if not sklearn_root.is_dir():
+            pytest.skip("Built-in sklearn config root is not present")
+
+        with mock.patch.dict(
+            os.environ,
+            {"DECKARD_CONFIG_DIRS": f"{sklearn_root}:{sklearn_root}"},
+        ):
+            roots = discover_config_roots()
+
+        assert roots.count(sklearn_root) == 1
+        assert roots[0] == sklearn_root
 
 
 class TestIterConfigFiles:
