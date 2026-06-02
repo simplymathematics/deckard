@@ -43,12 +43,48 @@ class DeclarationIndexEntry:
     selector: str
 
 
+def _append_root(
+    roots: List[Path],
+    seen: Set[Path],
+    path: Path,
+    *,
+    source: str,
+) -> None:
+    if path in seen:
+        logger.debug(f"Skipping duplicate {source} config root: {path}")
+        return
+    roots.append(path)
+    seen.add(path)
+    logger.debug(f"Discovered {source} config root: {path}")
+
+
+def _discover_builtin_config_roots(deckard_root: Path) -> List[Path]:
+    examples_root = deckard_root / "examples"
+    if not examples_root.is_dir():
+        logger.debug(f"Examples root not found: {examples_root}")
+        return []
+
+    builtin_roots: List[Path] = []
+    for example_dir in sorted(
+        path for path in examples_root.iterdir() if path.is_dir()
+    ):
+        config_root = example_dir / "config"
+        if config_root.is_dir():
+            builtin_roots.append(config_root.resolve())
+        else:
+            logger.debug(f"Built-in config root not found: {config_root}")
+    return builtin_roots
+
+
 def discover_config_roots() -> List[Path]:
     """
     Discover all active config root directories.
 
     Returns:
-        List[Path]: Ordered list of config root paths to scan. Built-in roots are prioritized before external roots.
+        List[Path]: Ordered list of config root paths to scan.
+            External roots from DECKARD_CONFIG_DIRS are prioritized before
+            built-ins. Duplicate paths are removed while preserving first-seen
+            order.
 
     Notes:
         - Built-in roots: examples/sklearn/config, examples/pytorch/config, examples/transformers/config
@@ -57,21 +93,7 @@ def discover_config_roots() -> List[Path]:
         - Only returns directories that exist
     """
     roots: List[Path] = []
-
-    # Discover built-in canonical roots relative to deckard package
-    deckard_root = Path(__file__).parent.parent
-    builtin_roots = [
-        deckard_root / "examples" / "sklearn" / "config",
-        deckard_root / "examples" / "pytorch" / "config",
-        deckard_root / "examples" / "transformers" / "config",
-    ]
-
-    for root in builtin_roots:
-        if root.is_dir():
-            roots.append(root)
-            logger.debug(f"Discovered built-in config root: {root}")
-        else:
-            logger.debug(f"Built-in config root not found: {root}")
+    seen: Set[Path] = set()
 
     # Discover external config roots from environment variable
     external_dirs = os.environ.get("DECKARD_CONFIG_DIRS", "").strip()
@@ -82,10 +104,15 @@ def discover_config_roots() -> List[Path]:
                 continue
             path = Path(path_str).expanduser().resolve()
             if path.is_dir():
-                roots.append(path)
-                logger.debug(f"Discovered external config root: {path}")
+                _append_root(roots, seen, path, source="external")
             else:
                 logger.warning(f"External config root not found: {path}")
+
+    # Discover built-in canonical roots relative to deckard package.
+    deckard_root = Path(__file__).parent.parent
+    builtin_roots = _discover_builtin_config_roots(deckard_root)
+    for root in builtin_roots:
+        _append_root(roots, seen, root, source="built-in")
 
     logger.info(f"Discovered {len(roots)} config root(s): {roots}")
     return roots
@@ -255,13 +282,9 @@ def _get_config_group_and_name(path: Path, root: Path) -> tuple:
 
 
 def _root_kind(root: Path) -> str:
-    root_str = str(root).replace("\\", "/")
-    if root_str.endswith("/examples/sklearn/config"):
-        return "sklearn"
-    if root_str.endswith("/examples/pytorch/config"):
-        return "pytorch"
-    if root_str.endswith("/examples/transformers/config"):
-        return "transformers"
+    parts = root.resolve().parts
+    if len(parts) >= 3 and parts[-3] == "examples" and parts[-1] == "config":
+        return parts[-2]
     return "external"
 
 

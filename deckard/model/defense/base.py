@@ -14,7 +14,7 @@ from sklearn.exceptions import NotFittedError
 from sklearn.utils.validation import check_is_fitted
 
 from ...artifacts import ScoreDict
-from ...frameworks.types import ArtEsimtator, EstimatorLike, StringifiedClass
+from ...types import ArtEsimtator, EstimatorLike, StringifiedClass
 from ...data import DataConfig
 from ...utils import (
     BaseConfig,
@@ -754,16 +754,24 @@ class DefensePipelineConfigBehaviorMixin(DefenseHookRuntimeMixin):
         defense_name = getattr(defense_obj, "name", None)
         if isinstance(defense_name, str) and defense_name.startswith("art."):
             return True
-        try:
-            from ...plugins.fairlearn.model import FairlearnDefenseConfig
-
-            if isinstance(defense_obj, FairlearnDefenseConfig):
-                return False
-        except Exception:
-            pass
+        if self._is_fairlearn_defense_instance(defense_obj):
+            return False
         if isinstance(defense_obj, DefenseConfig):
             return True
         return False
+
+    @staticmethod
+    def _is_fairlearn_defense_instance(defense_obj) -> bool:
+        """Return True when defense object is a fairlearn defense wrapper."""
+        cls = getattr(defense_obj, "__class__", None)
+        if cls is None:
+            return False
+        module_name = getattr(cls, "__module__", "")
+        class_name = getattr(cls, "__name__", "")
+        return (
+            module_name == "deckard.plugins.fairlearn.model"
+            and class_name == "FairlearnDefenseConfig"
+        )
 
     def _is_model_wrapper_defense(self, defense_obj) -> bool:
         """Return True for defenses that wrap/transform estimators rather than raw data."""
@@ -778,13 +786,8 @@ class DefensePipelineConfigBehaviorMixin(DefenseHookRuntimeMixin):
         defense_name = getattr(defense_obj, "name", None)
         if isinstance(defense_name, str) and defense_name.startswith("fairlearn."):
             return True
-        try:
-            from ...plugins.fairlearn.model import FairlearnDefenseConfig
-
-            if isinstance(defense_obj, FairlearnDefenseConfig):
-                return True
-        except Exception:
-            pass
+        if self._is_fairlearn_defense_instance(defense_obj):
+            return True
         return False
 
     def _is_retraining_defense(self, defense_obj) -> bool:

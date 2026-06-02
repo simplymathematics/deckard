@@ -7,7 +7,7 @@ from typing import Any, Literal, Union
 from sklearn.metrics import accuracy_score
 
 from ..artifacts import ScoreDict
-from ..frameworks.types import ArrayLike
+from ..types import ArrayLike
 from ..utils import BaseConfig, round_scores
 from .base import (
     ScorerConfig,

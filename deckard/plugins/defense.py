@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from typing import Any, Callable, Union
-from ..frameworks.types import StringifiedClass
-from ..frameworks.types import EstimatorLike
+from ..types import StringifiedClass
+from ..types import EstimatorLike
 from ..utils import BaseConfig
 
 DefenseScalar = str | int | float | bool | None

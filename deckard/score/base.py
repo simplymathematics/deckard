@@ -17,8 +17,7 @@ from omegaconf import DictConfig, ListConfig, OmegaConf
 
 from ..artifacts import ScoreDict
 from ..data import DataConfig
-from ..frameworks.types import ArrayLike, AttackLike, EstimatorLike, MatrixLike
-from ..frameworks.pytorch.score import normalize_scoring_mode, to_numpy_if_torch
+from ..types import ArrayLike, AttackLike, EstimatorLike, MatrixLike
 from ..utils import (
     BaseConfig,
     coerce_config,
@@ -33,6 +32,29 @@ from .canon import normalize_scorer_mode
 from ._runtime import series_like_to_float_dict as _series_like_to_float_dict
 
 logger = logging.getLogger(__name__)
+
+
+def to_numpy_if_torch(value: Any) -> Any:
+    """Recursively convert tensor-like payloads to numpy arrays when possible."""
+    if isinstance(value, list):
+        return [to_numpy_if_torch(v) for v in value]
+    if isinstance(value, tuple):
+        return tuple(to_numpy_if_torch(v) for v in value)
+    if all(hasattr(value, attr) for attr in ("detach", "cpu", "numpy")):
+        try:
+            return value.detach().cpu().numpy()
+        except Exception:
+            return value
+    return value
+
+
+def normalize_scoring_mode(mode: str | None) -> str:
+    """Normalize score mode tokens needed by core scorer feature resolution."""
+    resolved = normalize_scorer_mode(mode)
+    if resolved == "attack-val":
+        return "val"
+    return resolved
+
 
 MetricScalar = Union[float, int, np.floating, np.integer]
 MetricResult = Union[MetricScalar, np.ndarray]

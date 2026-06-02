@@ -30,7 +30,7 @@ from ..utils import (
     normalize_plugin_specs,
     instantiate_plugin_spec,
 )
-from ..frameworks.types import (
+from ..types import (
     ArtEsimtator,
     ArrayLike,
     EstimatorLike,

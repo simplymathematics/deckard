@@ -20,13 +20,11 @@ from pathlib import Path
 from types import SimpleNamespace
 from hydra.utils import instantiate
 
+from .. import _OPTIONAL_RUNTIME_CLASS_PATHS, _resolve_optional_runtime_class
+from ..declarations import is_package_available
 from ..data import DataConfig
 from ..model import ModelConfig
-
-try:
-    from ..data import FairlearnDataConfig
-except ImportError:  # pragma: no cover
-    FairlearnDataConfig = None
+from ..plugins import is_plugin_available
 from ..model.defense.base import DefenseConfig
 
 try:
@@ -76,15 +74,32 @@ try:
 except Exception:  # pragma: no cover
     torch = None
 
-try:
-    from ..data import AnjanaDataConfig
-except ImportError:  # pragma: no cover
-    AnjanaDataConfig = None
+_OPTIONAL_EXPERIMENT_RUNTIME_CACHE: dict[str, Any | None] = {
+    "fairlearn_data": None,
+    "anjana_data": None,
+    "fairlearn_model": None,
+    "fairlearn_pytorch_model": None,
+    "pytorch_model": None,
+}
 
 
-FairlearnModelConfig = None
-FairlearnPytorchModelConfig = None
-PytorchModelConfig = None
+def _load_optional_runtime_entry(
+    cache_key: str,
+    path_key: str,
+    *,
+    enabled: bool,
+) -> Any | None:
+    if not enabled:
+        return None
+
+    cached = _OPTIONAL_EXPERIMENT_RUNTIME_CACHE[cache_key]
+    if cached is None:
+        cached = _resolve_optional_runtime_class(
+            _OPTIONAL_RUNTIME_CLASS_PATHS[path_key],
+            enabled=True,
+        )
+        _OPTIONAL_EXPERIMENT_RUNTIME_CACHE[cache_key] = cached
+    return cached
 
 
 def _load_optional_model_specializations() -> tuple[Any, Any, Any]:
@@ -94,37 +109,39 @@ def _load_optional_model_specializations() -> tuple[Any, Any, Any]:
     torch stack during unrelated test collection. Delay that resolution until
     fairness specialization actually runs.
     """
+    return (
+        _load_optional_runtime_entry(
+            "pytorch_model",
+            "pytorch_model_config",
+            enabled=is_package_available("torch"),
+        ),
+        _load_optional_runtime_entry(
+            "fairlearn_model",
+            "fairlearn_model_config",
+            enabled=is_plugin_available("fairlearn"),
+        ),
+        _load_optional_runtime_entry(
+            "fairlearn_pytorch_model",
+            "fairlearn_pytorch_model_config",
+            enabled=is_plugin_available("fairlearn") and is_package_available("torch"),
+        ),
+    )
 
-    global FairlearnModelConfig, FairlearnPytorchModelConfig, PytorchModelConfig
 
-    if PytorchModelConfig is None:
-        try:
-            from ..frameworks.pytorch.model import (
-                PytorchModelConfig as _PytorchModelConfig,
-            )
-        except Exception:  # pragma: no cover
-            _PytorchModelConfig = None
-        PytorchModelConfig = _PytorchModelConfig
-
-    if FairlearnModelConfig is None:
-        try:
-            from ..plugins.fairlearn.model import (
-                FairlearnModelConfig as _FairlearnModelConfig,
-            )
-        except Exception:  # pragma: no cover
-            _FairlearnModelConfig = None
-        FairlearnModelConfig = _FairlearnModelConfig
-
-    if FairlearnPytorchModelConfig is None:
-        try:
-            from ..plugins.fairlearn.model import (
-                FairlearnPytorchModelConfig as _FairlearnPytorchModelConfig,
-            )
-        except Exception:  # pragma: no cover
-            _FairlearnPytorchModelConfig = None
-        FairlearnPytorchModelConfig = _FairlearnPytorchModelConfig
-
-    return PytorchModelConfig, FairlearnModelConfig, FairlearnPytorchModelConfig
+def _load_optional_data_specializations() -> tuple[Any, Any]:
+    """Load optional fairness/privacy data classes only when needed."""
+    return (
+        _load_optional_runtime_entry(
+            "fairlearn_data",
+            "fairlearn_data_config",
+            enabled=is_plugin_available("fairlearn"),
+        ),
+        _load_optional_runtime_entry(
+            "anjana_data",
+            "anjana_data_config",
+            enabled=is_plugin_available("anjana"),
+        ),
+    )
 
 
 logger = logging.getLogger(__name__)
@@ -269,33 +286,21 @@ class ExperimentConfig(ScoreOrchestratorMixin, BaseConfig):
         return data_dict
 
     def _select_data_cls(self, data_dict: dict):
-        if any(key in data_dict for key in self._anjana_keys):
-            resolved_anjana_cls = AnjanaDataConfig
-            if resolved_anjana_cls is None:
-                try:
-                    from ..plugins.anjana.data import (
-                        AnjanaDataConfig as _AnjanaDataConfig,
-                    )
+        fairlearn_cls, anjana_cls = _load_optional_data_specializations()
 
-                    resolved_anjana_cls = _AnjanaDataConfig
-                except Exception as exc:
-                    raise ImportError(
-                        "AnjanaDataConfig requires optional anjana dependencies. Install deckard[anjana] to enable anjana data configs.",
-                    ) from exc
+        if any(key in data_dict for key in self._anjana_keys):
+            resolved_anjana_cls = anjana_cls
+            if resolved_anjana_cls is None:
+                raise ImportError(
+                    "AnjanaDataConfig requires optional anjana dependencies. Install deckard[anjana] to enable anjana data configs.",
+                )
             return resolved_anjana_cls
         if any(key in data_dict for key in self._fairness_keys):
-            resolved_fairlearn_cls = FairlearnDataConfig
+            resolved_fairlearn_cls = fairlearn_cls
             if resolved_fairlearn_cls is None:
-                try:
-                    from ..plugins.fairlearn.data import (
-                        FairlearnDataConfig as _FairlearnDataConfig,
-                    )
-
-                    resolved_fairlearn_cls = _FairlearnDataConfig
-                except Exception as exc:
-                    raise ImportError(
-                        "FairlearnDataConfig requires optional fairness dependencies. Install deckard[fairlearn] to enable fairlearn data configs.",
-                    ) from exc
+                raise ImportError(
+                    "FairlearnDataConfig requires optional fairness dependencies. Install deckard[fairlearn] to enable fairlearn data configs.",
+                )
             return resolved_fairlearn_cls
         return DataConfig
 
@@ -872,9 +877,16 @@ class ExperimentConfig(ScoreOrchestratorMixin, BaseConfig):
         if fairness_base is None:
             return merged
 
-        from ..plugins.fairlearn.score import FairlearnScorerDictConfig
+        fairlearn_scorer_cls = _resolve_optional_runtime_class(
+            _OPTIONAL_RUNTIME_CLASS_PATHS["fairlearn_scorer_config"],
+            enabled=is_plugin_available("fairlearn"),
+        )
+        if fairlearn_scorer_cls is None:
+            raise ImportError(
+                "Fairlearn scorer merge requires optional fairness dependencies. Install deckard[fairlearn] to enable fairlearn scorer configs.",
+            )
 
-        return FairlearnScorerDictConfig(
+        return fairlearn_scorer_cls(
             scorers=merged.scorers,
             group_scorers=dict(getattr(fairness_base, "group_scorers", {}) or {}),
             group_reduction=getattr(
@@ -1278,9 +1290,11 @@ class ExperimentConfig(ScoreOrchestratorMixin, BaseConfig):
         if self.model is None:
             return
 
-        if FairlearnDataConfig is not None and isinstance(
+        fairlearn_data_cls, _ = _load_optional_data_specializations()
+
+        if fairlearn_data_cls is not None and isinstance(
             self.data,
-            FairlearnDataConfig,
+            fairlearn_data_cls,
         ):
             (
                 resolved_pytorch_model_cls,

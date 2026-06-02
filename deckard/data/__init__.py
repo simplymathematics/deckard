@@ -7,7 +7,11 @@ Optional exports are only available when their dependencies are installed.
 
 import logging
 
-from ..plugins import is_plugin_available
+from .._optional import (
+    get_optional_surface_export_names,
+    load_optional_export,
+    load_optional_surface_exports,
+)
 from .base import DataConfig
 from .declarations import DatasetDeclaration, discover_dataset_declarations
 from .pipeline import DataConfig as PipelineDataConfig
@@ -22,6 +26,9 @@ from .sample import (
 
 logger = logging.getLogger(__name__)
 
+_OPTIONAL_DATA_SURFACE = "deckard.data"
+_OPTIONAL_DATA_EXPORTS = get_optional_surface_export_names(_OPTIONAL_DATA_SURFACE)
+
 
 def _clear_optional_exports(*names: str) -> None:
     """Drop stale optional exports before conditional re-import on reload."""
@@ -31,46 +38,13 @@ def _clear_optional_exports(*names: str) -> None:
 
 
 _clear_optional_exports(
-    "PytorchDataConfig",
-    "PytorchCustomDataConfig",
-    "FairlearnDataConfig",
-    "AnjanaDataConfig",
+    *_OPTIONAL_DATA_EXPORTS,
 )
 
-try:
-    from .pipeline import PytorchDataConfig
-
-    _ = PytorchDataConfig
-except Exception:  # pragma: no cover
-    logger.debug("Torch not found. PytorchDataConfig is unavailable.")
-
-
-try:
-    from ..frameworks.pytorch.data import PytorchCustomDataConfig, PytorchDataConfig
-
-    _ = (PytorchDataConfig, PytorchCustomDataConfig)
-except Exception:
-    logger.debug("Torch not found.")
-
-if is_plugin_available("fairlearn"):
-    try:
-        from ..plugins.fairlearn.data import FairlearnDataConfig
-
-        _ = FairlearnDataConfig
-    except Exception:
-        logger.debug("Fairlearn plugin import failed.")
-else:
-    logger.debug("Fairlearn plugin dependencies not installed.")
-
-if is_plugin_available("anjana"):
-    try:
-        from ..plugins.anjana.data import AnjanaDataConfig
-
-        _ = AnjanaDataConfig
-    except Exception:
-        logger.debug("Anjana plugin import failed.")
-else:
-    logger.debug("Anjana plugin dependencies not installed.")
+load_optional_surface_exports(
+    _OPTIONAL_DATA_SURFACE,
+    module_globals=globals(),
+)
 
 
 __all__ = [
@@ -94,3 +68,14 @@ if "FairlearnDataConfig" in globals():
 
 if "AnjanaDataConfig" in globals():
     __all__.append("AnjanaDataConfig")
+
+
+def __getattr__(name: str):
+    value = load_optional_export(
+        _OPTIONAL_DATA_SURFACE,
+        name,
+        module_globals=globals(),
+    )
+    if value is not None:
+        return value
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

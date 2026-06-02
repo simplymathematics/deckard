@@ -20,7 +20,7 @@ from ..utils import (
     coerce_to_list,
     merge_list_of_dicts,
 )
-from ..frameworks.types import (
+from ..types import (
     ArrayLike,
     DatasetLike,
     EstimatorLike,

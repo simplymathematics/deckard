@@ -18,7 +18,7 @@ from typing import Any, Optional, cast
 import numpy as np
 import pandas as pd
 
-from .frameworks.types import ArrayLike, EstimatorLike, MatrixLike
+from .types import ArrayLike, EstimatorLike, MatrixLike
 
 try:
     import torch

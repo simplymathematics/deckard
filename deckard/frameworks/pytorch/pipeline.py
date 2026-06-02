@@ -7,7 +7,7 @@ import logging
 from torch import Tensor
 
 # Local / project
-from ..types import EstimatorLike
+from ...types import EstimatorLike
 
 # Logger
 logger = logging.getLogger(__name__)

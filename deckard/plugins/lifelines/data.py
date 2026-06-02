@@ -5,7 +5,7 @@ from enum import Enum
 from typing import Any, Optional, Union
 
 from ...data.base import DataConfig
-from ...frameworks.types import DatasetLike
+from ...types import DatasetLike
 
 
 class LifelinesDataMode(str, Enum):

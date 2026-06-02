@@ -5,6 +5,8 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from .._optional import OPTIONAL_FAMILY_REGISTRY
+
 
 def _load_optional_dependency_groups() -> set[str]:
     pyproject = Path(__file__).resolve().parents[2] / "pyproject.toml"
@@ -48,44 +50,44 @@ def _extras_from_groups(*names: str) -> list[str]:
     return [name for name in names if name in OPTIONAL_DEP_GROUPS]
 
 
+_EXTENSION_PLUGIN_NAMES = (
+    "anjana",
+    "fairlearn",
+    "lifelines",
+    "seaborn",
+    "yellowbrick",
+)
+_FRAMEWORK_NAME_TO_FAMILY = {
+    "pytorch": "pytorch",
+    "sklearn": "sklearn",
+    "transformers": "transformers_framework",
+}
+
 PluginRegistry = {
-    "anjana": {
-        "required_imports": ["anjana", "pycanon"],
+    name: {
+        "required_imports": list(OPTIONAL_FAMILY_REGISTRY[name].required_imports),
         # anjana has explicit dual-import semantics and should not auto-bind to extra groups.
-        "extra": None,
-    },
-    "fairlearn": {
-        "required_imports": ["fairlearn"],
-        "extra": _extra_from_groups("fairlearn"),
-    },
-    "lifelines": {
-        "required_imports": ["lifelines"],
-        "extra": _extra_from_groups("lifelines"),
-    },
-    "seaborn": {
-        "required_imports": ["seaborn"],
-        "extra": _extra_from_groups("seaborn"),
-    },
-    "yellowbrick": {
-        "required_imports": ["yellowbrick"],
-        "extra": _extra_from_groups("yellowbrick"),
-    },
+        "extra": None if name == "anjana" else _extra_from_groups(name),
+    }
+    for name in _EXTENSION_PLUGIN_NAMES
 }
 
 FrameworkRegistry = {
-    "pytorch": {
-        "required_imports": ["torch"],
-        "extra": _extra_from_groups("pytorch", aliases=("torch",)),
-    },
-    "sklearn": {
-        "required_imports": ["sklearn"],
-        "extra": _extra_from_groups("sklearn"),
-    },
-    "transformers": {
-        "required_imports": ["transformers"],
-        # transformers is required; related optional extras are surfaced explicitly.
-        "extra": _extras_from_groups("datasets", "openattack", "textattack"),
-    },
+    name: {
+        "required_imports": list(
+            OPTIONAL_FAMILY_REGISTRY[family_name].required_imports,
+        ),
+        "extra": (
+            _extra_from_groups("pytorch", aliases=("torch",))
+            if name == "pytorch"
+            else (
+                _extras_from_groups("datasets", "openattack", "textattack")
+                if name == "transformers"
+                else _extra_from_groups(name)
+            )
+        ),
+    }
+    for name, family_name in _FRAMEWORK_NAME_TO_FAMILY.items()
 }
 
 

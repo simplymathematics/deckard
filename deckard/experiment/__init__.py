@@ -6,6 +6,7 @@ orchestration config and an optional survival-specific extension.
 
 import logging
 
+from .._optional import load_optional_export, load_optional_surface_exports
 from .base import ExperimentConfig
 from .canon import (
     CANONICAL_EXPERIMENT_PIPELINE_STAGES,
@@ -31,6 +32,8 @@ from .power import (
 
 logger = logging.getLogger(__name__)
 
+_OPTIONAL_EXPERIMENT_SURFACE = "deckard.experiment"
+
 __all__ = [
     "ExperimentConfig",
     "CANONICAL_EXPERIMENT_PIPELINE_STAGES",
@@ -50,34 +53,34 @@ __all__ = [
 
 
 def _load_torch_experiment_symbols() -> bool:
-    try:
-        from ..frameworks.pytorch.experiment import TorchExperimentConfig
-    except Exception:  # pragma: no cover
-        logger.debug("PyTorch not found. TorchExperimentConfig is unavailable.")
-        return False
-
-    globals()["TorchExperimentConfig"] = TorchExperimentConfig
-    if "TorchExperimentConfig" not in __all__:
-        __all__.append("TorchExperimentConfig")
-    return True
+    return bool(
+        load_optional_surface_exports(
+            _OPTIONAL_EXPERIMENT_SURFACE,
+            module_globals=globals(),
+            exported_names=__all__,
+            family="pytorch",
+        ),
+    )
 
 
 def _load_lifelines_experiment_symbols() -> bool:
-    try:
-        from ..plugins.lifelines.experiment import SurvivalExperimentConfig
-    except Exception:  # pragma: no cover
-        logger.debug("Lifelines not found. SurvivalExperimentConfig is unavailable.")
-        return False
-
-    globals()["SurvivalExperimentConfig"] = SurvivalExperimentConfig
-    if "SurvivalExperimentConfig" not in __all__:
-        __all__.append("SurvivalExperimentConfig")
-    return True
+    return bool(
+        load_optional_surface_exports(
+            _OPTIONAL_EXPERIMENT_SURFACE,
+            module_globals=globals(),
+            exported_names=__all__,
+            family="lifelines",
+        ),
+    )
 
 
 def __getattr__(name: str):
-    if name == "TorchExperimentConfig" and _load_torch_experiment_symbols():
-        return globals()[name]
-    if name == "SurvivalExperimentConfig" and _load_lifelines_experiment_symbols():
-        return globals()[name]
+    value = load_optional_export(
+        _OPTIONAL_EXPERIMENT_SURFACE,
+        name,
+        module_globals=globals(),
+        exported_names=__all__,
+    )
+    if value is not None:
+        return value
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

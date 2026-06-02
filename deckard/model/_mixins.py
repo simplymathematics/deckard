@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Protocol
 
-from ..frameworks.types import EstimatorLike
+from ..types import EstimatorLike
 
 
 class PruneTrialProtocol(Protocol):

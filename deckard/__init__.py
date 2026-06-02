@@ -27,6 +27,8 @@ from omegaconf import OmegaConf
 from optuna.exceptions import ExperimentalWarning
 from sklearn.exceptions import ConvergenceWarning, UndefinedMetricWarning
 
+from ._optional import OPTIONAL_RUNTIME_CLASS_PATHS
+
 # Install library warning filters before importing deckard submodules, since
 # those imports can transitively import sklearn/art and emit warnings.
 warnings.filterwarnings("ignore", module=r"^sklearn(\.|$)")
@@ -36,6 +38,24 @@ warnings.filterwarnings(
     category=UserWarning,
     message=r"PyTorch not found\. Not importing DeepZ or Interval Bound Propagation functionality",
 )
+
+_OPTIONAL_RUNTIME_CLASS_PATHS: dict[str, str] = dict(OPTIONAL_RUNTIME_CLASS_PATHS)
+
+
+def _resolve_optional_runtime_class(
+    class_path: str,
+    *,
+    enabled: bool,
+) -> Any | None:
+    if not enabled:
+        return None
+    try:
+        from .utils import resolve_class
+
+        return resolve_class(class_path)
+    except Exception:  # pragma: no cover
+        return None
+
 
 from .data import DataConfig  # noqa E402
 from .model import ModelConfig  # noqa E402

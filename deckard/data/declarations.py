@@ -22,7 +22,7 @@ from typing import Any, Callable, TYPE_CHECKING
 
 import pandas as pd
 from sklearn.datasets import fetch_openml, make_classification, make_regression
-from ..frameworks.types import StringifiedClass
+from ..types import StringifiedClass
 
 logger = logging.getLogger(__name__)
 
@@ -182,15 +182,6 @@ def discover_dataset_declarations() -> dict[str, DatasetDeclaration]:
             ),
             "make_regression": DatasetDeclaration(
                 name="make_regression",
-                provider="sklearn",
-                target="sklearn.datasets.make_regression",
-                aliases=(
-                    "sklearn.make_regression",
-                    "sklearn_make_regression",
-                ),
-            ),
-            "adult": DatasetDeclaration(
-                name="adult",
                 provider="sklearn",
                 target="sklearn.datasets.make_regression",
                 aliases=(

@@ -38,7 +38,7 @@ from ...data.base import DataConfig
 from ...data.base import AUTO_SCORER
 from ...data.canon import DataFiles, merge_data_files
 from ...artifacts import ScoreDict
-from ...frameworks.types import DatasetLike
+from ...types import DatasetLike
 from .sample import PytorchBaseSampler
 
 # deckard

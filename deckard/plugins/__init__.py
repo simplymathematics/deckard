@@ -6,10 +6,14 @@ package import time.
 """
 
 from dataclasses import dataclass, field
-from importlib import import_module
 from typing import Any, Protocol
 
-from ..declarations import is_package_available
+from .._optional import (
+    get_optional_family_module,
+    get_optional_family_names,
+    get_optional_family_required_imports,
+    is_optional_family_available,
+)
 
 PluginScalar = str | int | float | bool | None
 PluginValue = PluginScalar | list["PluginValue"] | dict[str, "PluginValue"]
@@ -123,37 +127,14 @@ class HookPlugin:
         return _hook
 
 
-_PLUGIN_MAP = {
-    "anjana": "deckard.plugins.anjana",
-    "fairlearn": "deckard.plugins.fairlearn",
-    "lifelines": "deckard.plugins.lifelines",
-    "openattack": "deckard.plugins.openattack",
-    "transformers": "deckard.plugins.transformers",
-    "seaborn": "deckard.plugins.seaborn",
-    "textattack": "deckard.plugins.textattack",
-    "yellowbrick": "deckard.plugins.yellowbrick",
-}
-
-_PLUGIN_DEPENDENCIES = {
-    "anjana": ("anjana", "pycanon"),
-    "fairlearn": ("fairlearn",),
-    "lifelines": ("lifelines",),
-    "openattack": ("OpenAttack",),
-    "transformers": ("datasets",),
-    "seaborn": ("seaborn",),
-    "textattack": ("textattack",),
-    "yellowbrick": ("yellowbrick",),
-}
+_PLUGIN_NAMES = get_optional_family_names(kind="plugin")
 
 
 def is_plugin_available(name: str) -> bool:
     """Return whether a plugin family has its optional dependencies installed."""
-    if name not in _PLUGIN_MAP:
+    if name not in _PLUGIN_NAMES:
         raise KeyError(f"Unknown plugin: {name}")
-    return all(
-        is_package_available(package_name)
-        for package_name in _PLUGIN_DEPENDENCIES.get(name, ())
-    )
+    return is_optional_family_available(name, kind="plugin")
 
 
 def get_plugin(name: str):
@@ -163,20 +144,18 @@ def get_plugin(name: str):
             ImportError: If plugin is unavailable or optional dependency is missing.
             KeyError: If plugin name is unknown.
     """
-    if name not in _PLUGIN_MAP:
+    if name not in _PLUGIN_NAMES:
         raise KeyError(f"Unknown plugin: {name}")
 
     if not is_plugin_available(name):
-        required = ", ".join(_PLUGIN_DEPENDENCIES.get(name, (name,)))
+        required = ", ".join(get_optional_family_required_imports(name) or (name,))
         raise ImportError(
             f"Plugin '{name}' is not available. Install optional dependencies "
             f"for it ({required}) or the matching deckard extra.",
         )
 
-    module_name = _PLUGIN_MAP[name]
-
     try:
-        return import_module(module_name)
+        return get_optional_family_module(name, kind="plugin")
     except ImportError as e:
         raise ImportError(
             f"Plugin '{name}' is not available. "
@@ -190,7 +169,7 @@ def __getattr__(name: str):
     Allows attribute access like ``deckard.plugins.fairlearn`` without eagerly
     importing optional plugin dependencies at package import time.
     """
-    if name in _PLUGIN_MAP:
+    if name in _PLUGIN_NAMES:
         return get_plugin(name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
@@ -199,12 +178,5 @@ __all__ = [
     "HookPlugin",
     "get_plugin",
     "is_plugin_available",
-    "anjana",
-    "fairlearn",
-    "lifelines",
-    "openattack",
-    "transformers",
-    "seaborn",
-    "textattack",
-    "yellowbrick",
+    *list(_PLUGIN_NAMES),
 ]

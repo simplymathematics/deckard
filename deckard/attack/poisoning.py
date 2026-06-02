@@ -12,7 +12,7 @@ from sklearn.base import BaseEstimator
 
 from ..artifacts import ScoreDict
 from ..data import DataConfig
-from ..frameworks.types import AttackLike, EstimatorLike, MatrixLike, StringifiedClass
+from ..types import AttackLike, EstimatorLike, MatrixLike, StringifiedClass
 from ..model import ModelConfig
 from ..frameworks.pytorch.torch_utils import is_torch_model
 from .base import (

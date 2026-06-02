@@ -5,7 +5,7 @@ from sklearn.base import BaseEstimator
 
 from ..artifacts import ScoreDict
 from ..data import DataConfig
-from ..frameworks.types import AttackLike, EstimatorLike
+from ..types import AttackLike, EstimatorLike
 from ..model import ModelConfig
 from .base import AttackFamily, AttackSubFamily
 from .inference import InferenceAttackConfig

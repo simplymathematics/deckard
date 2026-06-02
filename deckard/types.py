@@ -1,7 +1,7 @@
-"""Shared framework typing protocols.
+"""Canonical runtime typing protocols for core and extension modules.
 
-This module contains framework-agnostic runtime typing markers used across
-deckard configs and framework integrations.
+This module is the canonical home for framework-agnostic runtime typing
+markers used across Deckard core, framework adapters, and plugin families.
 """
 
 from __future__ import annotations

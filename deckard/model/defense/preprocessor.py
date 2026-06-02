@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 
 from ...data import DataConfig
-from ...frameworks.types import ArtEsimtator, EstimatorLike, StringifiedClass
+from ...types import ArtEsimtator, EstimatorLike, StringifiedClass
 from ...utils import BaseConfig, safe_store
 from .base import ARTDefenseBehaviorMixin, DefenseInitParamValue
 

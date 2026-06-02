@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import importlib.util
-
+from .._optional import load_optional_surface_exports
+from ..plugins import is_plugin_available
 from .attack import (
     AttackScorerConfig,
     DefaultAttributeInferenceAttackScorerDictConfig,
@@ -47,64 +47,37 @@ from .dvc import (
 )
 from ..artifacts import ScoreDict
 
-
-def _is_available(module_name: str) -> bool:
-    """Return ``True`` when an optional dependency appears installed."""
-    return importlib.util.find_spec(module_name) is not None
+_OPTIONAL_SCORE_SURFACE = "deckard.score"
 
 
 def _load_fairlearn_score_symbols() -> bool:
-    try:
-        from ..plugins.fairlearn.score import (
-            DefaultFairlearnClassificationScorerDictConfig,
-            DefaultFairlearnDataScorerDictConfig,
-            DefaultFairlearnRegressionScorerDictConfig,
-            DefaultFairlearnScorerDictConfig,
-            FairlearnScorerDictConfig,
-        )
-    except Exception:  # pragma: no cover
-        return False
-
-    globals().update(
-        {
-            "DefaultFairlearnClassificationScorerDictConfig": DefaultFairlearnClassificationScorerDictConfig,
-            "DefaultFairlearnDataScorerDictConfig": DefaultFairlearnDataScorerDictConfig,
-            "DefaultFairlearnRegressionScorerDictConfig": DefaultFairlearnRegressionScorerDictConfig,
-            "DefaultFairlearnScorerDictConfig": DefaultFairlearnScorerDictConfig,
-            "FairlearnScorerDictConfig": FairlearnScorerDictConfig,
-        },
+    return bool(
+        load_optional_surface_exports(
+            _OPTIONAL_SCORE_SURFACE,
+            module_globals=globals(),
+            family="fairlearn",
+        ),
     )
-    return True
 
 
 def _load_anjana_score_symbols() -> bool:
-    try:
-        from ..plugins.anjana.score import (
-            DefaultAnjanaDataScorerDictConfig,
-            DefaultAnjanaModelScorerDictConfig,
-            DefaultAnjanaScorerDictConfig,
-        )
-    except Exception:  # pragma: no cover
-        return False
-
-    globals().update(
-        {
-            "DefaultAnjanaScorerDictConfig": DefaultAnjanaScorerDictConfig,
-            "DefaultAnjanaDataScorerDictConfig": DefaultAnjanaDataScorerDictConfig,
-            "DefaultAnjanaModelScorerDictConfig": DefaultAnjanaModelScorerDictConfig,
-        },
+    return bool(
+        load_optional_surface_exports(
+            _OPTIONAL_SCORE_SURFACE,
+            module_globals=globals(),
+            family="anjana",
+        ),
     )
-    return True
 
 
 def _load_lifelines_score_symbols() -> bool:
-    try:
-        from ..plugins.lifelines.score import DefaultLifelinesConfig
-    except Exception:  # pragma: no cover
-        return False
-
-    globals().update({"DefaultLifelinesConfig": DefaultLifelinesConfig})
-    return True
+    return bool(
+        load_optional_surface_exports(
+            _OPTIONAL_SCORE_SURFACE,
+            module_globals=globals(),
+            family="lifelines",
+        ),
+    )
 
 
 def _load_fairlearn_score_symbol(symbol_name: str):
@@ -282,7 +255,7 @@ __all__ = [
 ]
 
 
-if _is_available("fairlearn"):
+if is_plugin_available("fairlearn"):
     __all__.extend(
         [
             "DefaultFairlearnScorerDictConfig",
@@ -293,7 +266,7 @@ if _is_available("fairlearn"):
         ],
     )
 
-if _is_available("pycanon"):
+if is_plugin_available("anjana"):
     __all__.extend(
         [
             "DefaultAnjanaScorerDictConfig",
@@ -302,7 +275,7 @@ if _is_available("pycanon"):
         ],
     )
 
-if _is_available("lifelines"):
+if is_plugin_available("lifelines"):
     __all__.append("DefaultLifelinesConfig")
 
 

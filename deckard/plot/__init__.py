@@ -14,13 +14,17 @@ from typing import TYPE_CHECKING, Union
 
 import matplotlib as mpl
 
+from .._optional import load_optional_surface_exports
 from .canon import normalize_plot_backend
+from ..plugins import is_plugin_available
 from ..utils import BaseConfig
 
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
 
 logger = logging.getLogger(__name__)
+
+_OPTIONAL_PLOT_SURFACE = "deckard.plot"
 
 
 def _load_default_matplotlibrc() -> None:
@@ -45,36 +49,28 @@ def _load_default_matplotlibrc() -> None:
 
 _load_default_matplotlibrc()
 
-try:
-    from ..plugins.seaborn.plot import (
-        SeabornPlotConfig,
-        SeabornPlotConfigList,
-    )
-except ImportError:  # pragma: no cover
-    SeabornPlotConfig = None
-    SeabornPlotConfigList = None
+SeabornPlotConfig = None
+SeabornPlotConfigList = None
+SurvivalSeabornPlotConfigList = None
+SurvivalSeabornPlotterConfig = None
+YellowbrickPlotConfig = None
+YellowbrickConfigList = None
 
-try:
-    from ..plugins.lifelines.plot import (
-        SurvivalSeabornPlotConfigList,
-        SurvivalSeabornPlotterConfig,
-    )
-
-    _ = (SurvivalSeabornPlotConfigList, SurvivalSeabornPlotterConfig)
-except ImportError:  # pragma: no cover
-    logger.debug(
-        "Lifelines not found. Survival plotting configs are unavailable.",
-    )
-    SurvivalSeabornPlotConfigList = None
-    SurvivalSeabornPlotterConfig = None
-
-try:
-    from ..plugins.yellowbrick.plot import YellowbrickConfigList, YellowbrickPlotConfig
-
-    _ = (YellowbrickConfigList, YellowbrickPlotConfig)
-except ImportError:  # pragma: no cover
-    YellowbrickConfigList = None
-    YellowbrickPlotConfig = None
+load_optional_surface_exports(
+    _OPTIONAL_PLOT_SURFACE,
+    module_globals=globals(),
+    family="seaborn",
+)
+load_optional_surface_exports(
+    _OPTIONAL_PLOT_SURFACE,
+    module_globals=globals(),
+    family="lifelines",
+)
+load_optional_surface_exports(
+    _OPTIONAL_PLOT_SURFACE,
+    module_globals=globals(),
+    family="yellowbrick",
+)
 
 
 def _refresh_seaborn_configs() -> None:
@@ -82,20 +78,13 @@ def _refresh_seaborn_configs() -> None:
     global SeabornPlotConfig, SeabornPlotConfigList
     if SeabornPlotConfig is not None and SeabornPlotConfigList is not None:
         return
-    try:
-        from ..plugins.seaborn.plot import (
-            SeabornPlotConfig as _SeabornPlotConfig,
-        )
-        from ..plugins.seaborn.plot import (
-            SeabornPlotConfigList as _SeabornPlotConfigList,
-        )
-
-        if SeabornPlotConfig is None:
-            SeabornPlotConfig = _SeabornPlotConfig
-        if SeabornPlotConfigList is None:
-            SeabornPlotConfigList = _SeabornPlotConfigList
-    except ImportError:  # pragma: no cover
-        pass
+    if not is_plugin_available("seaborn"):
+        return
+    load_optional_surface_exports(
+        _OPTIONAL_PLOT_SURFACE,
+        module_globals=globals(),
+        family="seaborn",
+    )
 
 
 def _refresh_yellowbrick_configs() -> None:
@@ -103,20 +92,13 @@ def _refresh_yellowbrick_configs() -> None:
     global YellowbrickPlotConfig, YellowbrickConfigList
     if YellowbrickPlotConfig is not None and YellowbrickConfigList is not None:
         return
-    try:
-        from ..plugins.yellowbrick.plot import (
-            YellowbrickConfigList as _YellowbrickConfigList,
-        )
-        from ..plugins.yellowbrick.plot import (
-            YellowbrickPlotConfig as _YellowbrickPlotConfig,
-        )
-
-        if YellowbrickConfigList is None:
-            YellowbrickConfigList = _YellowbrickConfigList
-        if YellowbrickPlotConfig is None:
-            YellowbrickPlotConfig = _YellowbrickPlotConfig
-    except ImportError:  # pragma: no cover
-        pass
+    if not is_plugin_available("yellowbrick"):
+        return
+    load_optional_surface_exports(
+        _OPTIONAL_PLOT_SURFACE,
+        module_globals=globals(),
+        family="yellowbrick",
+    )
 
 
 @dataclass(eq=False, kw_only=True)

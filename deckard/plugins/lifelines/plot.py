@@ -15,7 +15,7 @@ from matplotlib.figure import Figure
 
 from ...data import DataConfig
 from ...experiment import SurvivalExperimentConfig
-from ...frameworks.types import StringifiedClass
+from ...types import StringifiedClass
 from ...utils import BaseConfig
 from ..seaborn.plot import SeabornPlotConfig
 

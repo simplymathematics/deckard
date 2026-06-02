@@ -8,6 +8,11 @@ dependencies are installed.
 import logging
 from typing import Any
 
+from .._optional import (
+    get_optional_surface_export_names,
+    load_optional_export,
+    load_optional_surface_exports,
+)
 from .base import ModelConfig
 from .defense.base import DefenseConfig
 from .defense.detector import DetectorDefenseConfig
@@ -30,6 +35,21 @@ ScorerDictConfig = Any
 
 logger = logging.getLogger(__name__)
 
+_OPTIONAL_MODEL_SURFACE = "deckard.model"
+_OPTIONAL_MODEL_EXPORTS = get_optional_surface_export_names(_OPTIONAL_MODEL_SURFACE)
+
+
+def _clear_optional_exports(*names: str) -> None:
+    """Drop stale optional exports before conditional re-import on reload."""
+    module_globals = globals()
+    for name in names:
+        module_globals.pop(name, None)
+
+
+_clear_optional_exports(
+    *_OPTIONAL_MODEL_EXPORTS,
+)
+
 
 def _load_optional_model_symbols() -> None:
     """Best-effort eager load of optional model symbols.
@@ -37,10 +57,11 @@ def _load_optional_model_symbols() -> None:
     This avoids hard failures at import time while still populating globals
     when optional dependencies are available.
     """
-    _load_fairlearn_model_symbols()
-    _load_lifelines_model_symbols()
-    _load_anjana_model_symbols()
-    _load_torch_model_symbols()
+    load_optional_surface_exports(
+        _OPTIONAL_MODEL_SURFACE,
+        module_globals=globals(),
+        exported_names=__all__,
+    )
 
 
 def _load_fairlearn_model_symbols() -> bool:
@@ -49,63 +70,47 @@ def _load_fairlearn_model_symbols() -> bool:
     Returns:
         True when symbols were loaded into module globals, else False.
     """
-    try:
-        from ..plugins.fairlearn.model import (
-            FairlearnDefenseConfig,
-            FairlearnModelConfig,
-            FairlearnPytorchModelConfig,
-        )
-    except ImportError:  # pragma: no cover
-        return False
-
-    globals()["FairlearnDefenseConfig"] = FairlearnDefenseConfig
-    globals()["FairlearnModelConfig"] = FairlearnModelConfig
-    globals()["FairlearnPytorchModelConfig"] = FairlearnPytorchModelConfig
-    if "__all__" in globals():
-        for symbol in (
-            "FairlearnDefenseConfig",
-            "FairlearnModelConfig",
-            "FairlearnPytorchModelConfig",
-        ):
-            if symbol not in __all__:
-                __all__.append(symbol)
-    return True
+    return bool(
+        load_optional_surface_exports(
+            _OPTIONAL_MODEL_SURFACE,
+            module_globals=globals(),
+            exported_names=__all__,
+            family="fairlearn",
+        ),
+    )
 
 
 def _load_lifelines_model_symbols() -> bool:
-    try:
-        from ..plugins.lifelines.model import SurvivalModelConfig
-    except ImportError:  # pragma: no cover
-        return False
-
-    globals()["SurvivalModelConfig"] = SurvivalModelConfig
-    if "__all__" in globals() and "SurvivalModelConfig" not in __all__:
-        __all__.append("SurvivalModelConfig")
-    return True
+    return bool(
+        load_optional_surface_exports(
+            _OPTIONAL_MODEL_SURFACE,
+            module_globals=globals(),
+            exported_names=__all__,
+            family="lifelines",
+        ),
+    )
 
 
 def _load_anjana_model_symbols() -> bool:
-    try:
-        from ..plugins.anjana.model import AnjanaModelConfig
-    except ImportError:  # pragma: no cover
-        return False
-
-    globals()["AnjanaModelConfig"] = AnjanaModelConfig
-    if "__all__" in globals() and "AnjanaModelConfig" not in __all__:
-        __all__.append("AnjanaModelConfig")
-    return True
+    return bool(
+        load_optional_surface_exports(
+            _OPTIONAL_MODEL_SURFACE,
+            module_globals=globals(),
+            exported_names=__all__,
+            family="anjana",
+        ),
+    )
 
 
 def _load_torch_model_symbols() -> bool:
-    try:
-        from ..frameworks.pytorch.model import PytorchModelConfig
-    except ImportError:  # pragma: no cover
-        return False
-
-    globals()["PytorchModelConfig"] = PytorchModelConfig
-    if "__all__" in globals() and "PytorchModelConfig" not in __all__:
-        __all__.append("PytorchModelConfig")
-    return True
+    return bool(
+        load_optional_surface_exports(
+            _OPTIONAL_MODEL_SURFACE,
+            module_globals=globals(),
+            exported_names=__all__,
+            family="pytorch",
+        ),
+    )
 
 
 __all__ = [
@@ -126,38 +131,15 @@ __all__ = [
     "PytorchTrainer",
 ]
 
-if "FairlearnDefenseConfig" in globals():
-    __all__.extend(
-        [
-            "FairlearnDefenseConfig",
-            "FairlearnModelConfig",
-            "FairlearnPytorchModelConfig",
-        ],
-    )
-if "AnjanaModelConfig" in globals():
-    __all__.extend(["AnjanaModelConfig"])
-if "PytorchModelConfig" in globals():
-    __all__.extend(["PytorchModelConfig"])
-if "SurvivalModelConfig" in globals():
-    __all__.extend(["SurvivalModelConfig"])
-
 
 def __getattr__(name: str):
     """Lazily resolve optional model symbols on first attribute access."""
-    fairlearn_symbols = {
-        "FairlearnDefenseConfig",
-        "FairlearnModelConfig",
-        "FairlearnPytorchModelConfig",
-    }
-    lifelines_symbols = {"SurvivalModelConfig"}
-    anjana_symbols = {"AnjanaModelConfig"}
-    torch_symbols = {"PytorchModelConfig"}
-    if name in fairlearn_symbols and _load_fairlearn_model_symbols():
-        return globals()[name]
-    if name in lifelines_symbols and _load_lifelines_model_symbols():
-        return globals()[name]
-    if name in anjana_symbols and _load_anjana_model_symbols():
-        return globals()[name]
-    if name in torch_symbols and _load_torch_model_symbols():
-        return globals()[name]
+    value = load_optional_export(
+        _OPTIONAL_MODEL_SURFACE,
+        name,
+        module_globals=globals(),
+        exported_names=__all__,
+    )
+    if value is not None:
+        return value
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
