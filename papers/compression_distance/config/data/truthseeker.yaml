@@ -1,8 +1,0 @@
-defaults:
-  - default
-
-target: BotScoreBinary
-alias: truthseeker
-random_state: 0
-stratify: true
-dataset_name: raw_data/truthseeker_undersampled_8000.csv

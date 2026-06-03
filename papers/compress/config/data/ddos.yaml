@@ -6,6 +6,4 @@ drop:
 - Timestamp
 - 'Unnamed: 0'
 alias: ddos
-random_state: 0
-stratify: true
-dataset_name: raw_data/ddos_undersampled_10000.csv
+name: raw_data/ddos_undersampled_10000.csv

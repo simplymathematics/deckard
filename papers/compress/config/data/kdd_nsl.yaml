@@ -1,0 +1,9 @@
+defaults:
+  - default
+
+drop:
+- id
+target: label
+alias: kdd_nsl
+
+name: raw_data/kdd_nsl_undersampled_5000.csv

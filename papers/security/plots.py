@@ -98,7 +98,7 @@ def main() -> None:
     rename_map = {
         "model.model_params.kernel": "Kernel",
         "data.data_params.n_features": "Features",
-        "data.train_size": "Samples",
+        "data.sampler.train_size": "Samples",
         "attack.attack_params.eps": "eps",
         "attack.attack_params.eps_step": "eps_step",
         "attack.attack_params.max_iter": "max_iter",

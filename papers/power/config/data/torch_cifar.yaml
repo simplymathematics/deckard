@@ -1,4 +1,4 @@
 _target_: deckard.data.PytorchDataConfig
-dataset_name: torch_cifar10
+name: torch_cifar10
 random_state: 0
 stratify: true

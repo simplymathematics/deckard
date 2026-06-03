@@ -1,7 +1,0 @@
-_target_: deckard.file.FileConfig
-data_file: output/${dataset}/data/${dataset}-${data.random_state}-${data.train_size}-${data.test_size}-${oc.select:data.split,0}.pkl
-score_file: output/${dataset}/reports/search/${model_name}/${algorithm}/${data.train_size}/${oc.select:data.split,0}/${data.test_size}/${data.random_state}/${model.init.metric}/attack/score_dict.json
-params_file: output/${dataset}/params.yaml
-test_predictions_file: output/${dataset}/reports/search/${model_name}/${algorithm}/${data.train_size}/${oc.select:data.split,0}/${data.test_size}/${data.random_state}/${model.init.metric}/attack/predictions.json
-log_file: output/${dataset}/reports/search/${model_name}/${algorithm}/${data.train_size}/${oc.select:data.split,0}/${data.test_size}/${data.random_state}/${model.init.metric}/logs/run.log
-error_file: output/${dataset}/reports/search/${model_name}/${algorithm}/${data.train_size}/${oc.select:data.split,0}/${data.test_size}/${data.random_state}/${model.init.metric}/logs/error.log

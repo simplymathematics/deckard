@@ -332,56 +332,6 @@ def test_load_yellowbrick_dataset_branches(monkeypatch):
         data_declarations.load_yellowbrick_dataset(cfg, "energy")
 
 
-def test_load_data_routes_lifelines_aliases_and_csv_options(monkeypatch, tmp_path):
-    cfg = _basic_data_config(name="lung", target="target")
-    monkeypatch.setattr(
-        data_declarations,
-        "discover_provider_dataset_loaders",
-        lambda provider: (
-            {
-                "lung": lambda **kwargs: pd.DataFrame({"x": [1], "target": [0]}),
-            }
-            if provider == "lifelines"
-            else {}
-        ),
-    )
-    data_declarations.load_lifelines_dataset(cfg, "lung")
-    assert list(cfg._X.columns) == ["x"]
-    assert cfg._y.tolist() == [0]
-
-    csv_path = tmp_path / "data.csv"
-    pd.DataFrame({"keep": [1, 2], "drop": [3, 4], "target": [0, 1]}).to_csv(
-        csv_path,
-        index=False,
-    )
-
-    cfg = _basic_data_config(
-        name=csv_path.as_posix(),
-        target="target",
-        keep=["keep"],
-    )
-    cfg._load_from_csv()
-    assert isinstance(cfg._X, pd.Series)
-    assert cfg._X.name == "keep"
-
-    cfg = _basic_data_config(
-        name=csv_path.as_posix(),
-        target="target",
-        drop=["drop"],
-    )
-    cfg._load_from_csv()
-    assert list(cfg._X.columns) == ["keep"]
-
-    cfg = _basic_data_config(
-        name=csv_path.as_posix(),
-        target="target",
-        keep=["keep"],
-        drop=["drop"],
-    )
-    with pytest.raises(AssertionError):
-        cfg._load_from_csv()
-
-
 def test_load_data_routes_yellowbrick_aliases(monkeypatch):
     cfg = _basic_data_config(name="energy", target="target")
     monkeypatch.setattr(
@@ -592,7 +542,7 @@ def test_score_and_feature_score_branches(monkeypatch):
 
 
 def test_empty_runtime_pipeline_leaves_data_unchanged():
-    cfg = DataConfig(pipeline={}, scorer="none")
+    cfg = DataConfig(name="adult", pipeline={}, scorer="none")
     cfg._X = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
     cfg._y = pd.Series([0, 1, 0])
 

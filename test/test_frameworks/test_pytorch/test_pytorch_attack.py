@@ -2870,7 +2870,7 @@ class TestFairlearnAttackScorer:
     def _make_data_with_sensitive(self):
         from deckard.plugins.fairlearn.data import FairlearnDataConfig
 
-        data = FairlearnDataConfig(name="sklearn.adult", sensitive_columns="sex")
+        data = FairlearnDataConfig(name="adult", sensitive_columns="sex")
         data()
         return data
 

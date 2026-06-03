@@ -158,6 +158,7 @@ class TestFairlearnModelConfig:
         from deckard.plugins.fairlearn.data import FairlearnDataConfig
 
         fairness_data = FairlearnDataConfig(
+            name="adult",
             sensitive_columns="sex",
         )
         fairness_data()

@@ -1,0 +1,6 @@
+defaults:
+  - default
+
+target: BotScoreBinary
+alias: truthseeker
+name: raw_data/truthseeker_undersampled_8000.csv

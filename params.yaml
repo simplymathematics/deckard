@@ -12,9 +12,8 @@ experiment:
     payload_kind: data
     metadata: {}
     default_stage: post-pipeline
-    name: sklearn.adult
-    data_params:
-      repo_dataset_path: ../../raw_data/adult_income/adult_income_dataset.csv
+    name: https://raw.githubusercontent.com/simplymathematics/Adult-Census-Income/refs/heads/master/adult.csv
+    data_params: {}
     split: null
     sampler:
       name: deckard.data.sample.SplitSampler
@@ -24,11 +23,11 @@ experiment:
       train_size: null
       val_size: null
     classifier: true
-    target: null
+    target: income
     drop: []
     keep: []
     plugins: []
-    alias: sklearn.adult
+    alias: https://raw.githubusercontent.com/simplymathematics/Adult-Census-Income/refs/heads/master/adult.csv
     scorer:
       _target_: deckard.score.data.DefaultDataClassificationScorerDictConfig
       id: ''
@@ -132,10 +131,15 @@ experiment:
           strategy: mean
           dtype: numeric
         encoder:
-          name: sklearn.preprocessing.OrdinalEncoder
+          name: sklearn.preprocessing.OneHotEncoder
+          handle_unknown: ignore
           dtype: string
+        label_encoder:
+          name: sklearn.preprocessing.LabelEncoder
+          fit_y: true
+          fit_X: false
     files: {}
-  experiment_name: c44dec6059cb5709d4876c489ec688a2
+  experiment_name: 5a423ce5e279cd5f493bf90cbdf546ba
   model:
     id: ''
     path: ''
@@ -703,11 +707,11 @@ experiment:
   detector: null
   files:
     replace: {}
-    handler: <deckard.file.CanonFileHandler object at 0x377552620>
-    params_file: /private/var/folders/cd/frntyg595hj5gz_qzm3696hm0000gp/T/pytest-of-c.meyers/pytest-41/test_dvc_repro_and_force_repro0/dvc-e2e/artifacts/params.yaml
-    score_file: /private/var/folders/cd/frntyg595hj5gz_qzm3696hm0000gp/T/pytest-of-c.meyers/pytest-41/test_dvc_repro_and_force_repro0/dvc-e2e/artifacts/scores.json
-    log_file: /private/var/folders/cd/frntyg595hj5gz_qzm3696hm0000gp/T/pytest-of-c.meyers/pytest-41/test_dvc_repro_and_force_repro0/dvc-e2e/artifacts/run.log
-    error_file: /private/var/folders/cd/frntyg595hj5gz_qzm3696hm0000gp/T/pytest-of-c.meyers/pytest-41/test_dvc_repro_and_force_repro0/dvc-e2e/artifacts/error.log
+    handler: <deckard.file.CanonFileHandler object at 0x388c40190>
+    params_file: /private/var/folders/cd/frntyg595hj5gz_qzm3696hm0000gp/T/pytest-of-c.meyers/pytest-58/test_dvc_repro_and_force_repro0/dvc-e2e/artifacts/params.yaml
+    score_file: /private/var/folders/cd/frntyg595hj5gz_qzm3696hm0000gp/T/pytest-of-c.meyers/pytest-58/test_dvc_repro_and_force_repro0/dvc-e2e/artifacts/scores.json
+    log_file: /private/var/folders/cd/frntyg595hj5gz_qzm3696hm0000gp/T/pytest-of-c.meyers/pytest-58/test_dvc_repro_and_force_repro0/dvc-e2e/artifacts/run.log
+    error_file: /private/var/folders/cd/frntyg595hj5gz_qzm3696hm0000gp/T/pytest-of-c.meyers/pytest-58/test_dvc_repro_and_force_repro0/dvc-e2e/artifacts/error.log
     data_file: null
     model_file: null
     attack_file: null
@@ -744,7 +748,7 @@ _dvc:
   stage_selection: all
   run_mode: single
   params_manifest:
-    experiment_name: c44dec6059cb5709d4876c489ec688a2
+    experiment_name: 5a423ce5e279cd5f493bf90cbdf546ba
     library: sklearn
     classifier: true
     evaluation_mode: standard
@@ -752,8 +756,8 @@ _dvc:
     random_state: 42
     data:
       type: deckard.data.base.DataConfig
-      alias: sklearn.adult
-      fingerprint: f88410e3b0876d2885190dc4a98649e4
+      alias: https://raw.githubusercontent.com/simplymathematics/Adult-Census-Income/refs/heads/master/adult.csv
+      fingerprint: 517c998d9803bc6e3b1f8060913a5b60
     model:
       type: deckard.model.base.ModelConfig
       alias: rf

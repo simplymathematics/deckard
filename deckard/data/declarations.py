@@ -30,11 +30,6 @@ logger = logging.getLogger(__name__)
 _ADULT_ALIAS_TOKENS = {
     "",
     "adult",
-    "sklearn.adult",
-    "sklearn_adult",
-    "openml.adult",
-    "openml_adult",
-    "adult.openml",
 }
 
 _ADULT_REPO_PATH_CANDIDATES = (
@@ -164,22 +159,6 @@ def discover_dataset_declarations() -> dict[str, DatasetDeclaration]:
     # sklearn / core datasets handled by DataConfig.
     declarations.update(
         {
-            "sklearn.adult": DatasetDeclaration(
-                name="sklearn.adult",
-                provider="sklearn",
-                target="deckard.data.declarations.load_adult_income_data",
-                aliases=(
-                    "adult",
-                    "sklearn_adult",
-                    "openml.adult",
-                    "openml_adult",
-                    "adult.openml",
-                ),
-                notes=(
-                    "Defaults to repository-local Kaggle Adult Income CSV at "
-                    "raw_data/adult_income/adult_income_dataset.csv."
-                ),
-            ),
             "diabetes": DatasetDeclaration(
                 name="diabetes",
                 provider="sklearn",
@@ -757,10 +736,6 @@ def build_loader_registry(cfg: "DataConfig") -> dict[str, Callable[..., Any]]:
         supported_datasets.setdefault(f"sklearn.{name}", loader)
         supported_datasets.setdefault(f"sklearn_{name}", loader)
 
-    _register_sklearn(
-        "adult",
-        lambda **params: load_adult_income_data(cfg, **params),
-    )
     supported_datasets.setdefault(
         "openml.adult",
         lambda **params: load_adult_income_data(cfg, **params),

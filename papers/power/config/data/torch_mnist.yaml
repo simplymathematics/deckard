@@ -1,4 +1,4 @@
 _target_: deckard.data.PytorchDataConfig
-dataset_name: torch_mnist
+name: torch_mnist
 random_state: 0
 stratify: true

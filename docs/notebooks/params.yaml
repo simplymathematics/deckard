@@ -11,7 +11,7 @@ experiment:
     payload_kind: data
     metadata: {}
     default_stage: post-pipeline
-    dataset_name: sklearn.adult
+    name: adult
     data_params: {}
     split: null
     sampler:

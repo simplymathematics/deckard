@@ -1138,7 +1138,7 @@ class BaseConfig(ArtifactLoaderMixin):
     def resolve_name(self, default: Optional[str] = None) -> Optional[str]:
         """Return the canonical runtime name token for this config instance.
 
-        Resolution prefers the Phase 4 canonical ``name`` field and optionally
+        Resolution prefers the canonical ``name`` field and optionally
         falls back to ``alias`` for user-facing display labels.
 
         Args:
@@ -1150,12 +1150,6 @@ class BaseConfig(ArtifactLoaderMixin):
         name_value = getattr(self, "name", None)
         if name_value is not None:
             token = str(name_value).strip()
-            if token != "":
-                return token
-
-        alias_value = getattr(self, "alias", None)
-        if alias_value is not None:
-            token = str(alias_value).strip()
             if token != "":
                 return token
         return default

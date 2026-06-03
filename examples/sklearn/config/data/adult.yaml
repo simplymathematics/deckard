@@ -1,6 +1,5 @@
-name: sklearn.adult
-data_params:
-  repo_dataset_path: ../../raw_data/adult_income/adult_income_dataset.csv
+name: https://raw.githubusercontent.com/simplymathematics/Adult-Census-Income/refs/heads/master/adult.csv
+target: income
 sampler:
   name: deckard.data.sample.SplitSampler
   test_size: 0.2
@@ -14,5 +13,11 @@ pipeline:
     strategy: mean
     dtype: numeric
   encoder:
-    name: sklearn.preprocessing.OrdinalEncoder
+    name: sklearn.preprocessing.OneHotEncoder
+    handle_unknown : ignore
+    sparse_output : False
     dtype: string
+  label_encoder:
+    name: sklearn.preprocessing.LabelEncoder
+    fit_y : True
+    fit_X : False

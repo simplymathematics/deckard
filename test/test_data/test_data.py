@@ -148,7 +148,7 @@ class TestDataConfigBehavior:
         assert not self.X_test.equals(config.X_test)
 
     def test_pipeline_fit_time(self):
-        config = DataConfig(pipeline=self.pipeline_config_dict)
+        config = DataConfig(name="adult", pipeline=self.pipeline_config_dict)
         config()
         assert config.pipeline_fit_time is not None
         assert config.pipeline_fit_time > 0

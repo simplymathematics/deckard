@@ -1,5 +1,5 @@
 vars:
-  - config/knn.yaml:hydra
+  - config/default.yaml:hydra
   - config/plots.yaml:line_plot
   - config/plots.yaml:cat_plot
   # - config/condensed_plots.yaml:line_plot
@@ -71,17 +71,16 @@ stages:
       algorithm="${item.algorithm[3]}"
       data=${item.dataset}
       ++data.sampler.train_size=${item.train_size}
-      ++data.random_state=42
-      ++data.split=0
-      ++data.pre_sample_transform=true
+      ++data.sampler.random_state=42
       optimization=precompute
       metric_name=${item.metric}
-      fold_name=full
       ++data.pipeline.distance.metric=${item.metric}
       ++data.pipeline.distance.zero_hack=${item.algorithm[0]}
       ++data.pipeline.distance.sort_hack=${item.algorithm[1]}
       ++data.pipeline.distance.average_hack=${item.algorithm[2]}
       ++data.pipeline.distance.distance_matrix_full=output/${item.dataset}/distance_matrix/${item.metric}/${item.algorithm[3]}/full.npz
+      ++data.scorer=null
+      ~model
       files=precompute
       hydra.sweeper.n_trials=1
       --config-dir config
@@ -119,12 +118,13 @@ stages:
       deckard optimize
       algorithm="${item.algorithm[3]}"
       data=${item.dataset}
-      model=ncd_${item.model_name}
+      ~model=ncd_${item.model_name}
       data.sample.name=deckard.data.sample.KFoldSampler
       ++data.sampler.train_size=${item.train_size}
-      ++data.random_state=42
+      ++data.sampler.random_state=42
       optimization=search
       metric_name=${item.metric}
+      ++data.scorer=null
       ++data.pipeline.distance.metric=${item.metric}
       ++data.pipeline.distance.zero_hack=${item.algorithm[0]}
       ++data.pipeline.distance.sort_hack=${item.algorithm[1]}
@@ -197,7 +197,7 @@ stages:
       data=${item.dataset}
       model=ncd_${item.model}
       ++data.sampler.train_size=${item.train_size}
-      ++data.split=-1
+      mode=val
       ++files.directory=output/${item.dataset}
       hydra.run.dir=output/${item.dataset}/logs/refit/${item.model}/${item.algorithm}/${item.metric}/${item.train_size}/
       --config-name ${item.dataset}_${item.model}_${item.algorithm}_${item.metric}

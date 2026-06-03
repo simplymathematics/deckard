@@ -1235,10 +1235,12 @@ class DataConfig(OrchestratorBase, BaseConfig):
         ):
             return
         self._run_plugin_hook("before_load_data")
-        from .declarations import build_loader_registry
+        from .declarations import build_loader_registry, load_adult_income_data
 
-        supported_datasets = build_loader_registry(self)
         dataset_name = str(self.resolve_name(default="") or "")
+        if dataset_name in ["adult", ""]:
+            return load_adult_income_data(self, **self.data_params)
+        supported_datasets = build_loader_registry(self)
         if dataset_name == "":
             raise ValueError("DataConfig.name must be set before loading data")
         self.name = dataset_name
@@ -1301,8 +1303,8 @@ class DataConfig(OrchestratorBase, BaseConfig):
         )
 
     def _load_from_csv(self, dataset_name: str | None = None):
-        if dataset_name is None:
-            dataset_name = str(self.resolve_name(default="") or "")
+        dataset_name = dataset_name or ""
+        print(dataset_name)
         data = pd.DataFrame(cast(Any, self.load_data(dataset_name)))
         if self.target is None:
             raise ValueError(

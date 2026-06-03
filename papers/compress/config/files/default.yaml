@@ -1,5 +1,5 @@
 _target_: deckard.file.FileConfig
-data_file: output/${dataset}/data/${dataset}-${data.random_state}-${data.train_size}-${data.test_size}-${oc.select:data.split,0}.pkl
+data_file: output/${dataset}/data/${dataset}-${data.sampler.random_state}-${data.sampler.train_size}-${data.sampler.test_size}-${oc.select:data.split,0}.pkl
 score_file: output/${dataset}/reports/attack/score_dict.json
 params_file: output/${dataset}/params.yaml
 test_predictions_file: output/${dataset}/reports/attack/predictions.json

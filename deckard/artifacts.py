@@ -8,17 +8,17 @@ hook routing.
 from __future__ import annotations
 
 import json
-import pickle
 import inspect
 import warnings
 from dataclasses import MISSING, dataclass, field
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any, Optional, cast
+from urllib.parse import urlparse
+import pickle
 
 import numpy as np
 import pandas as pd
-
-from .types import ArrayLike, EstimatorLike, MatrixLike
+import yaml
 
 try:
     import torch
@@ -30,10 +30,12 @@ try:
 except Exception:  # pragma: no cover - optional dependency
     joblib = None
 
-try:
-    import yaml
-except Exception:  # pragma: no cover - optional dependency
-    yaml = None
+from .types import ArrayLike, MatrixLike, EstimatorLike
+
+
+def is_url(value: str | Path) -> bool:
+    parsed = urlparse(str(value))
+    return parsed.scheme in {"http", "https"} and bool(parsed.netloc)
 
 
 SCORE_PAYLOAD_SCHEMA = "deckard.score.v1"
@@ -689,8 +691,7 @@ class ArtifactLoaderMixin:
         """
         if filepath is None:
             raise FileNotFoundError("Filepath is None.")
-
-        path = Path(filepath)
+        path, suffix = self.resolve_path_and_suffix(filepath)
         supported_filetypes = [
             ".csv",
             ".json",
@@ -700,8 +701,7 @@ class ArtifactLoaderMixin:
             ".npz",
             ".html",
         ]
-
-        match path.suffix:
+        match suffix:
             case ".pkl":
                 data = pd.read_pickle(path, **kwargs)
             case ".csv":
@@ -733,6 +733,21 @@ class ArtifactLoaderMixin:
                     f"Unsupported file type {path.suffix}. Supported types: {supported_filetypes}",
                 )
         return data
+
+    def resolve_path_and_suffix(self, filepath: str) -> tuple[str | Path, str]:
+        """
+        Return a pandas-compatible path object and its suffix.
+
+        URLs are preserved as strings to avoid Path() mangling
+        'https://' into 'https:/'.
+        """
+        parsed = urlparse(filepath)
+
+        if parsed.scheme in {"http", "https"} and parsed.netloc:
+            return filepath, PurePosixPath(parsed.path).suffix
+
+        path = Path(filepath)
+        return path, path.suffix
 
     def load_matrix(
         self,
