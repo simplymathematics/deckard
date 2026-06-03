@@ -3,4 +3,4 @@ defaults:
 
 plot_type: jointplot
 plot_params:
-  columns: [age, education-num]
+  columns: [age, education.num]

@@ -1114,8 +1114,8 @@ stages:
       nfiles: 20
     - path: ../../deckard/data/
       hash: md5
-      md5: 635bec16913e9fa075a9e765276fc989.dir
-      size: 380044
+      md5: 5783f57df12877b09d03b8b0e2e9c131.dir
+      size: 373968
       nfiles: 35
     - path: ../../deckard/experiment/
       hash: md5
@@ -1147,13 +1147,13 @@ stages:
       size: 58773
     - path: fairlearn.ipynb
       hash: md5
-      md5: c872276147ae30a01030cff2f73bada7
-      size: 120811
+      md5: 650fb9f9067bdc05ca5d7f71c3a0b36f
+      size: 120804
     outs:
     - path: ./build/fairlearn/
       hash: md5
-      md5: 23097248acf19985791476a958dc032f.dir
-      size: 95727227
+      md5: 34b3daa8b0cadd6586c104f450598213.dir
+      size: 95727214
       nfiles: 8
   notebook_dvclive:
     cmd: jupyter nbconvert --to notebook --execute --inplace dvclive.ipynb

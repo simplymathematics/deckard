@@ -154,25 +154,6 @@ stages:
     - ./build/pytorch/exp_model.pkl
     - ./build/pytorch/checkpoints/
     - ./build/pytorch/raw_data/
-
-  notebook_huggingface:
-    cmd: DECKARD_TEST_MAX_SAMPLES=512 jupyter nbconvert --to notebook --execute --inplace huggingface.ipynb
-    deps:
-    - huggingface.ipynb
-    - ../../deckard/attack/
-    - ../../deckard/data/
-    - ../../deckard/model/
-    - ../../deckard/frameworks/transformers/
-    - ../../deckard/file.py
-    - ../../deckard/utils.py
-    - ../../examples/transformers/config/default.yaml
-    - ../../examples/transformers/hf_task_datasets.py
-    outs:
-    - ./build/huggingface/huggingface_results.csv
-    - ./build/huggingface/checkpoints/hf_model_state.pt
-    - ./build/huggingface/plots/huggingface_classification_report.png
-    - ./build/huggingface/plots/huggingface_line.png
-    - ./build/huggingface/plots/huggingface_scatter.png
     
   notebook_hydra:
     cmd: jupyter nbconvert --to notebook --execute --inplace hydra.ipynb
@@ -351,6 +332,23 @@ stages:
     - ./build/anjana/defended_experiment_scores.json
     plots:
     - ./build/anjana/plots/anjana_attack_compare_bar.png
-    - ./build/anjana/plots/anjana_data_compare_bar_side_by_side.png
-    - ./build/anjana/plots/anjana_data_scores_bar.png
     - ./build/anjana/plots/anjana_yellowbrick_roc_auc.png
+
+  notebook_huggingface:
+    cmd: DECKARD_TEST_MAX_SAMPLES=512 jupyter nbconvert --to notebook --execute --inplace huggingface.ipynb
+    deps:
+    - huggingface.ipynb
+    - ../../deckard/attack/
+    - ../../deckard/data/
+    - ../../deckard/model/
+    - ../../deckard/frameworks/transformers/
+    - ../../deckard/file.py
+    - ../../deckard/utils.py
+    - ../../examples/transformers/config/default.yaml
+    - ../../examples/transformers/hf_task_datasets.py
+    outs:
+    - ./build/huggingface/huggingface_results.csv
+    - ./build/huggingface/checkpoints/hf_model_state.pt
+    - ./build/huggingface/plots/huggingface_classification_report.png
+    - ./build/huggingface/plots/huggingface_line.png
+    - ./build/huggingface/plots/huggingface_scatter.png
