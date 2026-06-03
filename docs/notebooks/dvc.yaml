@@ -331,7 +331,7 @@ stages:
     - ./build/anjana/baseline_experiment_scores.json
     - ./build/anjana/defended_experiment_scores.json
     plots:
-    - ./build/anjana/plots/anjana_attack_compare_bar.png
+    - ./build/anjana/plots/anjana_data_scores_bar.png
     - ./build/anjana/plots/anjana_yellowbrick_roc_auc.png
 
   notebook_huggingface:

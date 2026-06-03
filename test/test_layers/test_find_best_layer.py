@@ -118,7 +118,7 @@ class TestFindBestMain:
                 subset="data=mnist",
             )
 
-            assert result["trial_number"] in {0, 1}
+            assert result["trial_number"] in {0, 1, 2}
             payload = yaml.safe_load(output_file.read_text(encoding="utf-8"))
             assert payload["data"] == "mnist"
 

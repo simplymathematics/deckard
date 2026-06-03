@@ -133,13 +133,14 @@ experiment:
         encoder:
           name: sklearn.preprocessing.OneHotEncoder
           handle_unknown: ignore
+          sparse_output: false
           dtype: string
         label_encoder:
           name: sklearn.preprocessing.LabelEncoder
           fit_y: true
           fit_X: false
     files: {}
-  experiment_name: 5a423ce5e279cd5f493bf90cbdf546ba
+  experiment_name: f4289e15c46aa8aec56bffcba656a477
   model:
     id: ''
     path: ''
@@ -707,11 +708,11 @@ experiment:
   detector: null
   files:
     replace: {}
-    handler: <deckard.file.CanonFileHandler object at 0x388c40190>
-    params_file: /private/var/folders/cd/frntyg595hj5gz_qzm3696hm0000gp/T/pytest-of-c.meyers/pytest-58/test_dvc_repro_and_force_repro0/dvc-e2e/artifacts/params.yaml
-    score_file: /private/var/folders/cd/frntyg595hj5gz_qzm3696hm0000gp/T/pytest-of-c.meyers/pytest-58/test_dvc_repro_and_force_repro0/dvc-e2e/artifacts/scores.json
-    log_file: /private/var/folders/cd/frntyg595hj5gz_qzm3696hm0000gp/T/pytest-of-c.meyers/pytest-58/test_dvc_repro_and_force_repro0/dvc-e2e/artifacts/run.log
-    error_file: /private/var/folders/cd/frntyg595hj5gz_qzm3696hm0000gp/T/pytest-of-c.meyers/pytest-58/test_dvc_repro_and_force_repro0/dvc-e2e/artifacts/error.log
+    handler: <deckard.file.CanonFileHandler object at 0x379e89b40>
+    params_file: /private/var/folders/cd/frntyg595hj5gz_qzm3696hm0000gp/T/pytest-of-c.meyers/pytest-59/test_dvc_repro_and_force_repro0/dvc-e2e/artifacts/params.yaml
+    score_file: /private/var/folders/cd/frntyg595hj5gz_qzm3696hm0000gp/T/pytest-of-c.meyers/pytest-59/test_dvc_repro_and_force_repro0/dvc-e2e/artifacts/scores.json
+    log_file: /private/var/folders/cd/frntyg595hj5gz_qzm3696hm0000gp/T/pytest-of-c.meyers/pytest-59/test_dvc_repro_and_force_repro0/dvc-e2e/artifacts/run.log
+    error_file: /private/var/folders/cd/frntyg595hj5gz_qzm3696hm0000gp/T/pytest-of-c.meyers/pytest-59/test_dvc_repro_and_force_repro0/dvc-e2e/artifacts/error.log
     data_file: null
     model_file: null
     attack_file: null
@@ -748,7 +749,7 @@ _dvc:
   stage_selection: all
   run_mode: single
   params_manifest:
-    experiment_name: 5a423ce5e279cd5f493bf90cbdf546ba
+    experiment_name: f4289e15c46aa8aec56bffcba656a477
     library: sklearn
     classifier: true
     evaluation_mode: standard
@@ -757,7 +758,7 @@ _dvc:
     data:
       type: deckard.data.base.DataConfig
       alias: https://raw.githubusercontent.com/simplymathematics/Adult-Census-Income/refs/heads/master/adult.csv
-      fingerprint: 517c998d9803bc6e3b1f8060913a5b60
+      fingerprint: 45b2850fe4e3f84d89a6c7d1e6abf276
     model:
       type: deckard.model.base.ModelConfig
       alias: rf

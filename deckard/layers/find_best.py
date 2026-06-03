@@ -322,8 +322,8 @@ def find_best_main(
     trials_df = _complete_trials_only(trials_df)
     if len(trials_df) == 0:
         raise ValueError("No COMPLETE trials found in selected study")
-
-    trials_df = _apply_subset_filter(trials_df, subset=subset)
+    if subset is not None:
+        trials_df = _apply_subset_filter(trials_df, subset=subset)
     if len(trials_df) == 0:
         raise ValueError("No trials remaining after subset filter")
 
