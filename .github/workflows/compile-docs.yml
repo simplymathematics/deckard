@@ -25,7 +25,7 @@ permissions:
 jobs:
   docs:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 120
     env:
       DVC_REPRO_ARGS: ${{ github.event_name == 'workflow_dispatch' && inputs.force_repro && '--force' || '' }}
       SKIP_DVC: ${{ github.event_name == 'workflow_dispatch' && inputs.skip_dvc && '1' || '0' }}
