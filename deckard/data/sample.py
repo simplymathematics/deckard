@@ -106,6 +106,8 @@ class BaseSampler:
             return getattr(config, "_y", None)
         if isinstance(stratify, str):
             X = getattr(config, "_X", None)
+            if X is None:
+                raise ValueError("_X not set. Load the data before sampling.")
             columns = getattr(X, "columns", None)
             if columns is not None and stratify in columns:
                 return X[stratify]
@@ -113,6 +115,28 @@ class BaseSampler:
                 f"Stratify column '{stratify}' not found in data columns",
             )
         raise ValueError("stratify must be None, True, False, or a column name")
+
+    @staticmethod
+    def _size_to_count(size, total: int):
+        """Convert an int/float size spec to an absolute count."""
+        if size is None:
+            return None
+        if isinstance(size, float):
+            if size <= 0:
+                return 0
+            if size < 1:
+                return int(np.floor(total * size))
+            return int(size)
+        return int(size)
+
+    @staticmethod
+    def _resolve_terminal_sampler_spec(spec: Any) -> Any:
+        """Resolve callable/type sampler specs or raise for unsupported specs."""
+        if callable(spec) and not isinstance(spec, type):
+            return spec
+        if isinstance(spec, type):
+            return spec()
+        raise ValueError(f"Unsupported sampler specification: {type(spec)}")
 
     @classmethod
     def resolve(cls, config: "DataConfig") -> Any:
@@ -176,13 +200,22 @@ class BaseSampler:
                     return sampler_aliases[key](**kwargs)
             return load_class(str(class_path), **kwargs)
 
-        if callable(spec) and not isinstance(spec, type):
-            return spec
+        return cls._resolve_terminal_sampler_spec(spec)
 
-        if isinstance(spec, type):
-            return spec()
+    @classmethod
+    def _default_sampler(cls) -> Any:
+        """Return the default sampler instance when no sampler is configured."""
+        return SplitSampler()
 
-        raise ValueError(f"Unsupported sampler specification: {type(spec)}")
+    @classmethod
+    def _configure_composed_sampler(
+        cls,
+        sampler_obj: Any,
+        config: "DataConfig",
+    ) -> Any:
+        """Apply framework-specific sampler configuration after composition."""
+        _ = config
+        return sampler_obj
 
     @classmethod
     def compose(cls, config: "DataConfig") -> Any:
@@ -202,8 +235,10 @@ class BaseSampler:
             sampler_obj = cls.resolve(config)
             setattr(config, "_sampler_obj", sampler_obj)
         if sampler_obj is None:
-            sampler_obj = SplitSampler()
+            sampler_obj = cls._default_sampler()
             setattr(config, "_sampler_obj", sampler_obj)
+        sampler_obj = cls._configure_composed_sampler(sampler_obj, config)
+        setattr(config, "_sampler_obj", sampler_obj)
         if not callable(sampler_obj):
             raise TypeError(
                 f"Composed sampler must be callable, got {type(sampler_obj)}",
@@ -340,15 +375,7 @@ class KFoldSampler(BaseSampler):
     @staticmethod
     def _to_count(size, total: int):
         """Convert an int/float size spec to an absolute count."""
-        if size is None:
-            return None
-        if isinstance(size, float):
-            if size <= 0:
-                return 0
-            if size < 1:
-                return int(np.floor(total * size))
-            return int(size)
-        return int(size)
+        return BaseSampler._size_to_count(size, total)
 
     def __call__(self, cfg: "DataConfig") -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Generate fold-based train/test/validation splits.

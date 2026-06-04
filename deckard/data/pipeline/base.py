@@ -89,7 +89,7 @@ class DataPipeline(dict):
         x_steps = self._collect_x_steps(stage="pre_sample")
         pipeline = self._build_x_pipeline(x_steps)
         if pipeline is not None and getattr(host, "_X", None) is not None:
-            host._X = self._fit_transform_features(
+            host._X = self.fit_transform_features(
                 pipeline,
                 X_fit=host._X,
                 X_apply=host._X,
@@ -108,7 +108,7 @@ class DataPipeline(dict):
         x_steps = self._collect_x_steps(stage="X")
         pipeline = self._build_x_pipeline(x_steps)
         if pipeline is not None and getattr(host, "X_train", None) is not None:
-            host.X_train = self._fit_transform_features(
+            host.X_train = self.fit_transform_features(
                 pipeline,
                 X_fit=host.X_train,
                 X_apply=host.X_train,
@@ -130,7 +130,7 @@ class DataPipeline(dict):
         y_steps = self._collect_y_steps(stage="y")
         if len(y_steps) > 0 and getattr(host, "y_train", None) is not None:
             fit_start = time.process_time()
-            host.y_train = self._fit_transform_target(y_steps, host.y_train)
+            host.y_train = self.fit_transform_target(y_steps, host.y_train)
             host.pipeline_y_fit_time = time.process_time() - fit_start
             transform_start = time.process_time()
             host.y_test = self._transform_target(y_steps, host.y_test)
@@ -163,7 +163,7 @@ class DataPipeline(dict):
 
             X_all = pd.concat(X_parts, ignore_index=True)
             y_all = pd.concat([pd.Series(part) for part in y_parts], ignore_index=True)
-            X_all_t = self._fit_transform_features(
+            X_all_t = self.fit_transform_features(
                 pipeline,
                 X_fit=X_all,
                 X_apply=X_all,
@@ -319,7 +319,7 @@ class DataPipeline(dict):
             steps=[(name, transformer) for name, transformer, _ in x_steps],
         )
 
-    def _fit_transform_features(
+    def fit_transform_features(
         self,
         pipeline: Pipeline,
         X_fit: Any,
@@ -355,7 +355,7 @@ class DataPipeline(dict):
             return pd.DataFrame(transformed, columns=cols, index=X.index)
         return transformed
 
-    def _fit_transform_target(self, y_steps: list[tuple[str, Any]], y: Any) -> Any:
+    def fit_transform_target(self, y_steps: list[tuple[str, Any]], y: Any) -> Any:
         y_frame = y.to_frame() if isinstance(y, pd.Series) else pd.DataFrame(y)
         for _, stage in y_steps:
             stage.fit(y_frame)

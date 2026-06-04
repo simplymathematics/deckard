@@ -27,10 +27,6 @@ from ..types import StringifiedClass
 
 logger = logging.getLogger(__name__)
 
-_ADULT_ALIAS_TOKENS = {
-    "",
-    "adult",
-}
 
 _ADULT_REPO_PATH_CANDIDATES = (
     Path("raw_data/adult_income/adult_income_dataset.csv"),

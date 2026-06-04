@@ -5,14 +5,13 @@ from __future__ import annotations
 from typing import Any, Final, Mapping, TypedDict
 
 from ..artifacts import ScoreDict
+from ..utils import data_supported_filetypes
 from ..orchestration import (
     CANONICAL_RUNTIME_METHODS,
     DEFAULT_SCORE_MODE,
     DEFAULT_SCORE_STAGE,
     MODE_ALIASES as _MODE_ALIASES,
     STAGE_ALIASES as _STAGE_ALIASES,
-    DataRuntimeStateMixin as DataPluginRuntimeMixin,
-    ScoreOrchestratorMixin as ScoringOrchestratorMixin,
     normalize_runtime_split_mode as _normalize_runtime_split_mode,
     resolve_data_split_payload as _resolve_data_split_payload,
     resolve_sensitive_split_payload as _resolve_sensitive_split_payload,
@@ -20,6 +19,17 @@ from ..orchestration import (
 )
 
 CANONICAL_DATA_METHODS: Final[tuple[str, ...]] = CANONICAL_RUNTIME_METHODS
+
+CANONICAL_DATASET_LOAD_FILETYPES: Final[tuple[str, ...]] = tuple(
+    data_supported_filetypes,
+)
+CANONICAL_DATA_SAVE_FILETYPES: Final[tuple[str, ...]] = tuple(
+    filetype for filetype in data_supported_filetypes if filetype != ".openml"
+)
+CANONICAL_DATA_LOAD_FILETYPES: Final[tuple[str, ...]] = (
+    *CANONICAL_DATA_SAVE_FILETYPES,
+    ".npz",
+)
 
 CANONICAL_DATA_STAGES: Final[tuple[str, ...]] = (
     "pre-load",
@@ -216,14 +226,12 @@ def resolve_data_split_payload(
     mode: str | None,
     *,
     aliases: Mapping[str, str] | None = None,
-    fallback_to_all: bool = False,
 ) -> tuple[Any, Any]:
     """Resolve ``(y, X)`` payload for a runtime split mode from a data object."""
     return _resolve_data_split_payload(
         data,
         mode,
         aliases=aliases,
-        fallback_to_all=fallback_to_all,
     )
 
 
@@ -232,14 +240,12 @@ def resolve_sensitive_split_payload(
     mode: str | None,
     *,
     aliases: Mapping[str, str] | None = None,
-    fallback_to_all: bool = False,
 ) -> Any:
     """Resolve sensitive-feature payload for a runtime split mode."""
     return _resolve_sensitive_split_payload(
         data,
         mode,
         aliases=aliases,
-        fallback_to_all=fallback_to_all,
     )
 
 
@@ -264,6 +270,4 @@ __all__ = [
     "merge_data_files",
     "merge_files",
     "resolve_runtime_files",
-    "DataPluginRuntimeMixin",
-    "ScoringOrchestratorMixin",
 ]

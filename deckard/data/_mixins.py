@@ -403,7 +403,6 @@ class SensitiveColumnsMixin:
             getattr(self, "data", None),
             split,
             aliases={"attack-val": "val"},
-            fallback_to_all=False,
         )
 
     def _resolve_scoring_split(self, mode: str) -> str:
@@ -489,6 +488,49 @@ class SensitiveColumnsMixin:
         _ = device
         return model_obj
 
+    def _extract_rows_from_runtime_payload(self, X):
+        if (
+            isinstance(X, (list, tuple))
+            and len(X) > 0
+            and isinstance(X[0], (list, tuple))
+        ):
+            return list(X)
+        if (
+            isinstance(X, np.ndarray)
+            and X.ndim == 2
+            and X.shape[1] >= 2
+            and X.dtype == object
+        ):
+            return X.tolist()
+        if not (hasattr(X, "__len__") and hasattr(X, "__getitem__") and len(X) > 0):
+            return None
+
+        first_row = None
+        iloc_accessor = getattr(X, "iloc", None)
+        if iloc_accessor is not None:
+            try:
+                first_row = iloc_accessor[0]
+            except Exception:
+                first_row = None
+        else:
+            try:
+                first_row = X[0]
+            except Exception:
+                first_row = None
+
+        if isinstance(first_row, (list, tuple)):
+            return [X[i] for i in range(len(X))]
+        return None
+
+    def _normalize_training_X_sensitive(self, X, sensitive):
+        rows = self._extract_rows_from_runtime_payload(X)
+        if not rows:
+            return X, sensitive
+        normalized_X = [row[0] for row in rows]
+        if sensitive is None and len(rows[0]) >= 3:
+            sensitive = np.asarray([row[2] for row in rows])
+        return normalized_X, sensitive
+
     def get_model(self) -> RuntimePayload:
         """Return fitted model object, unwrapping wrapper attributes when needed.
 
@@ -526,64 +568,35 @@ class SensitiveColumnsMixin:
 
         # Some fairness datasets emit tuple-like rows (features, label, sensitive).
         # Normalize into homogeneous feature matrix and optional sensitive vector.
-        if (
-            isinstance(X, (list, tuple))
-            and len(X) > 0
-            and isinstance(X[0], (list, tuple))
-        ):
-            rows = list(X)
-            X = [row[0] for row in rows]
-            if sensitive is None and len(rows[0]) >= 3:
-                sensitive = np.asarray([row[2] for row in rows])
-        elif (
-            isinstance(X, np.ndarray)
-            and X.ndim == 2
-            and X.shape[1] >= 2
-            and X.dtype == object
-        ):
-            rows = X.tolist()
-            X = [row[0] for row in rows]
-            if sensitive is None and len(rows[0]) >= 3:
-                sensitive = np.asarray([row[2] for row in rows])
-        elif hasattr(X, "__len__") and hasattr(X, "__getitem__") and len(X) > 0:
-            first_row = None
-            if hasattr(X, "iloc"):
-                try:
-                    first_row = X.iloc[0]
-                except Exception:
-                    first_row = None
-            else:
-                try:
-                    first_row = X[0]
-                except Exception:
-                    first_row = None
-            if isinstance(first_row, (list, tuple)):
-                rows = [X[i] for i in range(len(X))]
-                X = [row[0] for row in rows]
-                if sensitive is None and len(rows[0]) >= 3:
-                    sensitive = np.asarray([row[2] for row in rows])
+        X, sensitive = self._normalize_training_X_sensitive(X, sensitive)
         self._check_shape_consistency(X, "X_train")
         self._check_shape_consistency(y, "y_train")
-        if hasattr(X, "numpy"):
-            X = X.numpy()
-        elif hasattr(X, "detach"):
-            X = X.detach().cpu().numpy()
-        if hasattr(y, "numpy"):
-            y = y.numpy()
-        elif hasattr(y, "detach"):
-            y = y.detach().cpu().numpy()
+        X_payload: Any = X
+        y_payload: Any = y
+        if hasattr(X_payload, "numpy"):
+            X_payload = X_payload.numpy()
+        elif hasattr(X_payload, "detach"):
+            X_payload = X_payload.detach().cpu().numpy()
+        if hasattr(y_payload, "numpy"):
+            y_payload = y_payload.numpy()
+        elif hasattr(y_payload, "detach"):
+            y_payload = y_payload.detach().cpu().numpy()
 
         fit_params = getattr(self, "fit_params", None)
         fit_params = fit_params if fit_params is not None else {}
         if sensitive is not None and self._method_accepts_sensitive_features(
             fit_method,
         ):
-            sensitive_arg = (
-                sensitive.to_numpy() if hasattr(sensitive, "to_numpy") else sensitive
+            to_numpy = getattr(sensitive, "to_numpy", None)
+            sensitive_arg = to_numpy() if callable(to_numpy) else sensitive
+            fit_method(
+                X_payload,
+                y_payload,
+                sensitive_features=sensitive_arg,
+                **fit_params,
             )
-            fit_method(X, y, sensitive_features=sensitive_arg, **fit_params)
         else:
-            fit_method(X, y, **fit_params)
+            fit_method(X_payload, y_payload, **fit_params)
         return defended_estimator
 
     def _check_shape_consistency(self, arr, name):

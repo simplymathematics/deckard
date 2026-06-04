@@ -6,7 +6,7 @@ import logging
 from pathlib import Path
 
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Callable, Literal, Optional, Union, cast
+from typing import TYPE_CHECKING, Any, Callable, Literal, Union, cast
 from omegaconf import DictConfig, ListConfig
 
 import numpy as np
@@ -15,7 +15,6 @@ import numpy as np
 from ..utils import (
     BaseConfig,
     RuntimeSerializable,
-    data_supported_filetypes,
     load_class,
     coerce_to_list,
     merge_list_of_dicts,
@@ -29,10 +28,17 @@ from ..types import (
     StringifiedClass,
     TabularLike,
 )
-from ..plugins.base import OrchestratorBase
-from ..orchestration import stage_hook_token
+from ..orchestration import (
+    ScoreOrchestratorMixin,
+    resolve_data_split_payload,
+    stage_hook_token,
+)
 from ..artifacts import ArtifactLoaderMixin, ScoreDict, SerializableValue
 from .canon import (
+    CANONICAL_DATA_LOAD_FILETYPES,
+    CANONICAL_DATA_SAVE_FILETYPES,
+    CANONICAL_DATASET_LOAD_FILETYPES,
+    CANONICAL_DATA_STAGES,
     DEFAULT_DATA_SCORE_STAGE,
     CANONICAL_DATA_TIMES,
     DataFiles,
@@ -54,11 +60,6 @@ if TYPE_CHECKING:
 
 AUTO_SCORER = "auto"
 DECKARD_TEST_MAX_SAMPLES_ENV = "DECKARD_TEST_MAX_SAMPLES"
-CANONICAL_DATASET_LOAD_FILETYPES = tuple(data_supported_filetypes)
-CANONICAL_DATA_SAVE_FILETYPES = tuple(
-    filetype for filetype in data_supported_filetypes if filetype != ".openml"
-)
-CANONICAL_DATA_LOAD_FILETYPES = (*CANONICAL_DATA_SAVE_FILETYPES, ".npz")
 
 
 def _coerce_scorer_config(*args, **kwargs):
@@ -97,7 +98,7 @@ def _load_optuna_studies_dataframe(
 
 
 @dataclass(eq=False, kw_only=True)
-class DataConfig(OrchestratorBase, BaseConfig):
+class DataConfig(ScoreOrchestratorMixin, BaseConfig):
     """DataConfig runtime class.
 
     Attributes:
@@ -296,7 +297,7 @@ class DataConfig(OrchestratorBase, BaseConfig):
     scorer: Any = AUTO_SCORER
     score_mode: str = "test"
     score_stage: str = DEFAULT_DATA_SCORE_STAGE
-    pipeline: "DataPipeline | None" = None
+    pipeline: Any = None
     files: DataFiles = field(
         default_factory=lambda: {},
         metadata={
@@ -361,37 +362,37 @@ class DataConfig(OrchestratorBase, BaseConfig):
         repr=False,
         metadata={"help": "Indices selected for the validation split."},
     )
-    X_train: Union[TabularLike, None] = field(
+    _X_train: Union[TabularLike, None] = field(
         default=None,
         init=False,
         repr=False,
         metadata={"help": "Cached training feature matrix."},
     )
-    y_train: Union[pd.Series, None] = field(
+    _y_train: Union[pd.Series, None] = field(
         default=None,
         init=False,
         repr=False,
         metadata={"help": "Cached training target vector."},
     )
-    X_test: Union[TabularLike, None] = field(
+    _X_test: Union[TabularLike, None] = field(
         default=None,
         init=False,
         repr=False,
         metadata={"help": "Cached test feature matrix."},
     )
-    y_test: Union[pd.Series, None] = field(
+    _y_test: Union[pd.Series, None] = field(
         default=None,
         init=False,
         repr=False,
         metadata={"help": "Cached test target vector."},
     )
-    X_val: Union[TabularLike, None] = field(
+    _X_val: Union[TabularLike, None] = field(
         default=None,
         init=False,
         repr=False,
         metadata={"help": "Cached validation feature matrix."},
     )
-    y_val: Union[pd.Series, None] = field(
+    _y_val: Union[pd.Series, None] = field(
         default=None,
         init=False,
         repr=False,
@@ -437,6 +438,14 @@ class DataConfig(OrchestratorBase, BaseConfig):
             "help": "Resolved sampler object cached for repeated split generation.",
         },
     )
+    pipeline: Any = field(
+        default=None,
+        init=True,
+        repr=True,
+        metadata={
+            "help": "Resolved runtime pipeline object built from pipeline config.",
+        },
+    )
     _score_orchestration_active: bool = field(
         default=False,
         init=False,
@@ -448,6 +457,22 @@ class DataConfig(OrchestratorBase, BaseConfig):
 
     def _normalize_score_mode(self, mode: str) -> str:
         return normalize_data_score_mode(mode)
+
+    def _normalize_score_stage(
+        self,
+        stage: str | None,
+        *,
+        allow_all_auto: bool = True,
+    ) -> str:
+        normalized = normalize_data_score_stage(
+            stage or DEFAULT_DATA_SCORE_STAGE,
+        )
+        if normalized in {"all", "auto"} and not allow_all_auto:
+            raise ValueError(
+                "Unknown data score stage "
+                f"'{stage}'. Must be one of {list(CANONICAL_DATA_STAGES)}",
+            )
+        return normalized
 
     def _stage_hook_token(self, stage: str) -> str:
         return stage_hook_token(stage)
@@ -485,7 +510,7 @@ class DataConfig(OrchestratorBase, BaseConfig):
                 return True
             if _is_declared_dataset(normalized):
                 return True
-            if Path(normalized).suffix in data_supported_filetypes:
+            if Path(normalized).suffix in CANONICAL_DATASET_LOAD_FILETYPES:
                 return True
             return False
 
@@ -502,11 +527,11 @@ class DataConfig(OrchestratorBase, BaseConfig):
                 "deferring validation to runtime loader resolution.",
                 canonical_name,
             )
-        self.score_stage = normalize_data_score_stage(
+        self.score_stage = self._normalize_score_stage(
             getattr(self, "score_stage", DEFAULT_DATA_SCORE_STAGE)
             or DEFAULT_DATA_SCORE_STAGE,
         )
-        self.score_mode = normalize_data_score_mode(
+        self.score_mode = self._normalize_score_mode(
             getattr(self, "score_mode", "test") or "test",
         )
 
@@ -672,6 +697,7 @@ class DataConfig(OrchestratorBase, BaseConfig):
         from .pipeline.base import DataPipeline
 
         if isinstance(raw_pipeline, DataPipeline):
+            self.pipeline = raw_pipeline
             return
         if isinstance(raw_pipeline, (dict, DictConfig)):
             pipeline_dict = {str(k): v for k, v in dict(raw_pipeline).items()}
@@ -703,7 +729,7 @@ class DataConfig(OrchestratorBase, BaseConfig):
             pipeline = pipeline_runtime
         return pipeline, pipeline_runtime
 
-    def _fit_transform_X(
+    def fit_transform(
         self,
         X_train,
         X_test,
@@ -742,15 +768,6 @@ class DataConfig(OrchestratorBase, BaseConfig):
         self._sampler_obj = BaseSampler.resolve(self)
 
     @property
-    def X(self) -> TabularLike | None:
-        """Convenience alias for the loaded feature matrix.
-
-        Returns:
-            Loaded feature payload.
-        """
-        return self._X
-
-    @property
     def scores(self) -> ScoreDict:
         """Canonical score container alias (backed by ``score_dict``).
 
@@ -777,6 +794,24 @@ class DataConfig(OrchestratorBase, BaseConfig):
         """
         return self._y
 
+    @y.setter
+    def y(self, value: pd.Series | None) -> None:
+        """Set the loaded target vector.
+
+        Args:
+            value: Loaded target payload.
+        """
+        self._y = value
+
+    @property
+    def X(self) -> TabularLike | None:
+        """Convenience alias for the loaded feature matrix.
+
+        Returns:
+            Loaded feature payload.
+        """
+        return self._X
+
     @X.setter
     def X(self, value: TabularLike | None) -> None:
         """Set the loaded feature matrix.
@@ -786,14 +821,97 @@ class DataConfig(OrchestratorBase, BaseConfig):
         """
         self._X = value
 
-    @y.setter
-    def y(self, value: pd.Series | None) -> None:
-        """Set the loaded target vector.
+    @property
+    def X_train(self) -> TabularLike | None:
+        """Convenience alias for the loaded feature matrix.
+
+        Returns:
+            Loaded feature payload.
+        """
+        return self._X_train
+
+    @X_train.setter
+    def X_train(self, value: TabularLike | None) -> None:
+        """Set the loaded feature matrix.
 
         Args:
-            value: Loaded target payload.
+            value: Loaded feature payload.
         """
-        self._y = value
+        self._X_train = value
+
+    @property
+    def X_test(self) -> TabularLike | None:
+        """Convenience alias for the loaded feature matrix.
+
+        Returns:
+            Loaded feature payload.
+        """
+        return self._X_test
+
+    @X_test.setter
+    def X_test(self, value: TabularLike | None) -> None:
+        """Set the loaded feature matrix.
+
+        Args:
+            value: Loaded feature payload.
+        """
+        self._X_test = value
+
+    @property
+    def y_train(self) -> pd.Series | None:
+        """Convenience alias for the loaded feature matrix.
+
+        Returns:
+            Loaded feature payload.
+        """
+        return self._y_train
+
+    @y_train.setter
+    def y_train(self, value: pd.Series | None) -> None:
+        """Set the loaded feature matrix.
+
+        Args:
+            value: Loaded feature payload.
+        """
+        self._y_train = value
+
+    @property
+    def y_test(self) -> pd.Series | None:
+        """Convenience alias for the loaded feature matrix.
+
+        Returns:
+            Loaded feature payload.
+        """
+        return self._y_test
+
+    @y_test.setter
+    def y_test(self, value: pd.Series | None) -> None:
+        """Set the loaded feature matrix.
+
+        Args:
+            value: Loaded feature payload.
+        """
+        self._y_test = value
+
+    @property
+    def X_val(self) -> TabularLike | None:
+        """Convenience alias for cached validation features."""
+        return self._X_val
+
+    @X_val.setter
+    def X_val(self, value: TabularLike | None) -> None:
+        """Set cached validation feature payload."""
+        self._X_val = value
+
+    @property
+    def y_val(self) -> pd.Series | None:
+        """Convenience alias for cached validation labels."""
+        return self._y_val
+
+    @y_val.setter
+    def y_val(self, value: pd.Series | None) -> None:
+        """Set cached validation label payload."""
+        self._y_val = value
 
     def load(
         self,
@@ -879,7 +997,7 @@ class DataConfig(OrchestratorBase, BaseConfig):
 
         return load_default_dataset(self, dataset_name=dataset, **loader_params)
 
-    def fit(self, run_hooks: bool = True) -> "DataConfig":
+    def sample(self, run_hooks: bool = True) -> "DataConfig":
         """Materialize train/test/(optional val) splits for this dataset.
 
         Args:
@@ -919,20 +1037,6 @@ class DataConfig(OrchestratorBase, BaseConfig):
                 )
         return self
 
-    def sample(self, run_hooks: bool = True) -> "DataConfig":
-        """Public sampling lifecycle method.
-
-        Mirrors ``score/scorer`` naming with ``sample/sampler``.
-
-        Args:
-            run_hooks: Whether to execute plugin hooks.
-
-        Returns:
-            This DataConfig instance.
-        """
-        self.fit(run_hooks=run_hooks)
-        return self
-
     def score(
         self,
         *args,
@@ -960,39 +1064,10 @@ class DataConfig(OrchestratorBase, BaseConfig):
             raise TypeError(
                 f"DataConfig.scorer must be callable or None, got {type(self.scorer)}",
             )
-        resolved_mode = normalize_data_score_mode(mode or self.score_mode)
+        resolved_mode = self._normalize_score_mode(mode or self.score_mode)
         mode_token = str(resolved_mode).strip().lower().replace("_", "-")
-
-        y = None
-        X = None
-        if mode_token == "train":
-            y = getattr(self, "y_train", None)
-            X = getattr(self, "X_train", None)
-        elif mode_token == "test":
-            y = getattr(self, "y_test", None)
-            X = getattr(self, "X_test", None)
-        elif mode_token == "val":
-            y = getattr(self, "y_val", None)
-            X = getattr(self, "X_val", None)
-        elif mode_token == "all":
-            y_train = getattr(self, "y_train", None)
-            y_test = getattr(self, "y_test", None)
-            X_train = getattr(self, "X_train", None)
-            X_test = getattr(self, "X_test", None)
-            if (
-                y_train is not None
-                and y_test is not None
-                and X_train is not None
-                and X_test is not None
-            ):
-                if isinstance(X_train, (pd.DataFrame, pd.Series)):
-                    X = pd.concat([X_train, X_test], ignore_index=True)
-                else:
-                    X = np.concatenate([np.asarray(X_train), np.asarray(X_test)])
-                if isinstance(y_train, (pd.DataFrame, pd.Series)):
-                    y = pd.concat([y_train, y_test], ignore_index=True)
-                else:
-                    y = np.concatenate([np.asarray(y_train), np.asarray(y_test)])
+        stage_token = str(stage).strip().lower().replace("_", "-")
+        y, X = self._resolve_score_payload(mode_token, stage_token)
 
         scorer_kwargs = {
             "mode": resolved_mode,
@@ -1008,6 +1083,63 @@ class DataConfig(OrchestratorBase, BaseConfig):
         if isinstance(scorer_output, dict):
             return ScoreDict.from_payload(scorer_output)
         return ScoreDict.from_payload({"value": scorer_output})
+
+    @staticmethod
+    def _coerce_split_payload_array(
+        payload: Any,
+        tuple_index: int | None = None,
+    ) -> Any:
+        if isinstance(payload, (pd.DataFrame, pd.Series)):
+            return payload
+        if isinstance(payload, np.ndarray):
+            return payload
+        if hasattr(payload, "__len__") and hasattr(payload, "__getitem__"):
+            if len(payload) == 0:
+                return np.asarray([])
+            first = payload[0]
+            if tuple_index is not None and isinstance(first, (tuple, list)):
+                values = [sample[tuple_index] for sample in payload]
+            else:
+                values = list(payload)
+            np_values = [np.asarray(value) for value in values]
+            try:
+                return np.stack(np_values)
+            except ValueError:
+                return np.asarray(np_values, dtype=object)
+        return np.asarray(payload)
+
+    @classmethod
+    def _concat_split_arrays(
+        cls,
+        train_payload: Any,
+        test_payload: Any,
+        tuple_index: int | None = None,
+    ) -> Any:
+        if isinstance(train_payload, (pd.DataFrame, pd.Series)):
+            return pd.concat([train_payload, test_payload], ignore_index=True)
+        train_arr = cls._coerce_split_payload_array(train_payload, tuple_index)
+        test_arr = cls._coerce_split_payload_array(test_payload, tuple_index)
+        return np.concatenate([train_arr, test_arr])
+
+    def _resolve_all_score_payload(self) -> tuple[Any, Any]:
+        y_train = getattr(self, "y_train", None)
+        y_test = getattr(self, "y_test", None)
+        X_train = getattr(self, "X_train", None)
+        X_test = getattr(self, "X_test", None)
+        if y_train is None or y_test is None or X_train is None or X_test is None:
+            return None, None
+        X_all = self._concat_split_arrays(X_train, X_test, tuple_index=0)
+        y_all = self._concat_split_arrays(y_train, y_test, tuple_index=1)
+        return y_all, X_all
+
+    def _resolve_score_payload(
+        self,
+        mode_token: str,
+        stage_token: str,
+    ) -> tuple[Any, Any]:
+        if mode_token == "all" or stage_token == "post-pipeline":
+            return self._resolve_all_score_payload()
+        return resolve_data_split_payload(self, mode_token)
 
     def __hash__(self):
         return super().__hash__()
@@ -1081,10 +1213,10 @@ class DataConfig(OrchestratorBase, BaseConfig):
         assert self.train_indices is not None and self.test_indices is not None
         train_index = np.asarray(self.train_indices, dtype=int)
         test_index = np.asarray(self.test_indices, dtype=int)
-        self.X_train = self._X.iloc[train_index].reset_index(drop=True)
-        self.y_train = self._y.iloc[train_index].reset_index(drop=True)
-        self.X_test = self._X.iloc[test_index].reset_index(drop=True)
-        self.y_test = self._y.iloc[test_index].reset_index(drop=True)
+        self._X_train = self._X.iloc[train_index].reset_index(drop=True)
+        self._y_train = self._y.iloc[train_index].reset_index(drop=True)
+        self._X_test = self._X.iloc[test_index].reset_index(drop=True)
+        self._y_test = self._y.iloc[test_index].reset_index(drop=True)
         assert self.X_train is not None and self.X_test is not None
         self.train_n = len(self.X_train)
         self.test_n = len(self.X_test)
@@ -1245,7 +1377,7 @@ class DataConfig(OrchestratorBase, BaseConfig):
             raise ValueError("DataConfig.name must be set before loading data")
         self.name = dataset_name
         filetype = Path(dataset_name).suffix
-        supported_filetypes = data_supported_filetypes
+        supported_filetypes = CANONICAL_DATASET_LOAD_FILETYPES
         is_optuna_source = (
             dataset_name.strip().lower() == "optuna"
             or filetype in {".db", ".sqlite3"}
@@ -1514,7 +1646,8 @@ class DataConfig(OrchestratorBase, BaseConfig):
         try:
             self.load_dataset()
             logger.info(f"Data loaded in {self.data_load_time:.2f} seconds")
-            self.fit()
+            self.sample()
+
             score_hook_start = time.process_time()
             self._run_plugin_hook("after_pipeline", score_kwargs=kwargs)
             score_hook_elapsed = time.process_time() - score_hook_start
@@ -1566,95 +1699,3 @@ class DataConfig(OrchestratorBase, BaseConfig):
         if save_flag:
             self.save(filepath=data_file)
         return self.score_dict
-
-
-@dataclass
-class DataPipelineStep:
-    """Represents a step in a data pipeline with optional metadata.
-
-    This dataclass normalizes and documents the optional parameters that
-    configure how a step integrates with the pipeline runtime.
-
-    Attributes
-    ----------
-    name : str
-        Fully-qualified class name or file path (e.g., "sklearn.preprocessing.StandardScaler"
-        or "path/to/custom.py:CustomTransformer").
-    fit_y : bool, default=False
-        If True, this step is applied to the target (y) rather than features (X).
-        Only one of fit_y or fit_xy can be True.
-    dtype : str, optional
-        Column selector hint for ColumnTransformer. Supported values: "numeric",
-        "num", "float", "int", "object", "string", "category". When specified,
-        only columns of matching dtype are passed to this step.
-    plugin_hook : str | list[str], optional
-        Hook name(s) that trigger when this step runs. Supported hooks:
-        - "before_sample": Run this step's pre_sample_fit before KFold sampling.
-
-    Attributes:
-        Runtime attributes are inherited or configured via class fields documented in this module.
-    """
-
-    name: str
-    fit_y: bool = False
-    fix_Xy: bool = False
-    fit_X: bool = True
-    fit_pre_sample: bool = False
-    dtype: Optional[str] = None
-    plugin_hook: Union[str, list, None] = None
-
-    @classmethod
-    def from_config(cls, step_name: str, step_config: dict) -> "DataPipelineStep":
-        """
-        Extract DataPipelineStep from a pipeline step config dict.
-
-        Args:
-            step_name: Name of the step (key in pipeline.steps dict).
-            step_config: Configuration dict for the step.
-
-        Returns:
-            Parsed step metadata.
-
-        Raises:
-            ValueError: If required metadata is missing or unsupported.
-        """
-        step_class = step_config.get("name")
-        if step_class is None:
-            raise ValueError(f"Step {step_name} missing required 'name' key")
-
-        fit_y = step_config.get("fit_y", False)
-        fit_xy = step_config.get("fit_xy", False)
-
-        if fit_xy is True:
-            raise ValueError("fit_xy pipeline steps are no longer supported.")
-
-        return cls(
-            name=step_class,
-            fit_y=fit_y,
-            dtype=step_config.get("dtype", None),
-            plugin_hook=step_config.get("plugin_hook", None),
-        )
-
-    def stripped_config(self, step_config: dict) -> dict:
-        """
-        Remove DataPipelineStep metadata from a step config dict.
-
-        Args:
-            step_config: Original step configuration.
-
-        Returns:
-            New config with metadata keys removed.
-        """
-        config = dict(step_config)
-        step_kwargs = {
-            "name",
-            "fit_y",
-            "fit_Xy",
-            "fit_X",
-            "fit_pre_sample",
-            "dtype",
-            "plugin_hook",
-        }
-        for key in step_kwargs:
-            config.pop(key, None)
-        return config
