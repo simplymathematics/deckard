@@ -145,6 +145,7 @@ test = [
     "transformers>=4.40.0",
     "datasets>=2.19.0",
     "huggingface_hub>=0.23.0",
+    "pylint",
 ]
 
 test-quality = [
@@ -209,6 +210,7 @@ all = [
     "mypy",
     "pre-commit",
     "pymarkdownlnt",
+    "pylint",
 
     "torch>=2.0.0",
     "torchvision>=0.15.0",
@@ -236,6 +238,10 @@ exclude = [
   "build",
   "docs"
 ]
+
+[tool.pylint.design]
+max-branches = 20
+max-statements = 70
 
 [tool.pymarkdown]
 

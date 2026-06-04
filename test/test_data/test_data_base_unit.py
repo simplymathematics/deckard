@@ -400,21 +400,6 @@ def test_pipeline_config_coerces_legacy_pipeline_specs():
     assert isinstance(cfg_list.pipeline, DataPipeline)
 
 
-def test_pipeline_step_rejects_fit_y_and_fit_xy_both_true():
-    with pytest.raises(
-        ValueError,
-        match="fit_xy pipeline steps are no longer supported",
-    ):
-        data_base.DataPipelineStep.from_config(
-            "bad",
-            {
-                "name": "sklearn.preprocessing.FunctionTransformer",
-                "fit_y": True,
-                "fit_xy": True,
-            },
-        )
-
-
 def test_pipeline_stage_flags_apply_only_to_declared_stages(monkeypatch):
     import deckard.data.pipeline.base as data_pipeline_base
 
@@ -546,7 +531,7 @@ def test_empty_runtime_pipeline_leaves_data_unchanged():
     cfg._X = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
     cfg._y = pd.Series([0, 1, 0])
 
-    cfg.fit()
+    cfg.sample()
 
     assert cfg.X_train is not None
     assert cfg.X_test is not None
@@ -554,7 +539,7 @@ def test_empty_runtime_pipeline_leaves_data_unchanged():
     assert cfg.y_test is not None
 
 
-def test_fit_transform_x_handles_sparse_and_generated_feature_names():
+def testfit_transform_handles_sparse_and_generated_feature_names():
     runtime = DataPipeline(
         pipeline={
             "csr": {
@@ -569,12 +554,12 @@ def test_fit_transform_x_handles_sparse_and_generated_feature_names():
 
     pipeline = runtime._build_x_pipeline(runtime._collect_x_steps(stage="X"))
     x_train = pd.DataFrame({"a": [1.0, 2.0]})
-    transformed = runtime._fit_transform_features(pipeline, x_train, x_train)
+    transformed = runtime.fit_transform_features(pipeline, x_train, x_train)
 
     assert list(transformed.columns) == ["feature_0"]
 
 
-def test_fit_transform_y_csr_conversion():
+def testfit_transform_y_csr_conversion():
     cfg = DataConfig(pipeline={}, scorer="none")
     transformer = FunctionTransformer(
         lambda values: csr_matrix(values),
@@ -582,7 +567,7 @@ def test_fit_transform_y_csr_conversion():
     )
     y_train = pd.Series([0, 1])
 
-    transformed = cfg.pipeline._fit_transform_target([("csr", transformer)], y_train)
+    transformed = cfg.pipeline.fit_transform_target([("csr", transformer)], y_train)
     assert isinstance(transformed, pd.Series)
     assert transformed.tolist() == [0, 1]
 

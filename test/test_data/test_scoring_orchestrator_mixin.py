@@ -1,11 +1,11 @@
 from dataclasses import dataclass, field
 from types import SimpleNamespace
 
-from deckard.data.canon import ScoringOrchestratorMixin
+from deckard.orchestration import ScoreOrchestratorMixin
 
 
 @dataclass(eq=False, kw_only=True)
-class _RuntimeHarness(ScoringOrchestratorMixin):
+class _RuntimeHarness(ScoreOrchestratorMixin):
     score_mode: str = "test"
     scorer: object | None = None
     plugins: list = field(default_factory=list)

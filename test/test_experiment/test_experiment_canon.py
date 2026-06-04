@@ -2,6 +2,8 @@ from types import SimpleNamespace
 
 import pytest
 
+import deckard.experiment.base as experiment_base
+from deckard.artifacts import ScoreDict
 from deckard.plugins import HookPlugin
 from deckard.plugins.base import HookBundle, compose_hook_plugins
 
@@ -90,10 +92,27 @@ def test_experiment_canon_stage_rejects_unknown_value():
 
 def test_experiment_canon_runtime_contract_populates_missing_fields():
     runtime = ensure_experiment_runtime_contract(SimpleNamespace(score_dict=None))
-    assert isinstance(runtime.score_dict, dict)
+    assert isinstance(runtime.score_dict, ScoreDict)
     assert isinstance(runtime.times, dict)
     assert isinstance(runtime.outputs, dict)
     assert isinstance(runtime.params, dict)
+
+
+def test_experiment_base_score_mode_normalization_delegates_to_canon(monkeypatch):
+    calls: list[str] = []
+
+    def _fake(mode: str) -> str:
+        calls.append(mode)
+        return "test"
+
+    monkeypatch.setattr(experiment_base, "normalize_experiment_score_mode", _fake)
+    runtime = object.__new__(experiment_base.ExperimentConfig)
+
+    assert (
+        experiment_base.ExperimentConfig._normalize_score_mode(runtime, "Eval")
+        == "test"
+    )
+    assert calls == ["Eval"]
 
 
 def test_experiment_canon_declares_score_modes_and_stages():

@@ -92,7 +92,13 @@ def _pytorch_config():
 def test_cross_family_data_runtime_contract(builder, tmp_path: Path):
     cfg = builder()
 
-    for method_name in ("load_dataset", "fit", "sample", "score", "__call__"):
+    for method_name in (
+        "load_dataset",
+        "fit_transform",
+        "sample",
+        "score",
+        "__call__",
+    ):
         assert callable(getattr(cfg, method_name, None)), method_name
 
     for time_key in CANONICAL_DATA_TIMES:

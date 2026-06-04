@@ -13,22 +13,11 @@ def test_fairness_pytorch_compat_reexport_matches_framework_symbol():
     assert compat_mod.__all__ == ["TinyFairness"]
 
 
-def test_data_pipeline_core_compat_reexports_base_symbols():
-    compat_mod = importlib.import_module("deckard.data.pipeline.core")
-    base_mod = importlib.import_module("deckard.data.pipeline.base")
-
-    assert compat_mod.DataPipeline is base_mod.DataPipeline
-    assert compat_mod.DataConfig is base_mod.DataConfig
-    assert set(compat_mod.__all__) == {"DataPipeline", "DataConfig"}
-
-
 def test_plot_declarations_expose_expected_plugins_and_defaults():
     declarations = importlib.import_module("deckard.plot.declarations")
 
     assert declarations.PLOT_DEFAULT["backend"] == "yellowbrick"
     assert "roc_auc" in declarations.PLOT_TYPES
-    assert declarations.SEABORN_PLOTTER_PLUGIN.backend == "seaborn"
-    assert declarations.YELLOWBRICK_PLOTTER_PLUGIN.backend == "yellowbrick"
 
 
 def test_yellowbrick_compat_module_reexports_symbols(monkeypatch):

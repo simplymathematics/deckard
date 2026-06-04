@@ -182,7 +182,7 @@ def test_sample_populates_sensitive_val_when_present(monkeypatch):
     cfg = _cfg()
     cfg.sensitive_columns = ["group"]
 
-    def _noop_fit(self, run_hooks: bool = True):
+    def _noop_sample(self, run_hooks: bool = True):
         _ = run_hooks
         self._X = pd.DataFrame({"group": ["a", "b", "b", "a"], "x": [1, 2, 3, 4]})
         self.train_indices = [0, 1]
@@ -195,9 +195,9 @@ def test_sample_populates_sensitive_val_when_present(monkeypatch):
         self.y_test = pd.Series([1])
         self.y_val = pd.Series([0])
 
-    monkeypatch.setattr(DataConfig, "fit", _noop_fit)
+    monkeypatch.setattr(DataConfig, "sample", _noop_sample)
 
-    cfg.fit()
+    cfg.sample()
 
     assert cfg._sensitive_train is not None
     assert cfg._sensitive_test is not None
@@ -212,7 +212,7 @@ def test_sample_prefers_post_transform_sensitive_columns(monkeypatch):
     cfg = _cfg()
     cfg.sensitive_columns = ["marital.status"]
 
-    def _noop_fit(self, run_hooks: bool = True):
+    def _noop_sample(self, run_hooks: bool = True):
         _ = run_hooks
         self._X = pd.DataFrame(
             {
@@ -247,9 +247,9 @@ def test_sample_prefers_post_transform_sensitive_columns(monkeypatch):
         self.y_test = pd.Series([1])
         self.y_val = None
 
-    monkeypatch.setattr(DataConfig, "fit", _noop_fit)
+    monkeypatch.setattr(DataConfig, "sample", _noop_sample)
 
-    cfg.fit()
+    cfg.sample()
 
     assert isinstance(cfg._sensitive_train, pd.DataFrame)
     assert isinstance(cfg._sensitive_test, pd.DataFrame)

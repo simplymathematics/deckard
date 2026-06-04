@@ -5,6 +5,8 @@ experiment:
   payload_kind: data
   metadata: {}
   default_stage: post-pipeline
+  stage_scoring_enabled: false
+  stage_score_filters: {}
   data:
     _target_: deckard.data.base.DataConfig
     id: ''
@@ -12,6 +14,8 @@ experiment:
     payload_kind: data
     metadata: {}
     default_stage: post-pipeline
+    stage_scoring_enabled: false
+    stage_score_filters: {}
     name: https://raw.githubusercontent.com/simplymathematics/Adult-Census-Income/refs/heads/master/adult.csv
     data_params: {}
     split: null
@@ -140,13 +144,15 @@ experiment:
           fit_y: true
           fit_X: false
     files: {}
-  experiment_name: f4289e15c46aa8aec56bffcba656a477
+  experiment_name: 12882754ddad5db8fdf8e1ab5afd9000
   model:
     id: ''
     path: ''
     payload_kind: data
     metadata: {}
     default_stage: post-pipeline
+    stage_scoring_enabled: false
+    stage_score_filters: {}
     name: sklearn.ensemble.RandomForestClassifier
     classifier: true
     model_params:
@@ -355,6 +361,8 @@ experiment:
     payload_kind: data
     metadata: {}
     default_stage: post-pipeline
+    stage_scoring_enabled: false
+    stage_score_filters: {}
     name: art.attacks.evasion.HopSkipJump
     attack_params:
       max_iter: 10
@@ -708,11 +716,11 @@ experiment:
   detector: null
   files:
     replace: {}
-    handler: <deckard.file.CanonFileHandler object at 0x379e89b40>
-    params_file: /private/var/folders/cd/frntyg595hj5gz_qzm3696hm0000gp/T/pytest-of-c.meyers/pytest-59/test_dvc_repro_and_force_repro0/dvc-e2e/artifacts/params.yaml
-    score_file: /private/var/folders/cd/frntyg595hj5gz_qzm3696hm0000gp/T/pytest-of-c.meyers/pytest-59/test_dvc_repro_and_force_repro0/dvc-e2e/artifacts/scores.json
-    log_file: /private/var/folders/cd/frntyg595hj5gz_qzm3696hm0000gp/T/pytest-of-c.meyers/pytest-59/test_dvc_repro_and_force_repro0/dvc-e2e/artifacts/run.log
-    error_file: /private/var/folders/cd/frntyg595hj5gz_qzm3696hm0000gp/T/pytest-of-c.meyers/pytest-59/test_dvc_repro_and_force_repro0/dvc-e2e/artifacts/error.log
+    handler: <deckard.file.CanonFileHandler object at 0x388db0c70>
+    params_file: /private/var/folders/cd/frntyg595hj5gz_qzm3696hm0000gp/T/pytest-of-c.meyers/pytest-159/test_dvc_repro_and_force_repro0/dvc-e2e/artifacts/params.yaml
+    score_file: /private/var/folders/cd/frntyg595hj5gz_qzm3696hm0000gp/T/pytest-of-c.meyers/pytest-159/test_dvc_repro_and_force_repro0/dvc-e2e/artifacts/scores.json
+    log_file: /private/var/folders/cd/frntyg595hj5gz_qzm3696hm0000gp/T/pytest-of-c.meyers/pytest-159/test_dvc_repro_and_force_repro0/dvc-e2e/artifacts/run.log
+    error_file: /private/var/folders/cd/frntyg595hj5gz_qzm3696hm0000gp/T/pytest-of-c.meyers/pytest-159/test_dvc_repro_and_force_repro0/dvc-e2e/artifacts/error.log
     data_file: null
     model_file: null
     attack_file: null
@@ -749,7 +757,7 @@ _dvc:
   stage_selection: all
   run_mode: single
   params_manifest:
-    experiment_name: f4289e15c46aa8aec56bffcba656a477
+    experiment_name: 12882754ddad5db8fdf8e1ab5afd9000
     library: sklearn
     classifier: true
     evaluation_mode: standard
@@ -758,11 +766,11 @@ _dvc:
     data:
       type: deckard.data.base.DataConfig
       alias: https://raw.githubusercontent.com/simplymathematics/Adult-Census-Income/refs/heads/master/adult.csv
-      fingerprint: 45b2850fe4e3f84d89a6c7d1e6abf276
+      fingerprint: 8598a9c9ae5c1fad4b220292402fceaf
     model:
       type: deckard.model.base.ModelConfig
       alias: rf
-      fingerprint: 587ffc5fd5684ddc80c29955d0c89e55
+      fingerprint: 101a4c91387ccf2f82a75114679fd92a
     defense:
       type: deckard.model.defense.base.DefenseConfig
       alias: class-labels
@@ -770,13 +778,13 @@ _dvc:
     attack:
       type: deckard.attack.base.AttackConfig
       alias: hsj
-      fingerprint: 75c1a5d4d56c583fead6c0b3cc691f65
+      fingerprint: d0869d4c3b8afd87d5dbf16b9793e36d
     detector: null
     score: null
     attack_chain:
     - type: deckard.attack.base.AttackConfig
       alias: hsj
-      fingerprint: 75c1a5d4d56c583fead6c0b3cc691f65
+      fingerprint: d0869d4c3b8afd87d5dbf16b9793e36d
     schema_version: deckard.experiment.runtime.v1
   dvclive:
     enabled: false

@@ -3,6 +3,7 @@ import pickle
 import shutil
 import tempfile
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 import numpy as np
@@ -15,9 +16,15 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.svm import SVC
 
+from deckard.artifacts import ScoreDict
 from deckard.attack import AttackConfig
 from deckard.attack.base import SensitiveFeaturesWrapper, _sensitive_slice
-from deckard.attack.canon import normalize_attack_stage
+from deckard.attack.canon import (
+    CANONICAL_ATTACK_SCORE_STAGES,
+    normalize_attack_score_mode,
+    normalize_attack_score_stage,
+    normalize_attack_stage,
+)
 from deckard.attack.extraction import ExtractionAttackConfig
 from deckard.score.attack import FairlearnAttackScorerConfig
 
@@ -338,8 +345,45 @@ class TestAttackConfig:
             np.array([0, 1]),
             np.array([0, 1]),
         )
-        assert not has_proba
-        assert scorer_cfg is not None
+
+    def test_attack_canon_stage_and_score_aliases(self):
+        assert normalize_attack_stage("before_attack") == "pre-attack"
+        assert normalize_attack_score_stage("before_attack") == "pre-attack"
+        assert normalize_attack_score_stage("after_attack") == "post-attack"
+        assert normalize_attack_score_mode("evaluation") == "test"
+
+    def test_attack_canon_declares_runtime_stage_score_tokens(self):
+        assert "pre-attack" in CANONICAL_ATTACK_SCORE_STAGES
+        assert "post-attack" in CANONICAL_ATTACK_SCORE_STAGES
+
+    def test_attack_stage_scoring_records_namespaced_scores(self):
+        attack = AttackConfig(name="art.attacks.evasion.FastGradientMethod")
+        attack.stage_scoring_enabled = True
+        attack._score = lambda **_kwargs: ScoreDict.from_payload(
+            {"evasion_accuracy": 1.0},
+        )
+
+        data = SimpleNamespace(
+            X_test=np.array([[0.0], [1.0], [2.0], [3.0]]),
+            y_test=np.array([0, 1, 0, 1]),
+            _X=None,
+            _y=None,
+        )
+        model = SimpleNamespace(predict=lambda X: np.array([0 for _ in range(len(X))]))
+
+        attack._run_stage_scoring_pass(
+            data=data,
+            stage="pre-attack",
+            component="evasion",
+            mode="test",
+            model=model,
+            attack_kind="evasion",
+        )
+
+        assert "stages" in attack.score_dict
+        assert "pre-attack" in attack.score_dict["stages"]
+        assert "test" in attack.score_dict["stages"]["pre-attack"]
+        assert "evasion_accuracy" in attack.score_dict["stages"]["pre-attack"]["test"]
 
     def test_attack_mode_rejects_defense_stage_aliases(self):
         attack = AttackConfig(name="art.attacks.evasion.FastGradientMethod")

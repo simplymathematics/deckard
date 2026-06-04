@@ -260,6 +260,56 @@ def test_task_aware_scorer_resolves_from_model_data_and_attack_context():
     )
 
 
+@pytest.mark.parametrize(
+    "scoring_type,expected_mode,expected_stage",
+    [
+        ("data", "all", "post-pipeline"),
+        ("model", "test", "post-predict"),
+        ("attack", "test", "post-attack"),
+        ("detector", "test", "post-filter"),
+    ],
+)
+def test_scorer_dict_defaults_are_scoring_type_aware(
+    scoring_type,
+    expected_mode,
+    expected_stage,
+):
+    cfg = ScorerDictConfig(
+        scorers={
+            "acc": {"score_function": "sklearn.metrics.accuracy_score"},
+        },
+    )
+    cfg.scoring_type = scoring_type
+
+    assert cfg._resolve_runtime_mode(None) == expected_mode
+    assert cfg._resolve_stage_key(mode=None, requested_stage=None) == expected_stage
+
+
+def test_scorer_dict_runtime_stage_pass_through_uses_requested_stage():
+    cfg = ScorerDictConfig(
+        scorers={
+            "acc": {"score_function": "sklearn.metrics.accuracy_score"},
+        },
+    )
+    cfg.scoring_type = "model"
+
+    assert (
+        cfg._resolve_stage_key(mode=None, requested_stage="post-predict")
+        == "post-predict"
+    )
+    assert (
+        cfg._resolve_stage_key(
+            mode=None,
+            requested_stage=["post-attack", "post-pipeline"],
+        )
+        == "post-attack"
+    )
+
+    # Stage aliases should normalize into supported canonical runtime tokens.
+    tokens = cfg._runtime_stage_tokens(mode="test", stage="post-predict")
+    assert "model-score" in tokens
+
+
 def testresolve_mode_features_and_predict_proba_paths():
     data = SimpleNamespace(X_train="train", X_test="test", X_val="val", _X="full")
     assert ScorerDictConfig.resolve_mode_features("train", data) == "train"

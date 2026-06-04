@@ -135,7 +135,7 @@ class TestDataConfigBehavior:
         config._y = self.y_train
         config.data_load_time = 3
         pipeline, _ = config._init_pipeline()
-        config.X_train, config.X_test, _, _ = config._fit_transform_X(
+        config.X_train, config.X_test, _, _ = config.fit_transform(
             self.X_train,
             self.X_test,
             self.y_train,
@@ -384,7 +384,7 @@ class TestDataConfig:
         )
         cfg._X = None
         cfg._y = None
-        cfg.fit()
+        cfg.sample()
         assert cfg.X_train is not None
         assert cfg.y_train is not None
         assert cfg.X_test is not None
@@ -856,7 +856,7 @@ class TestDataConfigAdditional:
         )
         cfg._X = None
         cfg._y = None
-        cfg.fit()
+        cfg.sample()
         assert cfg.X_train is not None
         assert cfg.y_train is not None
         assert cfg.X_test is not None

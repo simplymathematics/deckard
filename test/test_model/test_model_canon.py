@@ -2,9 +2,12 @@ from types import SimpleNamespace
 
 import pytest
 
+from deckard.artifacts import ScoreDict
 from deckard.model.canon import (
+    CANONICAL_MODEL_METHODS,
     CANONICAL_MODEL_RUNTIME_FIELDS,
     CANONICAL_MODEL_SCORE_MODES,
+    CANONICAL_MODEL_SCORE_STAGES,
     CANONICAL_MODEL_TIMES,
     defense_stage_priority,
     ensure_canonical_model_times,
@@ -13,6 +16,7 @@ from deckard.model.canon import (
     normalize_model_trainer_alias,
     resolve_model_defense_stage,
 )
+from deckard.model.base import ModelConfig
 
 
 def test_model_canon_times_contains_required_keys():
@@ -55,13 +59,18 @@ def test_model_canon_score_mode_rejects_unknown_value():
 
 def test_model_canon_runtime_contract_populates_missing_fields():
     runtime = ensure_model_runtime_contract(SimpleNamespace(score_dict=None))
-    assert isinstance(runtime.score_dict, dict)
+    assert isinstance(runtime.score_dict, ScoreDict)
     for field in CANONICAL_MODEL_RUNTIME_FIELDS:
         assert hasattr(runtime, field)
 
 
 def test_model_canon_declares_split_scoped_score_modes_only():
     assert set(CANONICAL_MODEL_SCORE_MODES) == {"train", "test", "val"}
+
+
+def test_model_canon_declares_defense_stage_score_tokens():
+    assert "pre-defense" in CANONICAL_MODEL_SCORE_STAGES
+    assert "post-defense" in CANONICAL_MODEL_SCORE_STAGES
 
 
 @pytest.mark.parametrize(
@@ -102,3 +111,20 @@ def test_model_canon_defense_stage_priority_order():
     assert defense_stage_priority("pre_fit") < defense_stage_priority(
         "post_fit_pre_predict",
     )
+
+
+def test_model_config_exposes_canonical_public_methods():
+    for method_name in CANONICAL_MODEL_METHODS:
+        method = getattr(ModelConfig, method_name, None)
+        assert callable(method), f"ModelConfig missing canonical method: {method_name}"
+
+
+def test_model_config_does_not_expose_legacy_shim_aliases():
+    legacy_aliases = (
+        "_train",
+        "_predict",
+        "_apply_defense",
+        "persist_runtime_artifacts",
+    )
+    for method_name in legacy_aliases:
+        assert not hasattr(ModelConfig, method_name)

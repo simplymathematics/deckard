@@ -6,8 +6,10 @@ import pytest
 from omegaconf import OmegaConf
 from sklearn.datasets import make_classification
 
+from deckard.artifacts import ScoreDict
 from deckard.detector import DetectorConfig
 from deckard.detector.canon import (
+    CANONICAL_DETECTOR_SCORE_STAGES,
     ensure_detector_runtime_contract,
     normalize_detector_runtime_split_mode,
     normalize_detector_score_mode,
@@ -268,10 +270,43 @@ def test_detector_model_coercion_from_yaml_string(monkeypatch):
 
 def test_detector_canon_stage_and_score_aliases() -> None:
     assert normalize_detector_stage("before_fit") == "pre-fit"
-    assert normalize_detector_stage(None) == "post-detect"
+    assert normalize_detector_stage(None) == "post-filter"
     assert normalize_detector_score_stage("pre_sample") == "pre-sample"
+    assert normalize_detector_score_stage("before_detect") == "pre-filter"
+    assert normalize_detector_score_stage("after_detect") == "post-filter"
     assert normalize_detector_score_stage("auto") == "auto"
     assert normalize_detector_score_mode("evaluation") == "test"
+
+
+def test_detector_canon_declares_runtime_stage_score_tokens() -> None:
+    assert "pre-fit" in CANONICAL_DETECTOR_SCORE_STAGES
+    assert "post-fit" in CANONICAL_DETECTOR_SCORE_STAGES
+    assert "pre-filter" in CANONICAL_DETECTOR_SCORE_STAGES
+    assert "post-filter" in CANONICAL_DETECTOR_SCORE_STAGES
+
+
+def test_detector_stage_scoring_records_namespaced_scores() -> None:
+    cfg = DetectorConfig(
+        detector_model={
+            "name": "sklearn.linear_model.LogisticRegression",
+            "classifier": True,
+            "model_params": {"max_iter": 10},
+        },
+    )
+    cfg.stage_scoring_enabled = True
+    cfg._run_stage_scoring_pass(
+        data=SimpleNamespace(),
+        stage="post-filter",
+        component="detector.test",
+        mode="test",
+        y_true=np.array([0, 1, 0, 1]),
+        y_pred=np.array([0, 1, 1, 1]),
+    )
+
+    assert "stages" in cfg.score_dict
+    assert "post-filter" in cfg.score_dict["stages"]
+    assert "test" in cfg.score_dict["stages"]["post-filter"]
+    assert "detector_accuracy" in cfg.score_dict["stages"]["post-filter"]["test"]
 
 
 def test_detector_canon_invalid_score_tokens_raise() -> None:
@@ -298,6 +333,7 @@ def test_ensure_detector_runtime_contract_initializes_missing_attrs() -> None:
 
     ensure_detector_runtime_contract(runtime)
 
+    assert isinstance(runtime.score_dict, ScoreDict)
     assert runtime.score_dict == {}
     assert runtime.detector is None
     assert runtime.detector_training_time is None
@@ -386,8 +422,8 @@ def test_detector_constructor_fallback_and_detect_poison_indices(monkeypatch):
 def test_detector_stage_normalization_tokens():
     assert normalize_detector_stage("before_fit") == "pre-fit"
     assert normalize_detector_stage("after_fit") == "post-fit"
-    assert normalize_detector_stage("before_detect") == "pre-detect"
-    assert normalize_detector_stage("after_detect") == "post-detect"
+    assert normalize_detector_stage("before_detect") == "pre-filter"
+    assert normalize_detector_stage("after_detect") == "post-filter"
 
 
 def test_detector_persists_files_and_score_state(tmp_path):
@@ -418,7 +454,7 @@ def test_detector_persists_files_and_score_state(tmp_path):
         )
 
     assert "detector_stage" in scores
-    assert scores["detector_stage"] == "post-detect"
+    assert scores["detector_stage"] == "post-filter"
     assert scores["detector_execution_order"] == "post-attack"
     assert detector_file.exists()
     assert detected_predictions_file.exists()

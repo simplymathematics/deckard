@@ -483,7 +483,7 @@ class TestKFoldSampler:
                     },
                 )
                 cfg.load_dataset()
-                cfg.fit()
+                cfg.sample()
                 assert len(cfg.X_train) == 800
                 assert len(cfg.X_test) == 200
                 assert len(cfg.X_val) == 200
@@ -514,7 +514,7 @@ class TestKFoldSampler:
         )
         cfg.load_dataset()
         with pytest.raises(ValueError):
-            cfg.fit()
+            cfg.sample()
 
 
 # ---------------------------------------------------------------------------
@@ -736,7 +736,7 @@ class TestOmegaConfSampleSpec:
             },
         )
         cfg.load_dataset()
-        cfg.fit()
+        cfg.sample()
         assert cfg.X_val is not None
         assert len(cfg.X_val) > 0
 

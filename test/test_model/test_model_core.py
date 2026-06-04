@@ -40,6 +40,14 @@ class TestModelConfig:
         assert hasattr(self.model._model, "fit")
         assert hasattr(self.model._model, "predict")
 
+    def test_model_config_uses_model_canon_stage_normalization(self):
+        assert self.model._normalize_score_stage("preload") == "pre-load"
+        assert self.model._normalize_score_stage("auto") == "auto"
+
+    def test_model_config_rejects_non_hook_stage_tokens_for_hook_dispatch(self):
+        with pytest.raises(ValueError, match=r"Unknown model score stage"):
+            self.model._normalize_score_stage("auto", allow_all_auto=False)
+
     def test_model_config_canonical_name_syncs_model_type(self):
         cfg = ModelConfig(
             name="sklearn.linear_model.LogisticRegression",
@@ -209,6 +217,55 @@ class TestModelConfig:
             test_probabilities_file=test_prob_file,
         )
         assert os.path.exists(test_prob_file)
+
+    def test_persist_outputs_persists_available_runtime_artifacts(self):
+        model = ModelConfig(
+            name=self.name,
+            classifier=True,
+            model_params={"n_estimators": 10},
+        )
+        model.training_predictions = [0, 1]
+        model.predictions = [1, 0]
+        model.training_probabilities = [[0.9, 0.1], [0.2, 0.8]]
+        model.probabilities = [[0.7, 0.3], [0.4, 0.6]]
+        model.score_dict = {"accuracy": 1.0}
+
+        saved_paths = []
+        model.save_data = lambda _payload, path: saved_paths.append(path)
+        model.merge_and_persist_scores = lambda scores, _score_file: scores
+
+        train_pred_file = os.path.join(self.tmpdir, "train_predictions.pkl")
+        test_pred_file = os.path.join(self.tmpdir, "test_predictions.pkl")
+        train_prob_file = os.path.join(self.tmpdir, "train_probabilities.pkl")
+        test_prob_file = os.path.join(self.tmpdir, "test_probabilities.pkl")
+        score_file = os.path.join(self.tmpdir, "scores.json")
+
+        model.persist_outputs(
+            test_predictions_file=test_pred_file,
+            train_predictions_file=train_pred_file,
+            training_probabilities_file=train_prob_file,
+            test_probabilities_file=test_prob_file,
+            score_file=score_file,
+        )
+
+        assert set(saved_paths) == {
+            train_pred_file,
+            test_pred_file,
+            train_prob_file,
+            test_prob_file,
+        }
+
+    def test_model_config_hard_cut_removes_legacy_shim_methods(self):
+        model = ModelConfig(
+            name=self.name,
+            classifier=True,
+            model_params={"n_estimators": 10},
+        )
+        assert hasattr(model, "persist_outputs")
+        assert not hasattr(model, "persist_runtime_artifacts")
+        assert not hasattr(model, "_train")
+        assert not hasattr(model, "_predict")
+        assert not hasattr(model, "_apply_defense")
 
     def test_call_saves_train_probabilities_when_file_requested(self):
         data = DataConfig(
@@ -1090,6 +1147,75 @@ class TestModelEvaluateAndScoreBranches:
 
         assert model.score_dict["defense_metric"] == 1.0
         assert model.score_dict["defense_application_time"] == 0.25
+
+    def test_apply_defense_records_pre_post_stage_scores(self):
+        model = self._model()
+        data = _make_data()
+        model._model = SimpleNamespace(
+            predict=lambda X: np.zeros(len(X), dtype=int),
+            predict_proba=lambda X: np.column_stack(
+                [np.ones(len(X)) * 0.4, np.ones(len(X)) * 0.6],
+            ),
+        )
+        model.defense = object()
+        model.stage_scoring_enabled = True
+        model.stage_score_filters = {"include": ["accuracy"]}
+        model.scorer = lambda y_true, y_pred, mode="test", **kwargs: {
+            "accuracy": 0.75,
+            "debug_metric": 1.0,
+        }
+
+        defense_pipeline = SimpleNamespace(
+            resolve_stage=lambda **_kwargs: "post_fit_pre_predict",
+            apply=lambda estimator, data, stage: estimator,
+            apply_defense=lambda estimator, data, stage: estimator,
+            defense_application_time=0.1,
+            score_dict={},
+        )
+        model._require_defense_pipeline = lambda: defense_pipeline
+
+        out = model.apply_defense(data=data, stage="post_fit_pre_predict")
+
+        assert out is model._model
+        assert "stages" in model.score_dict
+        assert "pre-defense" in model.score_dict["stages"]
+        assert "post-defense" in model.score_dict["stages"]
+        assert "accuracy" in model.score_dict["stages"]["pre-defense"]["test"]
+        assert "accuracy" in model.score_dict["stages"]["post-defense"]["test"]
+        assert "debug_metric" not in model.score_dict["stages"]["pre-defense"]["test"]
+        assert "debug_metric" not in model.score_dict["stages"]["post-defense"]["test"]
+
+    def test_apply_defense_stage_scoring_respects_exclude_filters(self):
+        model = self._model()
+        data = _make_data()
+        model._model = SimpleNamespace(
+            predict=lambda X: np.zeros(len(X), dtype=int),
+            predict_proba=lambda X: np.column_stack(
+                [np.ones(len(X)) * 0.5, np.ones(len(X)) * 0.5],
+            ),
+        )
+        model.defense = object()
+        model.stage_scoring_enabled = True
+        model.stage_score_filters = {"exclude": ["accuracy"]}
+        model.scorer = lambda y_true, y_pred, mode="test", **kwargs: {
+            "accuracy": 0.8,
+            "f1": 0.7,
+        }
+
+        defense_pipeline = SimpleNamespace(
+            resolve_stage=lambda **_kwargs: "post_fit_pre_predict",
+            apply=lambda estimator, data, stage: estimator,
+            apply_defense=lambda estimator, data, stage: estimator,
+            defense_application_time=0.2,
+            score_dict={},
+        )
+        model._require_defense_pipeline = lambda: defense_pipeline
+
+        model.apply_defense(data=data, stage="post_fit_pre_predict")
+
+        stage_scores = model.score_dict["stages"]["pre-defense"]["test"]
+        assert "accuracy" not in stage_scores
+        assert "f1" in stage_scores
 
     def test_evaluate_probability_persistence_valueerror_sets_none(self):
         model = self._model()

@@ -325,7 +325,7 @@ def test_load_init_sample_and_score_paths(monkeypatch):
     assert cfg.load_dataset() is cfg
     assert calls == ["load"]
 
-    def _fit_with_sensitive(self, run_hooks: bool = True):
+    def _sample_with_sensitive(self, run_hooks: bool = True):
         _ = run_hooks
         self._X = pd.DataFrame({"group": ["a", "b", "b"], "x": [1, 2, 3]})
         self.train_indices = [0, 1]
@@ -335,16 +335,16 @@ def test_load_init_sample_and_score_paths(monkeypatch):
         self.y_train = pd.Series([0, 1])
         self.y_test = pd.Series([1])
 
-    monkeypatch.setattr(DataConfig, "fit", _fit_with_sensitive)
+    monkeypatch.setattr(DataConfig, "sample", _sample_with_sensitive)
     cfg.sensitive_columns = ["group"]
-    cfg.fit()
+    cfg.sample()
     assert cfg._sensitive_train.tolist() == ["a", "b"]
     assert cfg._sensitive_test.tolist() == ["b"]
     assert cfg._sensitive_all.tolist() == ["a", "b", "b"]
 
     cfg_none = _bare_cfg()
-    monkeypatch.setattr(DataConfig, "fit", lambda self, run_hooks=True: None)
-    cfg_none.fit()
+    monkeypatch.setattr(DataConfig, "sample", lambda self, run_hooks=True: None)
+    cfg_none.sample()
 
     cfg_score = _bare_cfg()
     cfg_score.scorer = None

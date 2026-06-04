@@ -7,10 +7,10 @@ import pytest
 from deckard.plugins import HookPlugin
 from deckard.plugins.base import (
     HookBundle,
-    OrchestratorBase,
     RuntimeBase,
     compose_hook_plugins,
 )
+from deckard.orchestration import ScoreOrchestratorMixin
 
 
 def test_compose_hook_plugins_flattens_and_deduplicates() -> None:
@@ -85,7 +85,7 @@ class _ScorerCfg:
 
 
 @dataclass(eq=False, kw_only=True)
-class _OrchestratorHarness(OrchestratorBase):
+class _OrchestratorHarness(ScoreOrchestratorMixin):
     score_mode: str = "test"
     scorer: object = None
     score_dict: dict | None = None
@@ -106,7 +106,7 @@ class _OrchestratorHarness(OrchestratorBase):
 
 
 @dataclass(eq=False, kw_only=True)
-class _PlainOrchestratorHarness(OrchestratorBase):
+class _PlainOrchestratorHarness(ScoreOrchestratorMixin):
     scorer: object = None
     score_dict: dict | None = None
     plugins: list = field(default_factory=list)
@@ -305,3 +305,52 @@ def test_run_score_stage_hooks_calls_stage_specific_and_generic_hooks() -> None:
 
     assert runtime.calls[0][0] == "before_score_post_pipeline"
     assert runtime.calls[1][0] == "before_score"
+
+
+def test_run_generic_stage_hooks_uses_composed_plugins_and_component_aliases() -> None:
+    class _ComposedPlugin:
+        def after_train(self, runtime, **kwargs):
+            _ = runtime
+            return {"hook": "after_train", "kwargs": kwargs}
+
+        def after_model_train(self, runtime, **kwargs):
+            _ = runtime
+            return {"hook": "after_model_train", "kwargs": kwargs}
+
+    runtime = _OrchestratorHarness()
+    runtime._composed_hook_plugins = [_ComposedPlugin()]
+
+    outputs = runtime._run_generic_stage_hooks(
+        "after",
+        "train",
+        component="model",
+    )
+
+    hook_names = [output["hook"] for output in outputs if isinstance(output, dict)]
+    assert hook_names == ["after_train", "after_model_train"]
+
+
+def test_run_generic_stage_hooks_emits_between_component_boundary_hooks() -> None:
+    class _ComposedPlugin:
+        def after_between_data_defense(self, runtime, **kwargs):
+            _ = runtime
+            return {"hook": "after_between_data_defense", "kwargs": kwargs}
+
+        def after_after_data_before_defense(self, runtime, **kwargs):
+            _ = runtime
+            return {"hook": "after_after_data_before_defense", "kwargs": kwargs}
+
+    runtime = _OrchestratorHarness()
+    runtime._composed_hook_plugins = [_ComposedPlugin()]
+
+    outputs = runtime._run_generic_stage_hooks(
+        "after",
+        "train",
+        component="model",
+        previous_component="data",
+        next_component="defense",
+    )
+
+    hook_names = [output["hook"] for output in outputs if isinstance(output, dict)]
+    assert "after_between_data_defense" in hook_names
+    assert "after_after_data_before_defense" in hook_names
