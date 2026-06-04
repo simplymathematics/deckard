@@ -1093,6 +1093,50 @@ class BaseConfig(ArtifactLoaderMixin):
         self._finalize_parent_component_values(instance, overrides=overrides)
         return instance
 
+    def coerce_optional_component(
+        self,
+        component: ComponentInput,
+        expected_type: type,
+        *,
+        default_factory: Callable[[], Any] | None = None,
+        default_target: Optional[str] = None,
+        overrides: Optional[dict[str, RuntimeSerializable]] = None,
+        allow_passthrough: Callable[[ComponentInput], bool] | None = None,
+        include_best_default: bool = True,
+    ) -> Any:
+        """Coerce optional runtime component specs to a concrete config/runtime object.
+
+        This helper centralizes null/default token handling and target-spec
+        normalization for optional component fields.
+        """
+        if is_null_config_value(component):
+            return None
+        if is_default_config_value(component, include_best=include_best_default):
+            if default_factory is None:
+                return None
+            component = default_factory()
+        if component is None:
+            return None
+
+        normalized = component
+        if isinstance(component, DictConfig):
+            normalized = OmegaConf.to_container(component, resolve=True)
+        if isinstance(normalized, str):
+            normalized = {"_target_": normalized}
+        elif isinstance(normalized, dict):
+            spec = dict(normalized)
+            if "_target_" not in spec and "name" in spec:
+                spec["_target_"] = spec.pop("name")
+            normalized = spec
+
+        return self.coerce_component(
+            normalized,
+            expected_type,
+            default_target=default_target,
+            overrides=overrides,
+            allow_passthrough=allow_passthrough,
+        )
+
     def __call__(self, *args, **kwargs) -> ScoreDict:
         """Execute runtime behavior and return normalized score payload.
 

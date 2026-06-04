@@ -11,7 +11,7 @@ from dataclasses import dataclass, field
 from typing import Any, ClassVar, Final, Mapping
 
 from .artifacts import ScoreDict
-from .plugins.base import OrchestratorBase, RuntimeBase
+from .plugins import RuntimeBase
 
 CANONICAL_RUNTIME_METHODS: Final[tuple[str, ...]] = (
     "load",
@@ -73,6 +73,13 @@ EVENT_ALIASES: Final[dict[str, str]] = {
     "after": "after",
 }
 
+SCORE_STAGE_TO_HOOK: Final[dict[str, str]] = {
+    "pre-load": "before_load_data",
+    "pre-sample": "before_sample",
+    "post-sample": "after_sample",
+    "post-pipeline": "after_pipeline",
+}
+
 RUNTIME_SPLIT_ALIASES: Final[dict[str, str]] = {
     "train": "train",
     "test": "test",
@@ -99,15 +106,106 @@ _SPLIT_SENSITIVE_ATTRS: Final[dict[str, str]] = {
     "all": "_sensitive_all",
 }
 
+VALIDATION_SPLIT_RESET_FIELDS: Final[tuple[str, ...]] = (
+    "train_indices",
+    "test_indices",
+    "val_indices",
+    "X_train",
+    "y_train",
+    "X_test",
+    "y_test",
+    "X_val",
+    "y_val",
+    "train_n",
+    "test_n",
+    "val_n",
+)
+
+
+def normalize_score_stage(
+    stage: str | None,
+    *,
+    default: str = DEFAULT_SCORE_STAGE,
+    aliases: Mapping[str, str] | None = None,
+    allow_all_auto: bool = True,
+) -> str:
+    """Normalize score stage aliases to canonical stage tokens."""
+    token = str(stage or default).strip().lower().replace("_", "-").replace(" ", "-")
+    if allow_all_auto and token in {"all", "auto"}:
+        return token
+
+    alias_map = dict(STAGE_ALIASES)
+    if aliases:
+        alias_map.update(
+            {
+                str(key)
+                .strip()
+                .lower()
+                .replace("_", "-"): str(value)
+                .strip()
+                .lower()
+                .replace("_", "-")
+                for key, value in aliases.items()
+            },
+        )
+
+    resolved = alias_map.get(token)
+    if resolved is None:
+        raise ValueError(
+            f"Unknown score hook stage '{stage}'. Must be one of {list(CANONICAL_SCORE_STAGES)}",
+        )
+    return resolved
+
+
+def expand_score_stages(
+    raw_stages: list[str],
+    *,
+    default_stage: str = DEFAULT_SCORE_STAGE,
+    stage_order: tuple[str, ...] = tuple(
+        stage for stage in CANONICAL_SCORE_STAGES if stage not in {"all", "auto"}
+    ),
+    stage_aliases: Mapping[str, str] | None = None,
+) -> list[str]:
+    """Expand configured score stages, resolving aliases and all/auto tokens."""
+    ordered = list(stage_order)
+    expanded: list[str] = []
+    aliases = dict(stage_aliases or STAGE_ALIASES)
+
+    for token in raw_stages:
+        try:
+            normalized = normalize_score_stage(
+                token,
+                default=default_stage,
+                aliases=aliases,
+                allow_all_auto=True,
+            )
+        except ValueError as exc:
+            raise ValueError(
+                f"Unsupported score stage '{token}'. Expected one of {ordered + ['all', 'auto']}",
+            ) from exc
+        if normalized in {"", "auto"}:
+            expanded.append(default_stage)
+            continue
+        if normalized == "all":
+            expanded.extend(ordered)
+            continue
+        if normalized in ordered:
+            expanded.append(normalized)
+            continue
+        raise ValueError(
+            f"Unsupported score stage '{token}'. Expected one of {ordered + ['all', 'auto']}",
+        )
+
+    deduped: list[str] = []
+    for stage in ordered:
+        if stage in expanded and stage not in deduped:
+            deduped.append(stage)
+    return deduped or [default_stage]
+
 
 def stage_hook_token(stage: str) -> str:
     """Convert canonical score stage names into hook-safe tokens."""
-    key = str(stage).strip().lower().replace(" ", "-")
-    if key in STAGE_ALIASES:
-        return STAGE_ALIASES[key].replace("-", "_")
-    raise ValueError(
-        f"Unknown score hook stage '{stage}'. Must be one of {list(CANONICAL_SCORE_STAGES)}",
-    )
+    return normalize_score_stage(stage, allow_all_auto=False).replace("-", "_")
 
 
 def normalize_score_mode(mode: str) -> str:
@@ -149,7 +247,6 @@ def resolve_data_split_payload(
     mode: str | None,
     *,
     aliases: Mapping[str, str] | None = None,
-    fallback_to_all: bool = False,
 ) -> tuple[Any, Any]:
     """Resolve ``(y, X)`` payload for a runtime split mode from a data object."""
     if data is None:
@@ -158,11 +255,6 @@ def resolve_data_split_payload(
     y_attr, x_attr = _SPLIT_DATA_ATTRS[resolved_mode]
     y = getattr(data, y_attr, None)
     X = getattr(data, x_attr, None)
-    if fallback_to_all and resolved_mode != "all":
-        if y is None:
-            y = getattr(data, "_y", None)
-        if X is None:
-            X = getattr(data, "_X", None)
     return y, X
 
 
@@ -171,7 +263,6 @@ def resolve_sensitive_split_payload(
     mode: str | None,
     *,
     aliases: Mapping[str, str] | None = None,
-    fallback_to_all: bool = False,
 ) -> Any:
     """Resolve sensitive-feature payload for a runtime split mode."""
     if data is None:
@@ -182,81 +273,164 @@ def resolve_sensitive_split_payload(
     if sensitive is None:
         legacy_attr = sensitive_attr.removeprefix("_")
         sensitive = getattr(data, legacy_attr, None)
-    if sensitive is None and fallback_to_all and resolved_mode != "all":
-        all_attr = _SPLIT_SENSITIVE_ATTRS["all"]
-        sensitive = getattr(data, all_attr, None)
-        if sensitive is None:
-            sensitive = getattr(data, all_attr.removeprefix("_"), None)
     return sensitive
 
 
+def resolve_attack_split_payload(
+    data: Any,
+    requested_mode: str | None,
+    *,
+    error_message: str,
+    on_fallback: Any = None,
+) -> tuple[str, Any, Any]:
+    """Resolve attack split payload preferring requested train/val mode, else test."""
+    mode_token = normalize_runtime_split_mode(requested_mode, default="test")
+    if mode_token in {"train", "val"}:
+        y_attr, x_attr = _SPLIT_DATA_ATTRS[mode_token]
+        y = getattr(data, y_attr, None)
+        X = getattr(data, x_attr, None)
+        if X is not None and y is not None:
+            return mode_token, X, y
+        if callable(on_fallback):
+            on_fallback(mode_token)
+
+    y_test = getattr(data, "y_test", None)
+    X_test = getattr(data, "X_test", None)
+    if X_test is None or y_test is None:
+        raise ValueError(error_message)
+    return "test", X_test, y_test
+
+
+def ensure_validation_split_available(
+    data: Any,
+    *,
+    allow_call_fallback: bool = False,
+    allow_test_fallback: bool = False,
+    error_message: str = "Validation split is not available.",
+) -> tuple[Any, Any]:
+    """Ensure ``(X_val, y_val)`` are available for validation-scoped runtime work."""
+    if data is None:
+        raise ValueError(error_message)
+
+    X_val = getattr(data, "X_val", None)
+    y_val = getattr(data, "y_val", None)
+    if X_val is not None and y_val is not None:
+        return X_val, y_val
+
+    can_resample = (
+        callable(getattr(data, "sample", None))
+        and getattr(data, "_X", None) is not None
+        and getattr(data, "_y", None) is not None
+    )
+    if can_resample:
+        data.data_sample_time = None
+        for attr in VALIDATION_SPLIT_RESET_FIELDS:
+            setattr(data, attr, None)
+        data.sample()
+        X_val = getattr(data, "X_val", None)
+        y_val = getattr(data, "y_val", None)
+
+    if (
+        (X_val is None or y_val is None)
+        and allow_call_fallback
+        and callable(
+            getattr(data, "__call__", None),
+        )
+    ):
+        data()
+        X_val = getattr(data, "X_val", None)
+        y_val = getattr(data, "y_val", None)
+
+    if (X_val is None or y_val is None) and allow_test_fallback:
+        X_test = getattr(data, "X_test", None)
+        y_test = getattr(data, "y_test", None)
+        if X_test is not None and y_test is not None:
+            data.X_val = X_test
+            data.y_val = y_test
+            data.val_n = len(y_test)
+            X_val = data.X_val
+            y_val = data.y_val
+
+    if X_val is None or y_val is None:
+        raise ValueError(error_message)
+    return X_val, y_val
+
+
+def normalize_keyword_filters(
+    filters: Mapping[str, Any] | None,
+) -> dict[str, tuple[str, ...]]:
+    """Normalize include/exclude keyword filter config into canonical tuples."""
+    payload = dict(filters or {})
+
+    def _coerce(value: Any) -> tuple[str, ...]:
+        if value in [None, "", []]:
+            return ()
+        if isinstance(value, str):
+            tokens = [value]
+        elif isinstance(value, (list, tuple, set)):
+            tokens = list(value)
+        else:
+            tokens = [value]
+        normalized: list[str] = []
+        for token in tokens:
+            text = str(token).strip().lower()
+            if text == "":
+                continue
+            normalized.append(text)
+        return tuple(normalized)
+
+    return {
+        "include": _coerce(payload.get("include")),
+        "exclude": _coerce(payload.get("exclude")),
+    }
+
+
+def filter_scores_by_keywords(
+    scores: Mapping[str, Any] | None,
+    *,
+    include_keywords: tuple[str, ...] = (),
+    exclude_keywords: tuple[str, ...] = (),
+    context_keywords: tuple[str, ...] = (),
+) -> dict[str, Any]:
+    """Filter score keys by include/exclude keyword rules and context tokens."""
+    if not isinstance(scores, Mapping):
+        return {}
+
+    include = tuple(str(token).strip().lower() for token in include_keywords if token)
+    exclude = tuple(str(token).strip().lower() for token in exclude_keywords if token)
+    context = tuple(str(token).strip().lower() for token in context_keywords if token)
+
+    filtered: dict[str, Any] = {}
+    for key, value in scores.items():
+        key_token = str(key).strip().lower()
+        haystack = " ".join((key_token, *context)).strip()
+
+        if len(include) > 0 and not any(token in haystack for token in include):
+            continue
+        if len(exclude) > 0 and any(token in haystack for token in exclude):
+            continue
+        filtered[str(key)] = value
+    return filtered
+
+
 @dataclass(eq=False, kw_only=True)
-class DataRuntimeStateMixin(RuntimeBase):
-    """Reusable runtime-state copy behavior for data-like components.
+class ScoreOrchestratorMixin(RuntimeBase):
+    """Unified runtime + score-stage orchestration mixin for runtimes."""
 
-    Attributes:
-        Runtime attributes are inherited or configured via class fields documented in this module.
-    """
-
-    def _copy_runtime_state_to(self, target: Any) -> None:
-        runtime_fields = [
-            "score_dict",
-            "times",
-            "files",
-            "data_load_time",
-            "data_sample_time",
-            "data_pipeline_time",
-            "data_score_time",
-            "_X",
-            "_y",
-            "train_indices",
-            "test_indices",
-            "val_indices",
-            "X_train",
-            "y_train",
-            "X_test",
-            "y_test",
-            "X_val",
-            "y_val",
-            "train_n",
-            "test_n",
-            "val_n",
-            "pipeline_fit_n",
-            "pipeline_transform_n",
-            "pipeline_fit_time",
-            "pipeline_transform_time",
-            "pipeline_y_fit_n",
-            "pipeline_y_fit_time",
-            "pipeline_y_transform_n",
-            "pipeline_y_transform_time",
-        ]
-        for attr in runtime_fields:
-            if hasattr(self, attr):
-                setattr(target, attr, getattr(self, attr, None))
-
-
-@dataclass(eq=False, kw_only=True)
-class ScoreOrchestratorMixin(OrchestratorBase, DataRuntimeStateMixin):
-    """Shared score-stage orchestration for data-like runtimes.
-
-    Attributes:
-        Runtime attributes are inherited or configured via class fields documented in this module.
-    """
-
-    default_stage: Final[str] = DEFAULT_SCORE_STAGE
-    stage_aliases: ClassVar[dict[str, str]] = STAGE_ALIASES
-    mode_aliases: ClassVar[dict[str, str]] = MODE_ALIASES
-    score_stage_aliases: ClassVar[dict[str, str]] = STAGE_ALIASES
+    default_stage: str = DEFAULT_SCORE_STAGE
+    stage_scoring_enabled: bool = False
+    stage_score_filters: dict[str, Any] = field(
+        default_factory=dict,
+        metadata={
+            "help": "Optional include/exclude keyword filters for stage-scoped scoring.",
+        },
+    )
+    score_stage_aliases: ClassVar[dict[str, str]] = dict(STAGE_ALIASES)
     score_stage_order: ClassVar[tuple[str, ...]] = tuple(
         stage for stage in CANONICAL_SCORE_STAGES if stage not in {"all", "auto"}
     )
-    score_event_aliases: ClassVar[dict[str, str]] = EVENT_ALIASES
-    score_stage_to_hook: ClassVar[dict[str, str]] = {
-        "pre-load": "before_load_data",
-        "pre-sample": "before_sample",
-        "post-sample": "after_sample",
-        "post-pipeline": "after_pipeline",
-    }
+    score_event_aliases: ClassVar[dict[str, str]] = dict(EVENT_ALIASES)
+    score_stage_to_hook: ClassVar[dict[str, str]] = dict(SCORE_STAGE_TO_HOOK)
     _score_orchestration_active: bool = field(
         default=True,
         init=False,
@@ -267,8 +441,231 @@ class ScoreOrchestratorMixin(OrchestratorBase, DataRuntimeStateMixin):
     def _normalize_score_mode(self, mode: str) -> str:
         return normalize_score_mode(mode)
 
+    def _normalize_stage_score_filters(self) -> None:
+        """Normalize keyword filter config for stage-scoped score recording."""
+        self.stage_score_filters = dict(
+            normalize_keyword_filters(getattr(self, "stage_score_filters", None)),
+        )
+
+    def _stage_score_context_keywords(
+        self,
+        *,
+        stage: str,
+        mode: str,
+        component: str | None = None,
+    ) -> tuple[str, ...]:
+        """Return canonical context tokens used by keyword-filtered stage scores."""
+        cls_name = type(self).__name__.strip().lower()
+        if cls_name.endswith("config"):
+            cls_name = cls_name[: -len("config")]
+        module_domain = str(type(self).__module__).split(".")
+        domain = module_domain[1] if len(module_domain) > 1 else cls_name
+        return tuple(
+            token
+            for token in (stage, mode, component, domain, cls_name)
+            if token not in [None, ""]
+        )
+
+    def _record_stage_scores(
+        self,
+        *,
+        stage: str,
+        mode: str,
+        scores: Mapping[str, Any] | None,
+        component: str | None = None,
+    ) -> dict[str, Any]:
+        """Persist filtered stage scores under score_dict['stages'][stage][mode]."""
+        normalized_stage = self._normalize_score_stage(stage, allow_all_auto=False)
+        normalized_mode = self._normalize_score_mode(mode)
+        self._normalize_stage_score_filters()
+
+        include_keywords = tuple(self.stage_score_filters.get("include", ()))
+        exclude_keywords = tuple(self.stage_score_filters.get("exclude", ()))
+        filtered_scores = filter_scores_by_keywords(
+            scores,
+            include_keywords=include_keywords,
+            exclude_keywords=exclude_keywords,
+            context_keywords=self._stage_score_context_keywords(
+                stage=normalized_stage,
+                mode=normalized_mode,
+                component=component,
+            ),
+        )
+        if len(filtered_scores) == 0:
+            return {}
+
+        if getattr(self, "score_dict", None) is None:
+            self.score_dict = ScoreDict()
+        else:
+            self.score_dict = ScoreDict.from_payload(self.score_dict)
+
+        stages_bucket = self.score_dict.setdefault("stages", {})
+        stage_bucket = stages_bucket.setdefault(normalized_stage, {})
+        mode_bucket = stage_bucket.setdefault(normalized_mode, {})
+        mode_bucket.update(filtered_scores)
+
+        if component not in [None, ""]:
+            components_bucket = stage_bucket.setdefault("components", {})
+            component_bucket = components_bucket.setdefault(str(component), {})
+            component_mode_bucket = component_bucket.setdefault(normalized_mode, {})
+            component_mode_bucket.update(filtered_scores)
+        return filtered_scores
+
+    def _build_stage_score_payload(
+        self,
+        data: Any,
+        *,
+        stage: str,
+        mode: str,
+        component: str | None = None,
+        **kwargs: Any,
+    ) -> Mapping[str, Any] | None:
+        """Build raw score payload for a stage-scoring pass.
+
+        Domain runtimes override this to compute scores from canonical split payloads.
+        """
+        return {}
+
+    def _run_stage_scoring_pass(
+        self,
+        data: Any,
+        *,
+        stage: str,
+        component: str | None = None,
+        mode: str | None = None,
+        **kwargs: Any,
+    ) -> dict[str, Any]:
+        """Compute and persist stage-scoped scores for the active runtime mode."""
+        if not getattr(self, "stage_scoring_enabled", False):
+            return {}
+        normalized_stage = self._normalize_score_stage(stage, allow_all_auto=False)
+        normalized_mode = self._normalize_score_mode(
+            mode or getattr(self, "score_mode", "test"),
+        )
+        payload = self._build_stage_score_payload(
+            data,
+            stage=normalized_stage,
+            mode=normalized_mode,
+            component=component,
+            **kwargs,
+        )
+        if not isinstance(payload, Mapping):
+            return {}
+        return self._record_stage_scores(
+            stage=normalized_stage,
+            mode=normalized_mode,
+            component=component,
+            scores=payload,
+        )
+
+    def _normalize_score_stage(
+        self,
+        stage: str | None,
+        *,
+        allow_all_auto: bool = True,
+    ) -> str:
+        """Normalize score stage names for this runtime orchestration context."""
+        return normalize_score_stage(
+            stage,
+            default=self.default_stage,
+            aliases=self.score_stage_aliases,
+            allow_all_auto=allow_all_auto,
+        )
+
+    @staticmethod
+    def _hook_token(value: str | None) -> str:
+        return str(value or "").strip().lower().replace("-", "_").replace(" ", "_")
+
+    def _normalize_hook_event(self, when: str) -> str:
+        event = str(when).strip().lower()
+        if event not in self.score_event_aliases:
+            raise ValueError(
+                f"Score hook event must be 'before' or 'after', got {when}",
+            )
+        return self.score_event_aliases[event]
+
+    def _build_generic_stage_hook_names(
+        self,
+        *,
+        event: str,
+        stage: str,
+        component: str | None = None,
+        previous_component: str | None = None,
+        next_component: str | None = None,
+    ) -> list[str]:
+        stage_token = self._hook_token(stage)
+        component_token = self._hook_token(component)
+        prev_token = self._hook_token(previous_component)
+        next_token = self._hook_token(next_component)
+
+        names: list[str] = [f"{event}_{stage_token}"]
+        if component_token:
+            names.extend(
+                [
+                    f"{event}_{component_token}_{stage_token}",
+                    f"{event}_{stage_token}_{component_token}",
+                ],
+            )
+        if prev_token and next_token:
+            names.extend(
+                [
+                    f"{event}_between_{prev_token}_{next_token}",
+                    f"{event}_after_{prev_token}_before_{next_token}",
+                    f"{event}_{prev_token}_before_{next_token}",
+                ],
+            )
+
+        deduped: list[str] = []
+        seen: set[str] = set()
+        for name in names:
+            if name in seen:
+                continue
+            seen.add(name)
+            deduped.append(name)
+        return deduped
+
+    def _run_generic_stage_hooks(
+        self,
+        when: str,
+        stage: str,
+        *,
+        component: str | None = None,
+        previous_component: str | None = None,
+        next_component: str | None = None,
+        **kwargs: Any,
+    ) -> list[Any]:
+        event = self._normalize_hook_event(when)
+        hook_names = self._build_generic_stage_hook_names(
+            event=event,
+            stage=stage,
+            component=component,
+            previous_component=previous_component,
+            next_component=next_component,
+        )
+        hook_kwargs = {
+            "event": event,
+            "stage": stage,
+            "component": component,
+            "previous_component": previous_component,
+            "next_component": next_component,
+            **kwargs,
+        }
+        plugin_objects = getattr(self, "_composed_hook_plugins", None)
+        if not isinstance(plugin_objects, list):
+            plugin_objects = self._get_plugins()
+        outputs: list[Any] = []
+        for hook_name in hook_names:
+            for plugin in plugin_objects:
+                hook = getattr(plugin, hook_name, None)
+                if callable(hook):
+                    outputs.append(hook(self, **hook_kwargs))
+        return outputs
+
     def _stage_hook_token(self, stage: str) -> str:
-        return stage_hook_token(stage)
+        return self._normalize_score_stage(
+            stage,
+            allow_all_auto=False,
+        ).replace("-", "_")
 
     def _iter_configured_score_stages(self) -> list[str]:
         scorer = getattr(self, "scorer", None)
@@ -285,36 +682,22 @@ class ScoreOrchestratorMixin(OrchestratorBase, DataRuntimeStateMixin):
             if isinstance(stage_value, str):
                 raw_stages.append(stage_value)
                 continue
-            raw_stages.extend([str(token) for token in stage_value])
+            if isinstance(stage_value, (list, tuple, set)):
+                raw_stages.extend([str(token) for token in stage_value])
+                continue
+            raw_stages.append(str(stage_value))
 
         if len(raw_stages) == 0:
             return [self.default_stage]
         return raw_stages
 
     def _expand_canonical_score_stages(self, raw_stages: list[str]) -> list[str]:
-        ordered = list(self.score_stage_order)
-        expanded: list[str] = []
-
-        for token in raw_stages:
-            normalized = str(token).strip().lower().replace("_", "-")
-            if normalized in {"", "auto"}:
-                expanded.append(self.default_stage)
-                continue
-            if normalized == "all":
-                expanded.extend(ordered)
-                continue
-            if normalized in ordered:
-                expanded.append(normalized)
-                continue
-            raise ValueError(
-                f"Unsupported score stage '{token}'. Expected one of {ordered + ['all', 'auto']}",
-            )
-
-        deduped: list[str] = []
-        for stage in ordered:
-            if stage in expanded and stage not in deduped:
-                deduped.append(stage)
-        return deduped or [self.default_stage]
+        return expand_score_stages(
+            raw_stages,
+            default_stage=self.default_stage,
+            stage_order=self.score_stage_order,
+            stage_aliases=self.score_stage_aliases,
+        )
 
     def _configure_score_orchestration_plugins(self) -> None:
         from .plugins import HookPlugin
@@ -341,7 +724,10 @@ class ScoreOrchestratorMixin(OrchestratorBase, DataRuntimeStateMixin):
         if not self._score_orchestration_active:
             return None
         try:
-            self._stage_hook_token(stage)
+            stage = self._normalize_score_stage(
+                stage,
+                allow_all_auto=False,
+            )
         except ValueError:
             return None
         mode = kwargs.pop("mode", None)
@@ -402,15 +788,13 @@ class ScoreOrchestratorMixin(OrchestratorBase, DataRuntimeStateMixin):
         stage: str,
         **kwargs: Any,
     ) -> list[Any]:
-        event = str(when).strip().lower()
-        if event not in self.score_event_aliases:
-            raise ValueError(
-                f"Score hook event must be 'before' or 'after', got {when}",
-            )
-        event = self.score_event_aliases[event]
-        stage_token = self._stage_hook_token(stage)
-        stage = stage_token.replace("_", "-")
-        stage_kwargs = {"stage": stage, **kwargs}
+        event = self._normalize_hook_event(when)
+        normalized_stage = self._normalize_score_stage(
+            stage,
+            allow_all_auto=False,
+        )
+        stage_token = normalized_stage.replace("-", "_")
+        stage_kwargs = {"stage": normalized_stage, **kwargs}
         outputs: list[Any] = []
         outputs.extend(
             self._run_plugin_hook(f"{event}_score_{stage_token}", **stage_kwargs),
@@ -428,12 +812,16 @@ __all__ = [
     "STAGE_ALIASES",
     "MODE_ALIASES",
     "EVENT_ALIASES",
+    "SCORE_STAGE_TO_HOOK",
     "RUNTIME_SPLIT_ALIASES",
     "stage_hook_token",
+    "normalize_score_stage",
+    "expand_score_stages",
     "normalize_score_mode",
     "normalize_runtime_split_mode",
     "resolve_data_split_payload",
     "resolve_sensitive_split_payload",
-    "DataRuntimeStateMixin",
+    "normalize_keyword_filters",
+    "filter_scores_by_keywords",
     "ScoreOrchestratorMixin",
 ]

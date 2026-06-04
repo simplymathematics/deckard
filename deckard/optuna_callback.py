@@ -88,29 +88,11 @@ def clean_column_names(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def load_optuna_studies_dataframe(
-    storage: Any = None,
-    study_name: str | None = None,
-    schema: Union[dict[str, Any], str, None] = None,
-    study_names: list[str] | None = None,
-    columns: list[str] | None = None,
-    include_columns: list[str] | None = None,
-    exclude_columns: list[str] | None = None,
-    trial_numbers: Iterable[int] | None = None,
-    trial_number_range: tuple[int, int] | list[int] | None = None,
-    trial_states: Iterable[str] | None = None,
-    row_slice: slice | tuple[int | None, int | None] | str | None = None,
-    sort_by: str | list[str] | None = None,
-    ascending: bool = True,
-    offset: int = 0,
-    limit: int | None = None,
-) -> pd.DataFrame:
-    """Query Optuna studies without SQL, across any Optuna-supported RDB storage.
-
-    Supports multi-study selection, trial-level filtering, column projection,
-    sort/slice, and pagination through Optuna's Python API only.
-    """
-    storage_uri = _normalize_optuna_storage(storage)
+def _resolve_selected_study_names(
+    storage_uri: Any,
+    study_name: str | None,
+    study_names: list[str] | None,
+) -> list[str]:
     selected_names: list[str] = []
     if study_name is not None and str(study_name).strip() != "":
         selected_names.append(str(study_name).strip())
@@ -134,19 +116,15 @@ def load_optuna_studies_dataframe(
         if name not in seen:
             unique_names.append(name)
             seen.add(name)
+    return unique_names
 
-    merged = pd.DataFrame()
-    for resolved_name in unique_names:
-        study = optuna.study.load_study(storage=storage_uri, study_name=resolved_name)
-        frame = study.trials_dataframe()
-        frame["study_name"] = resolved_name
-        if schema is not None:
-            meta_df = parse_study_name(study_name=resolved_name, schema=schema)
-            frame = frame.merge(meta_df, how="cross")
-        merged = pd.concat([merged, frame], ignore_index=True)
 
-    merged = clean_column_names(merged)
-
+def _apply_trial_filters(
+    merged: pd.DataFrame,
+    trial_numbers: Iterable[int] | None,
+    trial_number_range: tuple[int, int] | list[int] | None,
+    trial_states: Iterable[str] | None,
+) -> pd.DataFrame:
     if trial_numbers is not None and "number" in merged.columns:
         allowed = {int(number) for number in trial_numbers}
         merged = merged[merged["number"].isin(allowed)]
@@ -160,7 +138,17 @@ def load_optuna_studies_dataframe(
     if trial_states is not None and "state" in merged.columns:
         allowed_states = {str(state).strip().upper() for state in trial_states}
         merged = merged[merged["state"].astype(str).str.upper().isin(allowed_states)]
+    return merged
 
+
+def _apply_sort_slice_and_pagination(
+    merged: pd.DataFrame,
+    sort_by: str | list[str] | None,
+    ascending: bool,
+    row_slice: slice | tuple[int | None, int | None] | str | None,
+    offset: int,
+    limit: int | None,
+) -> pd.DataFrame:
     if sort_by is not None:
         sort_cols = [sort_by] if isinstance(sort_by, str) else list(sort_by)
         sort_cols = [col for col in sort_cols if col in merged.columns]
@@ -186,18 +174,81 @@ def load_optuna_studies_dataframe(
         merged = merged.iloc[offset : offset + limit]
     elif offset > 0:
         merged = merged.iloc[offset:]
+    return merged
 
+
+def _apply_column_selection(
+    merged: pd.DataFrame,
+    columns: list[str] | None,
+    include_columns: list[str] | None,
+    exclude_columns: list[str] | None,
+) -> pd.DataFrame:
     if columns is not None:
         keep_cols = [col for col in columns if col in merged.columns]
-        merged = merged[keep_cols]
-    else:
-        if include_columns is not None:
-            include_cols = [col for col in include_columns if col in merged.columns]
-            merged = merged[include_cols]
-        if exclude_columns is not None:
-            drop_cols = [col for col in exclude_columns if col in merged.columns]
-            if len(drop_cols) > 0:
-                merged = merged.drop(columns=drop_cols)
+        return merged[keep_cols]
+
+    if include_columns is not None:
+        include_cols = [col for col in include_columns if col in merged.columns]
+        merged = merged[include_cols]
+    if exclude_columns is not None:
+        drop_cols = [col for col in exclude_columns if col in merged.columns]
+        if len(drop_cols) > 0:
+            merged = merged.drop(columns=drop_cols)
+    return merged
+
+
+def load_optuna_studies_dataframe(
+    storage: Any = None,
+    study_name: str | None = None,
+    schema: Union[dict[str, Any], str, None] = None,
+    study_names: list[str] | None = None,
+    columns: list[str] | None = None,
+    include_columns: list[str] | None = None,
+    exclude_columns: list[str] | None = None,
+    trial_numbers: Iterable[int] | None = None,
+    trial_number_range: tuple[int, int] | list[int] | None = None,
+    trial_states: Iterable[str] | None = None,
+    row_slice: slice | tuple[int | None, int | None] | str | None = None,
+    sort_by: str | list[str] | None = None,
+    ascending: bool = True,
+    offset: int = 0,
+    limit: int | None = None,
+) -> pd.DataFrame:
+    """Query Optuna studies without SQL, across any Optuna-supported RDB storage.
+
+    Supports multi-study selection, trial-level filtering, column projection,
+    sort/slice, and pagination through Optuna's Python API only.
+    """
+    storage_uri = _normalize_optuna_storage(storage)
+    unique_names = _resolve_selected_study_names(storage_uri, study_name, study_names)
+
+    merged = pd.DataFrame()
+    for resolved_name in unique_names:
+        study = optuna.study.load_study(storage=storage_uri, study_name=resolved_name)
+        frame = study.trials_dataframe()
+        frame["study_name"] = resolved_name
+        if schema is not None:
+            meta_df = parse_study_name(study_name=resolved_name, schema=schema)
+            frame = frame.merge(meta_df, how="cross")
+        merged = pd.concat([merged, frame], ignore_index=True)
+
+    merged = clean_column_names(merged)
+
+    merged = _apply_trial_filters(
+        merged,
+        trial_numbers,
+        trial_number_range,
+        trial_states,
+    )
+    merged = _apply_sort_slice_and_pagination(
+        merged,
+        sort_by,
+        ascending,
+        row_slice,
+        offset,
+        limit,
+    )
+    merged = _apply_column_selection(merged, columns, include_columns, exclude_columns)
 
     return merged.reset_index(drop=True)
 
