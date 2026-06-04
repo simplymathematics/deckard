@@ -102,7 +102,6 @@ class AnjanaDataScoreHooksMixin:
             y, X = resolve_data_split_payload(
                 self,
                 resolved_mode,
-                fallback_to_all=False,
             )
             return ScoreDict.from_payload(
                 self.scorer(
@@ -135,7 +134,7 @@ class AnjanaDataScoreHooksMixin:
             return ScoreDict()
 
         resolved_mode = normalize_data_score_mode(getattr(self, "score_mode", "test"))
-        y, X = resolve_data_split_payload(self, resolved_mode, fallback_to_all=False)
+        y, X = resolve_data_split_payload(self, resolved_mode)
         tail_scores = self.scorer(
             y=y,
             X=X,

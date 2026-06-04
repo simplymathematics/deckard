@@ -339,17 +339,7 @@ class AnjanaDataConfig(
 
     score_mode: str = "test"
 
-    def fit(self, run_hooks: bool = True) -> "AnjanaDataConfig":
-        """Fit data splits and refresh split-aligned sensitive feature payloads.
-
-        Args:
-            run_hooks: Whether to execute configured runtime hooks during fit.
-
-        Returns:
-            The current configuration instance.
-        """
-        super().fit(run_hooks=run_hooks)
-
+    def _refresh_sensitive_splits(self) -> "AnjanaDataConfig":
         if self.fairness_defense not in [None, False]:
             for attr_name in (
                 "_sensitive_train",
@@ -409,6 +399,11 @@ class AnjanaDataConfig(
         else:
             self._sensitive_val = None
         return self
+
+    def sample(self, run_hooks: bool = True) -> "AnjanaDataConfig":
+        """Sample data and refresh split-sensitive payloads for scoring hooks."""
+        super().sample(run_hooks=run_hooks)
+        return self._refresh_sensitive_splits()
 
     def __post_init__(self):
         # Support test patterns that call __post_init__ directly on bare instances.

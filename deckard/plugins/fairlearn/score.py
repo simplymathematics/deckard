@@ -113,7 +113,7 @@ class FairlearnDataScoreHooksMixin:
         kwargs.pop("y_pred", None)
         kwargs.pop("dep", None)
         kwargs.pop("ind", None)
-        y, X = resolve_data_split_payload(self, mode, fallback_to_all=True)
+        y, X = resolve_data_split_payload(self, mode)
         fairness_scores = self.scorer(
             *args,
             y=y,
@@ -344,14 +344,12 @@ def _resolve_sensitive_features(
             data,
             lookup_mode,
             aliases=stage_to_split_mode,
-            fallback_to_all=False,
         )
     except ValueError:
         sensitive = resolve_sensitive_split_payload(
             data,
             mode,
             aliases=stage_to_split_mode,
-            fallback_to_all=False,
         )
 
     return validate_sensitive_features(
@@ -484,6 +482,129 @@ def _resolve_metric_scope(metric_name: str, scorer: Any | None) -> str:
 def _is_reduction_candidate(metric_name: str, scorer: Any | None) -> bool:
     scope = _resolve_metric_scope(metric_name, scorer)
     return scope != "group"
+
+
+def _update_metric_frame_overall(
+    results: dict[str, SerializableValue],
+    self_cfg: Any,
+    metric_frame: Any,
+) -> None:
+    if not self_cfg.include_group_overall:
+        return
+    overall = metric_frame.overall
+    if isinstance(overall, pd.Series):
+        for metric_name, value in overall.items():
+            results[f"{metric_name}_overall"] = float(value)
+        return
+    overall_series = series_like_to_float_dict(cast(Any, overall))
+    if len(overall_series) == 1 and "value" in overall_series:
+        overall_value = overall_series["value"]
+        for metric_name in self_cfg.group_scorers.keys():
+            results[f"{metric_name}_overall"] = overall_value
+        return
+    for metric_name, value in overall_series.items():
+        results[f"{metric_name}_overall"] = value
+
+
+def _merge_metric_frame_by_group(
+    results: dict[str, SerializableValue],
+    metric_frame: Any,
+    *,
+    strict_values: bool,
+) -> None:
+    logger.debug(f" metric_frame.by_group type: {type(metric_frame.by_group)}")
+    logger.debug(
+        f" metric_frame.by_group content: {repr(metric_frame.by_group)}",
+    )
+    if not isinstance(metric_frame.by_group, pd.DataFrame):
+        logger.critical(
+            f" metric_frame.by_group is NOT a DataFrame! Type: {type(metric_frame.by_group)}. Value: {repr(metric_frame.by_group)}",
+        )
+        traceback.print_stack()
+        raise TypeError(
+            f"Expected metric_frame.by_group to be a DataFrame, got {type(metric_frame.by_group)}. Full content: {repr(metric_frame.by_group)}",
+        )
+    flat_group_metrics = _flatten_metric_frame_by_group(metric_frame.by_group)
+    logger.debug(f" flat_group_metrics type: {type(flat_group_metrics)}")
+    logger.debug(
+        f" flat_group_metrics content: {repr(flat_group_metrics)}",
+    )
+    if strict_values:
+        _validate_flat_group_metrics(flat_group_metrics)
+    results.update(flat_group_metrics)
+
+
+def _validate_flat_group_metrics(flat_group_metrics: dict[str, Any]) -> None:
+    for key, value in flat_group_metrics.items():
+        if isinstance(value, (dict, list)):
+            logger.critical(
+                f" Group metric '{key}' is NOT a flat value: {value}",
+            )
+            traceback.print_stack()
+            raise ValueError(
+                f"Group metric '{key}' is NOT a flat value: {value}. Full key: {key}, value: {repr(value)}",
+            )
+        if isinstance(value, str) and (value.startswith("{") or value.startswith("[")):
+            logger.critical(
+                f" Group metric '{key}' is a STRINGIFIED dict/list: {value}",
+            )
+            traceback.print_stack()
+            raise ValueError(
+                f"Group metric '{key}' is a STRINGIFIED dict/list: {value}. Full key: {key}, value: {repr(value)}",
+            )
+        try:
+            float(value)
+        except Exception as exc:
+            logger.critical(
+                f" Group metric '{key}' value CANNOT be cast to float: {value} ({exc})",
+            )
+            traceback.print_exc()
+            raise
+        if isinstance(key, int):
+            raise ValueError(
+                f"Group metric key '{key}' is an integer, not human-readable.",
+            )
+
+
+def _apply_metric_frame_reduction(
+    results: dict[str, SerializableValue],
+    self_cfg: Any,
+    metric_frame: Any,
+) -> None:
+    if self_cfg.group_reduction == "difference":
+        reduced = metric_frame.difference(method=self_cfg.group_reduction_method)
+        suffix = "difference"
+    elif self_cfg.group_reduction == "ratio":
+        reduced = metric_frame.ratio(method=self_cfg.group_reduction_method)
+        suffix = "ratio"
+    elif self_cfg.group_reduction == "none":
+        return
+    else:
+        raise ValueError(
+            "group_reduction must be one of {'difference', 'ratio', 'none'}",
+        )
+
+    for metric_name, value in series_like_to_float_dict(reduced).items():
+        scorer = cast(dict[str, Any], self_cfg.group_scorers).get(metric_name)
+        if _is_reduction_candidate(metric_name, scorer):
+            results[f"{metric_name}_{suffix}"] = value
+
+
+def _merge_metric_frame_results(
+    results: dict[str, SerializableValue],
+    self_cfg: Any,
+    metric_frame: Any,
+    *,
+    strict_group_values: bool,
+) -> None:
+    _update_metric_frame_overall(results, self_cfg, metric_frame)
+    if self_cfg.include_group_by_group:
+        _merge_metric_frame_by_group(
+            results,
+            metric_frame,
+            strict_values=strict_group_values,
+        )
+    _apply_metric_frame_reduction(results, self_cfg, metric_frame)
 
 
 class FairnessScorerMixin:
@@ -850,73 +971,19 @@ class FairnessScorerMixin:
             random_state=random_state,
         )
 
-        if self_cfg.include_group_overall:
-            overall = metric_frame.overall
-            if isinstance(overall, pd.Series):
-                for metric_name, value in overall.items():
-                    results[f"{metric_name}_overall"] = float(value)
-            else:
-                overall_series = series_like_to_float_dict(cast(Any, overall))
-                if len(overall_series) == 1 and "value" in overall_series:
-                    overall_value = overall_series["value"]
-                    for metric_name in self_cfg.group_scorers.keys():
-                        results[f"{metric_name}_overall"] = overall_value
-                else:
-                    for metric_name, value in overall_series.items():
-                        results[f"{metric_name}_overall"] = value
-
-        import traceback
-
-        if self_cfg.include_group_by_group:
-            logger.debug(f" metric_frame.by_group type: {type(metric_frame.by_group)}")
-            logger.debug(
-                f" metric_frame.by_group content: {repr(metric_frame.by_group)}",
+        try:
+            _merge_metric_frame_results(
+                results,
+                self_cfg,
+                metric_frame,
+                strict_group_values=False,
             )
-
-            if not isinstance(metric_frame.by_group, pd.DataFrame):
-                logger.critical(
-                    f" metric_frame.by_group is NOT a DataFrame! Type: {type(metric_frame.by_group)}. Value: {repr(metric_frame.by_group)}",
-                )
-                traceback.print_stack()
-                raise TypeError(
-                    f"Expected metric_frame.by_group to be a DataFrame, got {type(metric_frame.by_group)}. Full content: {repr(metric_frame.by_group)}",
-                )
-            try:
-                flat_group_metrics = _flatten_metric_frame_by_group(
-                    metric_frame.by_group,
-                )
-                logger.debug(f" flat_group_metrics type: {type(flat_group_metrics)}")
-                logger.debug(
-                    f" flat_group_metrics content: {repr(flat_group_metrics)}",
-                )
-                # Output validation removed: allow dict/list outputs as intended
-                results.update(flat_group_metrics)
-            except Exception as exc:
-                logger.critical(
-                    f" Exception during flattening or merging group metrics: {exc}",
-                )
-                traceback.print_exc()
-                raise
-
-        # Only apply reduction to metrics that are scalar per group (not group metric functions)
-        # is_scalar_metric removed (duplicate and not needed)
-
-        if self_cfg.group_reduction == "difference":
-            reduced = metric_frame.difference(method=self_cfg.group_reduction_method)
-            for metric_name, value in series_like_to_float_dict(reduced).items():
-                scorer = cast(dict[str, Any], self_cfg.group_scorers).get(metric_name)
-                if _is_reduction_candidate(metric_name, scorer):
-                    results[f"{metric_name}_difference"] = value
-        elif self_cfg.group_reduction == "ratio":
-            reduced = metric_frame.ratio(method=self_cfg.group_reduction_method)
-            for metric_name, value in series_like_to_float_dict(reduced).items():
-                scorer = cast(dict[str, Any], self_cfg.group_scorers).get(metric_name)
-                if _is_reduction_candidate(metric_name, scorer):
-                    results[f"{metric_name}_ratio"] = value
-        elif self_cfg.group_reduction != "none":
-            raise ValueError(
-                "group_reduction must be one of {'difference', 'ratio', 'none'}",
+        except Exception as exc:
+            logger.critical(
+                f" Exception during flattening or merging group metrics: {exc}",
             )
+            traceback.print_exc()
+            raise
 
         return results
 
@@ -967,6 +1034,65 @@ class FairlearnScorerDictConfig(FairnessScorerMixin, ScorerDictConfig):
                 "This is required for MetricFrame group scoring.",
             )
 
+    @staticmethod
+    def _resolve_scoring_payloads(
+        mode: Literal["test", "train", "attack", "val", "attack-val", None],
+        data: "DataConfig | None",
+        model: "ModelConfig | None",
+        attack: "AttackConfig | None",
+        y_pred: RuntimePayload | None,
+        y_true: RuntimePayload | None,
+        kwargs: dict[str, RuntimePayload],
+    ) -> tuple[RuntimePayload, RuntimePayload]:
+        data_y = kwargs.pop("y", None)
+        data_X = kwargs.pop("X", None)
+        if y_true is None:
+            y_true = data_y
+        if y_pred is None:
+            y_pred = data_X
+
+        if (
+            model is None
+            and attack is None
+            and y_true is not None
+            and y_pred is not None
+        ):
+            return y_true, y_pred
+
+        if data is None and (y_true is None or y_pred is None):
+            raise ValueError(
+                "data must be provided when y_true/y_pred are not passed directly",
+            )
+        resolved_y_true, resolved_y_pred = resolve_yt_yp(
+            mode,
+            cast(DataConfig, data),
+            model,
+            attack,
+            y_pred,
+            y_true,
+        )
+        return resolved_y_true, resolved_y_pred
+
+    @staticmethod
+    def _resolve_sensitive_features_input(
+        mode: Literal["test", "train", "attack", "val", "attack-val", None],
+        data: "DataConfig | None",
+        resolved_y_true: RuntimePayload,
+        kwargs: dict[str, RuntimePayload],
+    ) -> RuntimePayload:
+        resolved_mode = "test" if mode is None else mode
+        sensitive_features = kwargs.get("sensitive_features")
+        if sensitive_features is None:
+            sensitive_features = _resolve_sensitive_features(
+                data,
+                resolved_y_true,
+                mode=resolved_mode,
+                stage=cast(str | None, kwargs.get("stage")),
+            )
+        if sensitive_features is None:
+            raise ValueError("sensitive_features are required for fairness scoring")
+        return sensitive_features
+
     def __call__(
         self,
         mode: Literal["test", "train", "attack", "val", "attack-val", None] = "test",
@@ -996,49 +1122,21 @@ class FairlearnScorerDictConfig(FairnessScorerMixin, ScorerDictConfig):
         Raises:
             ValueError: If required data/sensitive features are missing.
         """
-        data_y = kwargs.pop("y", None)
-        data_X = kwargs.pop("X", None)
-        if y_true is None:
-            y_true = data_y
-        if y_pred is None:
-            y_pred = data_X
-
-        # Step 1: resolve y_true/y_pred for both main and group metrics.
-        # Data-only scorer paths should use explicit y/X payloads directly and
-        # not route through model/attack-centric y_true/y_pred resolution.
-        if (
-            model is None
-            and attack is None
-            and y_true is not None
-            and y_pred is not None
-        ):
-            resolved_y_true, resolved_y_pred = y_true, y_pred
-        else:
-            if data is None and (y_true is None or y_pred is None):
-                raise ValueError(
-                    "data must be provided when y_true/y_pred are not passed directly",
-                )
-            resolved_y_true, resolved_y_pred = resolve_yt_yp(
-                mode,
-                cast(DataConfig, data),
-                model,
-                attack,
-                y_pred,
-                y_true,
-            )
-
-        # Step 2: resolve sensitive features once.
-        resolved_mode = "test" if mode is None else mode
-        sensitive_features = kwargs.get("sensitive_features")
-        if sensitive_features is None:
-            sensitive_features = _resolve_sensitive_features(
-                data,
-                resolved_y_true,
-                mode=resolved_mode,
-                stage=cast(str | None, kwargs.get("stage")),
-            )
-        if sensitive_features is None:
-            raise ValueError("sensitive_features are required for fairness scoring")
+        resolved_y_true, resolved_y_pred = self._resolve_scoring_payloads(
+            mode,
+            data,
+            model,
+            attack,
+            y_pred,
+            y_true,
+            kwargs,
+        )
+        sensitive_features = self._resolve_sensitive_features_input(
+            mode,
+            data,
+            resolved_y_true,
+            kwargs,
+        )
 
         # Step 3: run base ScorerDictConfig scorers using resolved arrays, if any.
         if self.scorers:
@@ -1092,100 +1190,19 @@ class FairlearnScorerDictConfig(FairnessScorerMixin, ScorerDictConfig):
             random_state=random_state,
         )
 
-        # --- FLATTENING AND OUTPUT ENFORCEMENT ---
-        # Ensure all outputs are flat, scalar, and have human-readable keys
-        if self_cfg.include_group_overall:
-            overall = metric_frame.overall
-            if isinstance(overall, pd.Series):
-                for metric_name, value in overall.items():
-                    results[f"{metric_name}_overall"] = float(value)
-            else:
-                overall_series = series_like_to_float_dict(cast(Any, overall))
-                if len(overall_series) == 1 and "value" in overall_series:
-                    overall_value = overall_series["value"]
-                    for metric_name in self_cfg.group_scorers.keys():
-                        results[f"{metric_name}_overall"] = overall_value
-                else:
-                    for metric_name, value in overall_series.items():
-                        results[f"{metric_name}_overall"] = value
-
-        if self_cfg.include_group_by_group:
-            logger.debug(f" metric_frame.by_group type: {type(metric_frame.by_group)}")
-            logger.debug(
-                f" metric_frame.by_group content: {repr(metric_frame.by_group)}",
+        try:
+            _merge_metric_frame_results(
+                results,
+                self_cfg,
+                metric_frame,
+                strict_group_values=True,
             )
-            if not isinstance(metric_frame.by_group, pd.DataFrame):
-                logger.critical(
-                    f" metric_frame.by_group is NOT a DataFrame! Type: {type(metric_frame.by_group)}. Value: {repr(metric_frame.by_group)}",
-                )
-                traceback.print_stack()
-                raise TypeError(
-                    f"Expected metric_frame.by_group to be a DataFrame, got {type(metric_frame.by_group)}. Full content: {repr(metric_frame.by_group)}",
-                )
-            try:
-                flat_group_metrics = _flatten_metric_frame_by_group(
-                    metric_frame.by_group,
-                )
-                logger.debug(f" flat_group_metrics type: {type(flat_group_metrics)}")
-                logger.debug(
-                    f" flat_group_metrics content: {repr(flat_group_metrics)}",
-                )
-                # Defensive: check for nested dicts, lists, or stringified dicts/lists, and enforce float values and readable keys
-                for k, v in flat_group_metrics.items():
-                    if isinstance(v, (dict, list)):
-                        logger.critical(
-                            f" Group metric '{k}' is NOT a flat value: {v}",
-                        )
-                        traceback.print_stack()
-                        raise ValueError(
-                            f"Group metric '{k}' is NOT a flat value: {v}. Full key: {k}, value: {repr(v)}",
-                        )
-                    if isinstance(v, str) and (v.startswith("{") or v.startswith("[")):
-                        logger.critical(
-                            f" Group metric '{k}' is a STRINGIFIED dict/list: {v}",
-                        )
-                        traceback.print_stack()
-                        raise ValueError(
-                            f"Group metric '{k}' is a STRINGIFIED dict/list: {v}. Full key: {k}, value: {repr(v)}",
-                        )
-                    try:
-                        float(v)
-                    except Exception as e:
-                        logger.critical(
-                            f" Group metric '{k}' value CANNOT be cast to float: {v} ({e})",
-                        )
-                        traceback.print_exc()
-                        raise
-                    # Enforce human-readable keys (no integer keys)
-                    if isinstance(k, int):
-                        raise ValueError(
-                            f"Group metric key '{k}' is an integer, not human-readable.",
-                        )
-                results.update(flat_group_metrics)
-            except Exception as exc:
-                logger.critical(
-                    f" Exception during flattening or merging group metrics: {exc}",
-                )
-                traceback.print_exc()
-                raise
-
-        # Only apply reduction to metrics that are scalar per group (not group metric functions)
-        if self_cfg.group_reduction == "difference":
-            reduced = metric_frame.difference(method=self_cfg.group_reduction_method)
-            for metric_name, value in series_like_to_float_dict(reduced).items():
-                scorer = cast(dict[str, Any], self_cfg.group_scorers).get(metric_name)
-                if _is_reduction_candidate(metric_name, scorer):
-                    results[f"{metric_name}_difference"] = value
-        elif self_cfg.group_reduction == "ratio":
-            reduced = metric_frame.ratio(method=self_cfg.group_reduction_method)
-            for metric_name, value in series_like_to_float_dict(reduced).items():
-                scorer = cast(dict[str, Any], self_cfg.group_scorers).get(metric_name)
-                if _is_reduction_candidate(metric_name, scorer):
-                    results[f"{metric_name}_ratio"] = value
-        elif self_cfg.group_reduction != "none":
-            raise ValueError(
-                "group_reduction must be one of {'difference', 'ratio', 'none'}",
+        except Exception as exc:
+            logger.critical(
+                f" Exception during flattening or merging group metrics: {exc}",
             )
+            traceback.print_exc()
+            raise
 
         # Output validation removed: allow dict/list outputs as intended
         return results

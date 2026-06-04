@@ -1,7 +1,7 @@
 import logging
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, List, Literal, Optional, Union
+from typing import TYPE_CHECKING, Any, List, Literal, Optional, Union, cast
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -37,6 +37,113 @@ seaborn_plotter_dict = {
 supported_seaborn_plotters = list(seaborn_plotter_dict.keys())
 
 
+def _resolve_seaborn_plotter(plot_type: str):
+    plotter_map = globals().get(
+        "seaborn_plotter_dict",
+        globals().get("searborn_plotter_dict"),
+    )
+    return plotter_map[plot_type]
+
+
+def _ensure_plot_axes(ax: Axes | None, plot_type: str) -> Axes | None:
+    if ax is None and plot_type != "cat":
+        _, ax = plt.subplots()
+    return ax
+
+
+def _build_plot_kwargs(
+    *,
+    plot_type: str,
+    data: Any,
+    base_kwargs: dict[str, Any],
+    extra_kwargs: dict[str, SeabornValue],
+    x: str | None = None,
+    y: str | None = None,
+    hue: str | None = None,
+    style: str | None = None,
+) -> dict[str, Any]:
+    if plot_type == "heatmap":
+        return {
+            "data": data,
+            **base_kwargs,
+            **extra_kwargs,
+        }
+    plot_kwargs: dict[str, Any] = {
+        "data": data,
+        "x": x,
+        "y": y,
+        **base_kwargs,
+        **extra_kwargs,
+    }
+    if hue is not None:
+        plot_kwargs["hue"] = hue
+    if style is not None and plot_type in ["scatter", "line"]:
+        plot_kwargs["style"] = style
+    return plot_kwargs
+
+
+def _axes_from_plot_graph(graph: Any, fallback: Axes | None) -> Axes | None:
+    if isinstance(graph, Axes):
+        return graph
+    if hasattr(graph, "ax"):
+        return cast(Axes | None, graph.ax)
+    if hasattr(graph, "axes"):
+        axes = graph.axes
+        if axes is not None:
+            return cast(Axes, axes.flat[0] if hasattr(axes, "flat") else axes[0])
+    if hasattr(graph, "figure") and graph.figure.axes:
+        return cast(Axes, graph.figure.axes[0])
+    return fallback
+
+
+def _render_plot(
+    *,
+    plotter: Any,
+    plot_type: str,
+    ax: Axes | None,
+    plot_kwargs: dict[str, Any],
+) -> Axes | None:
+    if plot_type == "cat":
+        return _axes_from_plot_graph(plotter(**plot_kwargs), ax)
+    try:
+        graph = plotter(ax=ax, **plot_kwargs)
+    except TypeError:
+        graph = plotter(**plot_kwargs)
+    return _axes_from_plot_graph(graph, ax)
+
+
+def _finalize_plot_axes(
+    *,
+    ax: Axes,
+    title: str | None,
+    xlabel: str | None,
+    ylabel: str | None,
+    xscale: str | None,
+    yscale: str | None,
+    legend_title: str | None,
+    plot_file: str | None,
+) -> Axes:
+    if title:
+        ax.set_title(title)
+    if xlabel:
+        ax.set_xlabel(xlabel)
+    if ylabel:
+        ax.set_ylabel(ylabel)
+    if xscale:
+        ax.set_xscale(xscale)
+    if yscale:
+        ax.set_yscale(yscale)
+    if legend_title:
+        legend = ax.get_legend()
+        if legend is not None:
+            legend.set_title(legend_title)
+    if plot_file:
+        plot_path = Path(plot_file)
+        plot_path.parent.mkdir(parents=True, exist_ok=True)
+        ax.figure.savefig(plot_path, bbox_inches="tight")
+    return ax
+
+
 @dataclass(eq=True)
 class SeabornPlotterMixin(PlotterMixin):
     """Seaborn-specific plotter handler for matplotlib-based rendering.
@@ -64,84 +171,40 @@ class SeabornPlotterMixin(PlotterMixin):
         Returns:
             Matplotlib axis containing rendered plot.
         """
-        plotter_map = globals().get(
-            "seaborn_plotter_dict",
-            globals().get("searborn_plotter_dict"),
-        )
-        plotter = plotter_map[self.runtime.plot_type]
-
-        if ax is None and self.runtime.plot_type != "cat":
-            _, ax = plt.subplots()
+        plotter = _resolve_seaborn_plotter(self.runtime.plot_type)
+        ax = _ensure_plot_axes(ax, self.runtime.plot_type)
 
         if self.runtime.rc_config:
             plt.rcParams.update(self.runtime.rc_config)
 
-        if self.runtime.plot_type == "heatmap":
-            plot_kwargs = {
-                "data": self.runtime.data,
-                **self.runtime.kwargs,
-                **kwargs,
-            }
-        else:
-            plot_kwargs = {
-                "data": self.runtime.data,
-                "x": self.runtime.x,
-                "y": self.runtime.y,
-                **self.runtime.kwargs,
-                **kwargs,
-            }
-            if self.runtime.hue is not None:
-                plot_kwargs["hue"] = self.runtime.hue
-            if self.runtime.style is not None and self.runtime.plot_type in [
-                "scatter",
-                "line",
-            ]:
-                plot_kwargs["style"] = self.runtime.style
-
-        if self.runtime.plot_type == "cat":
-            graph = plotter(**plot_kwargs)
-            if hasattr(graph, "ax"):
-                ax = graph.ax
-            elif hasattr(graph, "axes"):
-                axes = graph.axes
-                if axes is not None:
-                    ax = axes.flat[0] if hasattr(axes, "flat") else axes[0]
-            elif hasattr(graph, "figure") and graph.figure.axes:
-                ax = graph.figure.axes[0]
-        else:
-            try:
-                graph = plotter(ax=ax, **plot_kwargs)
-            except TypeError:
-                graph = plotter(**plot_kwargs)
-                if hasattr(graph, "ax"):
-                    ax = graph.ax
-                elif hasattr(graph, "axes"):
-                    axes = graph.axes
-                    if axes is not None:
-                        ax = axes.flat[0] if hasattr(axes, "flat") else axes[0]
-                elif hasattr(graph, "figure") and graph.figure.axes:
-                    ax = graph.figure.axes[0]
-
-        if self.runtime.title:
-            ax.set_title(self.runtime.title)
-        if self.runtime.xlabel:
-            ax.set_xlabel(self.runtime.xlabel)
-        if self.runtime.ylabel:
-            ax.set_ylabel(self.runtime.ylabel)
-        if self.runtime.xscale:
-            ax.set_xscale(self.runtime.xscale)
-        if self.runtime.yscale:
-            ax.set_yscale(self.runtime.yscale)
-
-        if self.runtime.legend_title:
-            legend = ax.get_legend()
-            if legend is not None:
-                legend.set_title(self.runtime.legend_title)
-        if self.runtime.plot_file:
-            plot_path = Path(self.runtime.plot_file)
-            plot_path.parent.mkdir(parents=True, exist_ok=True)
-            ax.figure.savefig(plot_path, bbox_inches="tight")
-        return ax
+        plot_kwargs = _build_plot_kwargs(
+            plot_type=self.runtime.plot_type,
+            data=self.runtime.data,
+            base_kwargs=dict(self.runtime.kwargs),
+            extra_kwargs=kwargs,
+            x=self.runtime.x,
+            y=self.runtime.y,
+            hue=self.runtime.hue,
+            style=self.runtime.style,
+        )
+        resolved_ax = _render_plot(
+            plotter=plotter,
+            plot_type=self.runtime.plot_type,
+            ax=ax,
+            plot_kwargs=plot_kwargs,
+        )
+        if resolved_ax is None:
+            _, resolved_ax = plt.subplots()
+        return _finalize_plot_axes(
+            ax=resolved_ax,
+            title=self.runtime.title,
+            xlabel=self.runtime.xlabel,
+            ylabel=self.runtime.ylabel,
+            xscale=self.runtime.xscale,
+            yscale=self.runtime.yscale,
+            legend_title=self.runtime.legend_title,
+            plot_file=self.runtime.plot_file,
+        )
 
 
 @dataclass(kw_only=True, eq=False)
@@ -258,79 +321,40 @@ class SeabornPlotConfig(_SeabornPlotterMarker, BaseConfig):
         Returns:
             Axis containing the rendered seaborn chart.
         """
-        plotter_map = globals().get(
-            "seaborn_plotter_dict",
-            globals().get("searborn_plotter_dict"),
-        )
-        plotter = plotter_map[self.plot_type]
-
-        if ax is None and self.plot_type != "cat":
-            _, ax = plt.subplots()
+        plotter = _resolve_seaborn_plotter(self.plot_type)
+        ax = _ensure_plot_axes(ax, self.plot_type)
 
         if self.rc_config:
             plt.rcParams.update(self.rc_config)
 
-        if self.plot_type == "heatmap":
-            plot_kwargs = {
-                "data": self.data,
-                **self.kwargs,
-            }
-        else:
-            plot_kwargs = {
-                "data": self.data,
-                "x": self.x,
-                "y": self.y,
-                **self.kwargs,
-            }
-            if self.hue is not None:
-                plot_kwargs["hue"] = self.hue
-            if self.style is not None and self.plot_type in ["scatter", "line"]:
-                plot_kwargs["style"] = self.style
-
-        if self.plot_type == "cat":
-            graph = plotter(**plot_kwargs)
-            if hasattr(graph, "ax"):
-                ax = graph.ax
-            elif hasattr(graph, "axes"):
-                axes = graph.axes
-                if axes is not None:
-                    ax = axes.flat[0] if hasattr(axes, "flat") else axes[0]
-            elif hasattr(graph, "figure") and graph.figure.axes:
-                ax = graph.figure.axes[0]
-        else:
-            try:
-                graph = plotter(ax=ax, **plot_kwargs)
-            except TypeError:
-                graph = plotter(**plot_kwargs)
-                if hasattr(graph, "ax"):
-                    ax = graph.ax
-                elif hasattr(graph, "axes"):
-                    axes = graph.axes
-                    if axes is not None:
-                        ax = axes.flat[0] if hasattr(axes, "flat") else axes[0]
-                elif hasattr(graph, "figure") and graph.figure.axes:
-                    ax = graph.figure.axes[0]
-
-        if self.title:
-            ax.set_title(self.title)
-        if self.xlabel:
-            ax.set_xlabel(self.xlabel)
-        if self.ylabel:
-            ax.set_ylabel(self.ylabel)
-        if self.xscale:
-            ax.set_xscale(self.xscale)
-        if self.yscale:
-            ax.set_yscale(self.yscale)
-
-        if self.legend_title:
-            legend = ax.get_legend()
-            if legend is not None:
-                legend.set_title(self.legend_title)
-        if self.plot_file:
-            plot_path = Path(self.plot_file)
-            plot_path.parent.mkdir(parents=True, exist_ok=True)
-            ax.figure.savefig(plot_path, bbox_inches="tight")
-        return ax
+        plot_kwargs = _build_plot_kwargs(
+            plot_type=self.plot_type,
+            data=self.data,
+            base_kwargs=dict(self.kwargs),
+            extra_kwargs={},
+            x=self.x,
+            y=self.y,
+            hue=self.hue,
+            style=self.style,
+        )
+        resolved_ax = _render_plot(
+            plotter=plotter,
+            plot_type=self.plot_type,
+            ax=ax,
+            plot_kwargs=plot_kwargs,
+        )
+        if resolved_ax is None:
+            _, resolved_ax = plt.subplots()
+        return _finalize_plot_axes(
+            ax=resolved_ax,
+            title=self.title,
+            xlabel=self.xlabel,
+            ylabel=self.ylabel,
+            xscale=self.xscale,
+            yscale=self.yscale,
+            legend_title=self.legend_title,
+            plot_file=self.plot_file,
+        )
 
 
 @dataclass(eq=False, kw_only=True)

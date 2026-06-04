@@ -715,7 +715,7 @@ class YellowbrickPlotConfig(_YellowbrickPlotterMarker, BaseConfig):
             and callable(getattr(self.experiment.data, "_sample", None))
             and getattr(self.experiment.data, "_X", None) is not None
         ):
-            self.experiment.data.fit()
+            self.experiment.data.sample()
         # Fallback: generate synthetic data if still not ready
         if not self._experiment_outputs_ready():
             raise RuntimeError(

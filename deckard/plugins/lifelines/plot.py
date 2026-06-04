@@ -700,7 +700,7 @@ class SurvivalSeabornPlotConfigList(BaseConfig):
         runtime_data._X = data.drop(columns=[target]).reset_index(drop=True)
         runtime_data._y = data[target].reset_index(drop=True)
         runtime_data.data_load_time = 0.0
-        runtime_data.fit()
+        runtime_data.sample()
 
         if (
             runtime_data.X_train is None

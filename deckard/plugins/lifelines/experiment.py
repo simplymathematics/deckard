@@ -545,106 +545,147 @@ class SurvivalExperimentConfig(ExperimentConfig):
         """
         output = data.copy()
         if reference_metric in output.columns and "ben_failures" not in output.columns:
-            if "attack_size" in output.columns:
-                attack_sizes = output["attack_size"].fillna(
-                    self._resolve_attack_size(
-                        output,
-                        attack_config=cast(Any, failure_profile),
-                    ),
-                )
-            else:
-                attack_sizes = pd.Series(
-                    self._resolve_attack_size(
-                        output,
-                        attack_config=cast(Any, failure_profile),
-                    ),
-                    index=output.index,
-                    dtype=float,
-                )
+            attack_sizes = self._resolve_attack_sizes_series(output, failure_profile)
             output["ben_failures"] = attack_sizes * (1 - output[reference_metric])
 
         attack_label_col = self._get_attack_label_column(output)
-        attack_kind = None
+        attack_kind = self._resolve_attack_kind(failure_profile)
+
+        adv_failures = self._adv_failures_from_attack_labels(
+            output,
+            attack_label_col,
+            attack_kind,
+            failure_profile,
+        )
+        if adv_failures is not None:
+            output["adv_failures"] = adv_failures
+            return output
+
+        adv_failures = self._adv_failures_from_attack_metrics(
+            output,
+            attack_kind,
+            failure_profile,
+        )
+        if adv_failures is not None:
+            output["adv_failures"] = adv_failures
+            return output
+
+        adv_failures = self._adv_failures_from_generic_failure_metrics(output)
+        if adv_failures is not None:
+            output["adv_failures"] = adv_failures
+            return output
+
+        adv_failures = self._adv_failures_from_target_column(output)
+        if adv_failures is not None:
+            output["adv_failures"] = adv_failures
+        return output
+
+    def _resolve_attack_sizes_series(
+        self,
+        output: pd.DataFrame,
+        failure_profile: Optional[Any],
+    ) -> pd.Series:
+        fallback_size = self._resolve_attack_size(
+            output,
+            attack_config=cast(Any, failure_profile),
+        )
+        if "attack_size" in output.columns:
+            return output["attack_size"].fillna(fallback_size)
+        return pd.Series(
+            fallback_size,
+            index=output.index,
+            dtype=float,
+        )
+
+    @staticmethod
+    def _resolve_attack_kind(failure_profile: Optional[Any]) -> Optional[str]:
         if failure_profile is not None and hasattr(failure_profile, "attack_kind"):
-            attack_kind = cast(str, failure_profile.attack_kind)
+            return cast(str, failure_profile.attack_kind)
+        return None
 
-        if attack_label_col is not None:
-            adv_failures = pd.Series(np.nan, index=output.index, dtype=float)
-            for row_index, attack_label in output[attack_label_col].items():
-                row_kind = (
-                    self._infer_attack_kind_from_label(attack_label) or attack_kind
-                )
-                for metric in self._candidate_attack_metrics_for_kind(row_kind):
-                    if metric not in output.columns or pd.isna(
-                        output.at[row_index, metric],
-                    ):
-                        continue
-                    value = output.at[row_index, metric]
-                    adv_failures.at[row_index] = self._failure_count_from_metric(
-                        value=value,
-                        metric=metric,
-                        attack_size=self._resolve_attack_size(
-                            output,
-                            row_index=row_index,
-                            attack_config=cast(Any, failure_profile),
-                        ),
-                    )
-                    break
-            if adv_failures.notna().any():
-                output["adv_failures"] = adv_failures
-                return output
-
-        for metric in self._candidate_attack_metrics_for_kind(attack_kind):
-            if metric in output.columns:
-                if "attack_size" in output.columns:
-                    attack_sizes = output["attack_size"].fillna(
-                        self._resolve_attack_size(
-                            output,
-                            attack_config=cast(Any, failure_profile),
-                        ),
-                    )
-                else:
-                    attack_sizes = pd.Series(
-                        self._resolve_attack_size(
-                            output,
-                            attack_config=cast(Any, failure_profile),
-                        ),
-                        index=output.index,
-                        dtype=float,
-                    )
-                output["adv_failures"] = attack_sizes * (
-                    output[metric]
-                    if metric.endswith("_success")
-                    else 1 - output[metric]
+    def _adv_failures_from_attack_labels(
+        self,
+        output: pd.DataFrame,
+        attack_label_col: Optional[str],
+        attack_kind: Optional[str],
+        failure_profile: Optional[Any],
+    ) -> Optional[pd.Series]:
+        if attack_label_col is None:
+            return None
+        adv_failures = pd.Series(np.nan, index=output.index, dtype=float)
+        for row_index, attack_label in output[attack_label_col].items():
+            row_kind = self._infer_attack_kind_from_label(attack_label) or attack_kind
+            for metric in self._candidate_attack_metrics_for_kind(row_kind):
+                if metric not in output.columns or pd.isna(
+                    output.at[row_index, metric],
+                ):
+                    continue
+                value = output.at[row_index, metric]
+                adv_failures.at[row_index] = self._failure_count_from_metric(
+                    value=value,
+                    metric=metric,
+                    attack_size=self._resolve_attack_size(
+                        output,
+                        row_index=row_index,
+                        attack_config=cast(Any, failure_profile),
+                    ),
                 )
                 break
+        if adv_failures.notna().any():
+            return adv_failures
+        return None
 
-        if "adv_failures" not in output.columns:
-            for metric in self._candidate_failure_metrics():
-                if metric not in output.columns:
-                    continue
-                if "attack_size" in output.columns:
-                    sizes = output["attack_size"].fillna(1.0)
-                else:
-                    sizes = pd.Series(1.0, index=output.index, dtype=float)
-                values = pd.to_numeric(output[metric], errors="coerce")
-                if values.notna().any():
-                    output["adv_failures"] = sizes * values
-                    break
+    def _adv_failures_from_attack_metrics(
+        self,
+        output: pd.DataFrame,
+        attack_kind: Optional[str],
+        failure_profile: Optional[Any],
+    ) -> Optional[pd.Series]:
+        for metric in self._candidate_attack_metrics_for_kind(attack_kind):
+            if metric not in output.columns:
+                continue
+            attack_sizes = self._resolve_attack_sizes_series(output, failure_profile)
+            metric_values = (
+                output[metric] if metric.endswith("_success") else 1 - output[metric]
+            )
+            return attack_sizes * metric_values
+        return None
 
-        if (
-            "adv_failures" not in output.columns
-            and self.target in output.columns
-            and self.target not in {self.duration_col, self.event_col}
-        ):
-            candidate = pd.to_numeric(output[self.target], errors="coerce")
-            if candidate.notna().any() and candidate.between(0, 1).all():
-                if "attack_size" in output.columns:
-                    sizes = output["attack_size"].fillna(1.0)
-                else:
-                    sizes = pd.Series(1.0, index=output.index, dtype=float)
-                output["adv_failures"] = sizes * candidate
-        return output
+    @staticmethod
+    def _adv_failures_from_generic_failure_metrics(
+        output: pd.DataFrame,
+    ) -> Optional[pd.Series]:
+        for metric in SurvivalExperimentConfig._candidate_failure_metrics():
+            if metric not in output.columns:
+                continue
+            sizes = (
+                output["attack_size"].fillna(1.0)
+                if "attack_size" in output.columns
+                else pd.Series(1.0, index=output.index, dtype=float)
+            )
+            values = pd.to_numeric(output[metric], errors="coerce")
+            if values.notna().any():
+                return sizes * values
+        return None
+
+    def _adv_failures_from_target_column(
+        self,
+        output: pd.DataFrame,
+    ) -> Optional[pd.Series]:
+        if self.target not in output.columns or self.target in {
+            self.duration_col,
+            self.event_col,
+        }:
+            return None
+        candidate = pd.to_numeric(output[self.target], errors="coerce")
+        if not (candidate.notna().any() and candidate.between(0, 1).all()):
+            return None
+        sizes = (
+            output["attack_size"].fillna(1.0)
+            if "attack_size" in output.columns
+            else pd.Series(1.0, index=output.index, dtype=float)
+        )
+        return sizes * candidate
 
     def make_survival_model_table(
         self,

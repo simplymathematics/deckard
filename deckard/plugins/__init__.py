@@ -174,8 +174,15 @@ def __getattr__(name: str):
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
+# Re-export runtime helpers so callers do not need to import plugins.base directly.
+from .base import HookBundle, RuntimeBase, compose_hook_plugins  # noqa: E402
+
+
 __all__ = [
     "HookPlugin",
+    "HookBundle",
+    "RuntimeBase",
+    "compose_hook_plugins",
     "get_plugin",
     "is_plugin_available",
     *list(_PLUGIN_NAMES),

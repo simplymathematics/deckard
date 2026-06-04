@@ -52,7 +52,55 @@ class FairnessBehaviorMixin(SensitiveColumnsMixin):
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
 
-    def fit(self, run_hooks: bool = True) -> "FairnessBehaviorMixin":
+    def _refresh_sensitive_splits(self) -> "DataConfig":
+        data_runtime = cast(DataConfig, self)
+        train_indices = getattr(data_runtime, "train_indices", None)
+        test_indices = getattr(data_runtime, "test_indices", None)
+        if train_indices is None or test_indices is None:
+            data_runtime._sensitive_train = None
+            data_runtime._sensitive_test = None
+            data_runtime._sensitive_all = None
+            data_runtime._sensitive_val = getattr(data_runtime, "_sensitive_val", None)
+            return data_runtime
+
+        def _extract_sensitive(runtime_frame, fallback_frame, context: str):
+            try:
+                sensitive_payload = data_runtime._sensitive_features_from_frame(
+                    runtime_frame,
+                )
+            except Exception:
+                sensitive_payload = data_runtime._sensitive_labels_from_frame(
+                    fallback_frame,
+                )
+            return data_runtime._validate_sensitive_runtime(sensitive_payload, context)
+
+        data_runtime._sensitive_train = _extract_sensitive(
+            data_runtime.X_train,
+            data_runtime._X.iloc[train_indices].reset_index(drop=True),
+            "train sampling",
+        )
+        data_runtime._sensitive_test = _extract_sensitive(
+            data_runtime.X_test,
+            data_runtime._X.iloc[test_indices].reset_index(drop=True),
+            "test sampling",
+        )
+        data_runtime._sensitive_all = _extract_sensitive(
+            data_runtime.X,
+            data_runtime._X,
+            "full-data sampling",
+        )
+        val_indices = getattr(data_runtime, "val_indices", None)
+        if val_indices is not None and len(val_indices) > 0:
+            data_runtime._sensitive_val = _extract_sensitive(
+                data_runtime.X_val,
+                data_runtime._X.iloc[val_indices].reset_index(drop=True),
+                "val sampling",
+            )
+        else:
+            data_runtime._sensitive_val = None
+        return data_runtime
+
+    def sample(self, run_hooks: bool = True) -> "DataConfig":
         """Populate split-aligned sensitive feature payloads after data sampling.
 
         Args:
@@ -61,49 +109,9 @@ class FairnessBehaviorMixin(SensitiveColumnsMixin):
         Returns:
             The current fairness behavior instance.
         """
-        super().fit(run_hooks=run_hooks)
+        DataConfig.sample(cast(DataConfig, self), run_hooks=run_hooks)
 
-        train_indices = getattr(self, "train_indices", None)
-        test_indices = getattr(self, "test_indices", None)
-        if train_indices is None or test_indices is None:
-            self._sensitive_train = None
-            self._sensitive_test = None
-            self._sensitive_all = None
-            self._sensitive_val = getattr(self, "_sensitive_val", None)
-            return self
-
-        def _extract_sensitive(runtime_frame, fallback_frame, context: str):
-            try:
-                sensitive_payload = self._sensitive_features_from_frame(runtime_frame)
-            except Exception:
-                sensitive_payload = self._sensitive_labels_from_frame(fallback_frame)
-            return self._validate_sensitive_runtime(sensitive_payload, context)
-
-        self._sensitive_train = _extract_sensitive(
-            self.X_train,
-            self._X.iloc[train_indices].reset_index(drop=True),
-            "train sampling",
-        )
-        self._sensitive_test = _extract_sensitive(
-            self.X_test,
-            self._X.iloc[test_indices].reset_index(drop=True),
-            "test sampling",
-        )
-        self._sensitive_all = _extract_sensitive(
-            self.X,
-            self._X,
-            "full-data sampling",
-        )
-        val_indices = getattr(self, "val_indices", None)
-        if val_indices is not None and len(val_indices) > 0:
-            self._sensitive_val = _extract_sensitive(
-                self.X_val,
-                self._X.iloc[val_indices].reset_index(drop=True),
-                "val sampling",
-            )
-        else:
-            self._sensitive_val = None
-        return self
+        return self._refresh_sensitive_splits()
 
 
 @dataclass(eq=False, kw_only=True)
