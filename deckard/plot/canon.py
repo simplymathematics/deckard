@@ -16,6 +16,26 @@ class PlotRuntimeContract(TypedDict, total=False):
     backend: str
 
 
+def ensure_plot_runtime_contract(target: Any) -> Any:
+    """Populate canonical runtime attributes on a PlotConfig-like object."""
+    if not hasattr(target, "files") or getattr(target, "files") is None:
+        target.files = {}
+    else:
+        target.files = dict(getattr(target, "files") or {})
+
+    if not hasattr(target, "times") or getattr(target, "times") is None:
+        target.times = {}
+    else:
+        target.times = dict(getattr(target, "times") or {})
+
+    if not hasattr(target, "plot_state") or getattr(target, "plot_state") is None:
+        target.plot_state = {}
+    else:
+        target.plot_state = dict(getattr(target, "plot_state") or {})
+
+    return target
+
+
 def normalize_plot_backend(backend: str | None) -> str:
     """Normalize backend token to canonical backend names.
 

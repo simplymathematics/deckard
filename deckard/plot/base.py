@@ -6,9 +6,10 @@ enabling flexible composition of plot configurations with experiment state.
 
 import logging
 from dataclasses import dataclass, field
-from typing import Any, Callable, Union
+from typing import Any
 
-from ..utils import BaseConfig, resolve_class
+from ..utils import BaseConfig
+from .canon import normalize_plot_backend
 
 logger = logging.getLogger(__name__)
 
@@ -87,152 +88,8 @@ class PlotterMixin:
 
 
 @dataclass(eq=False, kw_only=True)
-class PlotTypePlugin:
-    """Generic plotter plugin that binds one mixin to one plotting family/backend.
-
-    Initialization fields
-    ---------------------
-    mixin_type : Any
-        Mixin class (or import path) implementing runtime ``__call__``.
-    backend : str
-        Backend this plugin matches (e.g., "seaborn", "yellowbrick").
-    plot_family : str | None
-        Optional plot family constraint (e.g., "feature", "classifier", "regressor").
-    excluded_families : tuple[str, ...]
-        Families explicitly excluded from this plugin match.
-    init_params : dict[str, Any]
-        Metadata-only declaration payload for class/type/library docs.
-
-    Plugin hooks
-    ------------
-    - ``resolve_plotter_mixins`` contributes mixins to runtime plotter context assembly.
-    - ``resolve_plotter_handler`` returns callable handler for dispatch.
-    - ``__call__`` forwards ``*args``/``**kwargs`` to the configured mixin instance
-      bound to the runtime config.
-
-    Attributes:
-        Runtime attributes are inherited or configured via class fields documented in this module.
-    """
-
-    mixin_type: Any
-    backend: str
-    plot_family: Union[str, None] = None
-    excluded_families: tuple[str, ...] = field(
-        default_factory=tuple,
-        metadata={"help": "Configuration field: excluded_families."},
-    )
-    init_params: dict[str, Any] = field(
-        default_factory=dict,
-        metadata={"help": "Configuration field: init_params."},
-    )
-
-    def _resolve_mixin_type(self) -> type:
-        if isinstance(self.mixin_type, str):
-            resolved = resolve_class(self.mixin_type)
-            self.mixin_type = resolved
-            return resolved
-        return self.mixin_type
-
-    def _matches(
-        self,
-        *,
-        backend: str,
-        plot_family: Union[str, None],
-    ) -> bool:
-        if (backend or "").lower() != (self.backend or "").lower():
-            return False
-        family = (plot_family or "").lower()
-        if self.plot_family is not None and family != self.plot_family.lower():
-            return False
-        if family in {item.lower() for item in self.excluded_families}:
-            return False
-        return True
-
-    def resolve_plotter_mixins(
-        self,
-        runtime: "PlotDictConfig",
-        *,
-        backend: str,
-        plot_family: Union[str, None],
-        default_mixins: tuple[type, ...],
-    ) -> tuple[type, ...]:
-        """Return mixin tuple for matching plotting backend/family.
-
-        Args:
-            runtime: Active runtime plot config.
-            backend: Requested plotting backend.
-            plot_family: Requested plotting family.
-            default_mixins: Default mixins for this plotting context.
-
-        Returns:
-            Mixin tuple to attach to runtime context.
-        """
-        _ = (runtime, default_mixins)
-        if not self._matches(
-            backend=backend,
-            plot_family=plot_family,
-        ):
-            return ()
-        mixin = self._resolve_mixin_type()
-        return (mixin,)
-
-    def resolve_plotter_handler(
-        self,
-        runtime: "PlotDictConfig",
-        *,
-        backend: str,
-        plot_family: Union[str, None],
-        default_handler: Callable[..., PlotResult] | None,
-        default_mixins: tuple[type, ...],
-    ) -> Callable[..., PlotResult] | None:
-        """Return callable runtime handler for matching backend/family.
-
-        Args:
-            runtime: Active runtime plot config.
-            backend: Requested plotting backend.
-            plot_family: Requested plotting family.
-            default_handler: Existing resolved runtime handler.
-            default_mixins: Existing resolved mixins.
-
-        Returns:
-            Callable runtime plot handler when plugin matches, else None.
-        """
-        _ = (default_handler, default_mixins)
-        if not self._matches(
-            backend=backend,
-            plot_family=plot_family,
-        ):
-            return None
-        return lambda *args, **kwargs: self(runtime, *args, **kwargs)
-
-    def __call__(
-        self,
-        runtime: "PlotDictConfig",
-        *args: PlotValue,
-        **kwargs: PlotValue,
-    ) -> PlotResult:
-        """Delegate runtime plotter execution to configured mixin handler.
-
-        Args:
-            runtime: Runtime config instance currently orchestrating plotting.
-            *args: Positional runtime args forwarded to mixin ``__call__``.
-            **kwargs: Keyword runtime args forwarded to mixin ``__call__``.
-
-        Returns:
-            Rendered plot payload from the configured mixin handler.
-        """
-        mixin = self._resolve_mixin_type()
-        handler = mixin(runtime)
-        return handler(*args, **kwargs)
-
-
-@dataclass(eq=False, kw_only=True)
 class PlotDictConfig(BaseConfig):
     """Container for multiple plot configs enabling flexible plot composition.
-
-    This config stores named plot definitions and a backend selector, then
-    participates in ``PlotTypePlugin``-based resolution for backend dispatch
-    and mixin composition at runtime.
 
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
@@ -247,6 +104,7 @@ class PlotDictConfig(BaseConfig):
     def __post_init__(self):
         if not self.plots:
             self.plots = {}
+        self.backend = normalize_plot_backend(self.backend)
 
     def __iter__(self):
         return iter(self.plots.items())

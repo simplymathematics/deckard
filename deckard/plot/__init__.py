@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING, Union
 import matplotlib as mpl
 
 from .._optional import load_optional_surface_exports
-from .canon import normalize_plot_backend
+from .canon import ensure_plot_runtime_contract, normalize_plot_backend
 from ..plugins import is_plugin_available
 from ..utils import BaseConfig
 
@@ -173,18 +173,82 @@ class PlotConfig(BaseConfig):
         }
         return {key: value for key, value in kwargs.items() if key in allowed}
 
-    def __post_init__(self):
-        # Merge any extra attributes set by BaseConfig into kwargs
+    def _merge_runtime_kwargs(self) -> None:
         known_fields = {"kwargs", "files", "times", "plot_state", "config"}
         for attr in list(vars(self).keys()):
             if attr not in known_fields:
                 self.kwargs.setdefault(attr, getattr(self, attr))
 
+    def _resolve_plot_source_flags(self) -> tuple[bool, bool]:
         has_experiment = self.kwargs.get("experiment") is not None
         has_seaborn_source = any(
             self.kwargs.get(key) is not None
             for key in ("data_file", "data_config", "data", "optuna_storage")
         )
+        return has_experiment, has_seaborn_source
+
+    @staticmethod
+    def _resolve_backend_name(
+        requested_backend: str | None,
+        has_experiment: bool,
+    ) -> str:
+        if requested_backend is not None:
+            return requested_backend
+        return "yellowbrick" if has_experiment else "seaborn"
+
+    @staticmethod
+    def _resolve_yellowbrick_config_class(wants_list: bool):
+        if wants_list:
+            if YellowbrickConfigList is None:
+                _refresh_yellowbrick_configs()
+            if YellowbrickConfigList is None:
+                raise ImportError(
+                    "Yellowbrick plotting requires optional dependency deckard[yellowbrick]",
+                )
+            return YellowbrickConfigList
+
+        if YellowbrickPlotConfig is None:
+            _refresh_yellowbrick_configs()
+        if YellowbrickPlotConfig is None:
+            raise ImportError(
+                "Yellowbrick plotting requires optional dependency deckard[yellowbrick]",
+            )
+        return YellowbrickPlotConfig
+
+    @staticmethod
+    def _resolve_seaborn_config_class(wants_list: bool):
+        if wants_list:
+            if SeabornPlotConfigList is None:
+                _refresh_seaborn_configs()
+            if SeabornPlotConfigList is None:
+                raise ImportError(
+                    "Seaborn plotting requires optional dependency deckard[seaborn]",
+                )
+            return SeabornPlotConfigList
+
+        if SeabornPlotConfig is None:
+            _refresh_seaborn_configs()
+        if SeabornPlotConfig is None:
+            raise ImportError(
+                "Seaborn plotting requires optional dependency deckard[seaborn]",
+            )
+        return SeabornPlotConfig
+
+    def _resolve_plot_config_class(self, backend: str, has_experiment: bool):
+        wants_list = "plots" in self.kwargs
+        if has_experiment:
+            if backend != "yellowbrick":
+                raise ValueError("Experiment source requires yellowbrick backend.")
+            return self._resolve_yellowbrick_config_class(wants_list)
+        if backend != "seaborn":
+            raise ValueError("Seaborn data source requires seaborn backend.")
+        return self._resolve_seaborn_config_class(wants_list)
+
+    def __post_init__(self):
+        ensure_plot_runtime_contract(self)
+        self._merge_runtime_kwargs()
+
+        has_experiment, has_seaborn_source = self._resolve_plot_source_flags()
         requested_backend = self._resolve_requested_backend(self.kwargs)
 
         if has_experiment and has_seaborn_source:
@@ -196,55 +260,8 @@ class PlotConfig(BaseConfig):
                 "Missing required source key: provide 'experiment' or 'data_file'.",
             )
 
-        if requested_backend is None:
-            backend = "yellowbrick" if has_experiment else "seaborn"
-        else:
-            backend = requested_backend
-
-        if has_experiment:
-            if backend != "yellowbrick":
-                raise ValueError(
-                    "Experiment source requires yellowbrick backend.",
-                )
-            wants_list = "plots" in self.kwargs
-            if wants_list:
-                if YellowbrickConfigList is None:
-                    _refresh_yellowbrick_configs()
-                if YellowbrickConfigList is None:
-                    raise ImportError(
-                        "Yellowbrick plotting requires optional dependency deckard[yellowbrick]",
-                    )
-                config_cls = YellowbrickConfigList
-            else:
-                if YellowbrickPlotConfig is None:
-                    _refresh_yellowbrick_configs()
-                if YellowbrickPlotConfig is None:
-                    raise ImportError(
-                        "Yellowbrick plotting requires optional dependency deckard[yellowbrick]",
-                    )
-                config_cls = YellowbrickPlotConfig
-        else:
-            if backend != "seaborn":
-                raise ValueError(
-                    "Seaborn data source requires seaborn backend.",
-                )
-            wants_list = "plots" in self.kwargs
-            if wants_list:
-                if SeabornPlotConfigList is None:
-                    _refresh_seaborn_configs()
-                if SeabornPlotConfigList is None:
-                    raise ImportError(
-                        "Seaborn plotting requires optional dependency deckard[seaborn]",
-                    )
-                config_cls = SeabornPlotConfigList
-            else:
-                if SeabornPlotConfig is None:
-                    _refresh_seaborn_configs()
-                if SeabornPlotConfig is None:
-                    raise ImportError(
-                        "Seaborn plotting requires optional dependency deckard[seaborn]",
-                    )
-                config_cls = SeabornPlotConfig
+        backend = self._resolve_backend_name(requested_backend, has_experiment)
+        config_cls = self._resolve_plot_config_class(backend, has_experiment)
 
         self.plot_state["backend"] = backend
         self.plot_state["configured"] = True
