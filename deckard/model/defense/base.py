@@ -27,8 +27,9 @@ from ...utils import (
 )
 from ..canon import defense_stage_priority, resolve_model_defense_stage
 from ..base import ModelConfig
+from ...warnings_policy import apply_warning_policy
 
-warnings.filterwarnings("ignore", category=UserWarning)
+apply_warning_policy()
 logger = logging.getLogger(__name__)
 
 DefenseScoreValue = str | int | float | bool | None

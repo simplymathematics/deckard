@@ -1,3 +1,8 @@
+import importlib
+import json
+import subprocess
+import sys
+
 import pytest
 from omegaconf import OmegaConf
 
@@ -13,11 +18,60 @@ def test_importing_deckard_does_not_register_configs(monkeypatch):
         raising=True,
     )
 
-    import importlib
-
     importlib.reload(deckard)
 
     assert calls == []
+
+
+def test_warning_policy_is_stable_across_import_orders():
+    script_template = """
+import importlib
+import json
+import warnings
+
+modules = {modules!r}
+for name in modules:
+    importlib.import_module(name)
+
+snapshot = []
+for action, message, category, module, lineno in warnings.filters:
+    if category.__name__ in {{
+        'FutureWarning',
+        'DeprecationWarning',
+        'UndefinedMetricWarning',
+        'RuntimeWarning',
+        'ConvergenceWarning',
+        'ExperimentalWarning',
+        'UserWarning',
+    }}:
+        snapshot.append((
+            action,
+            getattr(message, 'pattern', str(message)),
+            category.__name__,
+            getattr(module, 'pattern', str(module)),
+            lineno,
+        ))
+
+print(json.dumps(snapshot, sort_keys=True))
+"""
+
+    def _run_import_order(modules):
+        completed = subprocess.run(
+            [sys.executable, "-c", script_template.format(modules=modules)],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        return json.loads(completed.stdout.strip())
+
+    first_snapshot = _run_import_order(
+        ["deckard", "deckard.experiment.base", "deckard.model.defense.base"],
+    )
+    second_snapshot = _run_import_order(
+        ["deckard.model.defense.base", "deckard.experiment.base", "deckard"],
+    )
+
+    assert first_snapshot == second_snapshot
 
 
 def test_load_yaml_file_reads_content(tmp_path):

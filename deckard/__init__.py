@@ -17,32 +17,22 @@ who construct experiments from Python instead of the CLI.
 
 import logging
 import os
-import warnings
 from pathlib import Path
 from typing import Any
 
 import numpy as np
 from omegaconf import OmegaConf
-from optuna.exceptions import ExperimentalWarning
-from sklearn.exceptions import ConvergenceWarning, UndefinedMetricWarning
 
 from ._optional import OPTIONAL_RUNTIME_CLASS_PATHS
 from . import config_resolvers as _config_resolvers
+from .warnings_policy import apply_warning_policy
 
 _load_yaml_file = _config_resolvers._load_yaml_file
 _file_resolver = _config_resolvers._file_resolver
 _merge_resolver = _config_resolvers._merge_resolver
 register_core_resolvers = _config_resolvers.register_core_resolvers
 
-# Install library warning filters before importing deckard submodules, since
-# those imports can transitively import sklearn/art and emit warnings.
-warnings.filterwarnings("ignore", module=r"^sklearn(\.|$)")
-warnings.filterwarnings("ignore", module=r"^art(\.|$)")
-warnings.filterwarnings(
-    "ignore",
-    category=UserWarning,
-    message=r"PyTorch not found\. Not importing DeepZ or Interval Bound Propagation functionality",
-)
+apply_warning_policy()
 
 _OPTIONAL_RUNTIME_CLASS_PATHS: dict[str, str] = dict(OPTIONAL_RUNTIME_CLASS_PATHS)
 
@@ -345,13 +335,4 @@ logging.getLogger("art").setLevel(logging.WARNING)
 logging.config.dictConfig(LOGGING)
 logger = logging.getLogger(__name__)
 
-warnings.filterwarnings("ignore", category=FutureWarning)
-warnings.filterwarnings("ignore", category=DeprecationWarning)
-warnings.filterwarnings("ignore", category=UndefinedMetricWarning)
-warnings.filterwarnings("ignore", category=RuntimeWarning)
-warnings.filterwarnings("ignore", category=ConvergenceWarning)
-warnings.filterwarnings("ignore", category=ExperimentalWarning)
-# Suppress third-party warnings from sklearn and ART internals.
-warnings.filterwarnings("ignore", module=r"^sklearn(\.|$)")
-warnings.filterwarnings("ignore", module=r"^art(\.|$)")
 np.seterr(divide="ignore", invalid="ignore")

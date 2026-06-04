@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -24,11 +25,17 @@ def _resolve_config_dir() -> str:
     override before falling back to the environment variable.
     """
     try:
-        import deckard as deckard_module
-
-        module_dir = getattr(deckard_module, "DECKARD_CONFIG_DIR", None)
-        if module_dir:
-            return str(module_dir)
+        module_names = (
+            "deckard",
+            "deckard.experiment.base",
+        )
+        for module_name in module_names:
+            module = sys.modules.get(module_name)
+            if module is None:
+                continue
+            module_dir = getattr(module, "DECKARD_CONFIG_DIR", None)
+            if module_dir and str(module_dir) != "config":
+                return str(module_dir)
     except Exception:
         pass
     return os.environ.get("DECKARD_CONFIG_DIR", "config")

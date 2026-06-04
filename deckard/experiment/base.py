@@ -5,7 +5,6 @@ model, defense, attack, files, and scorers into a single executable unit.
 """
 
 import logging
-import warnings
 import hashlib
 import time
 import inspect
@@ -36,6 +35,7 @@ from ..data.sample import BaseSampler, KFoldSampler, ShuffleSampler
 from ..plugins.base import HookBundle, compose_hook_plugins
 from ..orchestration import ScoreOrchestratorMixin
 from ..orchestration import ensure_validation_split_available
+from ..warnings_policy import apply_warning_policy
 from .canon import (
     CANONICAL_EXPERIMENT_STAGE_COMPONENTS,
     CANONICAL_EXPERIMENT_STAGE_OUTPUT_KEYS,
@@ -158,7 +158,7 @@ def _load_optional_data_specializations() -> tuple[Any, Any]:
 
 
 logger = logging.getLogger(__name__)
-warnings.filterwarnings("ignore", category=UserWarning)
+apply_warning_policy()
 
 
 DECKARD_CONFIG_DIR = os.environ.get("DECKARD_CONFIG_DIR", "config")
