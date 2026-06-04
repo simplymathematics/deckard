@@ -1,4 +1,5 @@
 import importlib
+import os
 import sys
 from argparse import Namespace
 
@@ -164,6 +165,39 @@ def test_main_dispatches_to_supported_layer(main_module, monkeypatch, tmp_path):
 
     main_module.main()
 
+    assert seen["layer"] == layer
+
+
+def test_main_writes_absolute_config_dir_to_environment(
+    main_module,
+    monkeypatch,
+    tmp_path,
+):
+    config_dir = tmp_path / "config"
+    config_dir.mkdir()
+
+    layer = next(
+        layer
+        for layer in main_module.SUPPORTED_LAYERS
+        if layer not in {"experiment", "optimize"}
+    )
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("DECKARD_CONFIG_DIR", "config")
+    monkeypatch.setenv("DECKARD_SKIP_RUNTIME_CONFIG_REGISTRATION", "1")
+    monkeypatch.setattr(sys, "argv", ["deckard", layer])
+
+    seen = {}
+
+    monkeypatch.setattr(
+        main_module,
+        "generate_hydra_main",
+        lambda layer_name, argv=None: seen.setdefault("layer", layer_name),
+    )
+
+    main_module.main()
+
+    assert os.environ["DECKARD_CONFIG_DIR"] == str(config_dir.resolve())
     assert seen["layer"] == layer
 
 

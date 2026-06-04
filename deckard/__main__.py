@@ -96,6 +96,55 @@ def _resolve_config_default(
     return fallback
 
 
+def _resolve_existing_config_dir(
+    config_dir: str,
+    *,
+    working_dir: str | None = None,
+    return_absolute: bool = False,
+) -> str:
+    """Prompt for a real config directory and normalize the chosen path."""
+    resolved_working_dir = working_dir or os.getcwd()
+    while not Path(config_dir).exists():
+        config_dir = input(
+            f"Config directory '{config_dir}' does not exist. "
+            "Please enter a valid config directory path: ",
+        )
+
+    if return_absolute:
+        return Path(config_dir).resolve().as_posix()
+
+    if not Path(config_dir).is_absolute():
+        return os.path.relpath(config_dir, resolved_working_dir)
+
+    return Path(config_dir).as_posix()
+
+
+def _resolve_config_file(
+    config_dir: str,
+    requested_config_file: str,
+) -> str:
+    """Resolve a config file with default.yaml fallback when available."""
+    config_file = requested_config_file
+    requested_config_path = Path(config_dir, requested_config_file)
+    if not requested_config_path.exists() and requested_config_file != "default.yaml":
+        fallback_config_path = Path(config_dir, "default.yaml")
+        if fallback_config_path.exists():
+            logger.warning(
+                "Configured default file '%s' not found in '%s'; falling back to 'default.yaml'.",
+                requested_config_file,
+                config_dir,
+            )
+            config_file = "default.yaml"
+
+    logger.info(f"Resolved config file path: {config_file}")
+    if not Path(config_dir, config_file).exists():
+        logger.error(
+            f"Config file {config_file} does not exist. Did you set DECKARD_CONFIG_DIR correctly?",
+        )
+        raise FileNotFoundError(config_file)
+    return config_file
+
+
 def _layer_help_summary(layer_name: str) -> str:
     """Return a concise layer help summary from the registered layer parser."""
     parser = layer_dict[layer_name][0]
@@ -188,35 +237,15 @@ def get_configuration_paths():
         )
         or "default.yaml",
     ).as_posix()
-    config_file = requested_config_file
     working_dir = os.getcwd()
     logger.info(f"Current working directory: {working_dir}")
     logger.info("Starting deckard with Hydra configuration.")
     logger.info(f"Config directory: {Path(config_dir).resolve()}")
-    while not Path(config_dir).exists():
-        config_dir = input(
-            f"Config directory '{config_dir}' does not exist. "
-            "Please enter a valid config directory path: ",
-        )
-    if not Path(config_dir).is_absolute():
-        config_dir = os.path.relpath(config_dir, working_dir)
-    requested_config_path = Path(config_dir, requested_config_file)
-    if not requested_config_path.exists() and requested_config_file != "default.yaml":
-        fallback_config_path = Path(config_dir, "default.yaml")
-        if fallback_config_path.exists():
-            logger.warning(
-                "Configured default file '%s' not found in '%s'; falling back to 'default.yaml'.",
-                requested_config_file,
-                config_dir,
-            )
-            config_file = "default.yaml"
-
-    logger.info(f"Resolved config file path: {config_file}")
-    if not Path(config_dir, config_file).exists():
-        logger.error(
-            f"Config file {config_file} does not exist. Did you set DECKARD_CONFIG_DIR correctly?",
-        )
-        raise FileNotFoundError(config_file)
+    config_dir = _resolve_existing_config_dir(
+        config_dir,
+        working_dir=working_dir,
+    )
+    config_file = _resolve_config_file(config_dir, requested_config_file)
     return config_dir, config_file
 
 
@@ -269,12 +298,10 @@ def main():
             os.environ[key] = rc_defaults[key]
 
     config_dir = os.environ.get("DECKARD_CONFIG_DIR", "config")
-    while not Path(config_dir).exists():
-        config_dir = input(
-            f"Config directory '{config_dir}' does not exist. "
-            "Please enter a valid config directory path: ",
-        )
-    os.environ["DECKARD_CONFIG_DIR"] = Path(config_dir).resolve().as_posix()
+    os.environ["DECKARD_CONFIG_DIR"] = _resolve_existing_config_dir(
+        config_dir,
+        return_absolute=True,
+    )
 
     if os.environ.get("DECKARD_SKIP_RUNTIME_CONFIG_REGISTRATION", "0") not in {
         "1",
