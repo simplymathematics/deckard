@@ -248,6 +248,32 @@ def test_resolve_sample_branches(monkeypatch):
         BaseSampler.resolve(cfg)
 
 
+def test_concat_split_arrays_handles_scalar_payloads_without_value_error():
+    merged = DataConfig._concat_split_arrays(np.array(1), np.array(2))
+    assert merged.tolist() == [1, 2]
+
+
+def test_concat_split_arrays_handles_iterable_batch_payloads():
+    class _IterablePayload:
+        def __iter__(self):
+            yield (np.array([[1.0, 2.0]]), np.array([0]))
+            yield (np.array([[3.0, 4.0]]), np.array([1]))
+
+    merged_x = DataConfig._concat_split_arrays(
+        _IterablePayload(),
+        _IterablePayload(),
+        tuple_index=0,
+    )
+    merged_y = DataConfig._concat_split_arrays(
+        _IterablePayload(),
+        _IterablePayload(),
+        tuple_index=1,
+    )
+
+    assert merged_x.shape == (4, 2)
+    assert merged_y.tolist() == [0, 1, 0, 1]
+
+
 def test_load_lifelines_dataset_branches(monkeypatch):
     cfg = _basic_data_config(name="lung", target=None, classifier=False)
 

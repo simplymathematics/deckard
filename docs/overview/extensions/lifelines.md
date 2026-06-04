@@ -27,8 +27,8 @@ Related docs:
 6. Survival plot rendering and persistence.
 
 ```{include} ../flowcharts.md
-:start-after: <!-- lifelines-execution-flows-start -->
-:end-before: <!-- lifelines-execution-flows-end -->
+:start-after: "### Lifelines Execution Flows"
+:end-before: "### Yellowbrick Execution Flows"
 ```
 
 ## YAML Examples

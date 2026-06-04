@@ -188,6 +188,43 @@ def test_build_experiment_params_manifest_prefers_component_fingerprint_property
     assert manifest["model"]["fingerprint"] == ("c" * 32)
 
 
+def test_build_experiment_params_manifest_maps_component_subcomponents():
+    class _Component:
+        def __init__(self, alias: str):
+            self.alias = alias
+
+    data = _Component("data-alias")
+    data.sampler = _Component("sampler-alias")
+    data.pipeline = _Component("pipeline-alias")
+
+    model = _Component("model-alias")
+    model.trainer = _Component("trainer-alias")
+    model.defense = _Component("defense-alias")
+
+    target = SimpleNamespace(
+        experiment_name="exp",
+        library="sklearn",
+        classifier=True,
+        evaluation_mode="standard",
+        score_mode="test",
+        random_state=7,
+        data=data,
+        model=model,
+        defense=None,
+        attack=None,
+        detector=None,
+        score=None,
+        files=None,
+    )
+
+    manifest = build_experiment_params_manifest(target)
+
+    assert manifest["data"]["subcomponents"]["sampler"]["alias"] == "sampler-alias"
+    assert manifest["data"]["subcomponents"]["pipeline"]["alias"] == "pipeline-alias"
+    assert manifest["model"]["subcomponents"]["trainer"]["alias"] == "trainer-alias"
+    assert manifest["model"]["subcomponents"]["defense"]["alias"] == "defense-alias"
+
+
 def test_experiment_hook_graph_is_built_from_component_stage_contracts():
     graph = build_experiment_hook_graph()
     assert set(graph) == set(CANONICAL_EXPERIMENT_COMPONENT_STAGES)

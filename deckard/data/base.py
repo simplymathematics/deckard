@@ -3,6 +3,7 @@ import os
 import pandas as pd
 import time
 import logging
+from collections.abc import Mapping
 from pathlib import Path
 
 from dataclasses import dataclass, field
@@ -1103,10 +1104,33 @@ class DataConfig(ScoreOrchestratorMixin, BaseConfig):
                 values = list(payload)
             np_values = [np.asarray(value) for value in values]
             try:
+                return np.concatenate(np_values, axis=0)
+            except ValueError:
+                pass
+            try:
                 return np.stack(np_values)
             except ValueError:
                 return np.asarray(np_values, dtype=object)
-        return np.asarray(payload)
+        if hasattr(payload, "__iter__") and not isinstance(
+            payload,
+            (str, bytes, Mapping),
+        ):
+            values = list(payload)
+            if len(values) == 0:
+                return np.asarray([])
+            first = values[0]
+            if tuple_index is not None and isinstance(first, (tuple, list)):
+                values = [sample[tuple_index] for sample in values]
+            np_values = [np.asarray(value) for value in values]
+            try:
+                return np.concatenate(np_values, axis=0)
+            except ValueError:
+                pass
+            try:
+                return np.stack(np_values)
+            except ValueError:
+                return np.asarray(np_values, dtype=object)
+        return np.atleast_1d(np.asarray(payload))
 
     @classmethod
     def _concat_split_arrays(
@@ -1119,6 +1143,8 @@ class DataConfig(ScoreOrchestratorMixin, BaseConfig):
             return pd.concat([train_payload, test_payload], ignore_index=True)
         train_arr = cls._coerce_split_payload_array(train_payload, tuple_index)
         test_arr = cls._coerce_split_payload_array(test_payload, tuple_index)
+        train_arr = np.atleast_1d(train_arr)
+        test_arr = np.atleast_1d(test_arr)
         return np.concatenate([train_arr, test_arr])
 
     def _resolve_all_score_payload(self) -> tuple[Any, Any]:

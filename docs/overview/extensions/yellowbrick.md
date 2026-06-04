@@ -26,8 +26,8 @@ Related docs:
 5. Render yellowbrick diagnostics and persist plot artifacts.
 
 ```{include} ../flowcharts.md
-:start-after: <!-- yellowbrick-execution-flows-start -->
-:end-before: <!-- yellowbrick-execution-flows-end -->
+:start-after: "### Yellowbrick Execution Flows"
+:end-before: "### Seaborn"
 ```
 
 ## YAML Examples

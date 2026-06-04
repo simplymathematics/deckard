@@ -1377,7 +1377,6 @@ class AttackConfig(ScoreOrchestratorMixin, BaseConfig):
                 assert (
                     "attack_feature" in self.attack_params
                 ), "attack_feature must be specified in attack_params for attribute inference attacks"
-        # TODO: Set labels to distinguish targeted attacks from non-targeted attacks
         self._normalize_attack_model_param(data)
         attack_init_params = self._build_attack_init_params(
             attack_family,

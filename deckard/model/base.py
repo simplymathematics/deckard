@@ -1,8 +1,7 @@
 import time
 import logging
 import copy
-from typing import Any, Callable, ClassVar, Literal, Union, cast
-import inspect
+from typing import Any, Callable, ClassVar, Literal, Mapping, Union, cast
 from pathlib import Path
 from dataclasses import dataclass, field
 from functools import lru_cache
@@ -121,6 +120,44 @@ def _is_art_model_instance(model_obj: Any) -> bool:
     except Exception:
         return False
     return isinstance(model_obj, art_model_types)
+
+
+def _extract_constructor_params_from_estimator(
+    estimator: Any,
+    fallback_params: Mapping[str, Any] | None,
+) -> dict[str, Any]:
+    """Extract stable constructor-like params without relying on signature inspection."""
+    extracted: dict[str, Any] = {}
+    base_params = dict(fallback_params or {})
+
+    get_param_names = getattr(estimator, "_get_param_names", None)
+    if callable(get_param_names):
+        try:
+            for name in get_param_names():
+                if hasattr(estimator, name):
+                    value = getattr(estimator, name)
+                    if not callable(value):
+                        extracted[name] = value
+        except Exception:
+            extracted = {}
+
+    if len(extracted) == 0:
+        for name, value in vars(estimator).items():
+            if name.startswith("_"):
+                continue
+            if callable(value):
+                continue
+            extracted[name] = value
+
+    if len(extracted) == 0 and len(base_params) > 0:
+        for name in base_params:
+            if hasattr(estimator, name):
+                value = getattr(estimator, name)
+                if not callable(value):
+                    extracted[name] = value
+
+    extracted.update(base_params)
+    return extracted
 
 
 @dataclass(eq=False, kw_only=True)
@@ -617,8 +654,6 @@ class ModelConfig(ScoreOrchestratorMixin, BaseConfig):
         self.save_object(self, target_path)
 
     def _sync_model_signature_from_estimator(self, estimator: Any) -> None:
-        # TODO: use inspect for better init parsing
-
         if estimator is None:
             return
 
@@ -634,15 +669,13 @@ class ModelConfig(ScoreOrchestratorMixin, BaseConfig):
                 return
             except Exception:
                 pass
-        model_params = self.model_params or {}
-        sig = inspect.signature(estimator.__class__.__init__)
-        init_params = {}
-        for param in sig.parameters.values():
-            name = param.name
-            if hasattr(estimator, name):
-                value = getattr(estimator, name)
-                init_params[name] = value
-        self.model_params = {**init_params, **model_params}
+
+        self.model_params = _extract_constructor_params_from_estimator(
+            estimator,
+            self.model_params,
+        )
+        if hasattr(estimator, "predict_proba"):
+            self.probability = True
 
     def __hash__(self) -> int:
         return super().__hash__()

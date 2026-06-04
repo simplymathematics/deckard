@@ -23,6 +23,9 @@ Layers are thin orchestration entrypoints for higher-level tasks, such as:
 Each layer is registered in :data:`deckard.layers.layer_dict` as a
 `[parser, main]` pair consumed by the top-level CLI.
 
+All YAML and bash snippets below assume you are already in
+`examples/sklearn`.
+
 ## Optimization
 
 The optimize layer is implemented in {mod}`deckard.layers.optimize` and
@@ -44,8 +47,15 @@ The full optimization walkthrough, including single-run/multi-run directory
 behavior, sweep parameters, sweeper configuration, and dashboard usage, is in
 [Overview: Optimization](../../overview/optimize).
 
-<!-- TODO: Add a complete optimize workflow walkthrough using a real multirun directory tree. -->
-<!-- TODO: Add troubleshooting notes for objective-name mismatches and pruned-trial reporting. -->
+
+
+Use this layout when troubleshooting objective wiring:
+
+- Verify every run writes the same objective column names referenced by
+   `optimizers`.
+- Confirm `directions` length matches `optimizers` length.
+- Treat pruned trials as expected Optuna outcomes; they should appear in trial
+   history with a pruned state rather than a failure state.
 
 
 
@@ -64,6 +74,13 @@ behavior, sweep parameters, sweeper configuration, and dashboard usage, is in
 ### Minimal YAML Example
 
 ```yaml
+hydra:
+   sweeper:
+      n_trials: 10
+
+optimizers: [accuracy, evasion_accuracy]
+directions: [maximize, maximize]
+
 callbacks:
    deckard_optuna:
       _target_: deckard.layers.optimize.DefaultOptimizerCallback
@@ -75,7 +92,7 @@ callbacks:
 
 ```bash
 deckard optimize \
-   --config-dir examples/sklearn/config \
+   --config-dir config \
    --config-name default \
    hydra.mode=MULTIRUN \
    optimizers='[accuracy,evasion_accuracy]' \
@@ -101,8 +118,21 @@ metrics and study metadata into a single file for plotting and reporting.
 For end-to-end workflow context, including DVC and optimization integration, see
 [Developer Optimization: DVC](/developers/optimization/dvc).
 
-<!-- TODO: Add a schema-driven study-name parsing walkthrough with before/after output columns. -->
-<!-- TODO: Document recommended output formats (csv/parquet) per downstream layer. -->
+Schema parsing example (study name -> metadata columns):
+
+```text
+study_name: "rf_adult_baseline"
+schema: {sep: "_", model: 0, dataset: 1, variant: 2}
+```
+
+Resulting compiled columns include `model=rf`, `dataset=adult`, and
+`variant=baseline` in addition to Optuna trial metrics.
+
+Recommended output formats:
+
+- `parquet` for iterative analytics and large trial tables.
+- `csv` for quick inspection and tool interoperability.
+- Keep one canonical parquet output and export csv views only when needed.
 
 ```{seealso}
 
@@ -120,19 +150,23 @@ For end-to-end workflow context, including DVC and optimization integration, see
 
 ```yaml
 # config/my_schema.yaml
-# This example yaml file is use to add study-name metadata as key-value pair metadata to each trial run
 schema:
    sep: "_"
-   model: 0 
+   model: 0
    dataset: 1
+
+compile_results:
+   output_file: compiled_results.parquet
+   optuna_db: sqlite:///optuna.db
+   schema: config/my_schema.yaml
 ```
 
 ### CLI Example
 
 ```bash
 deckard compile_results \
-   --output-file build/compiled_results.parquet \
-   --optuna-db sqlite:///build/optuna.db
+   --output-file compiled_results.parquet \
+   --optuna-db sqlite:///optuna.db \
    --schema config/my_schema.yaml
 ```
 
@@ -164,8 +198,19 @@ trial counts inferred from DVC stage definitions.
 For DVC-stage and sweeper-storage setup details, see
 [Developer Optimization: DVC](/developers/optimization/dvc).
 
-<!-- TODO: Add an end-to-end monitoring walkthrough across multiple storages. -->
-<!-- TODO: Add notes on GridSampler trial-count inference and fallback behavior. -->
+Multi-storage monitoring walkthrough:
+
+- Point `hydra.sweeper.storage` at the active Optuna backend.
+- Run `progress_bar` per storage target (or per environment) and compare
+   completion percentages.
+- Use DVC stage names to scope monitoring to only the current pipeline segment.
+
+GridSampler note:
+
+- When a full search grid is inferable from sweeper params, expected trial
+   count comes from the grid cardinality.
+- Otherwise, the layer falls back to explicit `n_trials` (or configured
+   defaults) for progress estimation.
 
 ```{seealso}
 
@@ -186,7 +231,7 @@ For DVC-stage and sweeper-storage setup details, see
 hydra:
    sweeper:
       # Required: storage is used to query study/trial completion.
-      storage: sqlite:///optuna.db
+   storage: sqlite:///optuna.db
       # Optional in code (defaults to 100), but set explicitly in default.yaml.
       n_trials: 100
 
@@ -194,7 +239,7 @@ hydra:
 stages:
    optimize:
       # Required for auto stage detection in progress_bar_main.
-      cmd: python -m deckard optimize --config-name default --multirun
+   cmd: python -m deckard optimize --config-dir config --config-name default --multirun
 
 ```
 
@@ -236,8 +281,17 @@ trials for promotion, reporting, or follow-up experiments.
 For optimization objective setup and selection workflows, see
 [Overview: Optimization](../../overview/optimize).
 
-<!-- TODO: Add a walkthrough for single-objective top-k vs multi-objective Pareto selection. -->
-<!-- TODO: Add examples for objective-column mapping from metric names vs values_N columns. -->
+Selection walkthrough:
+
+- Single objective: sort by one optimizer column and keep `top_k`.
+- Multi objective: compute Pareto membership across aligned optimizer columns,
+   then optionally cap retained rows.
+
+Objective-column mapping guidance:
+
+- Prefer explicit metric columns when available (for example `accuracy`).
+- If only `values_N` columns exist, map each optimizer position to
+   `values_0`, `values_1`, ... in the same order as `optimizers`.
 
 ```{seealso}
 
@@ -255,8 +309,8 @@ For optimization objective setup and selection workflows, see
 
 ```yaml
 pareto:
-   output_file: build/pareto.csv
-   optuna_db: sqlite:///build/optuna.db
+   output_file: pareto.csv
+   optuna_db: sqlite:////optuna.db
    study_name: baseline_search
    optimizers: accuracy,evasion_accuracy
    directions: maximize,maximize
@@ -267,8 +321,8 @@ pareto:
 
 ```bash
 deckard pareto \
-   --output-file build/pareto.csv \
-   --optuna-db sqlite:///build/optuna.db \
+   --output-file pareto.csv \
+   --optuna-db sqlite:///optuna.db \
    --study-name baseline_search \
    --optimizers accuracy,evasion_accuracy \
    --directions maximize,maximize \
@@ -303,8 +357,18 @@ execution or plot rendering based on config shape.
 For survival architecture and scoring context, see
 [Overview: Lifelines Extension](../../overview/extensions/lifelines).
 
-<!-- TODO: Add full examples for experiment mode vs plot-only mode selection logic. -->
-<!-- TODO: Add model-alias normalization examples (cox/weibull/log-normal). -->
+Mode selection summary:
+
+- Experiment mode: selected when config provides full survival runtime inputs
+   (data/model/scoring context) and execution outputs are expected.
+- Plot-only mode: selected when precomputed survival artifacts are provided and
+   only rendering is requested.
+
+Model alias normalization examples:
+
+- `cox`, `coxph`, and `cox_ph` normalize to the Cox PH family.
+- `weibull` and `weibull-aft` normalize to Weibull AFT.
+- `log-normal` and `lognormal` normalize to Log-Normal AFT.
 
 ```{seealso}
 
@@ -327,15 +391,16 @@ survival:
       name: lifelines_rossi
       target: arrest
    model: cox
-   target: arrest
    duration_col: week
+   event_col: arrest
+   output_file: survival_results.csv
 ```
 
 ### CLI Example
 
 ```bash
 deckard survival \
-   --config-dir examples/sklearn/config \
+   --config-dir config \
    --config-name lifelines \
 ```
 
@@ -367,8 +432,20 @@ plotting (Yellowbrick) with backend auto-selection.
 For plotting architecture and backend behavior, see
 [Developer Experiment: Plot](/developers/experiment/plot).
 
-<!-- TODO: Add backend auto-selection decision table (auto/yellowbrick/seaborn). -->
-<!-- TODO: Add examples for experiment-backed yellowbrick vs file-backed seaborn runs. -->
+Backend auto-selection decision table:
+
+| Input shape | backend=auto resolution |
+| --- | --- |
+| Experiment/runtime objects present | `yellowbrick` |
+| Tabular file + declarative plot args | `seaborn` |
+| Explicit backend set | honor explicit value |
+
+Execution examples:
+
+- Experiment-backed Yellowbrick:
+   use runtime experiment outputs and model diagnostics hooks.
+- File-backed Seaborn:
+   provide `plot.data_file` and x/y columns for direct statistical plotting.
 
 ```{seealso}
 
@@ -388,11 +465,11 @@ For plotting architecture and backend behavior, see
 ```yaml
 plot:
    backend: seaborn
-   data_file: build/compiled_results.parquet
+   data_file: compiled_results.parquet
    plot_type: scatter
    x: accuracy
    y: evasion_accuracy
-   plot_file: build/plots/accuracy_vs_evasion.png
+   plot_file: plots/accuracy_vs_evasion.png
 ```
 
 ### CLI Example
@@ -400,11 +477,11 @@ plot:
 ```bash
 deckard plot \
    plot.backend=seaborn \
-   plot.data_file=build/compiled_results.parquet \
+   plot.data_file=compiled_results.parquet \
    plot.plot_type=scatter \
    plot.x=accuracy \
    plot.y=evasion_accuracy \
-   plot.plot_file=build/plots/accuracy_vs_evasion.png
+   plot.plot_file=plots/accuracy_vs_evasion.png
 ```
 
 ### API Reference

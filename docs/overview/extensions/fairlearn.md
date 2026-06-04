@@ -28,8 +28,8 @@ Related docs:
 5. Canonical persistence and fairness diagnostics.
 
 ```{include} ../flowcharts.md
-:start-after: <!-- fairlearn-execution-flows-start -->
-:end-before: <!-- fairlearn-execution-flows-end -->
+:start-after: <!-- fairlearn-model-overview-start -->
+:end-before: <!-- fairlearn-score-overview-end -->
 ```
 
 ## YAML Examples

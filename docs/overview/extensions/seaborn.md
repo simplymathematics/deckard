@@ -24,8 +24,7 @@ Related docs:
 5. Render seaborn figures and persist plot artifacts.
 
 ```{include} ../flowcharts.md
-:start-after: <!-- seaborn-execution-flows-start -->
-:end-before: <!-- seaborn-execution-flows-end -->
+:start-after: "### Seaborn"
 ```
 
 ## YAML Examples

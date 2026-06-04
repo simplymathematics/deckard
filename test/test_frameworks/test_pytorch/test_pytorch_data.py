@@ -242,13 +242,15 @@ class TestPytorchDataConfig:
         with pytest.raises(Exception):
             self.config.load_dataset()
 
-    def test_resolve_dataset_type_map_style_dataset(self):
-        assert self.config.resolve_dataset_type(IntImageDataset()) == "map"
-
-    def test_resolve_dataset_type_iterable_dataset(self):
-        assert (
-            self.config.resolve_dataset_type(StreamingIterableDataset()) == "iterable"
-        )
+    @pytest.mark.parametrize(
+        "dataset,expected",
+        [
+            (IntImageDataset(), "map"),
+            (StreamingIterableDataset(), "iterable"),
+        ],
+    )
+    def test_resolve_dataset_type(self, dataset, expected):
+        assert self.config.resolve_dataset_type(dataset) == expected
 
     def test_hash_method(self):
         h1 = hash(self.config)

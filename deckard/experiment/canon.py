@@ -639,6 +639,21 @@ def build_experiment_params_manifest(
             base_payload["fingerprint"] = _fingerprint_payload(base_payload)
         return base_payload
 
+    def _resolve_subcomponent(
+        primary: Any,
+        key: str,
+        *,
+        fallback: Any = None,
+    ) -> Any:
+        value = _get_value(primary, key)
+        if value is not None:
+            return value
+        if fallback is not None:
+            value = _get_value(fallback, key)
+            if value is not None:
+                return value
+        return _get_value(target, key)
+
     manifest: dict[str, Any] = {
         "experiment_name": _get_value(target, "experiment_name"),
         "library": _get_value(target, "library"),
@@ -647,13 +662,45 @@ def build_experiment_params_manifest(
         "score_mode": _get_value(target, "score_mode"),
         "random_state": _get_value(target, "random_state"),
     }
-    # TODO: Correctly map components/sub components to existing *Config objects
-    for component_name in ("data", "model", "defense", "attack", "detector", "score"):
+    component_subcomponents: dict[str, tuple[str, ...]] = {
+        "data": ("sampler", "pipeline"),
+        "model": ("trainer", "defense"),
+        "attack": (),
+        "detector": (),
+        "score": (),
+        "files": (),
+        "defense": (),
+    }
+
+    for component_name in (
+        "data",
+        "model",
+        "defense",
+        "attack",
+        "detector",
+        "score",
+        "files",
+    ):
         component = _get_value(target, component_name)
         if component is None:
             manifest[component_name] = None
             continue
-        manifest[component_name] = _component_manifest(component)
+
+        component_manifest = _component_manifest(component)
+        subcomponents: dict[str, Any] = {}
+        for subcomponent_name in component_subcomponents.get(component_name, ()):
+            subcomponent = _resolve_subcomponent(
+                component,
+                subcomponent_name,
+                fallback=target,
+            )
+            if subcomponent is None:
+                continue
+            subcomponents[subcomponent_name] = _component_manifest(subcomponent)
+
+        if len(subcomponents) > 0:
+            component_manifest["subcomponents"] = subcomponents
+        manifest[component_name] = component_manifest
 
     attack_chain = _get_value(target, "_attack_chain")
     if isinstance(attack_chain, (list, tuple)) and len(attack_chain) > 0:

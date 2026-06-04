@@ -28,8 +28,8 @@ Related docs:
 5. Artifact persistence and optional plotting.
 
 ```{include} ../flowcharts.md
-:start-after: <!-- transformers-execution-flows-start -->
-:end-before: <!-- transformers-execution-flows-end -->
+:start-after: <!-- core-model-overview-start -->
+:end-before: <!-- core-model-overview-end -->
 ```
 
 ## YAML Example
