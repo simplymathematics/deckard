@@ -1,3 +1,5 @@
+"""Utilities for selecting top Optuna trials and Pareto fronts."""
+
 import logging
 from pathlib import Path
 from typing import Optional
@@ -40,7 +42,7 @@ def _resolve_study(
     study_name: Optional[str],
 ) -> optuna.study.Study:
     if study_name:
-        logger.info(f"Loading study '{study_name}' from {optuna_db}")
+        logger.info("Loading study '%s' from %s", study_name, optuna_db)
         return optuna.study.load_study(storage=optuna_db, study_name=study_name)
 
     summaries = optuna.study.get_all_study_summaries(storage=optuna_db)
@@ -64,7 +66,8 @@ def _resolve_study(
     if inferred_name is None:
         raise ValueError("Could not infer study name from summary")
     logger.info(
-        f"No study_name provided; using only available study '{inferred_name}'",
+        "No study_name provided; using only available study '%s'",
+        inferred_name,
     )
     return optuna.study.load_study(storage=optuna_db, study_name=inferred_name)
 
@@ -127,7 +130,8 @@ def _infer_directions_for_objectives(
 
         if idx is None:
             logger.warning(
-                "Could not infer direction for objective '%s' (column '%s') from study objectives; defaulting to maximize.",
+                "Could not infer direction for objective '%s' (column '%s') "
+                "from study objectives; defaulting to maximize.",
                 name,
                 column,
             )
@@ -178,8 +182,10 @@ def _objective_to_column(
         return "value"
 
     raise ValueError(
-        f"Could not map optimizer '{objective}' to a trials dataframe column. "
-        f"Available columns: {list(trials_df.columns)}",
+        (
+            f"Could not map optimizer '{objective}' to a trials dataframe "
+            f"column. Available columns: {list(trials_df.columns)}"
+        ),
     )
 
 

@@ -250,91 +250,170 @@ def plot_main(cfg: Any) -> dict:
     kwargs_file = resolved["kwargs_file"]
     rc_config_file = resolved["rc_config_file"]
 
-    if backend == "yellowbrick" and not experiment_config:
-        if not extracted_experiment_cfg:
-            raise ValueError(
-                "yellowbrick backend requires plot.experiment_config or a Hydra experiment cfg",
-            )
+    _validate_backend_inputs(
+        backend=backend,
+        experiment_config=experiment_config,
+        extracted_experiment_cfg=extracted_experiment_cfg,
+        data_file=data_file,
+    )
+    if backend == "yellowbrick":
+        return _run_yellowbrick_backend(
+            extracted_experiment_cfg=extracted_experiment_cfg,
+            experiment_config=experiment_config,
+            plot_type=plot_type,
+            plots=plots,
+            plot_params_file=plot_params_file,
+            plot_file=plot_file,
+            plot_folder=plot_folder,
+            features=features,
+            classes=classes,
+            title=title,
+        )
+    return _run_seaborn_backend(
+        data_file=data_file,
+        plot_type=plot_type,
+        plots=plots,
+        plot_params_file=plot_params_file,
+        plot_file=plot_file,
+        x=x,
+        y=y,
+        hue=hue,
+        style=style,
+        title=title,
+        xlabel=xlabel,
+        ylabel=ylabel,
+        xscale=xscale,
+        yscale=yscale,
+        legend_title=legend_title,
+        kwargs_file=kwargs_file,
+        rc_config_file=rc_config_file,
+    )
+
+
+def _validate_backend_inputs(
+    *,
+    backend: str,
+    experiment_config: str,
+    extracted_experiment_cfg: Dict[str, Any],
+    data_file: str,
+) -> None:
+    if (
+        backend == "yellowbrick"
+        and not experiment_config
+        and not extracted_experiment_cfg
+    ):
+        raise ValueError(
+            "yellowbrick backend requires plot.experiment_config or a Hydra experiment cfg",
+        )
     if backend == "seaborn" and not data_file:
         raise ValueError("seaborn backend requires plot.data_file")
 
-    if backend == "yellowbrick":
-        exp_cfg = (
-            extracted_experiment_cfg
-            if extracted_experiment_cfg
-            else _load_experiment_config(experiment_config)
+
+def _run_yellowbrick_backend(
+    *,
+    extracted_experiment_cfg: Dict[str, Any],
+    experiment_config: str,
+    plot_type: str,
+    plots: Any,
+    plot_params_file: str,
+    plot_file: str,
+    plot_folder: str,
+    features: Any,
+    classes: Any,
+    title: str,
+) -> dict:
+    exp_cfg = (
+        extracted_experiment_cfg
+        if extracted_experiment_cfg
+        else _load_experiment_config(experiment_config)
+    )
+    exp_obj = _instantiate_experiment_cfg(exp_cfg)
+    resolved_plots = plots
+    if not plot_type and not resolved_plots:
+        resolved_plots = "all"
+
+    plot_params = {}
+    if plot_params_file:
+        loaded = _load_yaml(plot_params_file)
+        if not isinstance(loaded, dict):
+            raise TypeError("plot_params_file must contain a dictionary.")
+        plot_params = loaded
+
+    yellowbrick_module = importlib.import_module("deckard.plugins.yellowbrick.plot")
+    YellowbrickConfigList = yellowbrick_module.YellowbrickConfigList
+    YellowbrickPlotConfig = yellowbrick_module.YellowbrickPlotConfig
+
+    if plot_type:
+        default_folder = Path(plot_folder) if plot_folder else Path.cwd()
+        output_path = (
+            Path(plot_file) if plot_file else default_folder / f"{plot_type}.png"
         )
-        exp_obj = _instantiate_experiment_cfg(exp_cfg)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
 
-        if not plot_type and not plots:
-            plots = "all"
-
-        plot_params = {}
-        if plot_params_file:
-            loaded = _load_yaml(plot_params_file)
-            if not isinstance(loaded, dict):
-                raise TypeError("plot_params_file must contain a dictionary.")
-            plot_params = loaded
-
-        # Import lazily so this layer can be listed even when optional plotting deps are missing.
-        yellowbrick_module = importlib.import_module(
-            "deckard.plugins.yellowbrick.plot",
-        )
-
-        YellowbrickConfigList = yellowbrick_module.YellowbrickConfigList
-        YellowbrickPlotConfig = yellowbrick_module.YellowbrickPlotConfig
-
-        if plot_type:
-            default_folder = Path(plot_folder) if plot_folder else Path.cwd()
-            output_path = (
-                Path(plot_file) if plot_file else default_folder / f"{plot_type}.png"
-            )
-            output_path.parent.mkdir(parents=True, exist_ok=True)
-
-            single_title = title if title else plot_type.replace("_", " ").title()
-            cfg = YellowbrickPlotConfig(
-                experiment=exp_obj,
-                plot_type=plot_type,
-                features=features,
-                classes=classes,
-                title=single_title,
-                save_path=output_path.as_posix(),
-                plot_params=plot_params,
-            )
-            scores = cfg()
-            return {
-                "backend": "yellowbrick",
-                "mode": "single",
-                "plot_type": plot_type,
-                "plot_file": output_path.as_posix(),
-                "scores": scores,
-            }
-
-        plot_list = _normalize_yellowbrick_plots(plots)
-        if isinstance(plot_list, list) and len(plot_list) == 0:
-            raise ValueError(
-                "--plots must contain at least one plot type for yellowbrick backend.",
-            )
-
-        output_dir = Path(plot_folder) if plot_folder else Path.cwd()
-        output_dir.mkdir(parents=True, exist_ok=True)
-        cfg = YellowbrickConfigList(
+        single_title = title if title else plot_type.replace("_", " ").title()
+        single_cfg = YellowbrickPlotConfig(
             experiment=exp_obj,
-            plots=plot_list,
-            plot_folder=output_dir.as_posix(),
+            plot_type=plot_type,
+            features=features,
+            classes=classes,
+            title=single_title,
+            save_path=output_path.as_posix(),
+            plot_params=plot_params,
         )
-        scores = cfg()
+        scores = single_cfg()
         return {
             "backend": "yellowbrick",
-            "mode": "multi",
-            "plots": plot_list,
-            "plot_folder": output_dir.as_posix(),
+            "mode": "single",
+            "plot_type": plot_type,
+            "plot_file": output_path.as_posix(),
             "scores": scores,
         }
 
-    # Seaborn backend: designed for aggregated/tabular outputs from many experiments.
-    seaborn_module = importlib.import_module("deckard.plugins.seaborn.plot")
+    plot_list = _normalize_yellowbrick_plots(resolved_plots)
+    if isinstance(plot_list, list) and len(plot_list) == 0:
+        raise ValueError(
+            "--plots must contain at least one plot type for yellowbrick backend.",
+        )
 
+    output_dir = Path(plot_folder) if plot_folder else Path.cwd()
+    output_dir.mkdir(parents=True, exist_ok=True)
+    list_cfg = YellowbrickConfigList(
+        experiment=exp_obj,
+        plots=plot_list,
+        plot_folder=output_dir.as_posix(),
+    )
+    scores = list_cfg()
+    return {
+        "backend": "yellowbrick",
+        "mode": "multi",
+        "plots": plot_list,
+        "plot_folder": output_dir.as_posix(),
+        "scores": scores,
+    }
+
+
+def _run_seaborn_backend(
+    *,
+    data_file: str,
+    plot_type: str,
+    plots: Any,
+    plot_params_file: str,
+    plot_file: str,
+    x: str,
+    y: str,
+    hue: str,
+    style: str,
+    title: str,
+    xlabel: str,
+    ylabel: str,
+    xscale: str,
+    yscale: str,
+    legend_title: str,
+    kwargs_file: str,
+    rc_config_file: str,
+) -> dict:
+    _ = plots
+    seaborn_module = importlib.import_module("deckard.plugins.seaborn.plot")
     SeabornPlotConfig = seaborn_module.SeabornPlotConfig
     SeabornPlotConfigList = seaborn_module.SeabornPlotConfigList
 
@@ -353,15 +432,11 @@ def plot_main(cfg: Any) -> dict:
         rc_config = loaded
 
     if plot_type and plots:
-        raise ValueError(
-            "Provide only one of plot.plot_type or plot.plots",
-        )
-
+        raise ValueError("Provide only one of plot.plot_type or plot.plots")
     if not plot_type and not plot_params_file:
         raise ValueError(
             "Provide one of plot.plot_type or plot.plot_params_file for seaborn backend.",
         )
-
     if plot_type and plot_params_file:
         raise ValueError(
             "Provide only one of plot.plot_type or plot.plot_params_file for seaborn backend.",
@@ -369,10 +444,8 @@ def plot_main(cfg: Any) -> dict:
 
     if plot_type:
         if not x or not y:
-            raise ValueError(
-                "seaborn single-plot mode requires plot.x and plot.y",
-            )
-        cfg = SeabornPlotConfig(
+            raise ValueError("seaborn single-plot mode requires plot.x and plot.y")
+        single_cfg = SeabornPlotConfig(
             data_file=data_file,
             plot_type=plot_type,
             x=x,
@@ -389,7 +462,7 @@ def plot_main(cfg: Any) -> dict:
             rc_config=rc_config,
             plot_file=plot_file or None,
         )
-        cfg()
+        single_cfg()
         return {
             "backend": "seaborn",
             "mode": "single",
@@ -420,7 +493,6 @@ def plot_main(cfg: Any) -> dict:
         plot_cfgs.append(SeabornPlotConfig(**merged))
 
     list_cfg = SeabornPlotConfigList(plots=plot_cfgs, data_file=data_file)
-    # SeabornPlotConfigList.__call__ checks `self.file`; set explicitly for stability.
     list_cfg.file = plot_file or None
     list_cfg()
     return {

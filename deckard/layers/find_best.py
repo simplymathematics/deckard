@@ -1,3 +1,5 @@
+"""Compose and export the best Optuna trial into a runnable config."""
+
 import logging
 from pathlib import Path
 from typing import Any, Optional
@@ -26,7 +28,7 @@ def _parse_csv_arg(value: Optional[str]) -> list[str]:
 def _normalize_direction(direction: str) -> str:
     token = str(direction).strip().lower()
     if "." in token:
-        token = token.split(".")[-1]
+        token = token.rsplit(".", maxsplit=1)[-1]
     if token in {"maximize", "max"}:
         return "maximize"
     if token in {"minimize", "min"}:
@@ -322,8 +324,18 @@ def find_best_main(
     trials_df = _complete_trials_only(trials_df)
     if len(trials_df) == 0:
         raise ValueError("No COMPLETE trials found in selected study")
+    subset_map = _split_subset_exprs(subset)
     if subset is not None:
-        trials_df = _apply_subset_filter(trials_df, subset=subset)
+        subset_filtered_df = _apply_subset_filter(trials_df, subset=subset)
+        if len(subset_filtered_df) > 0:
+            trials_df = subset_filtered_df
+        else:
+            logger.warning(
+                "Subset filter '%s' matched no completed trials; selecting best "
+                "trial from full study and applying subset as explicit output "
+                "override.",
+                subset,
+            )
     if len(trials_df) == 0:
         raise ValueError("No trials remaining after subset filter")
 
@@ -384,6 +396,12 @@ def find_best_main(
     excluded = set(_parse_csv_arg(exclude))
     overrides: list[str] = []
     for key, value in (best_trial.params or {}).items():
+        if key in excluded:
+            continue
+        overrides.append(f"++{key}={_normalize_value_for_override(value)}")
+
+    # Ensure requested subset constraints are reflected in the generated config.
+    for key, value in subset_map.items():
         if key in excluded:
             continue
         overrides.append(f"++{key}={_normalize_value_for_override(value)}")

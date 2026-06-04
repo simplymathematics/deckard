@@ -1324,26 +1324,7 @@ def set_trial_attributes(
         )
         return
 
-    selected_trial = None
-    if trial_number is not None:
-        trial_number_str = str(trial_number)
-        for trial in trials:
-            if str(getattr(trial, "number", None)) == trial_number_str:
-                selected_trial = trial
-                break
-    elif len(trials) == 1:
-        selected_trial = trials[0]
-    else:
-        unique_match = None
-        match_count = 0
-        for trial in trials:
-            if getattr(trial, "user_attrs", {}).get("experiment_name") == exp_uuid:
-                unique_match = trial
-                match_count += 1
-                if match_count > 1:
-                    unique_match = None
-                    break
-        selected_trial = unique_match
+    selected_trial = _select_trial_for_attributes(trials, trial_number, exp_uuid)
 
     if selected_trial is None:
         logger.warning(
@@ -1353,26 +1334,63 @@ def set_trial_attributes(
         )
         return
 
+    for k, v in attrs.items():
+        if isinstance(v, (DictConfig, ListConfig)):
+            v = OmegaConf.to_container(v, resolve=True)
+        _set_trial_attribute(study, selected_trial, exp_uuid, k, v)
+
+
+def _select_trial_for_attributes(
+    trials: list[Any],
+    trial_number: Any,
+    exp_uuid: str,
+) -> Any | None:
+    if trial_number is not None:
+        trial_number_str = str(trial_number)
+        for trial in trials:
+            if str(getattr(trial, "number", None)) == trial_number_str:
+                return trial
+        return None
+
+    if len(trials) == 1:
+        return trials[0]
+
+    matches = [
+        trial
+        for trial in trials
+        if getattr(trial, "user_attrs", {}).get("experiment_name") == exp_uuid
+    ]
+    if len(matches) == 1:
+        return matches[0]
+    return None
+
+
+def _set_trial_attribute(
+    study: Any,
+    selected_trial: Any,
+    exp_uuid: str,
+    key: str,
+    value: Any,
+) -> None:
     trial_id = getattr(selected_trial, "_trial_id", None)
     if trial_id is None:
         trial_id = getattr(selected_trial, "trial_id", None)
 
-    for k, v in attrs.items():
-        if isinstance(v, (DictConfig, ListConfig)):
-            v = OmegaConf.to_container(v, resolve=True)
-        if trial_id is not None and hasattr(study, "_storage"):
-            try:
-                study._storage.set_trial_user_attr(trial_id, k, v)
-            except optuna.exceptions.UpdateFinishedTrialError:
-                if not _overwrite_frozen_trial_user_attr(study, trial_id, k, v):
-                    raise
-        elif hasattr(selected_trial, "set_user_attr"):
-            selected_trial.set_user_attr(k, v)
-        else:
-            raise RuntimeError(
-                f"Unable to set trial attribute '{k}' for experiment_name={exp_uuid}; "
-                "no Optuna storage handle found.",
-            )
+    if trial_id is not None and hasattr(study, "_storage"):
+        try:
+            study._storage.set_trial_user_attr(trial_id, key, value)
+            return
+        except optuna.exceptions.UpdateFinishedTrialError:
+            if _overwrite_frozen_trial_user_attr(study, trial_id, key, value):
+                return
+            raise
+    if hasattr(selected_trial, "set_user_attr"):
+        selected_trial.set_user_attr(key, value)
+        return
+    raise RuntimeError(
+        f"Unable to set trial attribute '{key}' for experiment_name={exp_uuid}; "
+        "no Optuna storage handle found.",
+    )
 
 
 _DROP_RUNTIME_VALUE = object()
