@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-from typing import Any, TypedDict
+from typing import Any, Final, TypedDict
+
+from ..orchestration import MODE_ALIASES as _MODE_ALIASES
 
 from ..artifacts import ScoreDict
 
@@ -33,10 +35,40 @@ ATTACK_RUNTIME_TIME_KEYS = (
     "attack_score_time",
 )
 
+CANONICAL_ATTACK_SCORE_STAGES: Final[tuple[str, ...]] = (
+    "pre-attack",
+    "post-attack",
+    "all",
+    "auto",
+)
 
-def normalize_attack_stage(stage: str | None) -> str:
+CANONICAL_ATTACK_SCORE_STAGE_ALIASES: Final[dict[str, str]] = {
+    "pre-attack": "pre-attack",
+    "pre_attack": "pre-attack",
+    "before-attack": "pre-attack",
+    "before_attack": "pre-attack",
+    "post-attack": "post-attack",
+    "post_attack": "post-attack",
+    "after-attack": "post-attack",
+    "after_attack": "post-attack",
+}
+
+CANONICAL_ATTACK_SCORE_MODES: Final[tuple[str, ...]] = (
+    "train",
+    "test",
+    "val",
+    "all",
+    "auto",
+)
+
+CANONICAL_ATTACK_SCORE_MODE_ALIASES: Final[dict[str, str]] = dict(_MODE_ALIASES)
+
+
+def normalize_attack_stage(stage: str | None) -> str | None:
     """Normalize attack stage tokens into canonical hook stage names."""
     token = str(stage or "post-attack").strip().lower().replace("_", "-")
+    if token == "auto":
+        return None
     return ATTACK_RUNTIME_STAGE_ALIASES.get(token, token)
 
 
@@ -49,6 +81,32 @@ def normalize_attack_mode(mode: Any) -> str:
             f"Unsupported attack mode '{mode}'. Expected one of: {expected}.",
         )
     return token
+
+
+def normalize_attack_score_stage(stage: str | None) -> str:
+    """Normalize attack score stage aliases to canonical attack score stages."""
+    token = str(stage or "post-attack").strip().lower().replace("_", "-")
+    if token in {"all", "auto"}:
+        return token
+    resolved = CANONICAL_ATTACK_SCORE_STAGE_ALIASES.get(token)
+    if resolved is None:
+        raise ValueError(
+            "Unknown attack score stage "
+            f"'{stage}'. Must be one of {list(CANONICAL_ATTACK_SCORE_STAGES)}",
+        )
+    return resolved
+
+
+def normalize_attack_score_mode(mode: str | None) -> str:
+    """Normalize attack score mode aliases to canonical split tokens."""
+    token = str(mode or "test").strip().lower().replace(" ", "-")
+    resolved = CANONICAL_ATTACK_SCORE_MODE_ALIASES.get(token)
+    if resolved is None:
+        raise ValueError(
+            "Unknown attack score mode "
+            f"'{mode}'. Must be one of {list(CANONICAL_ATTACK_SCORE_MODES)}",
+        )
+    return resolved
 
 
 def ensure_attack_runtime_contract(runtime: Any) -> None:

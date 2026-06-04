@@ -140,6 +140,7 @@ class EvasionAttackConfig(AttackConfig):
             is_classification=not is_regression,
             y_proba=None if is_regression else ben_preds,
             mode=active_mode,
+            data=data,
             sensitive_features=_sensitive_slice(
                 getattr(data, "_sensitive_test", None),
                 n,
@@ -151,6 +152,7 @@ class EvasionAttackConfig(AttackConfig):
             y_pred=adv_pred_labels,
             ben_pred_labels=ben_pred_labels,
             is_classification=not is_regression,
+            data=data,
             sensitive_features=_sensitive_slice(
                 getattr(data, "_sensitive_test", None),
                 n,

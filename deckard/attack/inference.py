@@ -14,6 +14,7 @@ from omegaconf import ListConfig, OmegaConf
 from ..artifacts import ScoreDict
 from ..data import DataConfig
 from ..model import ModelConfig
+from ..orchestration import resolve_attack_split_payload
 from ..types import AttackLike, EstimatorLike
 from .base import (
     AttackConfig,
@@ -337,6 +338,7 @@ class InferenceAttackConfig(AttackConfig):
             targeted_attribute=targeted_attribute_string,
             is_classification=is_classification,
             attack_generation_time=self.attack_time,
+            data=data,
             sensitive_features=sensitive_attribute,
         )
         return self._finalize_attack_state(
@@ -441,6 +443,7 @@ class InferenceAttackConfig(AttackConfig):
             attack_kind="membership",
             y_true=labels,
             y_pred=inferred,
+            data=data,
             sensitive_features=sensitive_membership,
         )
         return self._finalize_attack_state(
@@ -462,30 +465,18 @@ class InferenceAttackConfig(AttackConfig):
             attack_kind,
             attack_sub_family=self.attack_sub_family,
         )
-        if requested_mode == "val":
-            X_val = getattr(data, "X_val", None)
-            y_val = getattr(data, "y_val", None)
-            if X_val is not None and y_val is not None:
-                return "val", X_val, y_val
-            logger.warning(
-                "Attack mode='val' requested but validation split is unavailable; falling back to test split.",
-            )
-        elif requested_mode == "train":
-            X_train = getattr(data, "X_train", None)
-            y_train = getattr(data, "y_train", None)
-            if X_train is not None and y_train is not None:
-                return "train", X_train, y_train
-            logger.warning(
-                "Attack mode='train' requested but training split is unavailable; falling back to test split.",
-            )
-
-        X_test = getattr(data, "X_test", None)
-        y_test = getattr(data, "y_test", None)
-        if X_test is None or y_test is None:
-            raise ValueError(
-                "Inference attacks require test features/labels (or val when mode='val').",
-            )
-        return "test", X_test, y_test
+        return resolve_attack_split_payload(
+            data,
+            requested_mode,
+            error_message=(
+                "Inference attacks require test features/labels (or val when mode='val')."
+            ),
+            on_fallback=lambda mode: logger.warning(
+                "Attack mode='%s' requested but %s split is unavailable; falling back to test split.",
+                mode,
+                "validation" if mode == "val" else "training",
+            ),
+        )
 
     def infer_model_inversion(self, data: DataConfig, attack: AttackLike) -> ScoreDict:
         """Reconstruct representative inputs for target class labels.
@@ -599,6 +590,7 @@ class InferenceAttackConfig(AttackConfig):
             targeted_attribute="model_inversion",
             is_classification=False,
             attack_generation_time=self.attack_time,
+            data=data,
         )
         self.attack_score_time = float(score_dict.get("attack_score_time", 0.0))
 
@@ -701,6 +693,7 @@ class InferenceAttackConfig(AttackConfig):
             targeted_attribute="database_reconstruction_feature",
             is_classification=False,
             attack_generation_time=self.attack_time,
+            data=data,
         )
 
         label_score = {}
@@ -718,6 +711,7 @@ class InferenceAttackConfig(AttackConfig):
                         y_pred=np.asarray([int(y_pred_first)]),
                         targeted_attribute="database_reconstruction_label",
                         is_classification=True,
+                        data=data,
                     )
                     label_score = {
                         "database_reconstruction_label_accuracy": raw_label_scores.get(
@@ -731,6 +725,7 @@ class InferenceAttackConfig(AttackConfig):
                         y_pred=np.asarray([float(y_pred_first)]),
                         targeted_attribute="database_reconstruction_label",
                         is_classification=False,
+                        data=data,
                     )
                     label_score = {
                         "database_reconstruction_label_mae": raw_label_scores.get(

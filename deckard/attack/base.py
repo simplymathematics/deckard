@@ -9,7 +9,7 @@ import pandas as pd
 
 # Typing imports
 from dataclasses import dataclass, field
-from typing import Any, Callable, Literal, Mapping, Optional, Union
+from typing import Any, Callable, ClassVar, Literal, Mapping, Optional, Union
 
 # Sklearn and numpy imports
 from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin
@@ -34,11 +34,6 @@ from ..types import ArrayLike, EstimatorLike, MatrixLike
 from ..model.defense.base import _get_art_symbols
 from ..utils import (
     BaseConfig,
-    is_default_config_value,
-    is_null_config_value,
-    instantiate_plugin_spec,
-    load_class,
-    normalize_plugin_specs,
     resolve_class,
     resolve_torch_device,
 )
@@ -51,11 +46,15 @@ from ..frameworks.pytorch.torch_utils import (
     tensor_to_numpy,
 )
 from .canon import (
+    CANONICAL_ATTACK_SCORE_STAGE_ALIASES,
+    CANONICAL_ATTACK_SCORE_STAGES,
     ensure_attack_runtime_contract,
     normalize_attack_mode,
+    normalize_attack_score_mode,
+    normalize_attack_score_stage,
     normalize_attack_stage,
 )
-from ..orchestration import ScoreOrchestratorMixin
+from ..orchestration import ScoreOrchestratorMixin, resolve_data_split_payload
 from ..score.attack import AttackScorerConfig
 
 logger = logging.getLogger(__name__)
@@ -388,6 +387,96 @@ class AttackConfig(ScoreOrchestratorMixin, BaseConfig):
             "help": "Instantiated plugin objects cached for attack hook dispatch.",
         },
     )
+    score_stage_aliases: ClassVar[dict[str, str]] = (
+        CANONICAL_ATTACK_SCORE_STAGE_ALIASES
+    )
+    score_stage_order: ClassVar[tuple[str, ...]] = tuple(
+        stage
+        for stage in CANONICAL_ATTACK_SCORE_STAGES
+        if stage not in {"all", "auto"}
+    )
+
+    def _normalize_score_mode(self, mode: str) -> str:
+        normalized = normalize_attack_mode(mode)
+        if normalized == "auto":
+            return "test"
+        return normalize_attack_score_mode(normalized)
+
+    def _normalize_score_stage(
+        self,
+        stage: str | None,
+        *,
+        allow_all_auto: bool = True,
+    ) -> str:
+        normalized = normalize_attack_score_stage(stage)
+        if normalized in {"all", "auto"} and not allow_all_auto:
+            raise ValueError(
+                "Unknown attack score stage "
+                f"'{stage}'. Must be one of {list(CANONICAL_ATTACK_SCORE_STAGES)}",
+            )
+        return normalized
+
+    def _build_stage_score_payload(
+        self,
+        data: DataConfig,
+        *,
+        stage: str,
+        mode: str,
+        model: ModelConfig | BaseEstimator | EstimatorLike | None = None,
+        attack_kind: str | None = None,
+        y_true: Any = None,
+        y_pred: Any = None,
+        y_proba: Any = None,
+        **_kwargs: Any,
+    ) -> ScoreDict:
+        """Build attack-domain stage score payload for shared stage orchestration."""
+        if y_true is None:
+            y_true, X_mode = resolve_data_split_payload(
+                data,
+                mode,
+            )
+        else:
+            _, X_mode = resolve_data_split_payload(
+                data,
+                mode,
+            )
+
+        if y_true is None:
+            return ScoreDict()
+
+        if y_pred is None:
+            y_pred = self.score_y_pred
+        if y_pred is None:
+            y_pred = self.attacked_labels
+
+        if y_pred is None and model is not None and X_mode is not None:
+            predict_fn = getattr(model, "predict", None)
+            if callable(predict_fn):
+                y_pred = predict_fn(X_mode)
+
+        if y_pred is None:
+            return ScoreDict()
+
+        if y_proba is None:
+            y_proba = self.score_y_proba
+        if y_proba is None and model is not None and X_mode is not None:
+            predict_proba_fn = getattr(model, "predict_proba", None)
+            if callable(predict_proba_fn):
+                try:
+                    y_proba = predict_proba_fn(X_mode)
+                except Exception:
+                    y_proba = None
+
+        kind = str(attack_kind or self.attack_kind or "evasion").strip().lower()
+        score_stage = stage or "attack-score"
+        return self._score(
+            attack_kind=kind,
+            y_true=y_true,
+            y_pred=y_pred,
+            y_proba=y_proba,
+            stage=score_stage,
+            mode=mode,
+        )
 
     def __hash__(self):
         return super().__hash__()
@@ -409,28 +498,24 @@ class AttackConfig(ScoreOrchestratorMixin, BaseConfig):
         attack_scorer_cls = resolve_class(
             "deckard.score.attack.AttackScorerConfig",
         )
-        # Coerce user-specified scorer, if provided
-        if isinstance(self.scorer, str):
-            if is_null_config_value(self.scorer):
-                self.scorer = None
-            elif is_default_config_value(self.scorer, include_best=False):
-                self.scorer = attack_scorer_cls()
-            else:
-                self.scorer = load_class(self.scorer)
-        elif isinstance(self.scorer, DictConfig):
-            self.scorer = OmegaConf.to_container(self.scorer, resolve=True)
-        # Otherwise, handle expected input values
+        raw_scorer = self.scorer
+        if isinstance(raw_scorer, type):
+            raw_scorer = raw_scorer()
+        if isinstance(raw_scorer, (dict, DictConfig, str)) or raw_scorer is None:
+            self.scorer = self.coerce_optional_component(
+                raw_scorer,
+                attack_scorer_cls,
+                default_factory=attack_scorer_cls,
+                default_target="deckard.score.attack.AttackScorerConfig",
+                allow_passthrough=lambda value: callable(
+                    getattr(value, "_score", None),
+                ),
+                include_best_default=False,
+            )
+        else:
+            self.scorer = raw_scorer
         if self.scorer is None:
             self.scorer = attack_scorer_cls()
-        elif isinstance(self.scorer, dict):
-            scorer_spec = dict(self.scorer)
-            scorer_target = scorer_spec.pop("_target_", scorer_spec.pop("name", None))
-            if scorer_target is None:
-                self.scorer = attack_scorer_cls(**scorer_spec)
-            else:
-                self.scorer = load_class(scorer_target, **scorer_spec)
-        elif isinstance(self.scorer, type):
-            self.scorer = self.scorer()
 
         if not hasattr(self.scorer, "_score"):
             raise TypeError(
@@ -728,62 +813,6 @@ class AttackConfig(ScoreOrchestratorMixin, BaseConfig):
             attack_kind=attack_kind,
             extra_scores=extra_scores,
         )
-
-    def _instantiate_plugin(self, plugin_spec: Any):
-        """Instantiate one attack plugin specification.
-
-        Args:
-            plugin_spec: Plugin declaration payload or runtime plugin object.
-
-        Returns:
-            Instantiated plugin object.
-        """
-        return instantiate_plugin_spec(
-            plugin_spec,
-            loader=load_class,
-        )
-
-    def _get_plugins(self) -> list:
-        """Resolve and cache attack plugins for this config instance.
-
-        Returns:
-            Ordered list of instantiated plugin objects.
-        """
-        if self._plugin_objects is None:
-            plugin_specs = normalize_plugin_specs(self.plugins)
-            self._plugin_objects = [
-                self._instantiate_plugin(spec) for spec in plugin_specs
-            ]
-        return self._plugin_objects
-
-    def _run_plugin_hook(self, hook_name: str, **kwargs) -> list[Any]:
-        """Execute one plugin hook across all instantiated plugins.
-
-        Args:
-            hook_name: Hook method name to invoke when present on a plugin.
-            **kwargs: Hook-specific keyword arguments.
-
-        Returns:
-            Ordered list of hook return values.
-        """
-        hook_outputs = []
-        for plugin in self._get_plugins():
-            hook = getattr(plugin, hook_name, None)
-            if callable(hook):
-                hook_outputs.append(hook(self, **kwargs))
-        return hook_outputs
-
-    def _merge_plugin_scores(self, hook_outputs):
-        """Merge plugin hook outputs into the runtime score dictionary.
-
-        Args:
-            hook_outputs: Iterable of plugin hook return payloads.
-        """
-        if self.score_dict is None:
-            self.score_dict = ScoreDict()
-        for output in hook_outputs:
-            if isinstance(output, dict):
-                self.score_dict.update(ScoreDict.from_payload(output))
 
     def _resolve_runtime_attack_config(
         self,
@@ -1111,23 +1140,8 @@ class AttackConfig(ScoreOrchestratorMixin, BaseConfig):
                 "Evasion attacks are not supported for regression models in the current sklearn+ART integration.",
             )
 
-    def _initialize_attack(
-        self,
-        model: ModelConfig | EstimatorLike | BaseEstimator,
-        data: DataConfig,
-    ):
-        """Initialize attack runtime objects for the provided model/data context.
-
-        Args:
-            model: Model payload or model config to attack.
-            data: Runtime dataset used for ART wrapping and subset extraction.
-
-        Returns:
-            Tuple of initialized attack object, ART model, attack family, and subtype.
-
-        Raises:
-            ValueError: If attack type/model type is unsupported.
-        """
+    def _resolve_attack_runtime_identity(self) -> tuple[str, str, str, bool]:
+        """Resolve canonical attack name/family metadata for initialization."""
         attack_family = self.attack_family or ""
         attack_sub_family = self.attack_sub_family or ""
         attack_name = self.resolve_name(default=None)
@@ -1143,140 +1157,122 @@ class AttackConfig(ScoreOrchestratorMixin, BaseConfig):
             attack_family, attack_sub_family = plugin_family
             self._attack_family = attack_family
             self._attack_sub_family = attack_sub_family
-            # TextAttack/OpenAttack runtime handlers construct and execute
-            # concrete attack objects directly from canonical plugin names.
-            return None, None, attack_family, attack_sub_family
+            return attack_name, attack_family, attack_sub_family, True
 
-        art_model = None
+        return attack_name, attack_family, attack_sub_family, False
+
+    def _resolve_initial_art_model(
+        self,
+        model: ModelConfig | EstimatorLike | BaseEstimator,
+        data: DataConfig,
+        attack_family: str,
+    ) -> Any:
+        """Resolve ART model directly when model payload can provide one."""
         if isinstance(model, ModelConfig):
             runtime_model = getattr(model, "_model", None)
             if attack_family == "extraction" and is_torch_model(runtime_model):
                 # Extraction expects a neural-network ART classifier; build directly
                 # from the underlying torch module when available.
-                art_model = build_torch_art_model(model=runtime_model, data=data)
-            else:
-                art_model = model.get_art_model(data)
-        elif is_torch_model(model):
-            art_model = build_torch_art_model(model=model, data=data)
-        else:
-            check_is_fitted(model)
+                return build_torch_art_model(model=runtime_model, data=data)
+            return model.get_art_model(data)
+        if is_torch_model(model):
+            return build_torch_art_model(model=model, data=data)
+        check_is_fitted(model)
+        return None
 
-        # Validate attack family
-        if attack_family not in [
-            "evasion",
-            "poisoning",
-            "extraction",
-            "inference",
-        ]:
-            raise ValueError(f"Unsupported attack family: {attack_family}")
-
-        if attack_family == "poisoning":
-            self._validate_poisoning_params()
-
-        attack_class = resolve_class(attack_name)
-        if art_model is None:
-            sklearn_dict = _get_sklearn_dict()
-            if isinstance(model, _get_supported_models()):
-                art_model = model
-            elif (
-                isinstance(model, BaseEstimator)
-                and type(model).__name__ in sklearn_dict
-            ):
-                assert isinstance(
-                    model,
-                    ClassifierMixin,
-                ), f"Model must be a ClassifierMixin, got {type(model)}"
-                model_alias = type(model).__name__
-                art_cls = sklearn_dict[model_alias]
-                try:
-                    check_is_fitted(model)
-                except NotFittedError as e:
-                    logger.debug(e)
-                    model.fit(data.X_train, data.y_train)
-                art_model = art_cls(model)
-            elif isinstance(model, BaseEstimator):
-                try:
-                    check_is_fitted(model)
-                except NotFittedError:
-                    model.fit(data.X_train, data.y_train)
-                # Wrap models that require sensitive_features in predict (e.g. ThresholdOptimizer)
-                import inspect
-
-                predict_sig = inspect.signature(model.predict)
-                if "sensitive_features" in predict_sig.parameters:
-                    sensitive = getattr(data, "_sensitive_test", None)
-                    if sensitive is None:
-                        sensitive = getattr(data, "_sensitive_train", None)
-                    if sensitive is not None:
-                        model = SensitiveFeaturesWrapper(model, sensitive)
-                if isinstance(model, RegressorMixin) and not isinstance(
-                    model,
-                    ClassifierMixin,
-                ):
-                    art_model = sklearn_dict["sklearn-regressor"](model)
-                else:
-                    art_model = sklearn_dict["sklearn-classifier"](model)
-                if art_model.input_shape is None:
-                    art_model._input_shape = (data.X_train.shape[1],)
-                nb = getattr(art_model, "nb_classes", None)
-                if nb is None or nb <= 0:
-                    art_model.nb_classes = len(
-                        np.unique(np.asarray(data.y_train).flatten()),
-                    )
-            else:
-                raise ValueError(f"Unsupported model type: {type(model)}")
-        # Convert targeted attribute to index if necessary
-        if len(self.targeted_attribute) > 0 and isinstance(
-            self.targeted_attribute,
-            str,
-        ):
-            feature_name = self.targeted_attribute
+    def _coerce_estimator_to_art_model(
+        self,
+        model: ModelConfig | EstimatorLike | BaseEstimator,
+        data: DataConfig,
+    ) -> Any:
+        """Adapt non-ART estimators into ART wrappers required by attack classes."""
+        sklearn_dict = _get_sklearn_dict()
+        if isinstance(model, _get_supported_models()):
+            return model
+        if isinstance(model, BaseEstimator) and type(model).__name__ in sklearn_dict:
             assert isinstance(
-                data.X_train,
-                pd.DataFrame,
-            ), f"Expected Dataframe got {type(data.X_train)}"
-            if not hasattr(self, "target_index"):
-                if feature_name not in data.X_train.columns:
-                    cols = [
-                        col
-                        for col in data.X_train.columns
-                        if feature_name.split("_")[0] in col
-                    ]
-                    raise ValueError(
-                        f"{feature_name} not found. Did you mean one of these: {cols}?",
-                    )
-                self.target_index = data.X_train.columns.get_loc(feature_name)
-                self.attack_params["attack_feature"] = self.target_index
-                assert (
-                    "attack_feature" in self.attack_params
-                ), "attack_feature must be specified in attack_params for attribute inference attacks"
-        # TODO: Set labels to distinguish targeted attacks from non-targeted attacks
-        if "attack_model" in self.attack_params:
-            attack_model = self.attack_params["attack_model"]
-            if isinstance(attack_model, DictConfig):
-                dict_ = OmegaConf.to_container(attack_model)
-                cfg = ModelConfig(**dict_)
-                cfg(data)
-                attack_model = cfg.get_art_model(data)
-            elif isinstance(attack_model, ModelConfig):
-                attack_model._load_or_train_model(data)
-                attack_model = attack_model.get_art_model(data)
-            elif isinstance(attack_model, str):
-                assert Path(
-                    attack_model,
-                ).exists(), f"attack_model path {attack_model} does not exist"
-                with open(attack_model, "rb") as f:
-                    attack_model = pickle.load(f)
-                    assert isinstance(
-                        attack_model,
-                        ModelConfig,
-                    ), "Loaded attack_model must be a ModelConfig instance"
-                    attack_model = attack_model.get_art_model(data)
+                model,
+                ClassifierMixin,
+            ), f"Model must be a ClassifierMixin, got {type(model)}"
+            model_alias = type(model).__name__
+            art_cls = sklearn_dict[model_alias]
+            try:
+                check_is_fitted(model)
+            except NotFittedError as e:
+                logger.debug(e)
+                model.fit(data.X_train, data.y_train)
+            return art_cls(model)
+        if isinstance(model, BaseEstimator):
+            try:
+                check_is_fitted(model)
+            except NotFittedError:
+                model.fit(data.X_train, data.y_train)
+            # Wrap models that require sensitive_features in predict (e.g. ThresholdOptimizer)
+            import inspect
+
+            predict_sig = inspect.signature(model.predict)
+            if "sensitive_features" in predict_sig.parameters:
+                sensitive = getattr(data, "_sensitive_test", None)
+                if sensitive is None:
+                    sensitive = getattr(data, "_sensitive_train", None)
+                if sensitive is not None:
+                    model = SensitiveFeaturesWrapper(model, sensitive)
+            if isinstance(model, RegressorMixin) and not isinstance(
+                model,
+                ClassifierMixin,
+            ):
+                art_model = sklearn_dict["sklearn-regressor"](model)
             else:
-                raise ValueError(
-                    f"attack_model must be a ModelConfig instance. Got {type(attack_model)}",
+                art_model = sklearn_dict["sklearn-classifier"](model)
+            if art_model.input_shape is None:
+                art_model._input_shape = (data.X_train.shape[1],)
+            nb = getattr(art_model, "nb_classes", None)
+            if nb is None or nb <= 0:
+                art_model.nb_classes = len(
+                    np.unique(np.asarray(data.y_train).flatten()),
                 )
-            self.attack_params["attack_model"] = attack_model
+            return art_model
+        raise ValueError(f"Unsupported model type: {type(model)}")
+
+    def _normalize_attack_model_param(self, data: DataConfig) -> None:
+        """Resolve optional nested attack_model configuration into ART model."""
+        if "attack_model" not in self.attack_params:
+            return
+        attack_model = self.attack_params["attack_model"]
+        if isinstance(attack_model, DictConfig):
+            dict_ = OmegaConf.to_container(attack_model)
+            cfg = ModelConfig(**dict_)
+            cfg(data)
+            attack_model = cfg.get_art_model(data)
+        elif isinstance(attack_model, ModelConfig):
+            attack_model._load_or_train_model(data)
+            attack_model = attack_model.get_art_model(data)
+        elif isinstance(attack_model, str):
+            assert Path(
+                attack_model,
+            ).exists(), f"attack_model path {attack_model} does not exist"
+            with open(attack_model, "rb") as f:
+                attack_model = pickle.load(f)
+                assert isinstance(
+                    attack_model,
+                    ModelConfig,
+                ), "Loaded attack_model must be a ModelConfig instance"
+                attack_model = attack_model.get_art_model(data)
+        else:
+            raise ValueError(
+                f"attack_model must be a ModelConfig instance. Got {type(attack_model)}",
+            )
+        self.attack_params["attack_model"] = attack_model
+
+    def _build_attack_init_params(
+        self,
+        attack_family: str,
+        attack_sub_family: str,
+        attack_class: type,
+        art_model: Any,
+        data: DataConfig,
+    ) -> dict[str, Any]:
+        """Build constructor kwargs for attack runtime class."""
         attack_init_params = copy.deepcopy(self.attack_params)
         if attack_family == "poisoning":
             # Internal orchestration fields are not constructor args for ART attacks.
@@ -1307,6 +1303,88 @@ class AttackConfig(ScoreOrchestratorMixin, BaseConfig):
                 "missing_index",
             ):
                 attack_init_params.pop(key, None)
+        return attack_init_params
+
+    def _initialize_attack(
+        self,
+        model: ModelConfig | EstimatorLike | BaseEstimator,
+        data: DataConfig,
+    ):
+        """Initialize attack runtime objects for the provided model/data context.
+
+        Args:
+            model: Model payload or model config to attack.
+            data: Runtime dataset used for ART wrapping and subset extraction.
+
+        Returns:
+            Tuple of initialized attack object, ART model, attack family, and subtype.
+
+        Raises:
+            ValueError: If attack type/model type is unsupported.
+        """
+        _, attack_family, attack_sub_family, plugin_managed = (
+            self._resolve_attack_runtime_identity()
+        )
+        if plugin_managed:
+            # TextAttack/OpenAttack runtime handlers construct and execute
+            # concrete attack objects directly from canonical plugin names.
+            return None, None, attack_family, attack_sub_family
+
+        art_model = self._resolve_initial_art_model(
+            model,
+            data,
+            attack_family,
+        )
+
+        # Validate attack family
+        if attack_family not in [
+            "evasion",
+            "poisoning",
+            "extraction",
+            "inference",
+        ]:
+            raise ValueError(f"Unsupported attack family: {attack_family}")
+
+        if attack_family == "poisoning":
+            self._validate_poisoning_params()
+
+        attack_class = resolve_class(str(self.name))
+        if art_model is None:
+            art_model = self._coerce_estimator_to_art_model(model, data)
+        # Convert targeted attribute to index if necessary
+        if len(self.targeted_attribute) > 0 and isinstance(
+            self.targeted_attribute,
+            str,
+        ):
+            feature_name = self.targeted_attribute
+            assert isinstance(
+                data.X_train,
+                pd.DataFrame,
+            ), f"Expected Dataframe got {type(data.X_train)}"
+            if not hasattr(self, "target_index"):
+                if feature_name not in data.X_train.columns:
+                    cols = [
+                        col
+                        for col in data.X_train.columns
+                        if feature_name.split("_")[0] in col
+                    ]
+                    raise ValueError(
+                        f"{feature_name} not found. Did you mean one of these: {cols}?",
+                    )
+                self.target_index = data.X_train.columns.get_loc(feature_name)
+                self.attack_params["attack_feature"] = self.target_index
+                assert (
+                    "attack_feature" in self.attack_params
+                ), "attack_feature must be specified in attack_params for attribute inference attacks"
+        # TODO: Set labels to distinguish targeted attacks from non-targeted attacks
+        self._normalize_attack_model_param(data)
+        attack_init_params = self._build_attack_init_params(
+            attack_family,
+            attack_sub_family,
+            attack_class,
+            art_model,
+            data,
+        )
         attack = attack_class(art_model, **attack_init_params)
         self._attack_family = attack_family
         self._attack_sub_family = attack_sub_family
@@ -1472,6 +1550,17 @@ class AttackConfig(ScoreOrchestratorMixin, BaseConfig):
             attack_sub_family=attack_sub_family,
             execution_order=attack_execution_order,
         )
+        runtime._run_stage_scoring_pass(
+            data=data,
+            stage="pre-attack",
+            component=attack_sub_family or attack_family,
+            mode=runtime.resolve_mode_for_attack_kind(
+                runtime.attack_kind,
+                attack_sub_family=attack_sub_family,
+            ),
+            model=model,
+            attack_kind=runtime.attack_kind,
+        )
 
         scores = handler(
             data=data,
@@ -1491,6 +1580,19 @@ class AttackConfig(ScoreOrchestratorMixin, BaseConfig):
             attack_family=attack_family,
             attack_sub_family=attack_sub_family,
             execution_order=attack_execution_order,
+        )
+        runtime._run_stage_scoring_pass(
+            data=data,
+            stage="post-attack",
+            component=attack_sub_family or attack_family,
+            mode=runtime.resolve_mode_for_attack_kind(
+                runtime.attack_kind,
+                attack_sub_family=attack_sub_family,
+            ),
+            model=model,
+            attack_kind=runtime.attack_kind,
+            y_pred=runtime.score_y_pred,
+            y_proba=runtime.score_y_proba,
         )
         after_outputs = runtime._run_plugin_hook(
             "after_attack_dispatch",
@@ -1566,6 +1668,7 @@ class AttackConfig(ScoreOrchestratorMixin, BaseConfig):
         is_classification: bool,
         y_proba=None,
         mode: str | None = None,
+        data=None,
         ben_pred_labels=None,
         sensitive_features=None,
     ) -> ScoreDict:
@@ -1584,6 +1687,7 @@ class AttackConfig(ScoreOrchestratorMixin, BaseConfig):
             y_proba=y_proba,
             stage=stage,
             mode=mode,
+            data=data,
             ben_pred_labels=(y_pred if ben_pred_labels is None else ben_pred_labels),
             sensitive_features=sensitive_features,
         )

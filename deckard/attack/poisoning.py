@@ -15,6 +15,7 @@ from ..data import DataConfig
 from ..types import AttackLike, EstimatorLike, MatrixLike, StringifiedClass
 from ..model import ModelConfig
 from ..frameworks.pytorch.torch_utils import is_torch_model
+from ..orchestration import resolve_attack_split_payload
 from .base import (
     AttackConfig,
     AttackFamily,
@@ -574,30 +575,18 @@ class PoisoningAttackConfig(AttackConfig):
             "poisoning",
             attack_sub_family=self.attack_sub_family,
         )
-
-        if requested_mode == "val":
-            X_val = getattr(data, "X_val", None)
-            y_val = getattr(data, "y_val", None)
-            if X_val is not None and y_val is not None:
-                return "val", X_val, y_val
-            logger.warning(
-                "Attack mode='val' requested but validation split is unavailable; falling back to test split.",
-            )
-        elif requested_mode == "train":
-            X_train = getattr(data, "X_train", None)
-            y_train = getattr(data, "y_train", None)
-            if X_train is not None and y_train is not None:
-                return "train", X_train, y_train
-            logger.warning(
-                "Attack mode='train' requested but training split is unavailable; falling back to test split.",
-            )
-        X_test = getattr(data, "X_test", None)
-        y_test = getattr(data, "y_test", None)
-        if X_test is None or y_test is None:
-            raise ValueError(
-                "Extraction attacks require test features/labels (or val when mode='val').",
-            )
-        return "test", X_test, y_test
+        return resolve_attack_split_payload(
+            data,
+            requested_mode,
+            error_message=(
+                "Extraction attacks require test features/labels (or val when mode='val')."
+            ),
+            on_fallback=lambda mode: logger.warning(
+                "Attack mode='%s' requested but %s split is unavailable; falling back to test split.",
+                mode,
+                "validation" if mode == "val" else "training",
+            ),
+        )
 
     # Note:
     #     Expected family is ``poisoning``.
