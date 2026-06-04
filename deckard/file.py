@@ -22,6 +22,7 @@ from .attack.canon import AttackFiles
 from .data.canon import BaseFiles, DataFiles
 from .detector.canon import DetectorFiles
 from .model.canon import DefenseFiles, ModelFiles
+from .path_utils import to_posix_path
 
 
 class LogFiles(TypedDict, total=False):
@@ -427,7 +428,7 @@ class FileConfig(PlaceholderResolverMixin):
         path = Path(path_value)
         suffix = "".join(path.suffixes)
         hashed_name = f"{context_hash}{suffix}" if suffix else context_hash
-        return (path.parent / hashed_name).as_posix()
+        return to_posix_path(path.parent / hashed_name)
 
     def as_dict(self) -> dict[str, JsonValue]:
         """Return file mapping as a plain dictionary.

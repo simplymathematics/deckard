@@ -21,9 +21,11 @@ from deckard.utils import BaseConfig, load_data, save_data
 class _ScoreLoaderStub:
     def __init__(self):
         self.saved = None
+        self.load_calls = 0
 
     def load_scores(self, filepath):
         _ = filepath
+        self.load_calls += 1
         return {"existing": 1}
 
     def save_scores(self, scores, filepath):
@@ -89,6 +91,18 @@ def test_scoredict_call_merges_disk_and_persists_when_loader_present(tmp_path):
     saved_scores, saved_path = loader.saved
     assert saved_scores == {"new": 2, "existing": 1}
     assert saved_path == str(score_file)
+
+
+def test_scoredict_call_skips_missing_disk_cache(tmp_path):
+    loader = _ScoreLoaderStub()
+    score_file = tmp_path / "missing.json"
+
+    scores = ScoreDict({"new": 2})
+    result = scores(score_file=str(score_file), artifact_loader=loader, persist=False)
+
+    assert result == {"new": 2}
+    assert loader.load_calls == 0
+    assert loader.saved is None
 
 
 def test_save_and_load_scores_json_round_trip(tmp_path):

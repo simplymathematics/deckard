@@ -14,6 +14,7 @@ import yaml
 from . import DECKARD_CONFIG_DIR
 from .declarations import register_configs
 from .layers import SUPPORTED_LAYERS, layer_dict
+from .path_utils import to_posix_path
 from .utils import normalize_hydra_list_overrides
 
 # Set up logging
@@ -111,12 +112,12 @@ def _resolve_existing_config_dir(
         )
 
     if return_absolute:
-        return Path(config_dir).resolve().as_posix()
+        return to_posix_path(Path(config_dir).resolve())
 
     if not Path(config_dir).is_absolute():
         return os.path.relpath(config_dir, resolved_working_dir)
 
-    return Path(config_dir).as_posix()
+    return to_posix_path(config_dir)
 
 
 def _resolve_config_file(

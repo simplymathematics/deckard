@@ -31,11 +31,29 @@ except Exception:  # pragma: no cover - optional dependency
     joblib = None
 
 from .types import ArrayLike, MatrixLike, EstimatorLike
+from .path_utils import ensure_parent_dir, safe_unlink
 
 
 def is_url(value: str | Path) -> bool:
     parsed = urlparse(str(value))
     return parsed.scheme in {"http", "https"} and bool(parsed.netloc)
+
+
+def _load_cached_value(
+    filepath: str | Path | None,
+    loader: Any,
+    method_name: str,
+) -> Any | None:
+    """Load a cached value only when the file and loader method are available."""
+    if filepath is None:
+        return None
+    path = Path(filepath)
+    if not path.exists():
+        return None
+    method = getattr(loader, method_name, None)
+    if not callable(method):
+        return None
+    return method(str(path))
 
 
 SCORE_PAYLOAD_SCHEMA = "deckard.score.v1"
@@ -300,19 +318,11 @@ class ScoreDict(dict):
         if score_file is None:
             return dict(current)
 
-        score_path = Path(score_file)
-        score_path.parent.mkdir(parents=True, exist_ok=True)
+        score_path = ensure_parent_dir(score_file)
         merged = ScoreDict.from_payload(current)
 
-        if (
-            score_path.exists()
-            and artifact_loader is not None
-            and hasattr(
-                artifact_loader,
-                "load_scores",
-            )
-        ):
-            disk_scores = artifact_loader.load_scores(score_file)
+        disk_scores = _load_cached_value(score_path, artifact_loader, "load_scores")
+        if disk_scores is not None:
             merged = merged.merge(ScoreDict.from_payload(disk_scores))
 
         if (
@@ -509,8 +519,7 @@ class ArtifactLoaderMixin:
             AssertionError: If filepath is missing or file was not persisted.
         """
         assert filepath is not None, "Filepath must be provided to save scores."
-        score_path = Path(filepath)
-        score_path.parent.mkdir(parents=True, exist_ok=True)
+        score_path = ensure_parent_dir(filepath)
         supported_filetypes = [".csv", ".json", ".xlsx", ".yaml", ".yml"]
         serialized = _serialize_scores_payload(scores)
         if score_path.suffix in supported_filetypes:
@@ -639,8 +648,7 @@ class ArtifactLoaderMixin:
             AssertionError: If filepath is missing or file was not persisted.
         """
         assert filepath is not None, "Filepath must be provided to save data."
-        data_path = Path(filepath)
-        data_path.parent.mkdir(parents=True, exist_ok=True)
+        data_path = ensure_parent_dir(filepath)
         filetype = data_path.suffix
         supported_filetypes = [
             ".csv",
@@ -795,7 +803,7 @@ class ArtifactLoaderMixin:
         Raises:
             ValueError: If filepath extension is not pickle-compatible.
         """
-        Path(filepath).parent.mkdir(parents=True, exist_ok=True)
+        ensure_parent_dir(filepath)
         suffix = Path(filepath).suffix
         supported_suffixes = [".pkl", ".pickle"]
         if suffix not in supported_suffixes:
@@ -833,7 +841,7 @@ class ArtifactLoaderMixin:
                 obj = pickle.load(f)
         except (EOFError, pickle.UnpicklingError, AttributeError, OSError):
             if delete_corrupt:
-                Path(filepath).unlink(missing_ok=True)
+                safe_unlink(filepath)
             if ignore_corrupt:
                 return None
             raise
@@ -898,7 +906,7 @@ class ArtifactLoaderMixin:
                 raise ImportError(
                     "torch is required to save .pt model artifacts",
                 )
-            Path(filepath).parent.mkdir(parents=True, exist_ok=True)
+            ensure_parent_dir(filepath)
             torch.save(model, filepath)
             return
         elif suffix == ".joblib":
@@ -906,7 +914,7 @@ class ArtifactLoaderMixin:
                 raise ImportError(
                     "joblib is required to save .joblib model artifacts",
                 )
-            Path(filepath).parent.mkdir(parents=True, exist_ok=True)
+            ensure_parent_dir(filepath)
             joblib.dump(model, filepath)
             return
         elif suffix in [".pkl", ".pickle"]:

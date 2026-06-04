@@ -30,6 +30,7 @@ from omegaconf import DictConfig, OmegaConf
 from ..artifacts import ScoreDict
 from ..data import DataConfig
 from ..model import ModelConfig
+from ..path_utils import safe_unlink
 from ..types import ArrayLike, EstimatorLike, MatrixLike
 from ..model.defense.base import _get_art_symbols
 from ..utils import (
@@ -557,7 +558,7 @@ class AttackConfig(ScoreOrchestratorMixin, BaseConfig):
                     attack_predictions_file,
                     exc,
                 )
-                Path(attack_predictions_file).unlink(missing_ok=True)
+                safe_unlink(attack_predictions_file)
 
     def _validate_poisoning_params(self):
         """Validate poisoning-specific configuration parameters."""

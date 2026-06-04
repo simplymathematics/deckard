@@ -41,6 +41,7 @@ from ...data.canon import DataFiles, merge_data_files
 from ...data.declarations import build_loader_registry
 from ...data.pipeline.base import DataPipeline
 from ...artifacts import ScoreDict
+from ...path_utils import safe_unlink
 from ...types import DatasetLike
 from .sample import PytorchBaseSampler
 from .pipeline import TorchDataPipelineMixin
@@ -67,7 +68,7 @@ def _persist_pickle_cache(
             cache_path,
             exc,
         )
-        Path(cache_path).unlink(missing_ok=True)
+        safe_unlink(cache_path)
 
 
 @dataclass(eq=False, kw_only=True)
