@@ -18,8 +18,8 @@ from ...types import ArtEsimtator, EstimatorLike, StringifiedClass
 from ...data import DataConfig
 from ...utils import (
     BaseConfig,
+    coerce_component_sequence,
     coerce_config,
-    coerce_to_list,
     instantiate_plugin_spec,
     is_null_config_value,
     normalize_plugin_specs,
@@ -491,8 +491,13 @@ class DefensePipelineConfigBehaviorMixin(DefenseHookRuntimeMixin):
                 defenses=[DefenseStep.from_defense(defense_config)],
             )
         defense_config = coerce_config(defense_config)
-        if isinstance(defense_config, (list, ListConfig)):
-            return DefenseConfig(defenses=coerce_to_list(defense_config))
+        if isinstance(defense_config, (list, tuple, ListConfig)):
+            return DefenseConfig(
+                defenses=coerce_component_sequence(
+                    defense_config,
+                    field_name="defense_config",
+                ),
+            )
         if isinstance(defense_config, dict):
             defense_dict = cast(dict[str, Any], dict(defense_config))
             target = defense_dict.pop("_target_", None)
@@ -525,7 +530,10 @@ class DefensePipelineConfigBehaviorMixin(DefenseHookRuntimeMixin):
         defense_obj = coerce_config(defense_obj)
 
         if isinstance(defense_obj, (tuple, list, ListConfig)):
-            defenses = list(defense_obj)
+            defenses = coerce_component_sequence(
+                defense_obj,
+                field_name="defense pipeline step",
+            )
             if len(defenses) == 1:
                 return self._coerce_single_defense(defenses[0])
             raise TypeError(
@@ -740,10 +748,10 @@ class DefensePipelineConfigBehaviorMixin(DefenseHookRuntimeMixin):
         if defenses is None:
             return []
         defenses = coerce_config(defenses)
-        if isinstance(defenses, (tuple, list, ListConfig)):
-            defense_list = list(defenses)
-        else:
-            defense_list = [defenses]
+        defense_list = coerce_component_sequence(
+            defenses,
+            field_name="defenses",
+        )
         normalized: list[DefenseStep] = []
         for item in defense_list:
             step = self._coerce_single_defense(item)

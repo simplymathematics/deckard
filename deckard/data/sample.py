@@ -38,7 +38,7 @@ from sklearn.model_selection import (
     StratifiedShuffleSplit,
     train_test_split,
 )
-from ..utils import load_class
+from ..utils import resolve_component_spec
 
 if TYPE_CHECKING:
     from .base import DataConfig
@@ -158,49 +158,31 @@ class BaseSampler:
             "shuffle": ShuffleSampler,
         }
 
-        def _sampler_kwargs_for_alias(alias: str) -> dict[str, Any]:
-            sampler_spec = getattr(config, "sampler", None)
-            if not isinstance(sampler_spec, dict):
-                return {}
-
-            return sampler_spec
+        def _alias_kwargs(source: Any, alias: str) -> dict[str, Any]:
+            if isinstance(source, dict):
+                return {str(key): value for key, value in source.items()}
+            return {}
 
         spec = getattr(config, "sampler", None)
         if spec is None:
             return None
-
-        if isinstance(spec, str):
-            key = spec.lower()
-            if key not in sampler_aliases:
-                raise ValueError(
-                    f"Unknown sampler '{spec}'. Must be one of {list(sampler_aliases)}.",
-                )
-            return sampler_aliases[key](**_sampler_kwargs_for_alias(key))
-
-        try:
-            from omegaconf import DictConfig, OmegaConf
-
-            if isinstance(spec, DictConfig):
-                spec = OmegaConf.to_container(spec, resolve=True)
-        except ImportError:
-            pass
+        if isinstance(spec, dict) and not spec:
+            return None
 
         if isinstance(spec, dict):
-            if not spec:
-                return None
-            spec = dict(spec)
-            class_path = spec.pop("name", spec.pop("_target_", None))
-            kwargs = {str(key): value for key, value in spec.items()}
+            payload = dict(spec)
+            class_path = payload.pop("name", payload.pop("_target_", None))
             if class_path is None:
-                # Backward compatibility: plain sampler kwargs imply split sampler.
-                return SplitSampler(**kwargs)
-            if isinstance(class_path, str):
-                key = class_path.lower()
-                if key in sampler_aliases:
-                    return sampler_aliases[key](**kwargs)
-            return load_class(str(class_path), **kwargs)
+                return SplitSampler(
+                    **{str(key): value for key, value in payload.items()},
+                )
 
-        return cls._resolve_terminal_sampler_spec(spec)
+        return resolve_component_spec(
+            spec,
+            field_name="sampler",
+            aliases=sampler_aliases,
+            alias_kwargs_getter=_alias_kwargs,
+        )
 
     @classmethod
     def _default_sampler(cls) -> Any:

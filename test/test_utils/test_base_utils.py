@@ -17,6 +17,7 @@ from deckard.utils import (
     BaseConfig,
     _auto_torch_device_from_backends,
     _torch_compiler_backends,
+    coerce_component_sequence,
     coerce_config,
     coerce_to_list,
     create_parser_from_function,
@@ -26,6 +27,7 @@ from deckard.utils import (
     merge_list_of_dicts,
     merge_scores_with_collision_suffix,
     normalize_plugin_specs,
+    resolve_component_spec,
     resolve_class,
     resolve_torch_device,
     safe_store,
@@ -245,6 +247,42 @@ class TestUtilsAdditional:
             overrides={"defense": "parent-defense"},
         )
         assert child_explicit.defense == "child-defense"
+
+    def test_coerce_component_sequence_wraps_single_mapping(self):
+        payload = {"name": "step-a"}
+
+        assert coerce_component_sequence(None, field_name="defenses") == []
+        assert coerce_component_sequence(payload, field_name="defenses") == [payload]
+        assert coerce_component_sequence([payload], field_name="defenses") == [payload]
+
+    def test_resolve_component_spec_supports_alias_type_and_callable(self):
+        class AliasComponent:
+            def __init__(self, **kwargs):
+                self.kwargs = kwargs
+
+        resolved_alias = resolve_component_spec(
+            "alias",
+            field_name="trainer",
+            aliases={"alias": AliasComponent},
+            alias_kwargs_getter=lambda source, alias: {
+                "source": source,
+                "alias": alias,
+            },
+        )
+        assert isinstance(resolved_alias, AliasComponent)
+        assert resolved_alias.kwargs == {"source": "alias", "alias": "alias"}
+
+        resolved_type = resolve_component_spec(
+            AliasComponent,
+            field_name="trainer",
+        )
+        assert isinstance(resolved_type, AliasComponent)
+
+        resolved_callable = resolve_component_spec(
+            lambda: 1,
+            field_name="trainer",
+        )
+        assert callable(resolved_callable)
 
     def test_resolve_torch_device_cuda_falls_back_to_best_available(self):
         try:

@@ -50,6 +50,8 @@ __all__ = [
     "coerce_to_list",
     "normalize_optional_list_value",
     "normalize_optional_mapping_or_steps",
+    "coerce_component_sequence",
+    "resolve_component_spec",
     "normalize_plugin_specs",
     "instantiate_plugin_spec",
     "split_separated_tokens",
@@ -385,6 +387,124 @@ def normalize_optional_mapping_or_steps(
     raise TypeError(
         f"{field_name} must be None, bool, dict/DictConfig, or list/ListConfig. Got {type(value)}",
     )
+
+
+def coerce_component_sequence(
+    value: Any,
+    *,
+    field_name: str,
+) -> list[Any]:
+    """Normalize a component spec collection into a plain list.
+
+    This helper accepts singleton mappings as well as list/tuple/ListConfig
+    collections so callers can treat defense and pipeline step payloads
+    uniformly.
+
+    Args:
+        value (Any): Raw component payload.
+        field_name (str): Name of the field being normalized for error messages.
+
+    Returns:
+        list[Any]: A plain Python list of component payloads.
+
+    Raises:
+        TypeError: If *value* cannot be interpreted as a component collection.
+    """
+    value = coerce_config(value)
+    if value is None or is_null_config_value(value):
+        return []
+    if isinstance(value, (list, tuple, ListConfig)):
+        return list(value)
+    if isinstance(value, (DictConfig, dict)):
+        return [dict(value)]
+    return [value]
+
+
+def resolve_component_spec(
+    spec: Any,
+    *,
+    field_name: str,
+    aliases: dict[str, Any] | None = None,
+    alias_normalizer: Callable[[str], str | None] | None = normalize_config_token,
+    alias_kwargs_getter: Callable[[Any, str], dict[str, Any]] | None = None,
+    missing_mapping_resolver: Callable[[dict[str, Any]], Any] | None = None,
+    loader: Callable[..., Any] | None = None,
+) -> Any:
+    """Resolve a string/dict/type/callable component specification.
+
+    Args:
+        spec (Any): Raw component specification to resolve.
+        field_name (str): Human-readable component name for error messages.
+        aliases (dict[str, Any] | None): Optional alias-to-class mapping.
+        alias_normalizer (Callable | None): Optional alias normalization hook.
+        alias_kwargs_getter (Callable | None): Optional callback returning
+            constructor kwargs for a resolved alias.
+        missing_mapping_resolver (Callable | None): Optional callback used when
+            a mapping spec omits both ``name`` and ``_target_``.
+        loader (Callable): Import/instantiate helper used for non-alias class paths.
+
+    Returns:
+        Any: Resolved callable, instantiated object, or passthrough runtime object.
+
+    Raises:
+        ValueError: If *spec* cannot be resolved.
+    """
+    if loader is None:
+        loader = load_class
+
+    spec = coerce_config(spec)
+    if spec is None:
+        return None
+
+    if isinstance(spec, str):
+        if aliases is None:
+            return loader(spec)
+        alias = alias_normalizer(spec) if alias_normalizer is not None else spec
+        if alias not in aliases:
+            raise ValueError(
+                f"Unknown {field_name} '{spec}'. Must be one of {list(aliases)}.",
+            )
+        kwargs = alias_kwargs_getter(spec, alias) if alias_kwargs_getter else {}
+        return aliases[alias](**kwargs)
+
+    if isinstance(spec, dict):
+        if not spec:
+            return None
+
+        payload = dict(spec)
+        class_path = payload.pop("name", payload.pop("_target_", None))
+        if class_path is None:
+            if missing_mapping_resolver is not None:
+                return missing_mapping_resolver(payload)
+            raise ValueError(
+                f"{field_name} dict must include 'name' or '_target_'",
+            )
+
+        if isinstance(class_path, str) and aliases is not None:
+            alias = (
+                alias_normalizer(class_path)
+                if alias_normalizer is not None
+                else class_path
+            )
+            if alias in aliases:
+                kwargs = (
+                    alias_kwargs_getter(payload, alias) if alias_kwargs_getter else {}
+                )
+                kwargs = {**kwargs, **payload}
+                return aliases[alias](**kwargs)
+
+        loaded = loader(str(class_path), **payload)
+        if isinstance(loaded, type):
+            return loaded()
+        return loaded
+
+    if callable(spec) and not isinstance(spec, type):
+        return spec
+
+    if isinstance(spec, type):
+        return spec()
+
+    raise ValueError(f"Unsupported {field_name} specification: {type(spec)}")
 
 
 def normalize_plugin_specs(plugins: Any) -> list:

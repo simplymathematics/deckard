@@ -22,12 +22,17 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
-import yaml
 from omegaconf import OmegaConf
 from optuna.exceptions import ExperimentalWarning
 from sklearn.exceptions import ConvergenceWarning, UndefinedMetricWarning
 
 from ._optional import OPTIONAL_RUNTIME_CLASS_PATHS
+from . import config_resolvers as _config_resolvers
+
+_load_yaml_file = _config_resolvers._load_yaml_file
+_file_resolver = _config_resolvers._file_resolver
+_merge_resolver = _config_resolvers._merge_resolver
+register_core_resolvers = _config_resolvers.register_core_resolvers
 
 # Install library warning filters before importing deckard submodules, since
 # those imports can transitively import sklearn/art and emit warnings.
@@ -96,77 +101,7 @@ DECKARD_DEFAULT_CONFIG_FILE = os.environ.get(
 )
 
 
-def _load_yaml_file(path: Path):
-    """Load a YAML file from disk and return the parsed Python object."""
-    with path.open("r") as f:
-        return yaml.safe_load(f)
-
-
-def _file_resolver(arg: str):
-    """Resolve ``${file:...}`` OmegaConf interpolations relative to deckard config.
-
-    Example:
-
-    ```text
-    ${file:search/rf.yaml:model_search}
-    ${file:./configs/search/rf.yaml:model_search.subkey}
-    ${file:/abs/path/to/file.yaml}
-    ```
-    """
-    if not arg:
-        raise ValueError(
-            "file resolver requires an argument like 'path/to/file.yaml[:key]'",
-        )
-
-    # split into path and optional key (only first ':' splits, keys may contain '.')
-    if ":" in arg:
-        path_part, key_part = arg.split(":", 1)
-        key_part = key_part.strip()
-    else:
-        path_part, key_part = arg, None
-    path = Path(DECKARD_CONFIG_DIR, path_part)
-    if not path.exists():
-        raise FileNotFoundError(
-            f"file resolver: file not found: {path_part} in working dir {os.getcwd()}",
-        )
-
-    data = _load_yaml_file(path)
-    # if user requested a nested key, walk the dict using dot-splitting
-    if key_part:
-        parts = key_part.split(".")
-        cur = data
-        for p in parts:
-            if isinstance(cur, dict) and p in cur:
-                cur = cur[p]
-            else:
-                raise KeyError(
-                    f"file resolver: key '{key_part}' not found in {path}",
-                )
-        data = cur
-    # Return as an OmegaConf node so structured content is preserved
-    return OmegaConf.create(data)
-
-
-# Register resolver with OmegaConf (Hydra will pick up this plugin module automatically)
-OmegaConf.register_new_resolver(
-    "file",
-    _file_resolver,
-    replace=True,
-    use_cache=True,
-)
-
-
-def _merge_resolver(*args):
-    """Resolve and merge multiple config fragments into a single OmegaConf node."""
-    merged = OmegaConf.create()
-    for arg in args:
-        # Resolve any interpolations
-        obj = OmegaConf.to_container(OmegaConf.create(arg), resolve=True)
-        merged = OmegaConf.merge(merged, obj)
-    return OmegaConf.create(merged)
-
-
-OmegaConf.register_new_resolver("merge", _merge_resolver, replace=True)
+register_core_resolvers()
 
 
 def _hash_conf(*values, _root_=None):

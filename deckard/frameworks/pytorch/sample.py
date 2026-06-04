@@ -14,7 +14,7 @@ from torch.utils.data import TensorDataset
 
 # Local / project
 from ...data.sample import BaseSampler
-from ...utils import load_class
+from ...utils import resolve_component_spec
 
 try:
     from omegaconf import DictConfig, OmegaConf
@@ -199,52 +199,31 @@ class PytorchBaseSampler(BaseSampler):
 
         sampler_params = dict(getattr(config, "sampler_params", {}) or {})
 
-        spec = getattr(config, "sampler", None)
-        if spec is None:
-            return None
-
-        if isinstance(spec, str):
-            key = spec.strip().lower()
-            if key not in sampler_aliases:
-                raise ValueError(
-                    f"Unknown sampler '{spec}'. Must be one of {list(sampler_aliases)}.",
-                )
-            alias_kwargs = cls._sampler_kwargs_for_alias(config, sampler_params, key)
-            alias_kwargs.update(sampler_params)
-            return sampler_aliases[key](**alias_kwargs)
-
-        if (
-            DictConfig is not None
-            and OmegaConf is not None
-            and isinstance(spec, DictConfig)
-        ):
-            spec = OmegaConf.to_container(spec, resolve=True)
-
-        if isinstance(spec, dict):
-            if not spec:
-                return None
-            spec = dict(spec)
-            class_path = spec.pop("name", spec.pop("_target_", None))
-            if class_path is None:
-                raise ValueError("sampler dict must include 'name' or '_target_'")
-
-            key = str(class_path).strip().lower()
-            if key in sampler_aliases:
+        def _alias_kwargs(source: Any, alias: str) -> dict[str, Any]:
+            if isinstance(source, str):
+                return cls._sampler_kwargs_for_alias(config, sampler_params, alias)
+            if isinstance(source, dict):
                 alias_kwargs = cls._sampler_kwargs_for_alias(
                     config,
                     sampler_params,
-                    key,
+                    alias,
                 )
                 alias_kwargs.update(sampler_params)
-                alias_kwargs.update({str(k): v for k, v in spec.items()})
-                return sampler_aliases[key](**alias_kwargs)
+                return alias_kwargs
+            return {}
 
-            loaded = load_class(class_path, **{str(k): v for k, v in spec.items()})
-            if isinstance(loaded, type):
-                return loaded()
-            return loaded
+        spec = getattr(config, "sampler", None)
+        if spec is None:
+            return None
+        if isinstance(spec, dict) and not spec:
+            return None
 
-        return cls._resolve_terminal_sampler_spec(spec)
+        return resolve_component_spec(
+            spec,
+            field_name="sampler",
+            aliases=sampler_aliases,
+            alias_kwargs_getter=_alias_kwargs,
+        )
 
     @classmethod
     def _default_sampler(cls) -> TorchBaseSampler:

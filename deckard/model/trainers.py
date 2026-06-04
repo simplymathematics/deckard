@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING, Any
 from sklearn.exceptions import NotFittedError
 
 from .canon import normalize_model_trainer_alias
-from ..utils import load_class
+from ..utils import resolve_component_spec
 
 if TYPE_CHECKING:
     from .base import ModelConfig
@@ -79,40 +79,26 @@ class BaseTrainer:
             "pytorch": PytorchTrainer,
         }
 
+        trainer_params = dict(getattr(config, "trainer_params", {}) or {})
+
+        def _alias_kwargs(source: Any, alias: str) -> dict[str, Any]:
+            if isinstance(source, str):
+                return dict(trainer_params)
+            return {}
+
         spec = getattr(config, "trainer", None)
         if spec is None:
             return None
+        if isinstance(spec, dict) and not spec:
+            return None
 
-        if isinstance(spec, str):
-            key = normalize_model_trainer_alias(spec)
-            trainer_cls = trainer_aliases[key]
-            params = dict(getattr(config, "trainer_params", {}) or {})
-            return trainer_cls(**params)
-
-        try:
-            from omegaconf import DictConfig, OmegaConf
-
-            if isinstance(spec, DictConfig):
-                spec = OmegaConf.to_container(spec, resolve=True)
-        except ImportError:
-            pass
-
-        if isinstance(spec, dict):
-            if not spec:
-                return None
-            payload = dict(spec)
-            class_path = payload.pop("name", payload.pop("_target_", None))
-            if class_path is None:
-                raise ValueError("trainer dict must include 'name' or '_target_'")
-            return load_class(class_path, **payload)
-
-        if callable(spec) and not isinstance(spec, type):
-            return spec
-
-        if isinstance(spec, type):
-            return spec()
-
-        raise ValueError(f"Unsupported trainer specification: {type(spec)}")
+        return resolve_component_spec(
+            spec,
+            field_name="trainer",
+            aliases=trainer_aliases,
+            alias_normalizer=normalize_model_trainer_alias,
+            alias_kwargs_getter=_alias_kwargs,
+        )
 
     @classmethod
     def compose(cls, config: "ModelConfig") -> Any:

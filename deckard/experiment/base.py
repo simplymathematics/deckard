@@ -11,41 +11,26 @@ import time
 import inspect
 from dataclasses import dataclass, field
 from typing import List, Union, Literal, Any, Mapping
-from omegaconf import DictConfig, ListConfig, OmegaConf
-import os
-import yaml
-import numpy as np
-import pandas as pd
 from pathlib import Path
 from types import SimpleNamespace
+
+import numpy as np
+import pandas as pd
+from omegaconf import DictConfig, ListConfig, OmegaConf
 from hydra.utils import instantiate
+import os
+import yaml
 
 from .. import _OPTIONAL_RUNTIME_CLASS_PATHS, _resolve_optional_runtime_class
+from .. import config_resolvers as _config_resolvers
 from ..artifacts import ScoreDict
-from ..declarations import is_package_available
 from ..data import DataConfig
-from ..model import ModelConfig
-from ..plugins import is_plugin_available
-from ..model.defense.base import DefenseConfig
-
-try:
-    from ..attack import AttackConfig
-except Exception:  # pragma: no cover
-    AttackConfig = None
-from ..detector import DetectorConfig
-from ..score import ScorerDictConfig
+from ..declarations import is_package_available
 from ..file import FileConfig, data_files, model_files, attack_files
-from ..utils import (
-    BaseConfig,
-    coerce_config,
-    coerce_to_list,
-    instantiate_config,
-    is_default_config_value,
-    is_null_config_value,
-    load_class,
-    merge_scores_with_collision_suffix,
-    split_separated_tokens,
-)
+from ..model import ModelConfig
+from ..model.defense.base import DefenseConfig
+from ..plugins import is_plugin_available
+from ..score import ScorerDictConfig
 from ..score.base import coerce_scorer_config, _DataScorerMarker, _AttackProfileScorer
 from ..data.sample import BaseSampler, KFoldSampler, ShuffleSampler
 from ..plugins.base import HookBundle, compose_hook_plugins
@@ -68,6 +53,30 @@ from .canon import (
     resolve_experiment_score_modes,
 )
 
+
+from ..detector import DetectorConfig
+from ..utils import (
+    BaseConfig,
+    coerce_config,
+    coerce_to_list,
+    instantiate_config,
+    is_default_config_value,
+    is_null_config_value,
+    load_class,
+    merge_scores_with_collision_suffix,
+    split_separated_tokens,
+)
+
+_load_yaml_file = _config_resolvers._load_yaml_file
+_file_resolver = _config_resolvers._file_resolver
+_merge_resolver = _config_resolvers._merge_resolver
+register_core_resolvers = _config_resolvers.register_core_resolvers
+
+
+try:
+    from ..attack import AttackConfig
+except Exception:  # pragma: no cover
+    AttackConfig = None
 try:
     import tensorflow as tf
 except ImportError:  # pragma: no cover
@@ -159,77 +168,7 @@ DECKARD_DEFAULT_CONFIG_FILE = os.environ.get(
 )
 
 
-def _load_yaml_file(path: Path):
-    with path.open("r") as f:
-        return yaml.safe_load(f)
-
-
-def _file_resolver(arg: str):
-    """
-    Usage:
-      ${file:search/rf.yaml:model_search}
-      ${file:./configs/search/rf.yaml:model_search.subkey}
-      ${file:/abs/path/to/file.yaml}       -> returns whole file
-    """
-    if not arg:
-        raise ValueError(
-            "file resolver requires an argument like 'path/to/file.yaml[:key]'",
-        )
-
-    # split into path and optional key (only first ':' splits, keys may contain '.')
-    if ":" in arg:
-        path_part, key_part = arg.split(":", 1)
-        key_part = key_part.strip()
-    else:
-        path_part, key_part = arg, None
-    path = Path(DECKARD_CONFIG_DIR, path_part)
-    if not path.exists():
-        raise FileNotFoundError(
-            f"file resolver: file not found: {path_part} in working dir {os.getcwd()}",
-        )
-
-    data = _load_yaml_file(path)
-    # if user requested a nested key, walk the dict using dot-splitting
-    if key_part:
-        parts = key_part.split(".")
-        cur = data
-        for p in parts:
-            if isinstance(cur, dict) and p in cur:
-                cur = cur[p]
-            else:
-                raise KeyError(
-                    f"file resolver: key '{key_part}' not found in {path}",
-                )
-        data = cur
-    data = OmegaConf.create(data)
-    # Return as an OmegaConf node so structured content is preserved
-    return data
-
-
-# Register resolver with OmegaConf (Hydra will pick up this plugin module automatically)
-OmegaConf.register_new_resolver(
-    "file",
-    _file_resolver,
-    replace=True,
-    use_cache=True,
-)
-
-
-def _merge_resolver(*args):
-    """
-    Merge multiple OmegaConf or dict objects into a single OmegaConf dict.
-    Usage:
-      ${merge:${file:search/rf.yaml:model_search}, ${file:search/class_labels.yaml:model_search}}
-    """
-    merged = OmegaConf.create()
-    for arg in args:
-        # Resolve any interpolations
-        obj = OmegaConf.to_container(OmegaConf.create(arg), resolve=True)
-        merged = OmegaConf.merge(merged, obj)
-    return OmegaConf.create(merged)
-
-
-OmegaConf.register_new_resolver("merge", _merge_resolver, replace=True)
+register_core_resolvers()
 
 
 @dataclass(eq=False, kw_only=True)
