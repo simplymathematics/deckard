@@ -458,7 +458,7 @@ class PytorchDataConfig(TorchDataPipelineMixin, DataConfig):
 
                 def _y_transform(y: Tensor) -> Tensor:
                     y_series = pd.Series(self._tensor_to_numpy(y).reshape(-1))
-                    transformed = pipeline_cfg._fit_transform_target(y_steps, y_series)
+                    transformed = pipeline_cfg.fit_transform_target(y_steps, y_series)
                     return self._coerce_target_tensor(transformed)
 
                 self.y_transform = _y_transform
@@ -503,6 +503,16 @@ class PytorchDataConfig(TorchDataPipelineMixin, DataConfig):
         self.dataset_type = "tensor"
         return self
 
+    def fit(self, run_hooks: bool = True) -> "PytorchDataConfig":
+        """Compatibility shim that materializes train/test splits.
+
+        Some legacy tests and workflows call ``fit()`` on data configs.
+        PyTorch data configs are data-only, so ``fit`` maps to ``sample``.
+        This preserves the historical requirement that data must already be
+        loaded, and ``sample`` enforces that contract.
+        """
+        return self.sample(run_hooks=run_hooks)
+
     def load_dataset(self) -> "PytorchDataConfig":
         """Materialize runtime torch dataset payload into ``_X``/``_y``.
 
@@ -513,6 +523,62 @@ class PytorchDataConfig(TorchDataPipelineMixin, DataConfig):
             "PytorchDataConfig",
             self._load_dataset_with_hooks(self._load_data),
         )
+
+    def _load_from_registry(self, dataset_name: str, start: float) -> bool:
+        default_loader_registry = build_loader_registry(self)
+        if dataset_name not in default_loader_registry:
+            return False
+
+        default_loader_registry[dataset_name](**(self.data_params or {}))
+        self._X = self._coerce_feature_tensor(self._X)
+        self._y = self._coerce_target_tensor(self._y)
+        self.dataset_obj = TensorDataset(self._X, self._y)
+        self.dataset_type = "tensor"
+
+        if getattr(self, "pipeline", None):
+            self.run_pipeline(self.build_pipeline())
+
+        end = time.perf_counter()
+        if getattr(self, "data_load_time", None) is None:
+            self._set_time("data_load_time", end - start)
+        logger.info(
+            "Loaded declaration dataset %s in %.2f seconds. Shape: %s, Labels: %s",
+            self.name,
+            self.data_load_time,
+            self._X.shape,
+            self._y.shape,
+        )
+        return True
+
+    def _apply_torchvision_default_transform(self, dataset_name: str) -> None:
+        if not dataset_name.startswith("torchvision.datasets."):
+            return
+        try:
+            from torchvision import transforms
+
+            if (
+                "transform" not in self.data_params
+                or self.data_params["transform"] is None
+            ):
+                self.data_params["transform"] = transforms.ToTensor()
+        except ImportError:
+            return
+
+    def _build_dataset_params(self) -> dict[str, Any]:
+        loader_only_keys = {
+            "batch_size",
+            "num_workers",
+            "pin_memory",
+            "shuffle",
+            "drop_last",
+            "persistent_workers",
+            "prefetch_factor",
+        }
+        return {
+            key: value
+            for key, value in (self.data_params or {}).items()
+            if key not in loader_only_keys
+        }
 
     def _load_data(self) -> None:
         """Load a PyTorch dataset using load_class for generic instantiation.
@@ -527,58 +593,15 @@ class PytorchDataConfig(TorchDataPipelineMixin, DataConfig):
         start = time.perf_counter()
 
         try:
-            default_loader_registry = build_loader_registry(self)
-            if dataset_name in default_loader_registry:
-                default_loader_registry[dataset_name](**(self.data_params or {}))
-                self._X = self._coerce_feature_tensor(self._X)
-                self._y = self._coerce_target_tensor(self._y)
-                self.dataset_obj = TensorDataset(self._X, self._y)
-                self.dataset_type = "tensor"
-
-                if getattr(self, "pipeline", None):
-                    self.run_pipeline(self.build_pipeline())
-
-                end = time.perf_counter()
-                if getattr(self, "data_load_time", None) is None:
-                    self._set_time("data_load_time", end - start)
-                logger.info(
-                    "Loaded declaration dataset %s in %.2f seconds. Shape: %s, Labels: %s",
-                    self.name,
-                    self.data_load_time,
-                    self._X.shape,
-                    self._y.shape,
-                )
+            if self._load_from_registry(dataset_name, start):
                 return
 
             # If using torchvision image datasets, ensure transform=ToTensor() if not set
-            if dataset_name.startswith("torchvision.datasets."):
-                try:
-                    from torchvision import transforms
-
-                    if (
-                        "transform" not in self.data_params
-                        or self.data_params["transform"] is None
-                    ):
-                        self.data_params["transform"] = transforms.ToTensor()
-                except ImportError:
-                    pass
+            self._apply_torchvision_default_transform(dataset_name)
 
             # Instantiate the dataset using load_class.
             # Keep DataLoader-only keys out of dataset constructor kwargs.
-            loader_only_keys = {
-                "batch_size",
-                "num_workers",
-                "pin_memory",
-                "shuffle",
-                "drop_last",
-                "persistent_workers",
-                "prefetch_factor",
-            }
-            dataset_params = {
-                key: value
-                for key, value in (self.data_params or {}).items()
-                if key not in loader_only_keys
-            }
+            dataset_params = self._build_dataset_params()
             full_dataset = load_class(dataset_name, **dataset_params)
             self.dataset_obj = full_dataset
             self.dataset_type = self.resolve_dataset_type(full_dataset)
@@ -673,7 +696,7 @@ class PytorchDataConfig(TorchDataPipelineMixin, DataConfig):
             logger.error(f"Failed to load dataset {self.name}: {e}")
             raise
 
-    def fit(self, run_hooks: bool = True) -> "PytorchDataConfig":
+    def sample(self, run_hooks: bool = True) -> "PytorchDataConfig":
         """Sample train/test indices and populate runtime split payloads.
 
         Args:
@@ -788,7 +811,7 @@ class PytorchDataConfig(TorchDataPipelineMixin, DataConfig):
         if self.data_load_time is None:
             self.load_dataset()
         if self.data_sample_time is None:
-            self.fit()
+            self.sample()
 
         self._score_orchestration_active = True
         try:
@@ -1006,7 +1029,7 @@ class PytorchCustomDataConfig(PytorchDataConfig):
             f"(train={self.train_n}, test={self.test_n}).",
         )
 
-    def fit(self, run_hooks: bool = True) -> "PytorchCustomDataConfig":
+    def sample(self, run_hooks: bool = True) -> "PytorchCustomDataConfig":
         """Build lazy DataLoaders from pre-defined custom train/test datasets.
 
         Args:
@@ -1185,7 +1208,7 @@ class PytorchCustomDataConfig(PytorchDataConfig):
                 )
                 if not has_runtime_split:
                     self.load_dataset()
-                    self.fit(run_hooks=False)
+                    self.sample(run_hooks=False)
                 self.save_scores(self.score_dict, filepath=score_file)
                 if data_file is not None and self._supports_pickle_cache():
                     _persist_pickle_cache(

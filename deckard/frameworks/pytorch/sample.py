@@ -63,6 +63,81 @@ class PytorchBaseSampler(BaseSampler):
         """
         raise NotImplementedError
 
+    @staticmethod
+    def _cfg_value(
+        config: Any,
+        sampler_params: dict[str, Any],
+        name: str,
+        default: Any,
+    ) -> Any:
+        getter = getattr(config, "_get_sampler_option", None)
+        if callable(getter):
+            return getter(name, default)
+        if name in sampler_params:
+            return sampler_params[name]
+        return default
+
+    @classmethod
+    def _sampler_kwargs_for_alias(
+        cls,
+        config: Any,
+        sampler_params: dict[str, Any],
+        alias: str,
+    ) -> dict[str, Any]:
+        if alias == "split":
+            return {
+                "train_size": cls._cfg_value(
+                    config,
+                    sampler_params,
+                    "train_size",
+                    None,
+                ),
+                "test_size": cls._cfg_value(config, sampler_params, "test_size", None),
+                "val_size": cls._cfg_value(config, sampler_params, "val_size", None),
+                "random_state": cls._cfg_value(
+                    config,
+                    sampler_params,
+                    "random_state",
+                    42,
+                ),
+                "stratify": cls._cfg_value(config, sampler_params, "stratify", True),
+            }
+        if alias in {"fold", "kfold"}:
+            return {
+                "n_splits": getattr(config, "n_splits", 5),
+                "split": getattr(config, "split", 0),
+                "train_size": cls._cfg_value(
+                    config,
+                    sampler_params,
+                    "train_size",
+                    None,
+                ),
+                "test_size": cls._cfg_value(config, sampler_params, "test_size", None),
+                "val_size": cls._cfg_value(config, sampler_params, "val_size", None),
+                "random_state": cls._cfg_value(
+                    config,
+                    sampler_params,
+                    "random_state",
+                    42,
+                ),
+                "stratify": cls._cfg_value(config, sampler_params, "stratify", True),
+            }
+        if alias == "shuffle":
+            return {
+                "n_splits": getattr(config, "n_splits", 5),
+                "split": getattr(config, "split", 0),
+                "test_size": cls._cfg_value(config, sampler_params, "test_size", None),
+                "val_size": cls._cfg_value(config, sampler_params, "val_size", None),
+                "random_state": cls._cfg_value(
+                    config,
+                    sampler_params,
+                    "random_state",
+                    42,
+                ),
+                "stratify": cls._cfg_value(config, sampler_params, "stratify", True),
+            }
+        return {}
+
     @classmethod
     def resolve(cls, config: Any) -> Any:
         """Resolve sampler declaration into callable sampler object.
@@ -85,44 +160,6 @@ class PytorchBaseSampler(BaseSampler):
 
         sampler_params = dict(getattr(config, "sampler_params", {}) or {})
 
-        def _cfg_value(name: str, default: Any) -> Any:
-            getter = getattr(config, "_get_sampler_option", None)
-            if callable(getter):
-                return getter(name, default)
-            if name in sampler_params:
-                return sampler_params[name]
-            return default
-
-        def _sampler_kwargs_for_alias(alias: str) -> dict[str, Any]:
-            if alias == "split":
-                return {
-                    "train_size": _cfg_value("train_size", None),
-                    "test_size": _cfg_value("test_size", None),
-                    "val_size": _cfg_value("val_size", None),
-                    "random_state": _cfg_value("random_state", 42),
-                    "stratify": _cfg_value("stratify", True),
-                }
-            if alias in {"fold", "kfold"}:
-                return {
-                    "n_splits": getattr(config, "n_splits", 5),
-                    "split": getattr(config, "split", 0),
-                    "train_size": _cfg_value("train_size", None),
-                    "test_size": _cfg_value("test_size", None),
-                    "val_size": _cfg_value("val_size", None),
-                    "random_state": _cfg_value("random_state", 42),
-                    "stratify": _cfg_value("stratify", True),
-                }
-            if alias == "shuffle":
-                return {
-                    "n_splits": getattr(config, "n_splits", 5),
-                    "split": getattr(config, "split", 0),
-                    "test_size": _cfg_value("test_size", None),
-                    "val_size": _cfg_value("val_size", None),
-                    "random_state": _cfg_value("random_state", 42),
-                    "stratify": _cfg_value("stratify", True),
-                }
-            return {}
-
         spec = getattr(config, "sampler", None)
         if spec is None:
             return None
@@ -133,7 +170,7 @@ class PytorchBaseSampler(BaseSampler):
                 raise ValueError(
                     f"Unknown sampler '{spec}'. Must be one of {list(sampler_aliases)}.",
                 )
-            alias_kwargs = _sampler_kwargs_for_alias(key)
+            alias_kwargs = cls._sampler_kwargs_for_alias(config, sampler_params, key)
             alias_kwargs.update(sampler_params)
             return sampler_aliases[key](**alias_kwargs)
 
@@ -154,7 +191,11 @@ class PytorchBaseSampler(BaseSampler):
 
             key = str(class_path).strip().lower()
             if key in sampler_aliases:
-                alias_kwargs = _sampler_kwargs_for_alias(key)
+                alias_kwargs = cls._sampler_kwargs_for_alias(
+                    config,
+                    sampler_params,
+                    key,
+                )
                 alias_kwargs.update(sampler_params)
                 alias_kwargs.update({str(k): v for k, v in spec.items()})
                 return sampler_aliases[key](**alias_kwargs)
@@ -164,56 +205,19 @@ class PytorchBaseSampler(BaseSampler):
                 return loaded()
             return loaded
 
-        if callable(spec) and not isinstance(spec, type):
-            return spec
-
-        if isinstance(spec, type):
-            return spec()
-
-        raise ValueError(f"Unsupported sampler specification: {type(spec)}")
+        return cls._resolve_terminal_sampler_spec(spec)
 
     @classmethod
-    def compose(cls, config: Any) -> Any:
-        """Compose and cache runtime sampler callable.
+    def _default_sampler(cls) -> TorchBaseSampler:
+        return PytorchSplitSampler()
 
-        Args:
-            config: Runtime data-like config.
-
-        Returns:
-            Callable sampler object.
-
-        Raises:
-            TypeError: If resolved sampler is not callable.
-        """
-        sampler_obj = getattr(config, "_sampler_obj", None)
-        if sampler_obj is None:
-            sampler_obj = cls.resolve(config)
-            setattr(config, "_sampler_obj", sampler_obj)
-        if sampler_obj is None:
-            sampler_obj = PytorchSplitSampler()
-            setattr(config, "_sampler_obj", sampler_obj)
+    @classmethod
+    def _configure_composed_sampler(cls, sampler_obj: Any, config: Any) -> Any:
         params = dict(getattr(config, "sampler_params", {}) or {})
         for field_name, value in params.items():
             if hasattr(sampler_obj, field_name):
                 setattr(sampler_obj, field_name, value)
-        if not callable(sampler_obj):
-            raise TypeError(
-                f"Composed sampler must be callable, got {type(sampler_obj)}",
-            )
         return sampler_obj
-
-    @classmethod
-    def execute(cls, config: Any) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-        """Resolve/compose and execute sampler for runtime config.
-
-        Args:
-            config: Runtime data-like config.
-
-        Returns:
-            Train, test, and validation index arrays.
-        """
-        sampler_obj = cls.compose(config)
-        return sampler_obj(config)
 
     @staticmethod
     def _validate_stratify(stratify: bool | str | None) -> None:
@@ -352,15 +356,7 @@ class PytorchFoldSampler(PytorchBaseSampler):
 
     @staticmethod
     def _to_count(size, total: int):
-        if size is None:
-            return None
-        if isinstance(size, float):
-            if size <= 0:
-                return 0
-            if size < 1:
-                return int(np.floor(total * size))
-            return int(size)
-        return int(size)
+        return BaseSampler._size_to_count(size, total)
 
     def __call__(self, config: Any) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Generate fold-based train/test/validation splits.

@@ -182,9 +182,9 @@ class FairlearnPytorchDataConfig(FairlearnDataConfig, PytorchCustomDataConfig):
             PytorchCustomDataConfig.load_dataset(self),
         )
 
-    def _fit_transform_X(self, X_train, X_test, y_train, y_test, pipeline):
+    def fit_transform(self, X_train, X_test, y_train, y_test, pipeline):
         """Run canonical DataConfig pipeline fit/transform for torch fairness data."""
-        return DataConfig._fit_transform_X(
+        return DataConfig.fit_transform(
             self,
             X_train,
             X_test,
@@ -193,7 +193,7 @@ class FairlearnPytorchDataConfig(FairlearnDataConfig, PytorchCustomDataConfig):
             pipeline,
         )
 
-    def fit(self, run_hooks: bool = True) -> "FairlearnPytorchDataConfig":
+    def sample(self, run_hooks: bool = True) -> "FairlearnPytorchDataConfig":
         """Split the dataset and extract per-split sensitive-feature arrays.
 
         Args:
@@ -254,7 +254,7 @@ class FairlearnPytorchDataConfig(FairlearnDataConfig, PytorchCustomDataConfig):
             self.train_indices = getattr(self, "train_indices", None)
             self.test_indices = getattr(self, "test_indices", None)
 
-        PytorchCustomDataConfig.fit(self)
+        PytorchCustomDataConfig.sample(self)
         self._extract_sensitive_splits()
         return self
 
