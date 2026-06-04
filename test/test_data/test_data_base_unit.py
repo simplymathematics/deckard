@@ -208,7 +208,7 @@ def test_plugin_instantiation_and_hook_paths(monkeypatch):
 
 
 def test_resolve_sample_branches(monkeypatch):
-    import deckard.data.sample as data_sample
+    import deckard.utils as deckard_utils
     from deckard.data.sample import BaseSampler
 
     cfg = _basic_data_config(sampler="split")
@@ -219,7 +219,7 @@ def test_resolve_sample_branches(monkeypatch):
 
     loaded = object()
     monkeypatch.setattr(
-        data_sample,
+        deckard_utils,
         "load_class",
         lambda path, **kwargs: (path, kwargs),
     )

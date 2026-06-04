@@ -10,7 +10,7 @@ import pytest
 MODULE_PATH = (
     Path(__file__).resolve().parents[2]
     / "papers"
-    / "compression_distance"
+    / "compress"
     / "classifier_refactor.py"
 )
 

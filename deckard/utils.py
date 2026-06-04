@@ -1669,6 +1669,32 @@ def save_data(
         logger.info(f"Data saved to {Path(filepath)}")
 
 
+def update_data(
+    data: pd.DataFrame,
+    filepath: Union[str, None] = None,
+    key: Union[str, list, None] = None,
+    **kwargs,
+) -> None:
+    """Upsert or append rows into an existing tabular file.
+
+    Delegates to :meth:`ArtifactLoaderMixin.update_data`. If the file does
+    not yet exist it is created. When *key* is given, existing rows whose
+    key value(s) match rows in *data* are replaced; other existing rows are
+    preserved. When *key* is ``None`` the rows are appended and duplicate
+    rows are dropped (keeping the last occurrence).
+
+    Args:
+        data: New rows to merge.
+        filepath: Target file path.
+        key: Merge-key column name(s) for upsert semantics.
+        **kwargs: Extra keyword arguments forwarded to the pandas writer.
+    """
+    loader = ArtifactLoaderMixin(payload_kind="data")
+    loader.update_data(data, filepath=filepath, key=key, **kwargs)
+    if filepath is not None:
+        logger.info(f"Data updated at {Path(filepath)}")
+
+
 def load_data(filepath: str, **kwargs) -> pd.DataFrame:
     """Load tabular data via ArtifactLoaderMixin IO contract.
 

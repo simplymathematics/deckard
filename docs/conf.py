@@ -19,7 +19,7 @@ os.environ.setdefault("HF_HUB_DISABLE_PROGRESS_BARS", "1")
 project = "deckard"
 copyright = "2026, simplymathematics"
 author = "simplymathematics"
-release = "0.98.3"
+release = "0.98.4"
 
 # ---------------------------------------------------------------------------
 # General configuration

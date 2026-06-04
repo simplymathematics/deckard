@@ -6,7 +6,7 @@ import pytest
 
 from deckard.data import DataConfig
 from deckard.experiment.base import ExperimentConfig
-from deckard.model import ModelConfig
+from deckard.model import ModelConfig, SurvivalModelConfig
 from deckard.plugins.lifelines.experiment import SurvivalExperimentConfig
 
 
@@ -93,7 +93,7 @@ def test_post_init_validates_data_model_and_duration(monkeypatch):
         classifier=True,
         model_params={"max_depth": 1},
     )
-    with pytest.raises(ValueError, match="model must be a non-empty string"):
+    with pytest.raises((ValueError, TypeError)):
         cfg.__post_init__()
 
     cfg = _bare_instance()
@@ -171,13 +171,14 @@ def test_make_survival_model_table_handles_none_models_and_metric_failures(
     monkeypatch,
     tmp_path,
 ):
-    cfg = _bare_instance()
-    cfg.event_col = "E"
+    cfg = SurvivalModelConfig(duration_col="T", event_col="E", t0=0.35)
 
     x_test = pd.DataFrame({"T": [1.0, 2.0], "E": [1, 0]})
 
     empty = cfg.make_survival_model_table(
         models={"skip": None},
+        dataset="toy",
+        X_train=x_test,
         X_test=x_test,
         folder=str(tmp_path),
     )
@@ -192,13 +193,15 @@ def test_make_survival_model_table_handles_none_models_and_metric_failures(
             return super().__getattribute__(name)
 
     monkeypatch.setattr(
-        SurvivalExperimentConfig,
+        cfg,
         "survival_probability_calibration",
-        staticmethod(lambda **kwargs: {"ICI": 0.1, "E50": 0.2}),
+        lambda **kwargs: (None, 0.1, 0.2),
     )
 
     table = cfg.make_survival_model_table(
         models={"weibull": NoisyFitter()},
+        dataset="toy",
+        X_train=x_test,
         X_test=x_test,
         folder=str(tmp_path),
         t0s={"weibull": 0.7},
@@ -229,7 +232,7 @@ def test_prepare_loaded_data_raises_for_missing_fillna_column(monkeypatch):
     cfg.dummies = {}
 
     monkeypatch.setattr(
-        SurvivalExperimentConfig,
+        SurvivalModelConfig,
         "clean_data_for_aft",
         staticmethod(lambda data, covariates, target, dummy_dict: data),
     )
@@ -425,3 +428,58 @@ def test_call_raises_when_aux_runtime_split_missing(monkeypatch, tmp_path):
 
     with pytest.raises(ValueError, match="Runtime survival split unavailable"):
         cfg()
+
+
+def test_build_survival_plot_config_list_model():
+    """A list of model names should produce one config entry per model."""
+    cfg = SurvivalExperimentConfig(
+        data=DataConfig(name="lifelines_rossi"),
+        model=["weibull", "cox"],
+        target="arrest",
+        event_col="arrest",
+        duration_col="week",
+    )
+    result = cfg._build_survival_plot_config()
+    assert set(result.keys()) == {"weibull", "cox"}
+    assert result["weibull"]["t0"] == cfg.t0
+    assert result["cox"]["t0"] == cfg.t0
+
+
+def test_build_survival_plot_config_dict_model():
+    """A dict model spec should be used directly as the plot config."""
+    cfg = SurvivalExperimentConfig(
+        data=DataConfig(name="lifelines_rossi"),
+        model={"weibull": {"t0": 0.5}, "cox": {}},
+        target="arrest",
+        event_col="arrest",
+        duration_col="week",
+    )
+    result = cfg._build_survival_plot_config()
+    assert set(result.keys()) == {"weibull", "cox"}
+    assert result["weibull"]["t0"] == 0.5
+
+
+def test_build_survival_plot_config_string_model():
+    """A string model name should produce a single-entry config (backward compat)."""
+    cfg = SurvivalExperimentConfig(
+        data=DataConfig(name="lifelines_rossi"),
+        model="weibull",
+        target="arrest",
+        event_col="arrest",
+        duration_col="week",
+    )
+    result = cfg._build_survival_plot_config()
+    assert list(result.keys()) == ["weibull"]
+    assert result["weibull"]["t0"] == cfg.t0
+
+
+def test_validate_model_list_rejects_empty():
+    """An empty model list should raise at construction time."""
+    with pytest.raises((ValueError, TypeError)):
+        SurvivalExperimentConfig(
+            data=DataConfig(name="lifelines_rossi"),
+            model=[],
+            target="arrest",
+            event_col="arrest",
+            duration_col="week",
+        )

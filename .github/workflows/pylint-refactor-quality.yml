@@ -1,0 +1,54 @@
+name: Pylint Refactor Quality
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "deckard/**"
+      - "test/**"
+      - "pyproject.toml"
+      - ".github/workflows/pylint-refactor-quality.yml"
+  push:
+    branches: [main]
+    paths:
+      - "deckard/**"
+      - "test/**"
+      - "pyproject.toml"
+      - ".github/workflows/pylint-refactor-quality.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  pylint-refactor-report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          cache: "pip"
+
+      - name: Install lint dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e .[test]
+
+      - name: Run pylint (refactor rules only)
+        run: |
+          python scripts/pylint_refactor_report.py --output-dir build/quality_controller --targets deckard test
+
+      - name: Upload refactor quality artifacts
+        if: ${{ always() && env.ACT != 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: pylint-refactor-quality-reports
+          path: |
+            build/quality_controller/pylint_refactor_findings.json
+            build/quality_controller/pylint_refactor_summary.json
+            build/quality_controller/pylint_refactor_quality_report.md
+          retention-days: 30

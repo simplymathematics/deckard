@@ -32,6 +32,7 @@ from matplotlib.axes import Axes
 from ...artifacts import ScoreDict
 from ...model.base import ModelConfig
 from ...utils import save_data
+from .comparison import write_aft_comparison_table
 
 ScorerDictConfig = Any
 
@@ -570,8 +571,7 @@ class SurvivalModelConfig(ModelConfig):
 
         table = pd.DataFrame(comparison_data)
         if not table.empty:
-            csv_path = Path(folder) / "aft_comparison.csv"
-            table.to_csv(csv_path, index=False)
+            write_aft_comparison_table(table, folder)
         return table
 
 

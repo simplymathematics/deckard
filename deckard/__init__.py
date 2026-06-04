@@ -16,6 +16,7 @@ who construct experiments from Python instead of the CLI.
 """
 
 import logging
+import logging.config
 import os
 from pathlib import Path
 from typing import Any
@@ -272,8 +273,6 @@ for resolver_name, (method_name, payload_kind) in _ARTIFACT_SAVERS.items():
     )
 
 
-logger = logging.getLogger(__name__)
-
 __all__ = [
     "DataConfig",
     "ModelConfig",
@@ -299,9 +298,8 @@ LOGGING = {
     },
     "handlers": {
         "default": {
-            # Use RotatingFileHandler for log rotation
             "class": "logging.handlers.RotatingFileHandler",
-            "filename": os.path.join(Path.cwd(), "deckard.log"),
+            "filename": str(Path.cwd() / "deckard.log"),
             "formatter": "std",
             "level": logging.INFO,
             "maxBytes": 10 * 1024 * 1024,  # 10 MB log file size limit
@@ -309,11 +307,10 @@ LOGGING = {
             "mode": "a",
         },
         "error": {
-            # Use RotatingFileHandler for log rotation
             "class": "logging.handlers.RotatingFileHandler",
-            "filename": os.path.join(Path.cwd(), "error.log"),
+            "filename": str(Path.cwd() / "error.log"),
             "formatter": "std",
-            "level": logging.INFO,
+            "level": logging.ERROR,
             "maxBytes": 10 * 1024 * 1024,  # 10 MB log file size limit
             "backupCount": 5,  # Keep up to 5 backup files
             "mode": "a",

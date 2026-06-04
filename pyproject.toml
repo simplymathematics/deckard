@@ -1,6 +1,6 @@
 [project]
 name = "deckard"
-version = "0.98.3"
+version = "0.98.4"
 description = "A tool for declarative AI experimentation, evaluation, and verification."
 authors = [
     { name = "simplymathematics" }

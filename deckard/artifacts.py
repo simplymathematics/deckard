@@ -679,6 +679,77 @@ class ArtifactLoaderMixin:
                 )
         assert Path(data_path).exists(), f"Failed to save data to {data_path}"
 
+    def update_data(
+        self,
+        data: MatrixLike | ArrayLike | pd.DataFrame,
+        filepath: Optional[str] = None,
+        key: Optional[str | list[str]] = None,
+        **kwargs: Any,
+    ) -> None:
+        """Update an existing tabular file with new rows, preserving prior data.
+
+        If the file does not yet exist the method behaves identically to
+        :meth:`save_data`.  When the file *does* exist the incoming ``data``
+        is merged with the existing table:
+
+        * If *key* is given (a column name or list of column names), rows whose
+          key value(s) appear in ``data`` are replaced and any rows with
+          previously-unseen key values are preserved.
+        * If *key* is ``None``, ``data`` is appended to the existing table
+          and duplicate rows are dropped (keeping the last occurrence).
+
+        Supported formats: ``.csv``, ``.json``, ``.xlsx``, ``.parquet``,
+        ``.pkl``.  ``.html`` is write-only and always overwrites.
+
+        Args:
+            data: New rows to merge into the file.
+            filepath: Target file path.
+            key: Column name(s) used as the merge key for upsert semantics.
+                 Pass ``None`` for pure append-and-deduplicate behaviour.
+            **kwargs: Extra keyword arguments forwarded to the underlying
+                pandas writer (same as :meth:`save_data`).
+
+        Raises:
+            ValueError: If the file extension is unsupported.
+            AssertionError: If *filepath* is ``None`` or the file was not
+                written successfully.
+        """
+        assert filepath is not None, "Filepath must be provided to update data."
+        if not isinstance(data, pd.DataFrame):
+            data = pd.DataFrame(cast(Any, data))
+
+        data_path = Path(filepath)
+        supported_filetypes = [".csv", ".json", ".xlsx", ".parquet", ".pkl"]
+
+        if data_path.exists() and data_path.suffix in supported_filetypes:
+            try:
+                existing = self.load_data(filepath)
+                if not isinstance(existing, pd.DataFrame):
+                    existing = pd.DataFrame(cast(Any, existing))
+                if key is not None:
+                    keys = [key] if isinstance(key, str) else list(key)
+                    valid_keys = [
+                        k for k in keys if k in existing.columns and k in data.columns
+                    ]
+                    if valid_keys:
+                        mask = (
+                            existing[valid_keys]
+                            .apply(tuple, axis=1)
+                            .isin(
+                                data[valid_keys].apply(tuple, axis=1),
+                            )
+                        )
+                        existing = existing[~mask]
+                merged = pd.concat([existing, data], ignore_index=True)
+                if key is None:
+                    merged = merged.drop_duplicates(keep="last")
+            except Exception:
+                merged = data
+        else:
+            merged = data
+
+        self.save_data(merged, filepath=filepath, **kwargs)
+
     def load_data(
         self,
         filepath: str,

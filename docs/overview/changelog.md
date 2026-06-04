@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.98.4
+
+- Landed a broad hardening and centralization sweep across core config/runtime surfaces, including DataConfig, ModelConfig, ScoreConfig, AttackConfig, ExperimentConfig, CLI composition paths, plot config handling, and plugin canonical-method integration.
+- Consolidated resolver and warning initialization behavior into shared canonical paths and improved config resolution consistency across entrypoints.
+- Completed path/artifact centralization updates, including artifact IO helper consolidation and compatibility cleanup for repeated-save/update flows.
+- Expanded shared sub-component resolution and runtime composition behavior, with improved compatibility for trainer/sampler/defense-style declaration paths.
+- Improved PyTorch integration robustness, including better pre-split handling and sensitive-column parsing hardening.
+- Refreshed and stabilized tests during the hardening pass (compose/integration/plugin coverage updates and targeted regression fixes).
+- Refreshed notebook and docs pipelines repeatedly throughout the window (multiple notebook reruns/fixes, flaky notebook cleanup, docs updates, and local docs build/version-sync maintenance).
+- Updated dataset/config inputs used by examples and notebook flows (adult dataset source/config refresh, paper/config refreshes, and example updates).
+- Removed broken cache behavior discovered during cleanup and aligned cache behavior with current runtime expectations.
+- Applied additional core/runtime safety improvements and compatibility fixes discovered during regression-driven refactoring.
+
 ## 0.98.3
 
 - Improved documentation quality, cross-linking, licensing information, and developer workflow guidance.
@@ -57,19 +70,8 @@ Scan scope:
 - [ ] `deckard/attack/base.py`: resolve targeted/non-targeted attack label TODO in runtime payload path.
 - [ ] `deckard/model/base.py`: replace inspect-based fallback TODO in `_sync_model_signature_from_estimator` with a stable constructor-parameter extraction strategy.
 - [ ] `deckard/experiment/canon.py`: complete component/sub-component manifest mapping TODO in experiment runtime manifest builder.
-- [ ] `deckard/__main__.py`: remove stale config discovery TODO comment now that `.deckard_rc` defaults are supported and tested.
 
-#### API documentation content debt
 
-- [ ] `docs/api/layers/index.md`: complete all inline TODO walkthrough placeholders for optimize, compile-results, progress-bar, pareto, survival, and plotting sections.
-
-#### Test implementation debt
-
-- [ ] `test/test_frameworks/test_pytorch/test_pytorch_data.py`: implement placeholder custom dataset/dataloader/tensorset mixin tests.
-
-#### Tooling and docs-process cleanup
-
-- [x] `scripts/fix_docs_crosslinks.py` + `docs/developers/contributor/documentation.md`: replace `TODO-BROKEN-LINK` placeholder fallbacks with concrete docs index fallbacks and document the follow-up review expectation.
 
 #### Backlog classification notes
 

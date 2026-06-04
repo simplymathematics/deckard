@@ -223,7 +223,6 @@ def get_configuration_paths():
         DECKARD_CONFIG_DIR,
     )
     if config_dir is None:
-        # TODO: Read from existing .deckard_rc/create one
         logger.error(
             "DECKARD_CONFIG_DIR must be specified as an environment variable.",
         )

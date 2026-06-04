@@ -15,6 +15,7 @@ from matplotlib.figure import Figure
 
 from ...data import DataConfig
 from ...experiment import SurvivalExperimentConfig
+from ...model import SurvivalModelConfig
 from ...types import StringifiedClass
 from ...utils import BaseConfig
 from ..seaborn.plot import SeabornPlotConfig
@@ -434,13 +435,18 @@ class SurvivalSeabornPlotterConfig(BaseConfig):
         model_config = dict(config.pop("model", {}))
         model_config.update(config)
 
-        aft = SurvivalExperimentConfig.fit_aft(
+        model_runtime_cfg = SurvivalModelConfig(
+            name="lifelines",
+            classifier=False,
+            survival_model=mtype,
+            duration_col=duration_col,
+            event_col=target,
+            t0=t0,
+        )
+        aft = model_runtime_cfg.fit_aft(
             summary_file=plot_dict.get("summary_file", f"{mtype}_summary.csv"),
             folder=folder,
             df=X_train,
-            event_col=target,
-            duration_col=duration_col,
-            mtype=mtype,
             **model_config,
         )
 
@@ -472,24 +478,32 @@ class SurvivalSeabornPlotterConfig(BaseConfig):
                 ylabel="Observed Probability",
                 calibration_fn=lambda model, frame, frame_test, cutoff: pd.concat(
                     [
-                        SurvivalExperimentConfig.survival_probability_calibration(
+                        SurvivalModelConfig(
+                            duration_col=duration_col,
+                            event_col=target,
+                            t0=cutoff,
+                        )
+                        .survival_probability_calibration(
                             model,
                             frame,
-                            t0=cutoff,
                             return_curve=True,
                             plot=False,
-                        )[3].assign(dataset="train"),
+                        )[3]
+                        .assign(dataset="train"),
                         *(
                             [
-                                SurvivalExperimentConfig.survival_probability_calibration(
+                                SurvivalModelConfig(
+                                    duration_col=duration_col,
+                                    event_col=target,
+                                    t0=cutoff,
+                                )
+                                .survival_probability_calibration(
                                     model,
                                     frame_test,
-                                    t0=cutoff,
                                     return_curve=True,
                                     plot=False,
-                                )[
-                                    3
-                                ].assign(
+                                )[3]
+                                .assign(
                                     dataset="test",
                                 ),
                             ]
@@ -743,9 +757,16 @@ class SurvivalSeabornPlotConfigList(BaseConfig):
             duration_col=duration_col,
             event_col=target,
         )
-        summary_table = survival_config.make_survival_model_table(
-            self.models,
-            X_test,
+        summary_model_config = SurvivalModelConfig(
+            duration_col=duration_col,
+            event_col=target,
+            t0=survival_config.t0,
+        )
+        summary_table = summary_model_config.make_survival_model_table(
+            models=self.models,
+            dataset=dataset,
+            X_train=X_train,
+            X_test=X_test,
             folder=folder,
             t0s=self.t0s,
         )

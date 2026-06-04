@@ -221,7 +221,12 @@ def ensure_model_runtime_contract(target: Any) -> Any:
 
 def normalize_model_trainer_alias(alias: str | None) -> str:
     """Normalize trainer alias tokens for model runtime trainer composition."""
-    token = str(alias or "sklearn").strip().lower().replace("-", "_")
+    raw = str(alias or "sklearn").strip()
+    # Preserve fully-qualified class paths so resolve_component_spec can
+    # instantiate them directly (legacy config compatibility path).
+    if "." in raw or ":" in raw:
+        return raw
+    token = raw.lower().replace("-", "_")
     aliases = {
         "sklearn": "sklearn",
         "base": "sklearn",

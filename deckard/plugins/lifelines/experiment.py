@@ -12,7 +12,6 @@ import matplotlib
 import numpy as np
 import pandas as pd
 from lifelines.fitters import RegressionFitter
-from matplotlib.axes import Axes
 
 from ...attack import AttackConfig
 from ...data import DataConfig
@@ -79,7 +78,7 @@ class SurvivalExperimentConfig(ExperimentConfig):
 
     # Required fields
     data: DataConfig
-    model = cast(Any, None)
+    model: Union[str, list[str], dict[str, Any]] = cast(Any, None)
     target: str
     event_col: str
     duration_col: str
@@ -140,113 +139,6 @@ class SurvivalExperimentConfig(ExperimentConfig):
         if attack is not None or aux_model is not None:
             return "auxiliary"
         return "native"
-
-    @staticmethod
-    def fit_aft(
-        df: pd.DataFrame,
-        event_col: str,
-        duration_col: str,
-        mtype: str,
-        summary_file: Optional[str] = None,
-        folder: Optional[str] = None,
-        **kwargs,
-    ) -> RegressionFitter:
-        """Fit a lifelines survival model.
-
-        Args:
-            df: Training frame that includes event and duration columns.
-            event_col: Event indicator column.
-            duration_col: Duration/time column.
-            mtype: Lifelines model key (for example, ``"weibull"``).
-            summary_file: Optional summary output file name.
-            folder: Optional output folder for artifacts.
-            **kwargs: Extra fitter keyword arguments.
-
-        Returns:
-            The fitted lifelines regression fitter.
-        """
-        config = SurvivalModelConfig(
-            name="lifelines",
-            classifier=False,
-            survival_model=mtype,
-            duration_col=duration_col,
-            event_col=event_col,
-        )
-        return config.fit_aft(
-            df=df,
-            summary_file=summary_file,
-            folder=folder,
-            **kwargs,
-        )
-
-    @staticmethod
-    def survival_probability_calibration(
-        model: "RegressionFitter",
-        df: pd.DataFrame,
-        t0: float,
-        ax: Optional[Axes] = None,
-        color: str = "red",
-        return_curve: bool = False,
-        plot: bool = True,
-    ) -> Union[
-        tuple[Optional[Axes], float, float],
-        tuple[Optional[Axes], float, float, pd.DataFrame],
-    ]:
-        """Compute survival calibration metrics and optionally render a curve.
-
-        Args:
-            model: Fitted lifelines regression fitter.
-            df: Data used for calibration.
-            t0: Time horizon used by calibration.
-            ax: Optional axis for plotting.
-            color: Calibration curve color.
-            return_curve: Whether to return the calibration curve dataframe.
-            plot: Whether to render the calibration plot.
-
-        Returns:
-            A tuple containing axis, ICI, and E50. If ``return_curve`` is true,
-            returns a 4-tuple with the calibration curve dataframe appended.
-        """
-        config = SurvivalModelConfig(
-            name="lifelines",
-            classifier=False,
-            duration_col=cast(Any, model).duration_col,
-            event_col=cast(Any, model).event_col,
-            t0=t0,
-        )
-        return config.survival_probability_calibration(
-            model=model,
-            df=df,
-            ax=ax,
-            color=color,
-            return_curve=return_curve,
-            plot=plot,
-        )
-
-    @staticmethod
-    def clean_data_for_aft(
-        data: pd.DataFrame,
-        covariate_list: list[str],
-        target: str = "adv_failure_rate",
-        dummy_dict: Optional[dict[str, str]] = None,
-    ) -> pd.DataFrame:
-        """Clean and encode tabular data for AFT-style survival fitting.
-
-        Args:
-            data: Input dataframe.
-            covariate_list: Covariate columns to retain.
-            target: Target/event column name.
-            dummy_dict: Optional mapping from categorical columns to dummy prefixes.
-
-        Returns:
-            A cleaned dataframe ready for lifelines model fitting.
-        """
-        return SurvivalModelConfig.clean_data_for_aft(
-            data,
-            covariate_list,
-            target,
-            dummy_dict,
-        )
 
     @classmethod
     def compute_failures_under_attack(
@@ -334,7 +226,23 @@ class SurvivalExperimentConfig(ExperimentConfig):
             raise TypeError(
                 f"Expected data to resolve to DataConfig, got {type(self.data)}",
             )
-        self._require_non_empty_str("model", self.model)
+        if isinstance(self.model, str):
+            self._require_non_empty_str("model", self.model)
+        elif isinstance(self.model, list):
+            if not self.model:
+                raise ValueError("model list must not be empty")
+            for entry in self.model:
+                if not isinstance(entry, str) or not entry.strip():
+                    raise ValueError(
+                        f"Each model list entry must be a non-empty string, got {entry!r}",
+                    )
+        elif isinstance(self.model, dict):
+            if not self.model:
+                raise ValueError("model dict must not be empty")
+        else:
+            raise TypeError(
+                f"model must be a str, list of str, or dict, got {type(self.model)}",
+            )
         if self.aux_model is not None and not isinstance(self.aux_model, ModelConfig):
             raise TypeError(
                 f"Expected aux_model to resolve to ModelConfig, got {type(self.aux_model)}",
@@ -397,14 +305,6 @@ class SurvivalExperimentConfig(ExperimentConfig):
                 self.covariates = list(self.covariates)
             except TypeError as exc:
                 raise TypeError("covariates must be list-like when provided") from exc
-
-    def _resolve_execution_mode(self) -> str:
-        return self.infer_execution_mode(
-            execution_mode=self.execution_mode,
-            attack_optuna_db=self.attack_optuna_db,
-            attack=self.attack,
-            aux_model=self.aux_model,
-        )
 
     def _resolve_covariates(self) -> list[str]:
         covariates = list(self.covariates or [])
@@ -687,91 +587,6 @@ class SurvivalExperimentConfig(ExperimentConfig):
         )
         return sizes * candidate
 
-    def make_survival_model_table(
-        self,
-        models: Mapping[str, RegressionFitter],
-        X_test: pd.DataFrame,
-        folder: str = ".",
-        t0s: Optional[Mapping[str, float]] = None,
-    ) -> pd.DataFrame:
-        """Build a survival model comparison table.
-
-        Args:
-            models: Mapping of model names to fitted lifelines models.
-            X_test: Evaluation dataframe.
-            folder: Output folder for the generated CSV table.
-            t0s: Optional per-model calibration time horizons.
-
-        Returns:
-            A dataframe containing model comparison metrics.
-        """
-        t0s = t0s or {}
-        comparison_data = []
-
-        for model_type, fitter in models.items():
-            if fitter is None:
-                continue
-            t0 = t0s.get(model_type, 0.35)
-            row = {"model": model_type, "t0": t0}
-
-            try:
-                if hasattr(fitter, "AIC_"):
-                    row["AIC"] = fitter.AIC_
-            except Exception:
-                pass
-
-            try:
-                if hasattr(fitter, "AIC_partial_"):
-                    row["AIC"] = fitter.AIC_partial_
-            except Exception:
-                pass
-
-            try:
-                if hasattr(fitter, "BIC_"):
-                    row["BIC"] = fitter.BIC_
-            except Exception:
-                pass
-
-            try:
-                if hasattr(fitter, "concordance_index_"):
-                    row["concordance"] = fitter.concordance_index_
-            except Exception:
-                pass
-
-            if (
-                self.duration_col in X_test.columns
-                and self.event_col in X_test.columns
-            ):
-                try:
-                    calibration = self.survival_probability_calibration(
-                        model=fitter,
-                        df=X_test,
-                        t0=t0,
-                        plot=False,
-                        return_curve=False,
-                    )
-                    if isinstance(calibration, Mapping):
-                        if "ICI" in calibration:
-                            row["ICI"] = calibration["ICI"]
-                        if "E50" in calibration:
-                            row["E50"] = calibration["E50"]
-                    elif (
-                        isinstance(calibration, (tuple, list))
-                        and len(calibration) >= 3
-                    ):
-                        row["ICI"] = calibration[1]
-                        row["E50"] = calibration[2]
-                except Exception:
-                    pass
-
-            comparison_data.append(row)
-
-        table = pd.DataFrame(comparison_data)
-        if not table.empty:
-            csv_path = Path(folder) / "aft_comparison.csv"
-            table.to_csv(csv_path, index=False)
-        return table
-
     @staticmethod
     def _load_optuna_frame(
         optuna_db: str,
@@ -958,20 +773,33 @@ class SurvivalExperimentConfig(ExperimentConfig):
     def _build_survival_plot_config(self) -> dict[str, Any]:
         if self.model_config is not None:
             return dict(self.model_config)
+
         model_params = self._normalize_optional_dict(
             "survival_model_params",
             self.survival_model_params,
         )
         plot_config = self._normalize_optional_dict("plot", self.plot)
         label_config = self._normalize_optional_dict("labels", self.labels)
-        return {
-            str(self.model): {
-                "t0": self.t0,
-                "model": model_params,
-                "plot": plot_config,
-                "labels": label_config,
-            },
+        default_entry: dict[str, Any] = {
+            "t0": self.t0,
+            "model": model_params,
+            "plot": plot_config,
+            "labels": label_config,
         }
+
+        if isinstance(self.model, dict):
+            # Dict of model_name -> config block; use directly as full config.
+            return {
+                str(k): dict(v) if isinstance(v, Mapping) else {}
+                for k, v in self.model.items()
+            }
+
+        if isinstance(self.model, list):
+            # List of model names; each gets the same default config block.
+            return {str(m): dict(default_entry) for m in self.model}
+
+        # Single string model name (backward-compatible path).
+        return {str(self.model): default_entry}
 
     def _prepare_loaded_data(self, loaded_data: pd.DataFrame) -> pd.DataFrame:
         loaded_data = loaded_data.copy()
@@ -993,7 +821,7 @@ class SurvivalExperimentConfig(ExperimentConfig):
                 f"Available columns: {list(loaded_data.columns)}",
             )
         covariates = self._resolve_covariates()
-        cleaned = self.clean_data_for_aft(
+        cleaned = SurvivalModelConfig.clean_data_for_aft(
             loaded_data,
             covariates,
             target=self.target,
@@ -1023,7 +851,12 @@ class SurvivalExperimentConfig(ExperimentConfig):
         matplotlib.rc("font", **{"family": "Times New Roman", "size": 22})
 
         output_folder = self._resolve_output_folder()
-        resolved_mode = self._resolve_execution_mode()
+        resolved_mode = self.infer_execution_mode(
+            execution_mode=self.execution_mode,
+            attack_optuna_db=self.attack_optuna_db,
+            attack=self.attack,
+            aux_model=self.aux_model,
+        )
         dummy_map = self._normalize_optional_dict("dummies", self.dummies)
 
         if resolved_mode == "optuna":
