@@ -177,7 +177,6 @@ def __getattr__(name: str):
 # Re-export runtime helpers so callers do not need to import plugins.base directly.
 from .base import HookBundle, RuntimeBase, compose_hook_plugins  # noqa: E402
 
-
 __all__ = [
     "HookPlugin",
     "HookBundle",
