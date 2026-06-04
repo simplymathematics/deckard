@@ -23,12 +23,13 @@ At a high level, experiment execution follows this sequence:
 
 1. load data
 2. sample or split data
-3. train or load model
-4. apply fit-time defense when configured
-5. apply predict-time defense when configured
-6. run attack and detector branches when configured
-7. score and aggregate outputs
-8. persist runtime artifacts
+3. apply fit-time defense(s) when configured (pre-processing, training, re-training, multi-objective optimization)
+4. train or load model
+5. apply predict-time defense(s) when configured (post-processing)
+6. run attack  when configured (evasion, poisoning, inference, extraction)
+7. run the detection branches (poisoning and evasion attack filtering)
+8. score and aggregate outputs (scores, initialization parameters, metadata)
+9. persist runtime artifacts (data, models, predictions, attacked samples)
 
 `apply_fit_defense` and `apply_predict_defense` are distinct stages.
 Only fit-time defense can trigger retraining behavior.
@@ -43,20 +44,23 @@ Only fit-time defense can trigger retraining behavior.
 - Detector: {doc}`/api/detector/index`
 - Score: {doc}`/api/score/index`
 - Artifacts and paths: {doc}`/api/file/index`
-- Plot and layers (post-hoc): {doc}`/api/plot/index`, {doc}`/api/layers/index`
+
+In addition, there are tools for plotting and post-hoc analysis across many experiments.
+- Plot and visualization {doc}`/api/plot/index`
+- Survival analysis and pareto analysis {doc}`/api/layers/index`
 
 ## Runtime Controls
 
 Typical runtime controls are set through Hydra and OmegaConf overrides:
 
-- stage selection and stage fan-out
+- data, model, attack, detector, file, and scoring components
 - single run vs multirun
 - optimizer directions and objectives
 - output identity and persistence paths
+
 
 See also:
 
 - {doc}`optimize`
 - {doc}`hydra`
 - {doc}`dvc`
-- {doc}`/developers/experiment/experiment`

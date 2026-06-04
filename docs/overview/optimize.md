@@ -72,7 +72,7 @@ settings:
 
 - `directions`: objective direction for each metric (`maximize`/`minimize`)
 
-- `optimizers`: metric names aligned with `directions`
+- `optimizers`: metric names aligned with `directions`. These come from the configured scorers and the configured scoring stage/mode.
 
 - `hydra.sweeper.study_name`: Optuna study identifier
 
@@ -138,4 +138,7 @@ References:
 
 ## Easy Parallelization with Optuna and RDB
 
-[Docs](https://optuna.readthedocs.io/en/stable/tutorial/10_key_features/004_distributed.html#multi-process-optimization)
+By default, the optuna database for optimization uses sqlite version 3. 
+While this is a handy way to store data for serial experiments, this is likely to lead to lock and race conditions when conducting experiments in parallel. 
+You will have to configure another option (by setting up a database and configuring the URL in the config).
+For distributed experiments with many parallel workers, see the [Optuna Parallelization Docs](https://optuna.readthedocs.io/en/stable/tutorial/10_key_features/004_distributed.html#multi-process-optimization)

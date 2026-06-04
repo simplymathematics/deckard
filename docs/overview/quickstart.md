@@ -21,9 +21,7 @@ The fastest path through the overview section is:
 7. {doc}`dvc`
 8. {doc}`extensions/index`
 9. {doc}`installation`
-10. {doc}`docker`
-11. {doc}`../developers/index`
-12. {doc}`changelog`
+
 
 ## Start Here
 

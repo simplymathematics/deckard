@@ -15,13 +15,6 @@ For command semantics and edge-case flags, see official DVC docs:
 - [Pipelines and Stages](https://dvc.org/doc/user-guide/pipelines)
 - [Metrics, Plots, and Params](https://dvc.org/doc/user-guide/experiment-management)
 
-Related Deckard docs:
-
-- [Developer DVC Spec](/developers/optimization/dvc)
-- [Optimization Contract](/developers/optimization/optimization)
-- [Hydra Contract](/developers/optimization/hydra)
-- [Pruning Contract](/developers/optimization/pruning)
-
 ## Deps
 
 DVC dependencies (`deps`) declare source inputs and code paths that invalidate a stage when changed.
@@ -100,10 +93,10 @@ Run only one stage:
 dvc repro notebook_dvc
 ```
 
-Force-run notebook-prefixed stages (useful after notebook refactors):
+Force-run notebook-prefixed stages (useful after significant code changes):
 
 ```bash
-dvc repro --force notebook_*
+dvc repro --force --glob notebook_*
 ```
 
 What it does:
@@ -150,3 +143,11 @@ What it does:
 - Restores tracked outputs for stages that materialize artifacts.
 - Aligns local workspace artifacts with remote-backed DVC state.
 - Keeps local runs consistent with collaborator and CI outputs.
+
+
+## What's next?
+
+Check out the {doc}`Jupyter Notebook Portal </notebooks/index>` or get started with a particular modelling framework:
+1. {doc}`scikit-learn </notebooks/sklearn>`
+2. {doc}`pytorch </notebooks/pytorch>`
+3. {doc}`transformers </notebooks/huggingface>`

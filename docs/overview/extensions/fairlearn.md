@@ -46,6 +46,6 @@ model:
 ```yaml
 score:
     model:
-                _target_: deckard.plugins.fairlearn.score.FairlearnScorerDictConfig
+        _target_: deckard.plugins.fairlearn.score.FairlearnScorerDictConfig
         group_reduction: difference
 ```

@@ -32,22 +32,34 @@ Related docs:
 :end-before: <!-- transformers-execution-flows-end -->
 ```
 
-## YAML Examples
+## YAML Example
 
 ```yaml
-model:
-    _target_: deckard.frameworks.transformers.model.HuggingFacePytorchModelConfig
-    name: transformers.AutoModelForSequenceClassification
-    tokenizer: transformers.AutoTokenizer
+name: deckard.frameworks.transformers.declarations.GenericFlexibleTransformer
+model_params:
+  model_name: distilbert-base-multilingual-cased
+  model_revision: main
+  pretrained: true
+  out_features: 64
+  num_classes: 2
+  return_features: false
+
+classifier: true
+_target_: deckard.frameworks.transformers.model.HuggingFacePytorchModelConfig
+fit_params:
+  nb_epochs: 1
+  batch_size: 16
+  verbose: false
+library: pytorch
+criterion: CrossEntropyLoss
+optimizer:
+  name: SGD
+  lr: 0.01
+  momentum: 0.9
+clip_values: [0, 1]
+alias: hf_mbart_en_fr
 ```
-
-```yaml
-score:
-    model:
-        scorers:
-            f1:
-                score_name: f1
-                score_function: sklearn.metrics.f1_score
-                score_params:
-                    average: weighted
+```{include} ../flowcharts.md
+:start-after: <!-- core-experiment-overview-start -->
+:end-before: <!-- core-experiment-overview-end -->
 ```

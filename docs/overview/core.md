@@ -20,12 +20,6 @@ step.
 :end-before: <!-- core-data-overview-end -->
 ```
 
-Scoping detail:
-
-```{include} flowcharts.md
-:start-after: <!-- core-data-scope-start -->
-:end-before: <!-- core-data-scope-end -->
-```
 
 - [Data](/api/data/index): dataset loading and runtime coordination.
 - [Sample](/api/data/sample): sampling helpers.
@@ -37,11 +31,6 @@ The model object learns from the data, can train or load a model, and may add
 an optional defense before prediction. The final step is to persist outputs.
 
 This overview chart shows the simple model path and where defense fits.
-
-```{include} flowcharts.md
-:start-after: <!-- core-model-overview-start -->
-:end-before: <!-- core-model-overview-end -->
-```
 
 Scoping detail for trainer choices:
 
@@ -75,12 +64,6 @@ runtime detail.
 :end-before: <!-- core-attack-overview-end -->
 ```
 
-Scoping detail for attack subtypes:
-
-```{include} flowcharts.md
-:start-after: <!-- core-attack-family-start -->
-:end-before: <!-- core-attack-family-end -->
-```
 
 - [Attack](/api/attack/index): attack execution and scoring.
 
@@ -94,13 +77,6 @@ important split is train versus filter.
 :end-before: <!-- core-detector-overview-end -->
 ```
 
-Scoping detail for detector train and filter modes:
-
-```{include} flowcharts.md
-:start-after: <!-- core-detector-mode-start -->
-:end-before: <!-- core-detector-mode-end -->
-```
-
 - [Detector](/api/detector/index): detector training and filter-mode behavior.
 
 ## Score API
@@ -111,13 +87,6 @@ into one score payload.
 ```{include} flowcharts.md
 :start-after: <!-- core-score-overview-start -->
 :end-before: <!-- core-score-overview-end -->
-```
-
-Scoping detail for data, model, attack, and group scorers:
-
-```{include} flowcharts.md
-:start-after: <!-- core-score-composition-start -->
-:end-before: <!-- core-score-composition-end -->
 ```
 
 - [Score](/api/score/index): scorer setup and score payload composition.

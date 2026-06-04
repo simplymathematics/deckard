@@ -12,15 +12,6 @@ across:
 deckard uses Hydra/OmegaConf for configuration composition and supports Optuna
 for multirun optimization.
 
-Primary runtime composition objects are:
-
-- {class}`deckard.data.DataConfig`
-- {class}`deckard.model.ModelConfig`
-- {class}`deckard.attack.AttackConfig`
-- {class}`deckard.detector.DetectorConfig`
-- {class}`deckard.experiment.ExperimentConfig`
-- {class}`deckard.file.FileConfig`
-
 ## Prerequisites
 
 - Python 3.10 or higher
@@ -71,26 +62,22 @@ Python packages are installed locally within it.
 ### 3. Install Dependencies
 
 ```bash
-python -m pip install -e .
+pip install  .
 ```
-
-This command installs the project's dependencies in "editable" mode.
-Editable mode (`-e .`) allows you to modify the source code and have changes
-reflected immediately without needing to reinstall the package.
-The `-m` flag tells Python to run the `pip` module as a script, ensuring you use
-the correct version of `pip` for your environment.
 
 Optional dependency stacks (install as needed):
 
 ```bash
-pip install -e '.[test]'
-pip install -e '.[docs]'
+
 pip install -e '.[torch]'
 pip install -e '.[fairlearn]'
 pip install -e '.[lifelines]'
 pip install -e '.[seaborn]'
 pip install -e '.[yellowbrick]'
 pip install -e '.[anjana]'
+pip install -e '.[transformers]'
+pip install -e '.[test]'
+pip install -e '.[docs]'
 ```
 
 For a full extension stack in one environment:
@@ -161,13 +148,7 @@ For full documentation, use the docs navigation:
 
 - Developer docs: {doc}`../developers/index`
 - Landing page: {doc}`/index`
-- Overview index: {doc}`index`
-
-API entry points:
-
-- API hub: {doc}`/index`
 - Package overview: {doc}`/api/modules`
-- Module and extension map: {doc}`/api/modules`
 
 Notebook entry point:
 
@@ -175,17 +156,13 @@ Notebook entry point:
 
 Post-hoc layer entry points:
 
-- Layer API: {doc}`/api/layers/index`
+- CLI Functions: {doc}`/api/layers/index`
 - Plot API: {doc}`/api/plot/index`
 
 ### Example Configs
 
-Sklearn examples include reusable presets for attacks, scorers, and plots:
+Full end-to-end pipeline examples are available for each of the supported frameworks here:
 
-- Attacks: [examples/sklearn/config/attack](https://github.com/simplymathematics/deckard/tree/main/examples/sklearn/config/attack)
-
-- Scorers: [examples/sklearn/config/score](https://github.com/simplymathematics/deckard/tree/main/examples/sklearn/config/score)
-
-- Plots: [examples/sklearn/config/plot](https://github.com/simplymathematics/deckard/tree/main/examples/sklearn/config/plot)
-
-- Torch:
+- sklearn: [examples/sklearn/config/](https://github.com/simplymathematics/deckard/tree/main/examples/sklearn/config/attack)
+- Pytorch: [examples/pytorch/config/](https://github.com/simplymathematics/deckard/tree/main/examples/pytorch/config/attack)
+- Transformers: [examples/trasnformers/config/](https://github.com/simplymathematics/deckard/tree/main/examples/sklearn/config/attack)

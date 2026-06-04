@@ -29,8 +29,8 @@ Related docs:
 5. Checkpoint/artifact persistence and plot consumption.
 
 ```{include} ../flowcharts.md
-:start-after: <!-- pytorch-execution-flows-start -->
-:end-before: <!-- pytorch-execution-flows-end -->
+:start-after: <!-- core-experiment-overview-start -->
+:end-before: <!-- core-experiment-overview-end -->
 ```
 
 ## YAML Examples

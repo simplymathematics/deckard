@@ -28,7 +28,7 @@ Core components:
   Data-profile scorers use `pre-sample` for dataset-level checks before sampling,
   while `train`/`test`/`val`/`all` apply to split-aware payloads.
 - Runtime payload shape is represented by
-  {class}`~deckard.score.ScorerRuntimeContract`.
+  {class}`~deckard.score.Scorer`.
 - Stage filtering remains stage-token driven and independent from score scope.
 
 ## Output Shape Guarantees
