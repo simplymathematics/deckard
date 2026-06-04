@@ -131,7 +131,7 @@ Optimization runtime is the source of truth for:
 
 
 
-# Optimize Developer Guide
+## Optimize Developer Guide
 
 This page is the implementation-oriented companion to the optimization runtime contract.
 
@@ -166,6 +166,7 @@ Primary config source:
 
 - `examples/sklearn/config/default.yaml`
 
+
 ## Runtime Contract Checks
 
 When validating optimize behavior, confirm:
@@ -182,8 +183,9 @@ When validating optimize behavior, confirm:
 ## Recommended Notebook Validation Sequence
 
 1. run `docs/notebooks/hydra.ipynb` to verify compose and command templates
-2. run `docs/notebooks/optimize.ipynb` sections for single-run, multirun, and pruning
-3. verify generated params snapshots under `docs/build/`
+2. run `docs/notebooks/optimize.ipynb` sections for single-run and multirun behavior plus callback-policy validation
+3. run `docs/notebooks/deckard.ipynb` after `docs/notebooks/optimize.ipynb` so the CLI-layer walkthrough can reuse the study-backed outputs created by optimize
+4. verify generated params snapshots and CLI-layer artifacts under `docs/notebooks/build/`
 
 ## Test Requirements
 
