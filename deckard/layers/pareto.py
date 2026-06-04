@@ -2,96 +2,32 @@
 
 import logging
 from pathlib import Path
-from typing import Optional
 
 import optuna
 import pandas as pd
 from paretoset import paretoset
 
 from ..utils import create_parser_from_function, save_data
+from ._trial_utils import (
+    complete_trials_only as _complete_trials_only,
+)
+from ._trial_utils import (
+    infer_default_optimizers as _infer_default_optimizers,
+)
+from ._trial_utils import (
+    normalize_direction as _normalize_direction,
+)
+from ._trial_utils import (
+    objective_to_column as _objective_to_column,
+)
+from ._trial_utils import (
+    parse_csv_arg as _parse_csv_arg,
+)
+from ._trial_utils import (
+    resolve_study as _resolve_study,
+)
 
 logger = logging.getLogger(__name__)
-
-
-def _parse_csv_arg(value: Optional[str]) -> list[str]:
-    if value is None:
-        return []
-    value = value.strip()
-    if value == "":
-        return []
-    return [item.strip() for item in value.split(",") if item.strip()]
-
-
-def _normalize_direction(direction: str) -> str:
-    d = direction.strip().lower()
-    if "." in d:
-        d = d.split(".")[-1]
-    if d in {"maximize", "max"}:
-        return "maximize"
-    if d in {"minimize", "min"}:
-        return "minimize"
-    if d == "diff":
-        return "diff"
-    raise ValueError(
-        f"Unsupported direction '{direction}'. Use maximize/minimize/diff (or max/min).",
-    )
-
-
-def _resolve_study(
-    optuna_db: str,
-    study_name: Optional[str],
-) -> optuna.study.Study:
-    if study_name:
-        logger.info("Loading study '%s' from %s", study_name, optuna_db)
-        return optuna.study.load_study(storage=optuna_db, study_name=study_name)
-
-    summaries = optuna.study.get_all_study_summaries(storage=optuna_db)
-    if len(summaries) == 0:
-        raise ValueError(f"No studies found in {optuna_db}")
-    if len(summaries) > 1:
-        names = [
-            getattr(s, "study_name", getattr(s, "name", "<unknown>"))
-            for s in summaries
-        ]
-        raise ValueError(
-            "Multiple studies found. Please provide study_name. "
-            f"Available studies: {names}",
-        )
-
-    inferred_name = getattr(
-        summaries[0],
-        "study_name",
-        getattr(summaries[0], "name", None),
-    )
-    if inferred_name is None:
-        raise ValueError("Could not infer study name from summary")
-    logger.info(
-        "No study_name provided; using only available study '%s'",
-        inferred_name,
-    )
-    return optuna.study.load_study(storage=optuna_db, study_name=inferred_name)
-
-
-def _infer_default_optimizers(
-    study: optuna.study.Study,
-    trials_df: pd.DataFrame,
-) -> list[str]:
-    metric_names = list(getattr(study, "metric_names", []) or [])
-    if len(metric_names) > 0:
-        return metric_names
-
-    value_cols = sorted(
-        [c for c in trials_df.columns if c.startswith("values_")],
-        key=lambda c: int(c.split("_")[1]),
-    )
-    if len(value_cols) > 0:
-        return value_cols
-    if "value" in trials_df.columns:
-        return ["value"]
-
-    raise ValueError(
-        "Could not infer objective columns. Provide optimizers explicitly.",
-    )
 
 
 def _infer_directions_for_objectives(
@@ -142,53 +78,6 @@ def _infer_directions_for_objectives(
     return resolved_directions
 
 
-def _objective_to_column(
-    objective: str,
-    objective_idx: int,
-    trials_df: pd.DataFrame,
-    metric_names: list[str],
-    allow_index_fallback: bool = True,
-) -> str:
-    if objective in trials_df.columns:
-        return objective
-
-    if objective.startswith("values_") and objective in trials_df.columns:
-        return objective
-
-    named_value_column = f"values_{objective}"
-    if named_value_column in trials_df.columns:
-        return named_value_column
-
-    named_attr_column = f"user_attrs_{objective}"
-    if named_attr_column in trials_df.columns:
-        return named_attr_column
-
-    named_param_column = f"params_{objective}"
-    if named_param_column in trials_df.columns:
-        return named_param_column
-
-    if len(metric_names) > 0 and objective in metric_names:
-        idx = metric_names.index(objective)
-        candidate = f"values_{idx}"
-        if candidate in trials_df.columns:
-            return candidate
-
-    if allow_index_fallback:
-        fallback = f"values_{objective_idx}"
-        if fallback in trials_df.columns:
-            return fallback
-
-    if objective_idx == 0 and "value" in trials_df.columns:
-        return "value"
-
-    raise ValueError(
-        (
-            f"Could not map optimizer '{objective}' to a trials dataframe "
-            f"column. Available columns: {list(trials_df.columns)}"
-        ),
-    )
-
-
 def _coerce_objective_columns_numeric(
     trial_df: pd.DataFrame,
     objective_columns: list[str],
@@ -205,15 +94,6 @@ def _coerce_objective_columns_numeric(
             )
         result[col] = coerced
     return result
-
-
-def _complete_trials_only(trials_df: pd.DataFrame) -> pd.DataFrame:
-    if "state" not in trials_df.columns:
-        return trials_df
-
-    state_text = trials_df["state"].astype(str)
-    complete_mask = state_text.str.upper().str.contains("COMPLETE")
-    return trials_df.loc[complete_mask].copy()
 
 
 def pareto_main(

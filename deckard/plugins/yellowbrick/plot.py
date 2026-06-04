@@ -11,10 +11,10 @@ from pathlib import Path
 from typing import Any, Dict, Final, List, Literal, Optional, Union, get_args
 
 import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib.artist import Artist
 from matplotlib.axes import Axes
 from matplotlib.font_manager import FontProperties
-import numpy as np
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.model_selection import (
     KFold,
@@ -22,7 +22,6 @@ from sklearn.model_selection import (
     StratifiedKFold,
     TimeSeriesSplit,
 )
-from ...artifacts import ScoreDict
 
 # Classifier Visualizers
 from yellowbrick.classifier import (
@@ -70,6 +69,7 @@ from yellowbrick.target import (
     FeatureCorrelation,
 )
 
+from ...artifacts import ScoreDict
 from ...experiment import ExperimentConfig
 from ...frameworks.pytorch.score import (
     get_dataset_shape as _get_shape,
@@ -264,60 +264,6 @@ YELLOWBRICK_PLOT_TYPE_DOCS: Final[dict[str, str]] = {
 
 logger = logging.getLogger(__name__)
 warnings.filterwarnings("ignore", category=UserWarning)
-
-
-def _get_shape(obj):  # noqa: F811
-    if hasattr(obj, "shape"):
-        return obj.shape
-    if hasattr(obj, "dataset") and hasattr(obj.dataset, "shape"):
-        shape = obj.dataset.shape
-        if hasattr(obj, "indices") and len(shape) > 0:
-            return (len(obj.indices), *shape[1:])
-        return shape
-    if Subset is not None and isinstance(obj, Subset):
-        # Unwrap nested Subset / TensorDataset / custom dataset wrappers
-        base = obj.dataset
-
-        # Try recursive resolution first
-        try:
-            shape = _get_shape(base)
-            if len(shape) > 0:
-                return (len(obj.indices), *shape[1:])
-            return shape
-        except AttributeError:
-            pass
-
-        # Handle TensorDataset-like objects (.tensors)
-        if hasattr(base, "tensors") and base.tensors:
-            tensor = base.tensors[0]
-            if hasattr(tensor, "shape"):
-                shape = tensor.shape
-                if len(shape) > 0:
-                    return (len(obj.indices), *shape[1:])
-                return shape
-        if len(obj) > 0:
-            first = obj[0]
-            first_x = (
-                first[0]
-                if isinstance(first, (tuple, list)) and len(first) > 0
-                else first
-            )
-            first_arr = _to_numpy(first_x)
-            sample_shape = getattr(first_arr, "shape", ())
-            if len(sample_shape) > 0:
-                return (len(obj), *sample_shape)
-            return (len(obj),)
-    if hasattr(obj, "__len__") and hasattr(obj, "__getitem__") and len(obj) > 0:
-        first = obj[0]
-        first_x = (
-            first[0] if isinstance(first, (tuple, list)) and len(first) > 0 else first
-        )
-        first_arr = _to_numpy(first_x)
-        sample_shape = getattr(first_arr, "shape", ())
-        if len(sample_shape) > 0:
-            return (len(obj), *sample_shape)
-        return (len(obj),)
-    raise AttributeError(f"{type(obj).__name__} has no shape")
 
 
 class _YellowbrickModelAdapter(BaseEstimator, ClassifierMixin):

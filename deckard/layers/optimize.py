@@ -1,8 +1,8 @@
 import argparse
-from dataclasses import dataclass, field
 import inspect
 import json
 import logging
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Mapping, Protocol, cast
 
@@ -25,6 +25,7 @@ from ..experiment.canon import (
 )
 from ..file import FileConfig
 from ..utils import BaseConfig, hash_conf_values
+from ._trial_utils import normalize_direction as _normalize_direction
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -1223,19 +1224,6 @@ def create_study(
             load_if_exists=True,
         )
     return study
-
-
-def _normalize_direction(direction: str) -> str:
-    d = str(direction).strip().lower()
-    if "." in d:
-        d = d.split(".")[-1]
-    if d in ["maximize", "max"]:
-        return "maximize"
-    if d in ["minimize", "min"]:
-        return "minimize"
-    if d == "diff":
-        return "diff"
-    raise ValueError(f"Invalid direction: {direction}")
 
 
 def _filter_optuna_objectives(directions, optimizers):

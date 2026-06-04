@@ -7,15 +7,14 @@ from typing import Any
 
 import numpy as np
 
-from ...attack.base import AttackConfig
 from ...artifacts import ScoreDict
+from ...attack.base import AttackConfig
 from ...model import ModelConfig
 from ..text_runtime import (
-    apply_attack_runtime_outputs,
     TransformerTextAdapter,
-    resolve_runtime_model,
+    build_transformer_text_adapter,
+    finalize_attack_runtime_outputs,
     resolve_text_batch,
-    resolve_text_max_length,
 )
 
 
@@ -89,11 +88,10 @@ def run_openattack_attack_config(
 ) -> dict[str, Any]:
     """Run one OpenAttack attacker against raw text samples from a Deckard dataset."""
     texts, labels, tokenizer = resolve_text_batch(data, attack_config, split=split)
-    runtime_model = resolve_runtime_model(model)
-    adapter = TransformerTextAdapter(
-        model=runtime_model,
+    adapter = build_transformer_text_adapter(
+        data=data,
+        model=model,
         tokenizer=tokenizer,
-        max_length=resolve_text_max_length(data),
     )
     victim = _build_openattack_classifier(adapter)
 
@@ -214,7 +212,7 @@ class OpenAttackConfig(AttackConfig):
             )
             error = str(exc)
 
-        apply_attack_runtime_outputs(
+        return finalize_attack_runtime_outputs(
             runtime,
             records=records,
             library="openattack",
@@ -223,7 +221,6 @@ class OpenAttackConfig(AttackConfig):
             count=count,
             error=error,
         )
-        return runtime.score_dict
 
 
 __all__ = [

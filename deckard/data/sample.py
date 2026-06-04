@@ -38,6 +38,7 @@ from sklearn.model_selection import (
     StratifiedShuffleSplit,
     train_test_split,
 )
+
 from ..utils import resolve_component_spec
 
 if TYPE_CHECKING:
@@ -138,6 +139,29 @@ class BaseSampler:
             return spec()
         raise ValueError(f"Unsupported sampler specification: {type(spec)}")
 
+    @staticmethod
+    def _sampler_spec_or_none(config: "DataConfig") -> Any:
+        spec = getattr(config, "sampler", None)
+        if spec is None:
+            return None
+        if isinstance(spec, dict) and not spec:
+            return None
+        return spec
+
+    @staticmethod
+    def _resolve_component(
+        *,
+        spec: Any,
+        aliases: dict[str, Any],
+        alias_kwargs_getter,
+    ) -> Any:
+        return resolve_component_spec(
+            spec,
+            field_name="sampler",
+            aliases=aliases,
+            alias_kwargs_getter=alias_kwargs_getter,
+        )
+
     @classmethod
     def resolve(cls, config: "DataConfig") -> Any:
         """Resolve ``config.sampler`` into a callable sampler object or ``None``.
@@ -163,10 +187,8 @@ class BaseSampler:
                 return {str(key): value for key, value in source.items()}
             return {}
 
-        spec = getattr(config, "sampler", None)
+        spec = cls._sampler_spec_or_none(config)
         if spec is None:
-            return None
-        if isinstance(spec, dict) and not spec:
             return None
 
         if isinstance(spec, dict):
@@ -177,9 +199,8 @@ class BaseSampler:
                     **{str(key): value for key, value in payload.items()},
                 )
 
-        return resolve_component_spec(
-            spec,
-            field_name="sampler",
+        return cls._resolve_component(
+            spec=spec,
             aliases=sampler_aliases,
             alias_kwargs_getter=_alias_kwargs,
         )

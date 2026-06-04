@@ -12,6 +12,8 @@
 - Updated dataset/config inputs used by examples and notebook flows (adult dataset source/config refresh, paper/config refreshes, and example updates).
 - Removed broken cache behavior discovered during cleanup and aligned cache behavior with current runtime expectations.
 - Applied additional core/runtime safety improvements and compatibility fixes discovered during regression-driven refactoring.
+- Closed TODOs from changelog: targeted vs non-targeted attack label normalization in `deckard/attack/base.py`, constructor-parameter extraction stabilization in `deckard/model/base.py`, and component/sub-component runtime manifest mapping completion in `deckard/experiment/canon.py`.
+
 
 ## 0.98.3
 
@@ -62,15 +64,6 @@ Repository TODO audit completed from source, test, docs, scripts, workflow, and 
 Scan scope:
 - Included: `deckard`, `docs`, `examples`, `scripts`, `test`, `.github`, `README.md`, `pyproject.toml`
 - Excluded: `.git`, `.venv`, `.dvc`, `build`, `docs/build`, `outputs`, generated notebooks and HTML
-
-### Audited Open TODO List
-
-#### Runtime and core code
-
-- [ ] `deckard/attack/base.py`: resolve targeted/non-targeted attack label TODO in runtime payload path.
-- [ ] `deckard/model/base.py`: replace inspect-based fallback TODO in `_sync_model_signature_from_estimator` with a stable constructor-parameter extraction strategy.
-- [ ] `deckard/experiment/canon.py`: complete component/sub-component manifest mapping TODO in experiment runtime manifest builder.
-
 
 
 #### Backlog classification notes

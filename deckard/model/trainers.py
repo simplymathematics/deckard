@@ -14,8 +14,8 @@ from typing import TYPE_CHECKING, Any
 
 from sklearn.exceptions import NotFittedError
 
-from .canon import normalize_model_trainer_alias
 from ..utils import resolve_component_spec
+from .canon import normalize_model_trainer_alias
 
 if TYPE_CHECKING:
     from .base import ModelConfig
@@ -157,6 +157,29 @@ class BaseTrainer:
             force_retrain=force_retrain,
         )
 
+    @staticmethod
+    def _persist_if_requested(config: "ModelConfig", model_file: str | None) -> None:
+        if model_file is not None:
+            save_object = getattr(config, "save_object", None)
+            if callable(save_object):
+                save_object(config, model_file)
+
+    @classmethod
+    def _fit_and_collect(
+        cls,
+        config: "ModelConfig",
+        data: Any,
+        *,
+        model_file: str | None,
+        times: dict[str, Any] | None,
+    ) -> dict[str, Any]:
+        output = dict(times or {})
+        config.train(data.X_train, data.y_train)
+        output["training_time"] = getattr(config, "training_time", None)
+        output["training_n"] = getattr(config, "training_n", None)
+        cls._persist_if_requested(config, model_file)
+        return output
+
 
 @dataclass
 class SklearnTrainer(BaseTrainer):
@@ -187,13 +210,12 @@ class SklearnTrainer(BaseTrainer):
         Returns:
             Training metadata payload.
         """
-        output = dict(times or {})
-        config.train(data.X_train, data.y_train)
-        output["training_time"] = getattr(config, "training_time", None)
-        output["training_n"] = getattr(config, "training_n", None)
-        if model_file is not None:
-            config.save_object(config, model_file)
-        return output
+        return self._fit_and_collect(
+            config,
+            data,
+            model_file=model_file,
+            times=times,
+        )
 
 
 @dataclass
@@ -225,13 +247,12 @@ class PytorchTrainer(BaseTrainer):
         Returns:
             Training metadata payload.
         """
-        output = dict(times or {})
-        config.train(data.X_train, data.y_train)
-        output["training_time"] = getattr(config, "training_time", None)
-        output["training_n"] = getattr(config, "training_n", None)
-        if model_file is not None:
-            config.save_object(config, model_file)
-        return output
+        return self._fit_and_collect(
+            config,
+            data,
+            model_file=model_file,
+            times=times,
+        )
 
 
 @dataclass
@@ -271,12 +292,12 @@ class PretrainedTrainer(BaseTrainer):
         output = dict(times or {})
         if force_retrain:
             config._initialize_model()
-            config.train(data.X_train, data.y_train)
-            output["training_time"] = getattr(config, "training_time", None)
-            output["training_n"] = getattr(config, "training_n", None)
-            if model_file is not None:
-                config.save_object(config, model_file)
-            return output
+            return self._fit_and_collect(
+                config,
+                data,
+                model_file=model_file,
+                times=output,
+            )
 
         if model_file is not None and Path(model_file).exists():
             loaded_obj = config.load(str(model_file))
@@ -297,12 +318,12 @@ class PretrainedTrainer(BaseTrainer):
                 return output
 
         if self.allow_fallback_training:
-            config.train(data.X_train, data.y_train)
-            output["training_time"] = getattr(config, "training_time", None)
-            output["training_n"] = getattr(config, "training_n", None)
-            if model_file is not None:
-                config.save_object(config, model_file)
-            return output
+            return self._fit_and_collect(
+                config,
+                data,
+                model_file=model_file,
+                times=output,
+            )
 
         raise NotFittedError(
             "PretrainedTrainer requires a fitted model artifact and allow_fallback_training=False",
@@ -367,8 +388,7 @@ class PartialFitTrainer(BaseTrainer):
 
         output["training_time"] = getattr(config, "training_time", None)
         output["training_n"] = getattr(config, "training_n", None)
-        if model_file is not None:
-            config.save_object(config, model_file)
+        self._persist_if_requested(config, model_file)
         return output
 
 
@@ -405,14 +425,17 @@ class PruningTrainer(BaseTrainer):
         Returns:
             Training metadata payload.
         """
-        output = dict(times or {})
-        config.train(data.X_train, data.y_train)
-        output["training_time"] = getattr(config, "training_time", None)
-        output["training_n"] = getattr(config, "training_n", None)
+        output = self._fit_and_collect(
+            config,
+            data,
+            model_file=None,
+            times=times,
+        )
 
-        if self.trial is not None and hasattr(config, "check_prune"):
+        check_prune = getattr(config, "check_prune", None)
+        if self.trial is not None and callable(check_prune):
             metric_value = output.get(self.prune_metric, None)
-            should_prune = config.check_prune(
+            should_prune = check_prune(
                 self.trial,
                 value=metric_value,
                 step=self.prune_step,
@@ -420,8 +443,7 @@ class PruningTrainer(BaseTrainer):
             if should_prune:
                 output["pruned"] = True
 
-        if model_file is not None:
-            config.save_object(config, model_file)
+        self._persist_if_requested(config, model_file)
         return output
 
 
@@ -465,9 +487,10 @@ class PartialFitPruningTrainer(PartialFitTrainer):
             times=times,
             force_retrain=force_retrain,
         )
-        if self.trial is not None and hasattr(config, "check_prune"):
+        check_prune = getattr(config, "check_prune", None)
+        if self.trial is not None and callable(check_prune):
             metric_value = output.get(self.prune_metric, None)
-            should_prune = config.check_prune(
+            should_prune = check_prune(
                 self.trial,
                 value=metric_value,
                 step=self.prune_step,

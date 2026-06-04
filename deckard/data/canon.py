@@ -5,18 +5,33 @@ from __future__ import annotations
 from typing import Any, Final, Mapping, TypedDict
 
 from ..artifacts import ScoreDict
-from ..utils import data_supported_filetypes
 from ..orchestration import (
     CANONICAL_RUNTIME_METHODS,
+    CANONICAL_SCORE_MODES,
+    CANONICAL_SCORE_STAGES,
     DEFAULT_SCORE_MODE,
     DEFAULT_SCORE_STAGE,
+    VALIDATION_SPLIT_RESET_FIELDS,
+)
+from ..orchestration import (
     MODE_ALIASES as _MODE_ALIASES,
+)
+from ..orchestration import (
     STAGE_ALIASES as _STAGE_ALIASES,
+)
+from ..orchestration import (
     normalize_runtime_split_mode as _normalize_runtime_split_mode,
+)
+from ..orchestration import (
     resolve_data_split_payload as _resolve_data_split_payload,
+)
+from ..orchestration import (
     resolve_sensitive_split_payload as _resolve_sensitive_split_payload,
+)
+from ..orchestration import (
     stage_hook_token as _stage_hook_token,
 )
+from ..utils import data_supported_filetypes
 
 CANONICAL_DATA_METHODS: Final[tuple[str, ...]] = CANONICAL_RUNTIME_METHODS
 
@@ -31,20 +46,19 @@ CANONICAL_DATA_LOAD_FILETYPES: Final[tuple[str, ...]] = (
     ".npz",
 )
 
-CANONICAL_DATA_STAGES: Final[tuple[str, ...]] = (
-    "pre-load",
-    "pre-sample",
-    "post-sample",
-    "post-pipeline",
-    "all",
-    "auto",
+CANONICAL_DATA_STAGES: Final[tuple[str, ...]] = CANONICAL_SCORE_STAGES
+
+CANONICAL_DATA_SCORE_MODES: Final[tuple[str, ...]] = CANONICAL_SCORE_MODES
+
+CANONICAL_DATA_SPLIT_RUNTIME_FIELDS: Final[tuple[str, ...]] = (
+    VALIDATION_SPLIT_RESET_FIELDS
 )
 
-CANONICAL_DATA_SCORE_MODES: Final[tuple[str, ...]] = (
-    "train",
-    "test",
-    "val",
-    "all",
+CANONICAL_DATA_PIPELINE_COUNTER_FIELDS: Final[tuple[str, ...]] = (
+    "pipeline_fit_n",
+    "pipeline_transform_n",
+    "pipeline_y_fit_n",
+    "pipeline_y_transform_n",
 )
 
 CANONICAL_DATA_TIMES: Final[tuple[str, ...]] = (
@@ -64,18 +78,7 @@ CANONICAL_DATA_RUNTIME_FIELDS: Final[tuple[str, ...]] = (
     "times",
     "_X",
     "_y",
-    "train_indices",
-    "test_indices",
-    "val_indices",
-    "X_train",
-    "y_train",
-    "X_test",
-    "y_test",
-    "X_val",
-    "y_val",
-    "train_n",
-    "test_n",
-    "val_n",
+    *CANONICAL_DATA_SPLIT_RUNTIME_FIELDS,
 )
 
 DEFAULT_DATA_SCORE_STAGE: Final[str] = DEFAULT_SCORE_STAGE
@@ -254,6 +257,8 @@ __all__ = [
     "CANONICAL_DATA_STAGES",
     "CANONICAL_DATA_SCORE_MODES",
     "CANONICAL_DATA_TIMES",
+    "CANONICAL_DATA_SPLIT_RUNTIME_FIELDS",
+    "CANONICAL_DATA_PIPELINE_COUNTER_FIELDS",
     "CANONICAL_DATA_RUNTIME_FIELDS",
     "DEFAULT_DATA_SCORE_STAGE",
     "DEFAULT_DATA_SCORE_MODE",

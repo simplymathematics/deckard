@@ -17,6 +17,11 @@ from omegaconf import DictConfig, ListConfig, OmegaConf
 
 from ..artifacts import ScoreDict
 from ..data import DataConfig
+from ..plugins.base import (
+    bind_runtime_handler,
+    matches_typed_plugin,
+    resolve_plugin_mixin_type,
+)
 from ..types import ArrayLike, AttackLike, EstimatorLike, MatrixLike
 from ..utils import (
     BaseConfig,
@@ -28,6 +33,7 @@ from ..utils import (
     resolve_class,
     safe_store,
 )
+from ._runtime import series_like_to_float_dict as _series_like_to_float_dict
 from .canon import (
     DEFAULT_SCORING_MODE_BY_TYPE,
     DEFAULT_SCORING_STAGE_BY_TYPE,
@@ -48,7 +54,6 @@ from .canon import (
     ScoringPipelineStage,
     normalize_scorer_mode,
 )
-from ._runtime import series_like_to_float_dict as _series_like_to_float_dict
 
 logger = logging.getLogger(__name__)
 
@@ -157,11 +162,9 @@ class ScorerTypePlugin:
     )
 
     def _resolve_mixin_type(self) -> type:
-        if isinstance(self.mixin_type, str):
-            resolved = resolve_class(self.mixin_type)
-            self.mixin_type = resolved
-            return resolved
-        return self.mixin_type
+        resolved = resolve_plugin_mixin_type(self.mixin_type, resolver=resolve_class)
+        self.mixin_type = resolved
+        return resolved
 
     def _matches(
         self,
@@ -169,17 +172,13 @@ class ScorerTypePlugin:
         scoring_type: str,
         scoring_subtype: Union[str, None],
     ) -> bool:
-        if (scoring_type or "").lower() != (self.scoring_type or "").lower():
-            return False
-        subtype = (scoring_subtype or "").lower()
-        if (
-            self.scoring_subtype is not None
-            and subtype != self.scoring_subtype.lower()
-        ):
-            return False
-        if subtype in {item.lower() for item in self.excluded_subtypes}:
-            return False
-        return True
+        return matches_typed_plugin(
+            requested_type=scoring_type,
+            configured_type=self.scoring_type,
+            requested_subtype=scoring_subtype,
+            configured_subtype=self.scoring_subtype,
+            excluded_subtypes=self.excluded_subtypes,
+        )
 
     def resolve_scorer_mixins(
         self,
@@ -250,7 +249,7 @@ class ScorerTypePlugin:
             Normalized score payload returned by the mixin handler.
         """
         mixin = self._resolve_mixin_type()
-        handler = mixin(runtime)
+        handler = bind_runtime_handler(runtime, mixin)
         return ScoreDict.from_payload(handler(*args, **kwargs))
 
 
@@ -709,127 +708,8 @@ class ScorerDictConfig(BaseConfig):
         for key, value in self.scorers.items():
             if isinstance(value, ScorerConfig):
                 scorer = value
-            elif isinstance(value, dict):
-                scorer_data = dict(value)
-                raw_score_name = scorer_data.pop("score_name", key)
-                raw_score_params = scorer_data.pop("score_params", {})
-                raw_metric_scope = scorer_data.pop("metric_scope", "auto")
-                raw_stage = scorer_data.pop("stage", "")
-                raw_needs_labels = scorer_data.pop("needs_labels", None)
-                raw_needs_proba = scorer_data.pop("needs_proba", None)
-                raw_needs_logits = scorer_data.pop("needs_logits", None)
-                raw_binary_expand = scorer_data.pop(
-                    "binary_expand_to_multiclass",
-                    None,
-                )
-                raw_positive_idx = scorer_data.pop("binary_positive_class_index", 1)
-                raw_row_sum_atol = scorer_data.pop("row_sum_atol", 1e-2)
-                raw_prob_clip_eps = scorer_data.pop("probability_clip_eps", 1e-12)
-                resolved_needs_labels = (
-                    True
-                    if raw_needs_labels is None and raw_needs_proba is not True
-                    else (
-                        False if raw_needs_labels is None else bool(raw_needs_labels)
-                    )
-                )
-                resolved_needs_proba = (
-                    bool(raw_needs_proba) if raw_needs_proba is not None else None
-                )
-                if not isinstance(raw_score_params, dict):
-                    raise TypeError(
-                        f"score_params for '{key}' must be a dictionary, got {type(raw_score_params)}",
-                    )
-                scorer = ScorerConfig(
-                    score_name=str(raw_score_name),
-                    score_function=scorer_data.pop("score_function"),
-                    score_params=dict(raw_score_params),
-                    metric_scope=str(raw_metric_scope),
-                    stage=self._normalize_stage_field(raw_stage),
-                    greater_is_better=bool(
-                        scorer_data.pop(
-                            "greater_is_better",
-                            True,
-                        ),
-                    ),
-                    needs_labels=resolved_needs_labels,
-                    needs_proba=resolved_needs_proba,
-                    needs_logits=(
-                        bool(raw_needs_logits)
-                        if raw_needs_logits is not None
-                        else None
-                    ),
-                    binary_expand_to_multiclass=(
-                        bool(raw_binary_expand)
-                        if raw_binary_expand is not None
-                        else None
-                    ),
-                    binary_positive_class_index=int(raw_positive_idx),
-                    row_sum_atol=float(raw_row_sum_atol),
-                    probability_clip_eps=float(raw_prob_clip_eps),
-                )
-            elif isinstance(value, DictConfig):
-                raw_value = OmegaConf.to_container(value, resolve=True)
-                if not isinstance(raw_value, dict):
-                    raise TypeError(
-                        f"DictConfig scorer entry '{key}' must resolve to a dictionary, got {type(raw_value)}",
-                    )
-                scorer_data = dict(raw_value)
-                raw_score_name = scorer_data.pop("score_name", key)
-                raw_score_params = scorer_data.pop("score_params", {})
-                raw_metric_scope = scorer_data.pop("metric_scope", "auto")
-                raw_stage = scorer_data.pop("stage", "")
-                raw_needs_labels = scorer_data.pop("needs_labels", None)
-                raw_needs_proba = scorer_data.pop("needs_proba", None)
-                raw_needs_logits = scorer_data.pop("needs_logits", None)
-                raw_binary_expand = scorer_data.pop(
-                    "binary_expand_to_multiclass",
-                    None,
-                )
-                raw_positive_idx = scorer_data.pop("binary_positive_class_index", 1)
-                raw_row_sum_atol = scorer_data.pop("row_sum_atol", 1e-2)
-                raw_prob_clip_eps = scorer_data.pop("probability_clip_eps", 1e-12)
-                resolved_needs_labels = (
-                    True
-                    if raw_needs_labels is None and raw_needs_proba is not True
-                    else (
-                        False if raw_needs_labels is None else bool(raw_needs_labels)
-                    )
-                )
-                resolved_needs_proba = (
-                    bool(raw_needs_proba) if raw_needs_proba is not None else None
-                )
-                if not isinstance(raw_score_params, dict):
-                    raise TypeError(
-                        f"score_params for '{key}' must be a dictionary, got {type(raw_score_params)}",
-                    )
-                scorer = ScorerConfig(
-                    score_name=str(raw_score_name),
-                    score_function=scorer_data.pop("score_function"),
-                    score_params=dict(raw_score_params),
-                    metric_scope=str(raw_metric_scope),
-                    stage=self._normalize_stage_field(raw_stage),
-                    greater_is_better=bool(
-                        scorer_data.pop(
-                            "greater_is_better",
-                            True,
-                        ),
-                    ),
-                    needs_labels=resolved_needs_labels,
-                    needs_proba=resolved_needs_proba,
-                    needs_logits=(
-                        bool(raw_needs_logits)
-                        if raw_needs_logits is not None
-                        else None
-                    ),
-                    binary_expand_to_multiclass=(
-                        bool(raw_binary_expand)
-                        if raw_binary_expand is not None
-                        else None
-                    ),
-                    binary_positive_class_index=int(raw_positive_idx),
-                    row_sum_atol=float(raw_row_sum_atol),
-                    probability_clip_eps=float(raw_prob_clip_eps),
-                )
+            elif isinstance(value, (dict, DictConfig)):
+                scorer = self._build_scorer_from_mapping(key=key, value=value)
             else:
                 raise TypeError(
                     f"Value for key '{key}' must be ScorerConfig or dict, got {type(value)}",
@@ -838,6 +718,64 @@ class ScorerDictConfig(BaseConfig):
             normalized[key] = scorer
         self.scorers = normalized
         self._validate_scope_mode_compatibility()
+
+    @staticmethod
+    def _coerce_scorer_mapping(key: str, value: Any) -> dict[str, Any]:
+        if isinstance(value, DictConfig):
+            raw_value = OmegaConf.to_container(value, resolve=True)
+            if not isinstance(raw_value, dict):
+                raise TypeError(
+                    f"DictConfig scorer entry '{key}' must resolve to a dictionary, got {type(raw_value)}",
+                )
+            return dict(raw_value)
+        return dict(value)
+
+    def _build_scorer_from_mapping(self, key: str, value: Any) -> ScorerConfig:
+        scorer_data = self._coerce_scorer_mapping(key, value)
+        raw_score_name = scorer_data.pop("score_name", key)
+        raw_score_params = scorer_data.pop("score_params", {})
+        raw_metric_scope = scorer_data.pop("metric_scope", "auto")
+        raw_stage = scorer_data.pop("stage", "")
+        raw_needs_labels = scorer_data.pop("needs_labels", None)
+        raw_needs_proba = scorer_data.pop("needs_proba", None)
+        raw_needs_logits = scorer_data.pop("needs_logits", None)
+        raw_binary_expand = scorer_data.pop("binary_expand_to_multiclass", None)
+        raw_positive_idx = scorer_data.pop("binary_positive_class_index", 1)
+        raw_row_sum_atol = scorer_data.pop("row_sum_atol", 1e-2)
+        raw_prob_clip_eps = scorer_data.pop("probability_clip_eps", 1e-12)
+
+        resolved_needs_labels = (
+            True
+            if raw_needs_labels is None and raw_needs_proba is not True
+            else (False if raw_needs_labels is None else bool(raw_needs_labels))
+        )
+        resolved_needs_proba = (
+            bool(raw_needs_proba) if raw_needs_proba is not None else None
+        )
+        if not isinstance(raw_score_params, dict):
+            raise TypeError(
+                f"score_params for '{key}' must be a dictionary, got {type(raw_score_params)}",
+            )
+
+        return ScorerConfig(
+            score_name=str(raw_score_name),
+            score_function=scorer_data.pop("score_function"),
+            score_params=dict(raw_score_params),
+            metric_scope=str(raw_metric_scope),
+            stage=self._normalize_stage_field(raw_stage),
+            greater_is_better=bool(scorer_data.pop("greater_is_better", True)),
+            needs_labels=resolved_needs_labels,
+            needs_proba=resolved_needs_proba,
+            needs_logits=(
+                bool(raw_needs_logits) if raw_needs_logits is not None else None
+            ),
+            binary_expand_to_multiclass=(
+                bool(raw_binary_expand) if raw_binary_expand is not None else None
+            ),
+            binary_positive_class_index=int(raw_positive_idx),
+            row_sum_atol=float(raw_row_sum_atol),
+            probability_clip_eps=float(raw_prob_clip_eps),
+        )
 
     def _validate_scope_mode_compatibility(self) -> None:
         """Fail fast on scorer-scope/mode combinations that are semantically invalid."""
@@ -1649,22 +1587,15 @@ class ScorerDictConfig(BaseConfig):
             TypeError: If configured scorer entries are not callable.
             KeyError: If scoring mode token is unsupported.
         """
-        results: dict[str, Any] = {}
         runtime_stage = kwargs.pop("stage", None)
-
-        if (
-            mode is None
-            and runtime_stage is None
-            and ind is None
-            and dep is None
-            and "y_pred" not in kwargs
-            and "y_true" not in kwargs
-        ):
-            raise AssertionError("y_true must be provided if mode is None")
-
-        effective_mode = self._resolve_runtime_mode(
-            mode=mode,
-            requested_stage=runtime_stage,
+        effective_mode, stage_key, runtime_stage_tokens = (
+            self._prepare_runtime_context(
+                mode=mode,
+                runtime_stage=runtime_stage,
+                ind=ind,
+                dep=dep,
+                kwargs=kwargs,
+            )
         )
         scorer_is_data_profile = self._is_data_profile_scorer()
         if effective_mode == "pre-sample" and not scorer_is_data_profile:
@@ -1672,22 +1603,15 @@ class ScorerDictConfig(BaseConfig):
                 "pre-sample mode is reserved for data-profile scorers.",
             )
 
+        results: dict[str, Any] = {}
+
         if score_file is not None and Path(score_file).exists():
             results = self.load_scores(score_file)
 
         if not isinstance(results, dict):
             results = {}
 
-        stage_key = self._resolve_stage_key(
-            mode=mode,
-            requested_stage=runtime_stage,
-        )
         stage_results = self._normalize_existing_stage_results(results, stage_key)
-
-        runtime_stage_tokens = self._runtime_stage_tokens(
-            mode=effective_mode,
-            stage=runtime_stage,
-        )
         if not self._stage_matches(self.stage, runtime_stage_tokens):
             raise KeyError(
                 "ScorerDictConfig stage filter did not match requested stage. "
@@ -1753,6 +1677,39 @@ class ScorerDictConfig(BaseConfig):
         if mode is not None or runtime_stage is not None:
             return ScoreDict.from_payload({stage_key: results[stage_key]})
         return ScoreDict.from_payload(results[stage_key])
+
+    def _prepare_runtime_context(
+        self,
+        *,
+        mode: str | None,
+        runtime_stage: Any,
+        ind: MatrixLike | ArrayLike | None,
+        dep: MatrixLike | ArrayLike | None,
+        kwargs: dict[str, Any],
+    ) -> tuple[str, str, set[str]]:
+        if (
+            mode is None
+            and runtime_stage is None
+            and ind is None
+            and dep is None
+            and "y_pred" not in kwargs
+            and "y_true" not in kwargs
+        ):
+            raise AssertionError("y_true must be provided if mode is None")
+
+        effective_mode = self._resolve_runtime_mode(
+            mode=mode,
+            requested_stage=runtime_stage,
+        )
+        stage_key = self._resolve_stage_key(
+            mode=mode,
+            requested_stage=runtime_stage,
+        )
+        runtime_stage_tokens = self._runtime_stage_tokens(
+            mode=effective_mode,
+            stage=runtime_stage,
+        )
+        return effective_mode, stage_key, runtime_stage_tokens
 
 
 def coerce_scorer_config(scorer_obj, *, default_factory=None):

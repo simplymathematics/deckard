@@ -166,8 +166,6 @@ Primary config source:
 
 - `examples/sklearn/config/default.yaml`
 
-b`
-
 ## Runtime Contract Checks
 
 When validating optimize behavior, confirm:

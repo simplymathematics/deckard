@@ -12,10 +12,21 @@ import pandas as pd
 import pytest
 from helpers import make_runtime_env
 
-from deckard.attack import AttackConfig
-from deckard.experiment import ExperimentConfig
-from deckard.file import FileConfig
-from deckard.model import DefenseConfig, ModelConfig
+from test.test_plugins.test_anjana.shared import (
+    assert_anjana_privacy_scores as _assert_anjana_privacy_scores,
+)
+from test.test_plugins.test_anjana.shared import (
+    assert_wrapper_reordered_last,
+    make_art_postprocessor_defense,
+    make_hopskipjump_attack,
+    make_logistic_model,
+    run_experiment,
+    stub_copy_resolver,
+    stub_drop_half_rows_resolver,
+)
+from test.test_plugins.test_anjana.shared import (
+    make_anjana_data as _make_anjana_data,
+)
 
 ROOT = Path(__file__).resolve().parents[3]
 EXAMPLES_SKLEARN_DIR = ROOT / "examples" / "sklearn"
@@ -143,90 +154,6 @@ def _contains_metric(scores: dict, metric: str) -> bool:
         return True
     return any(
         isinstance(value, dict) and metric in value for value in scores.values()
-    )
-
-
-def _make_anjana_data(n=40, monkeypatch=None, defense=None):
-    from deckard.plugins.anjana.data import AnjanaDataConfig
-
-    cfg = AnjanaDataConfig(
-        name="make_classification",
-        data_params={
-            "n_samples": n,
-            "n_features": 6,
-            "n_informative": 3,
-            "n_redundant": 0,
-            "random_state": 0,
-            "n_clusters_per_class": 1,
-        },
-        sampler={
-            "name": "deckard.data.sample.SplitSampler",
-            "train_size": 0.7,
-            "test_size": 0.3,
-        },
-        classifier=True,
-        quasi_identifiers=["feature_0", "feature_1"],
-        sensitive_attribute="target",
-        sensitive_columns=["feature_0"],
-        anjana_defense=defense,
-        hierarchy_interval_sizes={"feature_0": [1, 2], "feature_1": [1, 2]},
-    )
-
-    if monkeypatch is not None and defense is not None:
-
-        def _stub_k_anon(data, **kwargs):
-            _ = kwargs
-            return data.copy()
-
-        monkeypatch.setattr(
-            "deckard.plugins.anjana.data.resolve_class",
-            lambda _: _stub_k_anon,
-        )
-    return cfg
-
-
-def _assert_anjana_privacy_scores(scores: dict) -> None:
-    anjana_metrics = {
-        "k_anonymity",
-        "l_diversity",
-        "t_closeness",
-    }
-
-    # Persisted score artifacts are envelope-based; runtime scores are plain mappings.
-    metric_source = (
-        scores.get("payload") if isinstance(scores.get("payload"), dict) else scores
-    )
-
-    # Check for metrics under "post-pipeline" key (expected default location)
-    post_pipeline = metric_source.get("post-pipeline")
-    if isinstance(post_pipeline, dict):
-        assert anjana_metrics.issubset(set(post_pipeline.keys())), (
-            f"Expected privacy metrics under 'post-pipeline' key, "
-            f"but found keys: {sorted(post_pipeline.keys())}"
-        )
-        return
-
-    # Direct scorer calls may return mode-scoped payloads, e.g. {"test": {...}}.
-    for value in metric_source.values():
-        if isinstance(value, dict) and anjana_metrics.issubset(set(value.keys())):
-            return
-
-    flat_source = scores.get("flat") if isinstance(scores.get("flat"), dict) else None
-    if isinstance(flat_source, dict):
-        flattened_keys = {key.rsplit(".", 1)[-1] for key in flat_source.keys()}
-        assert anjana_metrics.issubset(flattened_keys), (
-            "Expected Anjana-specific privacy metrics in flattened scores "
-            "(k_anonymity, l_diversity, t_closeness), "
-            f"but found keys: {sorted(flat_source.keys())}"
-        )
-        return
-
-    # Check for flat top-level keys (legacy fallback)
-    flattened_keys = {key for key in metric_source if key in anjana_metrics}
-    assert anjana_metrics.issubset(flattened_keys), (
-        "Expected Anjana-specific privacy metrics in scores (k_anonymity, "
-        "l_diversity, t_closeness), "
-        f"but found keys: {sorted(metric_source.keys())}"
     )
 
 
@@ -443,45 +370,17 @@ def test_deckard_optimize_hydra_multirun_syncs_optuna_trial_attrs_sklearn(tmp_pa
 
 
 def test_anjana_attack_chain_type_and_scores(monkeypatch):
-    def _stub_k_anon(data, **kwargs):
-        _ = kwargs
-        return data.copy()
-
-    monkeypatch.setattr(
-        "deckard.plugins.anjana.data.resolve_class",
-        lambda _: _stub_k_anon,
-    )
+    stub_copy_resolver(monkeypatch)
 
     data_cfg = _make_anjana_data(
         n=40,
         defense={"name": "anjana.anonymity.k_anonymity", "k": 2},
     )
-    model_cfg = ModelConfig(
-        name="sklearn.linear_model.LogisticRegression",
-        classifier=True,
-        model_params={"max_iter": 30},
-    )
-    attack_cfg = AttackConfig(
-        name="art.attacks.evasion.HopSkipJump",
-        attack_size=3,
-        attack_params={
-            "max_iter": 1,
-            "init_eval": 1,
-            "max_eval": 2,
-            "init_size": 5,
-            "norm": 2,
-            "targeted": False,
-        },
-    )
-
-    exp = ExperimentConfig(
+    exp, scores = run_experiment(
         data=data_cfg,
-        model=model_cfg,
-        attack=attack_cfg,
-        files=FileConfig(),
-        classifier=True,
+        model=make_logistic_model(max_iter=30),
+        attack=make_hopskipjump_attack(attack_size=3),
     )
-    scores = exp()
 
     assert isinstance(exp.data.X_train, pd.DataFrame)
     _assert_anjana_privacy_scores(scores)
@@ -495,14 +394,7 @@ def test_anjana_fairness_and_art_chain_type_and_transform(monkeypatch):
         ScikitlearnLogisticRegression,
     )
 
-    def _drop_half_rows(data, **kwargs):
-        _ = kwargs
-        return data.iloc[: len(data) // 2].copy()
-
-    monkeypatch.setattr(
-        "deckard.plugins.anjana.data.resolve_class",
-        lambda _: _drop_half_rows,
-    )
+    stub_drop_half_rows_resolver(monkeypatch)
 
     data_cfg = _make_anjana_data(
         n=60,
@@ -513,32 +405,13 @@ def test_anjana_fairness_and_art_chain_type_and_transform(monkeypatch):
         "step_name": "fairness_correlation_remover",
     }
 
-    model_cfg = ModelConfig(
-        name="sklearn.linear_model.LogisticRegression",
-        classifier=True,
-        model_params={"max_iter": 30},
-        defense=DefenseConfig(
-            defenses=[
-                {
-                    "name": "art.defences.postprocessor.ClassLabels",
-                    "defense_params": {
-                        "apply_fit": False,
-                        "apply_predict": True,
-                    },
-                    "classifier": True,
-                },
-            ],
+    exp, scores = run_experiment(
+        data=data_cfg,
+        model=make_logistic_model(
+            max_iter=30,
+            defense=make_art_postprocessor_defense(include_model_name=False),
         ),
     )
-
-    exp = ExperimentConfig(
-        data=data_cfg,
-        model=model_cfg,
-        attack=None,
-        files=FileConfig(),
-        classifier=True,
-    )
-    scores = exp()
 
     assert isinstance(exp.model._model, ScikitlearnLogisticRegression)
     assert len(exp.data._X) == 30
@@ -549,38 +422,10 @@ def test_anjana_fairness_and_art_chain_type_and_transform(monkeypatch):
 
 
 def test_wrapper_defenses_reordered_last_with_warning(caplog):
-    import logging
-
-    call_order = []
-
-    class _StubDataDefense:
-        name = "custom.mock.DataDefense"
-        defense_application_time = 0.0
-
-        def apply_to(self, estimator, data):
-            _ = data
-            call_order.append("data")
-            return estimator
-
-    class _StubArtDefense:
-        name = "art.mock.MockArtDefense"
-        defense_application_time = 0.0
-
-        def apply_to(self, estimator, data):
-            _ = data
-            call_order.append("art")
-            return estimator
-
-    pipeline = DefenseConfig(
-        defenses=[_StubArtDefense(), _StubDataDefense()],
-    )
-
-    with caplog.at_level(logging.WARNING, logger="deckard.model.defense.base"):
-        pipeline.apply(estimator=object(), data=object())
-
-    assert call_order == ["data", "art"]
-    assert any(
-        "automatically reordered to run last" in rec.message for rec in caplog.records
+    assert_wrapper_reordered_last(
+        caplog,
+        warning_substring="automatically reordered to run last",
+        data_defense_name="custom.mock.DataDefense",
     )
 
 

@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from art.config import ART_NUMPY_DTYPE
 
-from ...attack.base import AttackConfig
+from ...attack.base import AttackConfig, _tabular_values_or_original
 from ...score.attack import AttackScorerConfig  # noqa: F401
 from .torch_utils import is_tensor, tensor_to_numpy
 
@@ -23,28 +23,31 @@ class PytorchAttackConfig(AttackConfig):
     def _prepare_features_for_attack(self, value):
         if is_tensor(value):
             return value
-        if isinstance(value, pd.DataFrame):
-            return value.values.astype(ART_NUMPY_DTYPE)
-        if isinstance(value, pd.Series):
-            return value.values.astype(ART_NUMPY_DTYPE)
+        if isinstance(value, (pd.DataFrame, pd.Series)):
+            tabular = _tabular_values_or_original(value)
+            if isinstance(tabular, np.ndarray) and np.issubdtype(
+                tabular.dtype,
+                np.floating,
+            ):
+                return tabular.astype(ART_NUMPY_DTYPE)
+            return tabular
         return value
 
     def _prepare_labels_for_attack(self, value):
         if is_tensor(value):
             return value
-        if isinstance(value, pd.DataFrame):
-            return value.values
-        if isinstance(value, pd.Series):
-            return value.values
-        return value
+        return _tabular_values_or_original(value)
 
-    def _prepare_features_for_art(self, value):
+    def _prepare_features_for_art(
+        self,
+        value,
+    ):  # pyright: ignore[reportIncompatibleMethodOverride]
         """Torch-aware conversion used only at ART model/attack call boundaries."""
         if is_tensor(value):
             array = tensor_to_numpy(value)
             if np.issubdtype(array.dtype, np.floating):
-                return array.astype(ART_NUMPY_DTYPE, copy=False)
-            return array
+                return np.asarray(array.astype(ART_NUMPY_DTYPE, copy=False))
+            return np.asarray(array)
         if isinstance(value, pd.DataFrame):
             return value.values.astype(ART_NUMPY_DTYPE)
         if isinstance(value, pd.Series):
@@ -53,12 +56,11 @@ class PytorchAttackConfig(AttackConfig):
             return value.astype(ART_NUMPY_DTYPE, copy=False)
         return np.asarray(value)
 
-    def _prepare_labels_for_art(self, value):
+    def _prepare_labels_for_art(
+        self,
+        value,
+    ):  # pyright: ignore[reportIncompatibleMethodOverride]
         """Torch-aware label conversion used only where ART requires numpy labels."""
         if is_tensor(value):
             return tensor_to_numpy(value)
-        if isinstance(value, pd.DataFrame):
-            return value.values
-        if isinstance(value, pd.Series):
-            return value.values
-        return value
+        return _tabular_values_or_original(value)

@@ -144,7 +144,7 @@ experiment:
           fit_y: true
           fit_X: false
     files: {}
-  experiment_name: e25ac2a71ff7dd763d179d8354262c82
+  experiment_name: 071393edf314481ddd08c6a21e5858c6
   model:
     id: ''
     path: ''
@@ -716,11 +716,11 @@ experiment:
   detector: null
   files:
     replace: {}
-    handler: <deckard.file.CanonFileHandler object at 0x38e19d390>
-    params_file: /private/var/folders/cd/frntyg595hj5gz_qzm3696hm0000gp/T/pytest-of-c.meyers/pytest-222/test_dvc_repro_and_force_repro0/dvc-e2e/artifacts/params.yaml
-    score_file: /private/var/folders/cd/frntyg595hj5gz_qzm3696hm0000gp/T/pytest-of-c.meyers/pytest-222/test_dvc_repro_and_force_repro0/dvc-e2e/artifacts/scores.json
-    log_file: /private/var/folders/cd/frntyg595hj5gz_qzm3696hm0000gp/T/pytest-of-c.meyers/pytest-222/test_dvc_repro_and_force_repro0/dvc-e2e/artifacts/run.log
-    error_file: /private/var/folders/cd/frntyg595hj5gz_qzm3696hm0000gp/T/pytest-of-c.meyers/pytest-222/test_dvc_repro_and_force_repro0/dvc-e2e/artifacts/error.log
+    handler: <deckard.file.CanonFileHandler object at 0x385766f80>
+    params_file: /private/var/folders/cd/frntyg595hj5gz_qzm3696hm0000gp/T/pytest-of-c.meyers/pytest-276/test_dvc_repro_and_force_repro0/dvc-e2e/artifacts/params.yaml
+    score_file: /private/var/folders/cd/frntyg595hj5gz_qzm3696hm0000gp/T/pytest-of-c.meyers/pytest-276/test_dvc_repro_and_force_repro0/dvc-e2e/artifacts/scores.json
+    log_file: /private/var/folders/cd/frntyg595hj5gz_qzm3696hm0000gp/T/pytest-of-c.meyers/pytest-276/test_dvc_repro_and_force_repro0/dvc-e2e/artifacts/run.log
+    error_file: /private/var/folders/cd/frntyg595hj5gz_qzm3696hm0000gp/T/pytest-of-c.meyers/pytest-276/test_dvc_repro_and_force_repro0/dvc-e2e/artifacts/error.log
     data_file: null
     model_file: null
     attack_file: null
@@ -757,7 +757,7 @@ _dvc:
   stage_selection: all
   run_mode: single
   params_manifest:
-    experiment_name: e25ac2a71ff7dd763d179d8354262c82
+    experiment_name: 071393edf314481ddd08c6a21e5858c6
     library: sklearn
     classifier: true
     evaluation_mode: standard
@@ -767,10 +767,28 @@ _dvc:
       type: deckard.data.base.DataConfig
       alias: https://raw.githubusercontent.com/simplymathematics/Adult-Census-Income/refs/heads/master/adult.csv
       fingerprint: 8598a9c9ae5c1fad4b220292402fceaf
+      subcomponents:
+        sampler:
+          type: omegaconf.dictconfig.DictConfig
+          alias: null
+          fingerprint: f3c96a241c85babbd1f2438acd98381d1e28a6e5365f8731546eb948e12b6795
+        pipeline:
+          type: deckard.data.pipeline.base.DataPipeline
+          alias: null
+          fingerprint: 312d5da3a4fd63f86e368ff5f289e10b4256a3e973ea0ee0161e8d419a9ac19a
     model:
       type: deckard.model.base.ModelConfig
       alias: rf
       fingerprint: 101a4c91387ccf2f82a75114679fd92a
+      subcomponents:
+        trainer:
+          type: deckard.model.trainers.SklearnTrainer
+          alias: null
+          fingerprint: 155be85af521ac25558a3fa8ab853817e4339125e67818a566de943fb9f1a1de
+        defense:
+          type: deckard.model.defense.base.DefenseConfig
+          alias: class-labels
+          fingerprint: 6da539ef79584aee83b4e11ff3b8cbee
     defense:
       type: deckard.model.defense.base.DefenseConfig
       alias: class-labels
@@ -781,6 +799,10 @@ _dvc:
       fingerprint: d0869d4c3b8afd87d5dbf16b9793e36d
     detector: null
     score: null
+    files:
+      type: deckard.file.FileConfig
+      alias: null
+      fingerprint: 5041bdd2f9be398d2726935b6aa84e03869dc35cbbe275766d4c5dc871d90f5e
     attack_chain:
     - type: deckard.attack.base.AttackConfig
       alias: hsj

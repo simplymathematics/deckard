@@ -57,6 +57,21 @@ def resolve_text_max_length(data: Any) -> int | None:
     return None
 
 
+def build_transformer_text_adapter(
+    *,
+    data: Any,
+    model: Any,
+    tokenizer: Any,
+) -> "TransformerTextAdapter":
+    """Build a canonical transformer text adapter for attack runtime helpers."""
+    runtime_model = resolve_runtime_model(model)
+    return TransformerTextAdapter(
+        model=runtime_model,
+        tokenizer=tokenizer,
+        max_length=resolve_text_max_length(data),
+    )
+
+
 def apply_attack_runtime_outputs(
     runtime: Any,
     *,
@@ -86,6 +101,29 @@ def apply_attack_runtime_outputs(
             "error": error,
         },
     )
+
+
+def finalize_attack_runtime_outputs(
+    runtime: Any,
+    *,
+    records: list[dict[str, Any]],
+    library: str,
+    attack_name: str,
+    successful_examples: int,
+    count: int,
+    error: str | None,
+) -> ScoreDict:
+    """Apply canonical attack runtime outputs and return runtime score payload."""
+    apply_attack_runtime_outputs(
+        runtime,
+        records=records,
+        library=library,
+        attack_name=attack_name,
+        successful_examples=successful_examples,
+        count=count,
+        error=error,
+    )
+    return runtime.score_dict
 
 
 def _resolve_split_dataset(data: Any, split: str):
@@ -217,6 +255,8 @@ class TransformerTextAdapter:
 
 __all__ = [
     "apply_attack_runtime_outputs",
+    "build_transformer_text_adapter",
+    "finalize_attack_runtime_outputs",
     "TransformerTextAdapter",
     "is_library_attack_name",
     "resolve_runtime_model",

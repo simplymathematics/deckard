@@ -1,46 +1,48 @@
-import time
-import logging
 import copy
-from typing import Any, Callable, ClassVar, Literal, Mapping, Union, cast
-from pathlib import Path
+import logging
+import time
 from dataclasses import dataclass, field
 from functools import lru_cache
-from omegaconf import DictConfig
+from pathlib import Path
+from typing import Any, Callable, ClassVar, Literal, Mapping, Union, cast
 
 import numpy as np
 import pandas as pd
-
-
+from omegaconf import DictConfig
+from sklearn.base import BaseEstimator
 from sklearn.exceptions import NotFittedError
 from sklearn.utils.validation import check_is_fitted
-from sklearn.base import BaseEstimator
 
+from ..artifacts import ScoreDict
 from ..data import DataConfig
+from ..orchestration import ScoreOrchestratorMixin, ensure_validation_split_available
 from ..score.base import (  # noqa: F401
     _DataScorerMarker,
+)
+from ..score.base import (
     coerce_scorer_config as _coerce_scorer_config,
 )
-from ..artifacts import ScoreDict
-from ..utils import (
-    BaseConfig,
-    load_class,
-    probabilities_from_model_outputs,
-    round_scores,
-    normalize_plugin_specs,
-)
 from ..types import (
-    ArtEsimtator,
     ArrayLike,
+    ArtEsimtator,
     EstimatorLike,
     MatrixLike,
     StringifiedClass,
 )
-from ..orchestration import ScoreOrchestratorMixin
-from ..orchestration import ensure_validation_split_available
+from ..utils import (
+    BaseConfig,
+    load_class,
+    normalize_plugin_specs,
+    probabilities_from_model_outputs,
+    round_scores,
+)
 from .canon import (
-    CANONICAL_MODEL_SCORE_STAGES,
+    CANONICAL_MODEL_PREDICTION_OUTPUT_FIELDS,
+    CANONICAL_MODEL_RUNTIME_FIELDS,
     CANONICAL_MODEL_SCORE_STAGE_ALIASES,
+    CANONICAL_MODEL_SCORE_STAGES,
     ensure_model_runtime_contract,
+    normalize_classifier_flag,
     normalize_model_runtime_split_mode,
     normalize_model_score_stage,
     normalize_model_trainer_alias,
@@ -56,53 +58,14 @@ __all__ = ["ModelConfig"]
 
 @lru_cache(maxsize=1)
 def _get_art_symbols() -> dict[str, Any]:
-    from art.estimators.classification.scikitlearn import (
-        ScikitlearnAdaBoostClassifier,
-        ScikitlearnBaggingClassifier,
-        ScikitlearnClassifier,
-        ScikitlearnDecisionTreeClassifier,
-        ScikitlearnExtraTreesClassifier,
-        ScikitlearnGradientBoostingClassifier,
-        ScikitlearnLogisticRegression,
-        ScikitlearnRandomForestClassifier,
-        ScikitlearnSVC,
-    )
-    from art.estimators.regression.scikitlearn import (
-        ScikitlearnDecisionTreeRegressor,
-        ScikitlearnRegressor,
-    )
-    from art.estimators.classification import PyTorchClassifier
-    from art.estimators.regression import PyTorchRegressor
+    from .defense.base import _get_art_symbols as _get_defense_art_symbols
 
-    classifier_dict = {
-        "SVC": ScikitlearnSVC,
-        "LogisticRegression": ScikitlearnLogisticRegression,
-        "RandomForestClassifier": ScikitlearnRandomForestClassifier,
-        "GradientBoostingClassifier": ScikitlearnGradientBoostingClassifier,
-        "ExtraTreesClassifier": ScikitlearnExtraTreesClassifier,
-        "AdaBoostClassifier": ScikitlearnAdaBoostClassifier,
-        "BaggingClassifier": ScikitlearnBaggingClassifier,
-        "DecisionTreeClassifier": ScikitlearnDecisionTreeClassifier,
-        "sklearn-classifier": ScikitlearnClassifier,
-    }
-    regressor_dict = {
-        "DecisionTreeRegressor": ScikitlearnDecisionTreeRegressor,
-        "sklearn-regressor": ScikitlearnRegressor,
-    }
-    sklearn_dict = {**classifier_dict, **regressor_dict}
-    art_model_types = (
-        ScikitlearnClassifier,
-        ScikitlearnRegressor,
-        PyTorchClassifier,
-        PyTorchRegressor,
-    )
-    return {
-        "classifier_dict": classifier_dict,
-        "regressor_dict": regressor_dict,
-        "sklearn_dict": sklearn_dict,
-        "sklearn_models": list(sklearn_dict.values()),
-        "art_model_types": art_model_types,
-    }
+    symbols = dict(_get_defense_art_symbols())
+    sklearn_dict = symbols["sklearn_dict"]
+    torch_wrapper_types = tuple(symbols["torch_wrapper_types"])
+    symbols["sklearn_models"] = list(sklearn_dict.values())
+    symbols["art_model_types"] = tuple(sklearn_dict.values()) + torch_wrapper_types
+    return symbols
 
 
 def _art_numpy_dtype():
@@ -476,14 +439,7 @@ class ModelConfig(ScoreOrchestratorMixin, BaseConfig):
 
     def _normalize_classifier_flag(self) -> None:
         """Normalize classifier/regressor selector to a strict boolean."""
-        if self.classifier in ["classifier", True]:
-            self.classifier = True
-        elif self.classifier in ["regressor", False]:
-            self.classifier = False
-        else:
-            raise ValueError(
-                f"classifier must be boolean or one of ['classifier', 'regressor'], got {self.classifier}",
-            )
+        self.classifier = normalize_classifier_flag(self.classifier)
 
     def _initialize_default_scorer(self) -> None:
         """Resolve model scorer defaults based on classifier mode."""
@@ -681,28 +637,7 @@ class ModelConfig(ScoreOrchestratorMixin, BaseConfig):
         return super().__hash__()
 
     def _copy_runtime_state_to(self, target) -> None:
-        runtime_fields = [
-            "_model",
-            "score_dict",
-            "training_predictions",
-            "predictions",
-            "val_predictions",
-            "training_probabilities",
-            "probabilities",
-            "val_probabilities",
-            "training_time",
-            "prediction_time",
-            "val_prediction_time",
-            "training_prediction_time",
-            "training_score_time",
-            "prediction_score_time",
-            "val_score_time",
-            "defense_application_time",
-            "training_n",
-            "prediction_n",
-            "val_n",
-        ]
-        for attr in runtime_fields:
+        for attr in CANONICAL_MODEL_RUNTIME_FIELDS:
             setattr(target, attr, getattr(self, attr, None))
 
     def _require_defense_pipeline(self):
@@ -1127,12 +1062,7 @@ class ModelConfig(ScoreOrchestratorMixin, BaseConfig):
 
     def _reset_runtime_predictions(self) -> None:
         for attr in (
-            "training_predictions",
-            "predictions",
-            "val_predictions",
-            "training_probabilities",
-            "probabilities",
-            "val_probabilities",
+            *CANONICAL_MODEL_PREDICTION_OUTPUT_FIELDS,
             "training_prediction_time",
             "prediction_time",
             "val_prediction_time",

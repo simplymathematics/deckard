@@ -4,57 +4,45 @@ This module contains the base experiment configuration object that ties data,
 model, defense, attack, files, and scorers into a single executable unit.
 """
 
-import logging
 import hashlib
-import time
 import inspect
+import logging
+import os
+import time
 from dataclasses import dataclass, field
-from typing import List, Union, Literal, Any, Mapping
 from pathlib import Path
 from types import SimpleNamespace
+from typing import Any, List, Literal, Mapping, Union
 
 import numpy as np
 import pandas as pd
-from omegaconf import DictConfig, ListConfig, OmegaConf
-from hydra.utils import instantiate
-import os
 import yaml
+from hydra.utils import instantiate
+from omegaconf import DictConfig, ListConfig, OmegaConf
 
 from .. import _OPTIONAL_RUNTIME_CLASS_PATHS, _resolve_optional_runtime_class
 from .. import config_resolvers as _config_resolvers
 from ..artifacts import ScoreDict
 from ..data import DataConfig
-from ..declarations import is_package_available
-from ..file import FileConfig, data_files, model_files, attack_files
-from ..model import ModelConfig
-from ..model.defense.base import DefenseConfig
-from ..plugins import is_plugin_available
-from ..score import ScorerDictConfig
-from ..score.base import coerce_scorer_config, _DataScorerMarker, _AttackProfileScorer
-from ..data.sample import BaseSampler, KFoldSampler, ShuffleSampler
-from ..plugins.base import HookBundle, compose_hook_plugins
-from ..orchestration import ScoreOrchestratorMixin
-from ..orchestration import ensure_validation_split_available
-from ..warnings_policy import apply_warning_policy
-from .canon import (
-    CANONICAL_EXPERIMENT_STAGE_COMPONENTS,
-    CANONICAL_EXPERIMENT_STAGE_OUTPUT_KEYS,
-    CANONICAL_EXPERIMENT_PIPELINE_STAGES,
-    CANONICAL_EXPERIMENT_TIMES,
-    CANONICAL_EXPERIMENT_CACHE_STAGES,
-    CANONICAL_EXPERIMENT_RUNTIME_SCHEMA_PREFIX,
-    CANONICAL_EXPERIMENT_RUNTIME_SCHEMA_VERSION,
-    build_experiment_hook_bundle,
-    build_experiment_hook_graph,
-    build_experiment_stage_cache_key,
-    build_experiment_params_manifest,
-    ensure_experiment_runtime_contract,
-    normalize_experiment_score_mode,
-    resolve_experiment_score_modes,
+from ..data.canon import (
+    CANONICAL_DATA_PIPELINE_COUNTER_FIELDS,
+    CANONICAL_DATA_SPLIT_RUNTIME_FIELDS,
 )
-
-
+from ..data.sample import BaseSampler, KFoldSampler, ShuffleSampler
+from ..declarations import is_package_available
 from ..detector import DetectorConfig
+from ..file import FileConfig, attack_files, data_files, model_files
+from ..model import ModelConfig
+from ..model.canon import (
+    CANONICAL_MODEL_PREDICTION_OUTPUT_FIELDS,
+    normalize_classifier_flag,
+)
+from ..model.defense.base import DefenseConfig
+from ..orchestration import ScoreOrchestratorMixin, ensure_validation_split_available
+from ..plugins import is_plugin_available
+from ..plugins.base import HookBundle, compose_hook_plugins
+from ..score import ScorerDictConfig
+from ..score.base import _AttackProfileScorer, _DataScorerMarker, coerce_scorer_config
 from ..utils import (
     BaseConfig,
     coerce_config,
@@ -65,6 +53,23 @@ from ..utils import (
     load_class,
     merge_scores_with_collision_suffix,
     split_separated_tokens,
+)
+from ..warnings_policy import apply_warning_policy
+from .canon import (
+    CANONICAL_EXPERIMENT_CACHE_STAGES,
+    CANONICAL_EXPERIMENT_PIPELINE_STAGES,
+    CANONICAL_EXPERIMENT_RUNTIME_SCHEMA_PREFIX,
+    CANONICAL_EXPERIMENT_RUNTIME_SCHEMA_VERSION,
+    CANONICAL_EXPERIMENT_STAGE_COMPONENTS,
+    CANONICAL_EXPERIMENT_STAGE_OUTPUT_KEYS,
+    CANONICAL_EXPERIMENT_TIMES,
+    build_experiment_hook_bundle,
+    build_experiment_hook_graph,
+    build_experiment_params_manifest,
+    build_experiment_stage_cache_key,
+    ensure_experiment_runtime_contract,
+    normalize_experiment_score_mode,
+    resolve_experiment_score_modes,
 )
 
 _load_yaml_file = _config_resolvers._load_yaml_file
@@ -94,6 +99,21 @@ _OPTIONAL_EXPERIMENT_RUNTIME_CACHE: dict[str, Any | None] = {
     "fairlearn_pytorch_model": None,
     "pytorch_model": None,
 }
+
+EXPERIMENT_SAMPLE_CACHE_TIME_FIELDS: tuple[str, ...] = (
+    "pipeline_fit_time",
+    "pipeline_transform_time",
+    "pipeline_y_fit_time",
+    "pipeline_y_transform_time",
+    "data_load_time",
+    "data_sample_time",
+)
+
+EXPERIMENT_SAMPLE_CACHE_FIELDS: tuple[str, ...] = (
+    *CANONICAL_DATA_SPLIT_RUNTIME_FIELDS,
+    *CANONICAL_DATA_PIPELINE_COUNTER_FIELDS,
+    *EXPERIMENT_SAMPLE_CACHE_TIME_FIELDS,
+)
 
 
 def _load_optional_runtime_entry(
@@ -514,14 +534,7 @@ class ExperimentConfig(ScoreOrchestratorMixin, BaseConfig):
     def _clear_model_prediction_outputs(self) -> None:
         if self.model is None:
             return
-        for attr in (
-            "training_predictions",
-            "predictions",
-            "val_predictions",
-            "training_probabilities",
-            "probabilities",
-            "val_probabilities",
-        ):
+        for attr in CANONICAL_MODEL_PREDICTION_OUTPUT_FIELDS:
             if not hasattr(self.model, attr):
                 continue
             setattr(self.model, attr, None)
@@ -1150,14 +1163,10 @@ class ExperimentConfig(ScoreOrchestratorMixin, BaseConfig):
             self.data,
             DataConfig,
         ), f"data must be an instance of DataConfig. Got {type(self.data)}"
-        if self.classifier in ["classifier", True]:
-            self.classifier = True
-        elif self.classifier in ["regressor", False]:
-            self.classifier = False
-        else:
-            raise ValueError(
-                f"classifier in experiment must be boolean or one of ['classifier', 'regressor'], got {self.classifier}",
-            )
+        self.classifier = normalize_classifier_flag(
+            self.classifier,
+            context="classifier in experiment",
+        )
         assert (
             self.classifier == self.data.classifier
         ), f"classifier in experiment must match data.classifier. Got {self.classifier} vs {self.data.classifier}"
@@ -1440,8 +1449,8 @@ class ExperimentConfig(ScoreOrchestratorMixin, BaseConfig):
     def _initialize_hook_orchestration(self) -> None:
         """Compose canonical and user-provided hook plugins/bundles."""
         from .dvc import build_dvc_experiment_plugin_hooks
-        from .repro import build_repro_experiment_plugin_hooks
         from .power import build_power_plugin_hooks
+        from .repro import build_repro_experiment_plugin_hooks
 
         canonical_bundle = build_experiment_hook_bundle()
         dvc_first_hooks, dvc_last_hooks = build_dvc_experiment_plugin_hooks(
@@ -1593,9 +1602,9 @@ class ExperimentConfig(ScoreOrchestratorMixin, BaseConfig):
         **kwargs: Any,
     ) -> dict[str, Any]:
         """Delegate optional DVCExperimentPlugin hook handling to dvc helpers."""
-        from .dvc import run_dvc_experiment_plugin_hook
+        from .dvc import dispatch_dvc_experiment_plugin_hook
 
-        return run_dvc_experiment_plugin_hook(
+        return dispatch_dvc_experiment_plugin_hook(
             self,
             dvc_plugin=dvc_plugin,
             plugin_position=plugin_position,
@@ -1877,30 +1886,7 @@ class ExperimentConfig(ScoreOrchestratorMixin, BaseConfig):
 
     @staticmethod
     def _sample_cache_fields() -> tuple[str, ...]:
-        return (
-            "train_indices",
-            "test_indices",
-            "val_indices",
-            "X_train",
-            "y_train",
-            "X_test",
-            "y_test",
-            "X_val",
-            "y_val",
-            "train_n",
-            "test_n",
-            "val_n",
-            "pipeline_fit_n",
-            "pipeline_transform_n",
-            "pipeline_fit_time",
-            "pipeline_transform_time",
-            "pipeline_y_fit_n",
-            "pipeline_y_transform_n",
-            "pipeline_y_fit_time",
-            "pipeline_y_transform_time",
-            "data_load_time",
-            "data_sample_time",
-        )
+        return EXPERIMENT_SAMPLE_CACHE_FIELDS
 
     def _capture_sample_cache_value(self) -> dict[str, Any]:
         value: dict[str, Any] = {

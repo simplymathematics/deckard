@@ -16,6 +16,33 @@ from deckard.model.defense.transformer import TransformerDefenseConfig
 DummyDataConfig = SimpleNamespace
 
 
+def _torch_and_nn():
+    torch = pytest.importorskip("torch")
+    nn = pytest.importorskip("torch.nn")
+    return torch, nn
+
+
+def _tiny_linear_factory(nn, in_features=3, out_features=2):
+    class TinyLinear(nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.linear = nn.Linear(in_features, out_features)
+
+        def forward(self, x):
+            return self.linear(x)
+
+    return TinyLinear
+
+
+def _torch_binary_data(torch, train_size=16, test_size=8, in_features=3):
+    return SimpleNamespace(
+        X_train=torch.rand(train_size, in_features, dtype=torch.float32),
+        y_train=torch.randint(0, 2, (train_size,), dtype=torch.long),
+        X_test=torch.rand(test_size, in_features, dtype=torch.float32),
+        y_test=torch.randint(0, 2, (test_size,), dtype=torch.long),
+    )
+
+
 class TestRetrainingDefensePipeline:
     def test_retraining_defense_is_reordered_last_with_warning(self):
         order = []
@@ -58,23 +85,9 @@ class TestRetrainingDefensePipeline:
             defense.apply_to(estimator=model.get_model(), data=cast(Any, data))
 
     def test_real_adversarial_retraining_executes_with_pytorch_model(self):
-        torch = pytest.importorskip("torch")
-        nn = pytest.importorskip("torch.nn")
-
-        class TinyLinear(nn.Module):
-            def __init__(self):
-                super().__init__()
-                self.linear = nn.Linear(3, 2)
-
-            def forward(self, x):
-                return self.linear(x)
-
-        data = SimpleNamespace(
-            X_train=torch.rand(16, 3, dtype=torch.float32),
-            y_train=torch.randint(0, 2, (16,), dtype=torch.long),
-            X_test=torch.rand(8, 3, dtype=torch.float32),
-            y_test=torch.randint(0, 2, (8,), dtype=torch.long),
-        )
+        torch, nn = _torch_and_nn()
+        TinyLinear = _tiny_linear_factory(nn)
+        data = _torch_binary_data(torch)
 
         config_path = (
             Path(__file__).resolve().parents[3]
@@ -100,26 +113,12 @@ class TestRetrainingDefensePipeline:
         assert defense.defense_application_time is not None
 
     def test_retraining_handles_existing_art_torch_wrapper(self):
-        torch = pytest.importorskip("torch")
-        nn = pytest.importorskip("torch.nn")
+        torch, nn = _torch_and_nn()
         PyTorchClassifier = pytest.importorskip(
             "art.estimators.classification",
         ).PyTorchClassifier
-
-        class TinyLinear(nn.Module):
-            def __init__(self):
-                super().__init__()
-                self.linear = nn.Linear(3, 2)
-
-            def forward(self, x):
-                return self.linear(x)
-
-        data = SimpleNamespace(
-            X_train=torch.rand(16, 3, dtype=torch.float32),
-            y_train=torch.randint(0, 2, (16,), dtype=torch.long),
-            X_test=torch.rand(8, 3, dtype=torch.float32),
-            y_test=torch.randint(0, 2, (8,), dtype=torch.long),
-        )
+        TinyLinear = _tiny_linear_factory(nn)
+        data = _torch_binary_data(torch)
 
         wrapped_model = TinyLinear()
         wrapped = PyTorchClassifier(
@@ -173,23 +172,9 @@ class TestRetrainingDefensePipeline:
             defense.apply_to(estimator=model.get_model(), data=cast(Any, data))
 
     def test_binary_input_detector_handles_raw_torch_model(self):
-        torch = pytest.importorskip("torch")
-        nn = pytest.importorskip("torch.nn")
-
-        class TinyLinear(nn.Module):
-            def __init__(self):
-                super().__init__()
-                self.linear = nn.Linear(3, 2)
-
-            def forward(self, x):
-                return self.linear(x)
-
-        data = SimpleNamespace(
-            X_train=torch.rand(16, 3, dtype=torch.float32),
-            y_train=torch.randint(0, 2, (16,), dtype=torch.long),
-            X_test=torch.rand(8, 3, dtype=torch.float32),
-            y_test=torch.randint(0, 2, (8,), dtype=torch.long),
-        )
+        torch, nn = _torch_and_nn()
+        TinyLinear = _tiny_linear_factory(nn)
+        data = _torch_binary_data(torch)
 
         defense = DetectorDefenseConfig(
             name="art.defences.detector.evasion.BinaryInputDetector",
@@ -207,26 +192,12 @@ class TestRetrainingDefensePipeline:
         assert defense.defense_application_time is not None
 
     def test_binary_input_detector_handles_existing_art_wrapper(self):
-        torch = pytest.importorskip("torch")
-        nn = pytest.importorskip("torch.nn")
+        torch, nn = _torch_and_nn()
         PyTorchClassifier = pytest.importorskip(
             "art.estimators.classification",
         ).PyTorchClassifier
-
-        class TinyLinear(nn.Module):
-            def __init__(self):
-                super().__init__()
-                self.linear = nn.Linear(3, 2)
-
-            def forward(self, x):
-                return self.linear(x)
-
-        data = SimpleNamespace(
-            X_train=torch.rand(16, 3, dtype=torch.float32),
-            y_train=torch.randint(0, 2, (16,), dtype=torch.long),
-            X_test=torch.rand(8, 3, dtype=torch.float32),
-            y_test=torch.randint(0, 2, (8,), dtype=torch.long),
-        )
+        TinyLinear = _tiny_linear_factory(nn)
+        data = _torch_binary_data(torch)
 
         wrapped_model = TinyLinear()
         wrapped = PyTorchClassifier(
@@ -304,23 +275,9 @@ class TestRetrainingDefensePipeline:
             defense.apply_to(estimator=model.get_model(), data=data)
 
     def test_real_defensive_distillation_executes_with_pytorch_model(self):
-        torch = pytest.importorskip("torch")
-        nn = pytest.importorskip("torch.nn")
-
-        class TinyLinear(nn.Module):
-            def __init__(self):
-                super().__init__()
-                self.linear = nn.Linear(3, 2)
-
-            def forward(self, x):
-                return self.linear(x)
-
-        data = SimpleNamespace(
-            X_train=torch.rand(16, 3, dtype=torch.float32),
-            y_train=torch.randint(0, 2, (16,), dtype=torch.long),
-            X_test=torch.rand(8, 3, dtype=torch.float32),
-            y_test=torch.randint(0, 2, (8,), dtype=torch.long),
-        )
+        torch, nn = _torch_and_nn()
+        TinyLinear = _tiny_linear_factory(nn)
+        data = _torch_binary_data(torch)
 
         config_path = (
             Path(__file__).resolve().parents[3]
@@ -347,23 +304,9 @@ class TestRetrainingDefensePipeline:
     def test_real_neural_cleanse_reports_backend_incompatibility_for_pytorch_model(
         self,
     ):
-        torch = pytest.importorskip("torch")
-        nn = pytest.importorskip("torch.nn")
-
-        class TinyLinear(nn.Module):
-            def __init__(self):
-                super().__init__()
-                self.linear = nn.Linear(3, 2)
-
-            def forward(self, x):
-                return self.linear(x)
-
-        data = SimpleNamespace(
-            X_train=torch.rand(16, 3, dtype=torch.float32),
-            y_train=torch.randint(0, 2, (16,), dtype=torch.long),
-            X_test=torch.rand(8, 3, dtype=torch.float32),
-            y_test=torch.randint(0, 2, (8,), dtype=torch.long),
-        )
+        torch, nn = _torch_and_nn()
+        TinyLinear = _tiny_linear_factory(nn)
+        data = _torch_binary_data(torch)
 
         config_path = (
             Path(__file__).resolve().parents[3]

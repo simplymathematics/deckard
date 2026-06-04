@@ -1,34 +1,8 @@
-from pathlib import Path
-
-from hydra import compose, initialize_config_dir
-from hydra.core.config_store import ConfigStore
-from hydra.core.global_hydra import GlobalHydra
-
-SKLEARN_CONFIG_DIR = (
-    Path(__file__).resolve().parents[2] / "examples" / "sklearn" / "config"
-)
-PYTORCH_CONFIG_DIR = (
-    Path(__file__).resolve().parents[2] / "examples" / "pytorch" / "config"
-)
-
-
-def _reset_hydra_state() -> None:
-    if GlobalHydra.instance().is_initialized():
-        GlobalHydra.instance().clear()
-    config_store = ConfigStore.instance()
-    for key in list(config_store.repo.keys()):
-        if key not in {"hydra", "_dummy_empty_config_.yaml"}:
-            config_store.repo.pop(key, None)
-
-
-def _compose(config_dir: Path, config_name: str, overrides: list[str] | None = None):
-    _reset_hydra_state()
-    with initialize_config_dir(version_base="1.3", config_dir=str(config_dir)):
-        return compose(config_name=config_name, overrides=overrides or [])
+from .shared_compose import PYTORCH_CONFIG_DIR, SKLEARN_CONFIG_DIR, compose_config
 
 
 def test_sklearn_pretrained_default_composes_with_attack_and_defense():
-    cfg = _compose(SKLEARN_CONFIG_DIR, "pretrained-default")
+    cfg = compose_config(SKLEARN_CONFIG_DIR, "pretrained-default")
 
     assert cfg is not None
     assert cfg.model.trainer._target_ == "deckard.model.trainers.PretrainedTrainer"
@@ -37,7 +11,7 @@ def test_sklearn_pretrained_default_composes_with_attack_and_defense():
 
 
 def test_sklearn_pretrained_default_composes_without_attack_and_defense():
-    cfg = _compose(
+    cfg = compose_config(
         SKLEARN_CONFIG_DIR,
         "pretrained-default",
         overrides=["~attack", "~defense"],
@@ -50,7 +24,7 @@ def test_sklearn_pretrained_default_composes_without_attack_and_defense():
 
 
 def test_sklearn_pretrained_default_composes_without_pretrained_trainer():
-    cfg = _compose(
+    cfg = compose_config(
         SKLEARN_CONFIG_DIR,
         "pretrained-default",
         overrides=["trainer@model.trainer=sklearn"],
@@ -61,7 +35,7 @@ def test_sklearn_pretrained_default_composes_without_pretrained_trainer():
 
 
 def test_pytorch_pretrained_default_composes_with_attack_and_defense():
-    cfg = _compose(PYTORCH_CONFIG_DIR, "pretrained-default")
+    cfg = compose_config(PYTORCH_CONFIG_DIR, "pretrained-default")
 
     assert cfg is not None
     assert cfg.model.trainer._target_ == "deckard.model.trainers.PretrainedTrainer"
@@ -70,7 +44,7 @@ def test_pytorch_pretrained_default_composes_with_attack_and_defense():
 
 
 def test_pytorch_pretrained_default_composes_without_attack_and_defense():
-    cfg = _compose(
+    cfg = compose_config(
         PYTORCH_CONFIG_DIR,
         "pretrained-default",
         overrides=["~attack", "~defense"],
@@ -83,7 +57,7 @@ def test_pytorch_pretrained_default_composes_without_attack_and_defense():
 
 
 def test_pytorch_pretrained_default_composes_without_pretrained_trainer():
-    cfg = _compose(
+    cfg = compose_config(
         PYTORCH_CONFIG_DIR,
         "pretrained-default",
         overrides=["trainer@model.trainer=pytorch"],

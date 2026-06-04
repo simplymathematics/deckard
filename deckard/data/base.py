@@ -1,24 +1,21 @@
 # Imports
-import os
-import pandas as pd
-import time
 import logging
+import os
+import time
 from collections.abc import Mapping
-from pathlib import Path
-
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Literal, Union, cast
-from omegaconf import DictConfig, ListConfig
 
 import numpy as np
+import pandas as pd
+from omegaconf import DictConfig, ListConfig
 
-# deckard
-from ..utils import (
-    BaseConfig,
-    RuntimeSerializable,
-    load_class,
-    coerce_to_list,
-    merge_list_of_dicts,
+from ..artifacts import ArtifactLoaderMixin, ScoreDict, SerializableValue
+from ..orchestration import (
+    ScoreOrchestratorMixin,
+    resolve_data_split_payload,
+    stage_hook_token,
 )
 from ..types import (
     ArrayLike,
@@ -29,22 +26,27 @@ from ..types import (
     StringifiedClass,
     TabularLike,
 )
-from ..orchestration import (
-    ScoreOrchestratorMixin,
-    resolve_data_split_payload,
-    stage_hook_token,
+
+# deckard
+from ..utils import (
+    BaseConfig,
+    RuntimeSerializable,
+    coerce_to_list,
+    load_class,
+    merge_list_of_dicts,
 )
-from ..artifacts import ArtifactLoaderMixin, ScoreDict, SerializableValue
 from .canon import (
     CANONICAL_DATA_LOAD_FILETYPES,
+    CANONICAL_DATA_PIPELINE_COUNTER_FIELDS,
+    CANONICAL_DATA_RUNTIME_FIELDS,
     CANONICAL_DATA_SAVE_FILETYPES,
-    CANONICAL_DATASET_LOAD_FILETYPES,
     CANONICAL_DATA_STAGES,
-    DEFAULT_DATA_SCORE_STAGE,
     CANONICAL_DATA_TIMES,
+    CANONICAL_DATASET_LOAD_FILETYPES,
+    DEFAULT_DATA_SCORE_STAGE,
     DataFiles,
-    ensure_data_runtime_contract,
     ensure_canonical_times,
+    ensure_data_runtime_contract,
     merge_data_files,
     normalize_data_score_mode,
     normalize_data_score_stage,
@@ -619,37 +621,11 @@ class DataConfig(ScoreOrchestratorMixin, BaseConfig):
         self._y = self._y.iloc[:sample_cap].copy()
 
     def _copy_runtime_state_to(self, target) -> None:
-        runtime_fields = [
-            "score_dict",
-            "times",
-            "files",
-            "data_load_time",
-            "data_sample_time",
-            "data_pipeline_time",
-            "data_score_time",
-            "_X",
-            "_y",
-            "train_indices",
-            "test_indices",
-            "val_indices",
-            "X_train",
-            "y_train",
-            "X_test",
-            "y_test",
-            "X_val",
-            "y_val",
-            "train_n",
-            "test_n",
-            "val_n",
-            "pipeline_fit_n",
-            "pipeline_transform_n",
-            "pipeline_fit_time",
-            "pipeline_transform_time",
-            "pipeline_y_fit_n",
-            "pipeline_y_fit_time",
-            "pipeline_y_transform_n",
-            "pipeline_y_transform_time",
-        ]
+        runtime_fields = (
+            *CANONICAL_DATA_RUNTIME_FIELDS,
+            *CANONICAL_DATA_TIMES,
+            *CANONICAL_DATA_PIPELINE_COUNTER_FIELDS,
+        )
         for attr in runtime_fields:
             if hasattr(self, attr):
                 setattr(target, attr, getattr(self, attr, None))

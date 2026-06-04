@@ -10,24 +10,29 @@ import os
 import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Iterable, Mapping, Literal, cast
+from typing import TYPE_CHECKING, Any, Iterable, Literal, Mapping, cast
 
 import yaml
 from omegaconf import DictConfig, OmegaConf
 
+from ..plugins import HookPlugin
+from ..score.base import SUPPORTED_SCORING_STAGES
 from .canon import (
-    CANONICAL_EXPERIMENT_PIPELINE_STAGES,
     CANONICAL_EXPERIMENT_COMPONENT_STAGES,
+    CANONICAL_EXPERIMENT_PIPELINE_STAGES,
     CANONICAL_EXPERIMENT_RUN_MODE_ALIASES,
-    CANONICAL_EXPERIMENT_STAGE_OUTPUT_KEYS,
     CANONICAL_EXPERIMENT_STAGE_COMPONENTS,
+    CANONICAL_EXPERIMENT_STAGE_OUTPUT_KEYS,
     CANONICAL_EXPERIMENT_STAGE_PRIMARY_COMPONENTS,
     build_experiment_params_manifest,
     build_experiment_stage_param_key_paths,
     normalize_experiment_stage,
 )
-from ..plugins import HookPlugin
-from ..score.base import SUPPORTED_SCORING_STAGES
+from .hooks import (
+    build_plugin_hook_wrappers,
+    prepare_hook_run_context,
+    should_run_persist_tail,
+)
 
 if TYPE_CHECKING:
     from .base import ExperimentConfig
@@ -202,7 +207,7 @@ class DVCExperimentMixin:
         Returns:
             Result payload describing hook execution state and outputs.
         """
-        return run_dvc_experiment_plugin_hook(
+        return dispatch_dvc_experiment_plugin_hook(
             self,
             dvc_plugin=dvc_plugin,
             plugin_position=plugin_position,
@@ -211,6 +216,28 @@ class DVCExperimentMixin:
             event=event,
             **kwargs,
         )
+
+
+def dispatch_dvc_experiment_plugin_hook(
+    runtime: Any,
+    *,
+    dvc_plugin: Any,
+    plugin_position: str,
+    component: str,
+    stage: str,
+    event: str,
+    **kwargs: Any,
+) -> dict[str, str | int | float | bool | None]:
+    """Dispatch one DVC monitoring hook invocation through canonical runtime helper."""
+    return run_dvc_experiment_plugin_hook(
+        runtime,
+        dvc_plugin=dvc_plugin,
+        plugin_position=plugin_position,
+        component=component,
+        stage=stage,
+        event=event,
+        **kwargs,
+    )
 
 
 @dataclass(eq=False, kw_only=True)
@@ -1391,36 +1418,13 @@ def _build_dvc_plugin_hook_wrappers(
     *,
     method_name: str,
 ) -> tuple[list[HookPlugin], list[HookPlugin]]:
-    first_hooks: list[HookPlugin] = []
-    last_hooks: list[HookPlugin] = []
-    plugin_payload = plugin_cfg.to_dict()
-
-    for stage in CANONICAL_EXPERIMENT_PIPELINE_STAGES:
-        stage_token = _normalize_token(stage).replace("-", "_")
-        for event in ("before", "after"):
-            hook_name = f"{event}_{stage_token}"
-            first_hooks.append(
-                HookPlugin(
-                    hook_name=hook_name,
-                    method_name=method_name,
-                    method_kwargs={
-                        "dvc_plugin": plugin_payload,
-                        "plugin_position": "first",
-                    },
-                ),
-            )
-            last_hooks.append(
-                HookPlugin(
-                    hook_name=hook_name,
-                    method_name=method_name,
-                    method_kwargs={
-                        "dvc_plugin": plugin_payload,
-                        "plugin_position": "last",
-                    },
-                ),
-            )
-
-    return first_hooks, last_hooks
+    return build_plugin_hook_wrappers(
+        stages=CANONICAL_EXPERIMENT_PIPELINE_STAGES,
+        stage_token_resolver=lambda stage: _normalize_token(stage).replace("-", "_"),
+        method_name=method_name,
+        plugin_payload_key="dvc_plugin",
+        plugin_payload=plugin_cfg.to_dict(),
+    )
 
 
 def build_dvc_experiment_plugin_hooks(
@@ -1452,18 +1456,14 @@ def run_dvc_experiment_plugin_hook(
     """Run one DVCExperimentPlugin hook callback."""
     _ = kwargs
     plugin_cfg = coerce_dvc_experiment_plugin(dvc_plugin)
-    stage_token = _resolve_stage_token(stage)
-    event_token = str(event).strip().lower()
-    position_token = str(plugin_position).strip().lower()
-
-    result: dict[str, Any] = {
-        "enabled": bool(plugin_cfg.enabled),
-        "position": position_token,
-        "component": str(component),
-        "stage": stage_token,
-        "event": event_token,
-        "executed": False,
-    }
+    stage_token, event_token, position_token, result = prepare_hook_run_context(
+        enabled=plugin_cfg.enabled,
+        component=component,
+        stage=stage,
+        event=event,
+        plugin_position=plugin_position,
+        resolve_stage_token=_resolve_stage_token,
+    )
 
     dvclive_bucket = _ensure_output_buckets(experiment)
     hook_trace = dvclive_bucket.setdefault("hook_trace", [])
@@ -1476,8 +1476,8 @@ def run_dvc_experiment_plugin_hook(
 
     if position_token == "last" and event_token == "after":
         try:
-            from ..score.dvc import DVCSystemScorerDictConfig, DVC_SYSTEM_SCORE_STAGES
             from ..artifacts import ScoreDict
+            from ..score.dvc import DVC_SYSTEM_SCORE_STAGES, DVCSystemScorerDictConfig
 
             if stage_token not in DVC_SYSTEM_SCORE_STAGES:
                 raise KeyError(stage_token)
@@ -1533,10 +1533,10 @@ def run_dvc_experiment_plugin_hook(
             live.next_step()
         result["executed"] = True
 
-    if (
-        position_token == "last"
-        and event_token == "after"
-        and stage_token == "persist"
+    if should_run_persist_tail(
+        position_token=position_token,
+        event_token=event_token,
+        stage_token=stage_token,
     ):
         _log_dvclive_params(experiment, plugin_cfg)
         _log_dvclive_scores(experiment, plugin_cfg)
@@ -2094,6 +2094,62 @@ def _configure_persist_stage(
     stage_entry["metrics"].extend([score_file])
 
 
+def _init_stage_entry(
+    *,
+    stage_name: str,
+    stage: str,
+    runtime_stage: str,
+    component: str,
+    deps: list[str],
+    params_file_alias: str | None,
+    dvc_file: str,
+) -> dict[str, Any]:
+    return {
+        "name": stage_name,
+        "stage": stage,
+        "runtime_stage": runtime_stage,
+        "component": component,
+        "runtime_overrides": [],
+        "deps": deps,
+        "outs": [],
+        "params": [],
+        "param_key_paths": [],
+        "metrics": [],
+        "plots": [],
+        "params_file": params_file_alias,
+        "dvc_file": dvc_file,
+    }
+
+
+def _finalize_persist_stage_if_component_only(
+    *,
+    runtime_stage: str,
+    base_stage: str,
+    stage_entry: dict[str, Any],
+    stage_name: str,
+    stage_plan: list[dict[str, Any]],
+    stage_name_to_outs: dict[str, list[str]],
+    artifact_owners: dict[str, dict[str, Any]],
+) -> bool:
+    if runtime_stage != "persist":
+        return False
+    if base_stage not in {
+        "data-persist",
+        "model-persist",
+        "attack-persist",
+        "detector-persist",
+    }:
+        return False
+    _finalize_stage_entry(
+        stage_entry,
+        stage_name,
+        stage_plan,
+        stage_name_to_outs,
+        artifact_owners,
+    )
+    return True
+
+
 def build_dvc_stage_plan(
     experiment: Any,
     stage_selection: Any = None,
@@ -2145,21 +2201,15 @@ def build_dvc_stage_plan(
             )
             deps.extend(stage_name_to_outs.get(prev_name, []))
 
-        stage_entry: dict[str, Any] = {
-            "name": stage_name,
-            "stage": stage,
-            "runtime_stage": runtime_stage,
-            "component": component,
-            "runtime_overrides": [],
-            "deps": deps,
-            "outs": [],
-            "params": [],
-            "param_key_paths": [],
-            "metrics": [],
-            "plots": [],
-            "params_file": params_file_alias,
-            "dvc_file": dvc_file,
-        }
+        stage_entry = _init_stage_entry(
+            stage_name=stage_name,
+            stage=stage,
+            runtime_stage=runtime_stage,
+            component=component,
+            deps=deps,
+            params_file_alias=params_file_alias,
+            dvc_file=dvc_file,
+        )
 
         outs = stage_entry["outs"]
         _ = outs
@@ -2184,19 +2234,15 @@ def build_dvc_stage_plan(
                 stage=stage,
                 params_manifest=params_manifest,
             )
-            if base_stage in {
-                "data-persist",
-                "model-persist",
-                "attack-persist",
-                "detector-persist",
-            }:
-                _finalize_stage_entry(
-                    stage_entry,
-                    stage_name,
-                    stage_plan,
-                    stage_name_to_outs,
-                    artifact_owners,
-                )
+            if _finalize_persist_stage_if_component_only(
+                runtime_stage=runtime_stage,
+                base_stage=base_stage,
+                stage_entry=stage_entry,
+                stage_name=stage_name,
+                stage_plan=stage_plan,
+                stage_name_to_outs=stage_name_to_outs,
+                artifact_owners=artifact_owners,
+            ):
                 continue
 
         stage_entry["cmd"] = build_dvc_cmd(

@@ -7,9 +7,8 @@ group structure present in examples/*/config rather than hard-coded cases.
 from pathlib import Path
 
 import pytest
-from hydra import compose, initialize_config_dir
-from hydra.core.config_store import ConfigStore
-from hydra.core.global_hydra import GlobalHydra
+
+from .shared_compose import compose_config
 
 ROOT = Path(__file__).resolve().parents[2]
 PAPERS_ROOT = ROOT / "papers"
@@ -30,20 +29,8 @@ IGNORED_ROOT_CONFIGS = {
 }
 
 
-def _reset_hydra_state() -> None:
-    if GlobalHydra.instance().is_initialized():
-        GlobalHydra.instance().clear()
-    config_store = ConfigStore.instance()
-    for key in list(config_store.repo.keys()):
-        if key not in {"hydra", "_dummy_empty_config_.yaml"}:
-            config_store.repo.pop(key, None)
-
-
 def _compose(config_dir: Path, config_name: str, overrides: list[str] | None = None):
-    overrides = overrides or []
-    _reset_hydra_state()
-    with initialize_config_dir(version_base="1.3", config_dir=str(config_dir)):
-        return compose(config_name=config_name, overrides=overrides)
+    return compose_config(config_dir, config_name, overrides=overrides)
 
 
 def _discover_example_groups() -> list[str]:

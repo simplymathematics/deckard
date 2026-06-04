@@ -54,6 +54,7 @@ __all__ = [
     "resolve_component_spec",
     "normalize_plugin_specs",
     "instantiate_plugin_spec",
+    "merge_unique_types",
     "split_separated_tokens",
     "normalize_hydra_list_overrides",
     "merge_list_of_dicts",
@@ -566,6 +567,35 @@ def instantiate_plugin_spec(
         return plugin_spec()
 
     return plugin_spec
+
+
+def merge_unique_types(
+    initial_types: Iterable[type],
+    plugin_outputs: Iterable[Any],
+) -> tuple[type, ...]:
+    """Merge runtime type contributions from plugin outputs without duplicates.
+
+    Args:
+        initial_types: Seed handler/mixin types.
+        plugin_outputs: Hook outputs that may include types or iterables of types.
+
+    Returns:
+        Tuple of unique types preserving first-seen order.
+    """
+    merged: list[type] = [item for item in initial_types if isinstance(item, type)]
+    for output in plugin_outputs:
+        if isinstance(output, type):
+            merged.append(output)
+        elif isinstance(output, (tuple, list)):
+            for item in output:
+                if isinstance(item, type):
+                    merged.append(item)
+
+    deduped: list[type] = []
+    for item in merged:
+        if item not in deduped:
+            deduped.append(item)
+    return tuple(deduped)
 
 
 def split_separated_tokens(value: Any, sep=",") -> list[str]:

@@ -1,8 +1,9 @@
 from dataclasses import dataclass, field
-from typing import Any, Callable, Union
-from ..types import StringifiedClass
-from ..types import EstimatorLike
+from typing import Any, Callable, Union, cast
+
+from ..types import EstimatorLike, StringifiedClass
 from ..utils import BaseConfig
+from .base import bind_runtime_handler, matches_typed_plugin, resolve_plugin_mixin_type
 
 DefenseScalar = str | int | float | bool | None
 DefenseValue = DefenseScalar | list["DefenseValue"] | dict[str, "DefenseValue"]
@@ -43,14 +44,14 @@ class DefenseTypePlugin:
     )
 
     def _resolve_mixin_type(self) -> type:
-        if isinstance(self.mixin_type, str):
-            # Assume resolve_class is available in the runtime context
-            from deckard.utils import resolve_class
+        from deckard.utils import resolve_class as runtime_resolve_class
 
-            resolved = resolve_class(self.mixin_type)
-            self.mixin_type = resolved
-            return resolved
-        return self.mixin_type
+        resolved = resolve_plugin_mixin_type(
+            self.mixin_type,
+            resolver=runtime_resolve_class,
+        )
+        self.mixin_type = resolved
+        return resolved
 
     def _matches(
         self,
@@ -58,17 +59,13 @@ class DefenseTypePlugin:
         defense_type: StringifiedClass | None,
         defense_subtype: Union[str, None],
     ) -> bool:
-        if (defense_type or "").lower() != (self.defense_type or "").lower():
-            return False
-        subtype = (defense_subtype or "").lower()
-        if (
-            self.defense_subtype is not None
-            and subtype != self.defense_subtype.lower()
-        ):
-            return False
-        if subtype in {item.lower() for item in self.excluded_subtypes}:
-            return False
-        return True
+        return matches_typed_plugin(
+            requested_type=cast(str | None, defense_type),
+            configured_type=cast(str | None, self.defense_type),
+            requested_subtype=cast(str | None, defense_subtype),
+            configured_subtype=cast(str | None, self.defense_subtype),
+            excluded_subtypes=self.excluded_subtypes,
+        )
 
     def resolve_defense_mixins(
         self,
@@ -144,8 +141,5 @@ class DefenseTypePlugin:
             Two-item tuple returned by the defense handler.
         """
         mixin = self._resolve_mixin_type()
-        if isinstance(mixin, type) and mixin in type(runtime).mro():
-            handler = runtime
-        else:
-            handler = mixin(runtime)
+        handler = bind_runtime_handler(runtime, mixin)
         return handler(*args, **kwargs)

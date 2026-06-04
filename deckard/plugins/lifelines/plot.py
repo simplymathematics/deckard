@@ -80,6 +80,50 @@ class SurvivalSeabornPlotterConfig(BaseConfig):
     calibration_title: str = "Survival Calibration"
 
     @staticmethod
+    def _split_single_model_config(
+        config: dict[str, PlotValue],
+    ) -> tuple[dict[str, Any], dict[str, Any], list[Any], dict[str, Any]]:
+        normalized = dict(config or {})
+        plot_dict = dict(normalized.pop("plot", {}))
+        label_dict = dict(normalized.pop("labels", {}))
+        partial_effect_list = list(normalized.pop("partial_effect", []))
+        model_config = dict(normalized.pop("model", {}))
+        model_config.update(normalized)
+        return plot_dict, label_dict, partial_effect_list, model_config
+
+    @staticmethod
+    def _build_calibration_frame(
+        *,
+        model: SurvivalFitterLike,
+        frame: pd.DataFrame,
+        frame_test: Optional[pd.DataFrame],
+        cutoff: float,
+        duration_col: str,
+        target: str,
+    ) -> pd.DataFrame:
+        runtime_model = SurvivalModelConfig(
+            duration_col=duration_col,
+            event_col=target,
+            t0=cutoff,
+        )
+        train_curve = runtime_model.survival_probability_calibration(
+            model,
+            frame,
+            return_curve=True,
+            plot=False,
+        )[3].assign(dataset="train")
+        frames = [train_curve]
+        if frame_test is not None:
+            test_curve = runtime_model.survival_probability_calibration(
+                model,
+                frame_test,
+                return_curve=True,
+                plot=False,
+            )[3].assign(dataset="test")
+            frames.append(test_curve)
+        return pd.concat(frames, ignore_index=True)
+
+    @staticmethod
     def _resolve_output_path(folder: str, file: str, filetype: str) -> Path:
         """Build an output path under a folder with a default suffix.
 
@@ -426,14 +470,10 @@ class SurvivalSeabornPlotterConfig(BaseConfig):
         folder: str = ".",
     ) -> tuple[SurvivalFitterLike, list[Axes]]:
         dummy_dict = dummy_dict or {}
-        config = dict(config or {})
         plots = []
-
-        plot_dict = dict(config.pop("plot", {}))
-        label_dict = dict(config.pop("labels", {}))
-        partial_effect_list = list(config.pop("partial_effect", []))
-        model_config = dict(config.pop("model", {}))
-        model_config.update(config)
+        plot_dict, label_dict, partial_effect_list, model_config = (
+            self._split_single_model_config(dict(config or {}))
+        )
 
         model_runtime_cfg = SurvivalModelConfig(
             name="lifelines",
@@ -476,42 +516,13 @@ class SurvivalSeabornPlotterConfig(BaseConfig):
                 file=plot_dict.get("qq_file", f"{mtype}_qq.pdf"),
                 xlabel="Predicted Probability",
                 ylabel="Observed Probability",
-                calibration_fn=lambda model, frame, frame_test, cutoff: pd.concat(
-                    [
-                        SurvivalModelConfig(
-                            duration_col=duration_col,
-                            event_col=target,
-                            t0=cutoff,
-                        )
-                        .survival_probability_calibration(
-                            model,
-                            frame,
-                            return_curve=True,
-                            plot=False,
-                        )[3]
-                        .assign(dataset="train"),
-                        *(
-                            [
-                                SurvivalModelConfig(
-                                    duration_col=duration_col,
-                                    event_col=target,
-                                    t0=cutoff,
-                                )
-                                .survival_probability_calibration(
-                                    model,
-                                    frame_test,
-                                    return_curve=True,
-                                    plot=False,
-                                )[3]
-                                .assign(
-                                    dataset="test",
-                                ),
-                            ]
-                            if frame_test is not None
-                            else []
-                        ),
-                    ],
-                    ignore_index=True,
+                calibration_fn=lambda model, frame, frame_test, cutoff: self._build_calibration_frame(
+                    model=model,
+                    frame=frame,
+                    frame_test=frame_test,
+                    cutoff=cutoff,
+                    duration_col=duration_col,
+                    target=target,
                 ),
                 folder=folder,
             ),
@@ -607,6 +618,44 @@ class SurvivalSeabornPlotConfigList(BaseConfig):
     )
     runtime_data: Any = None
 
+    @staticmethod
+    def _validate_runtime_inputs(
+        *,
+        data: pd.DataFrame | None,
+        test_size: float,
+        target: str,
+        duration_col: str,
+    ) -> None:
+        if data is None:
+            raise ValueError("data must be provided for survival plotting")
+        if not isinstance(test_size, float) or not (0 < test_size < 1):
+            raise ValueError("test_size must be a float between 0 and 1")
+        if target not in data.columns:
+            raise ValueError(f"{target} not in data columns")
+        if duration_col not in data.columns:
+            raise ValueError(f"{duration_col} not in data columns")
+
+    @staticmethod
+    def _prepare_split_frames(
+        *,
+        runtime_data: DataConfig,
+        target: str,
+    ) -> tuple[pd.DataFrame, pd.DataFrame]:
+        if (
+            runtime_data.X_train is None
+            or runtime_data.X_test is None
+            or runtime_data.y_train is None
+            or runtime_data.y_test is None
+        ):
+            raise ValueError(
+                "Runtime survival split did not produce train/test partitions",
+            )
+        X_train = pd.DataFrame(runtime_data.X_train).copy()
+        X_test = pd.DataFrame(runtime_data.X_test).copy()
+        X_train[target] = runtime_data.y_train.values
+        X_test[target] = runtime_data.y_test.values
+        return X_train.dropna(axis=0, how="any"), X_test.dropna(axis=0, how="any")
+
     def add_model_plots(
         self,
         model_type: StringifiedClass,
@@ -689,15 +738,12 @@ class SurvivalSeabornPlotConfigList(BaseConfig):
 
         target = survival_config.target
         duration_col = survival_config.duration_col
-
-        if data is None:
-            raise ValueError("data must be provided for survival plotting")
-        if not isinstance(test_size, float) or not (0 < test_size < 1):
-            raise ValueError("test_size must be a float between 0 and 1")
-        if target not in data.columns:
-            raise ValueError(f"{target} not in data columns")
-        if duration_col not in data.columns:
-            raise ValueError(f"{duration_col} not in data columns")
+        self._validate_runtime_inputs(
+            data=data,
+            test_size=test_size,
+            target=target,
+            duration_col=duration_col,
+        )
 
         runtime_data = DataConfig(
             name=dataset or "provided_data",
@@ -715,23 +761,10 @@ class SurvivalSeabornPlotConfigList(BaseConfig):
         runtime_data._y = data[target].reset_index(drop=True)
         runtime_data.data_load_time = 0.0
         runtime_data.sample()
-
-        if (
-            runtime_data.X_train is None
-            or runtime_data.X_test is None
-            or runtime_data.y_train is None
-            or runtime_data.y_test is None
-        ):
-            raise ValueError(
-                "Runtime survival split did not produce train/test partitions",
-            )
-
-        X_train = pd.DataFrame(runtime_data.X_train).copy()
-        X_test = pd.DataFrame(runtime_data.X_test).copy()
-        X_train[target] = runtime_data.y_train.values
-        X_test[target] = runtime_data.y_test.values
-        X_train = X_train.dropna(axis=0, how="any")
-        X_test = X_test.dropna(axis=0, how="any")
+        X_train, X_test = self._prepare_split_frames(
+            runtime_data=runtime_data,
+            target=target,
+        )
 
         for mtype, sub_config in model_config.items():
             cfg = dict(sub_config or {})

@@ -6,15 +6,14 @@ from typing import Any
 
 import numpy as np
 
-from ...attack.base import AttackConfig
 from ...artifacts import ScoreDict
+from ...attack.base import AttackConfig
 from ...model import ModelConfig
 from ..text_runtime import (
-    apply_attack_runtime_outputs,
     TransformerTextAdapter,
-    resolve_runtime_model,
+    build_transformer_text_adapter,
+    finalize_attack_runtime_outputs,
     resolve_text_batch,
-    resolve_text_max_length,
 )
 
 
@@ -110,7 +109,7 @@ def run_textattack_attack_config(
             exc=exc,
         )
 
-    apply_attack_runtime_outputs(
+    return finalize_attack_runtime_outputs(
         runtime=runtime,
         records=records,
         library="textattack",
@@ -119,7 +118,6 @@ def run_textattack_attack_config(
         count=count,
         error=error,
     )
-    return runtime.score_dict
 
 
 class TextAttackConfig(AttackConfig):
@@ -181,11 +179,10 @@ def _prepare_runtime_objects(
         runtime,
         split=split,
     )
-    runtime_model = resolve_runtime_model(model)
-    adapter = TransformerTextAdapter(
-        model=runtime_model,
+    adapter = build_transformer_text_adapter(
+        data=data,
+        model=model,
         tokenizer=tokenizer,
-        max_length=resolve_text_max_length(data),
     )
     wrapper = _build_model_wrapper(adapter)
     recipe_name = _resolve_recipe_name(runtime)

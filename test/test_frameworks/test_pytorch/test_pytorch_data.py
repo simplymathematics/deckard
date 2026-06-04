@@ -1,8 +1,8 @@
+import pickle
 import shutil
 import tempfile
 from pathlib import Path
 from unittest.mock import patch
-import pickle
 
 import pytest
 from torch.utils.data import Dataset, IterableDataset
@@ -131,43 +131,67 @@ class StreamingIterableDataset(IterableDataset):
             yield torch.randn(4), torch.tensor(i % 2)
 
 
+def _split_sampler(train_size, test_size, **overrides):
+    sampler = {
+        "name": "split",
+        "train_size": train_size,
+        "test_size": test_size,
+    }
+    sampler.update(overrides)
+    return sampler
+
+
+def _tensor_binary_data(n=300, features=4):
+    return torch.randn(n, features), torch.randint(0, 2, (n,))
+
+
+def _assert_train_test_dataloaders(cfg):
+    from torch.utils.data import DataLoader
+
+    assert isinstance(cfg.X_train, DataLoader)
+    assert isinstance(cfg.X_test, DataLoader)
+
+
+def _assert_sensitive_split(cfg, *, total_len, train_len, test_len):
+    assert hasattr(cfg, "_sensitive")
+    assert len(cfg._sensitive) == total_len
+    assert hasattr(cfg, "_sensitive_train")
+    assert hasattr(cfg, "_sensitive_test")
+    assert len(cfg._sensitive_train) == train_len
+    assert len(cfg._sensitive_test) == test_len
+
+
 class TestPytorchDataConfig:
 
-    def _make_config(
-        self,
-        *,
-        name="torch.utils.data.TensorDataset",
-        data_dir=None,
-        sampler=None,
-        data_params=None,
-        data_args=None,
-    ):
-        if data_dir is None:
-            data_dir = self.temp_dir
-        if sampler is None:
-            sampler = {
-                "name": "split",
-                "test_size": 100,
-                "train_size": 100,
-                "random_state": 42,
-            }
-        if data_args is None:
-            data_args = (torch.randn(300, 4), torch.randint(0, 2, (300,)))
+    def _make_config(self, **overrides):
+        config = {
+            "name": "torch.utils.data.TensorDataset",
+            "data_dir": self.temp_dir,
+            "sampler": _split_sampler(100, 100, random_state=42),
+            "data_params": None,
+            "data_args": _tensor_binary_data(),
+        }
+        config.update(overrides)
+
+        data_dir = (
+            config["data_dir"] if config["data_dir"] is not None else self.temp_dir
+        )
+        data_args = config["data_args"]
+        data_params = config["data_params"]
         if data_params is None:
             data_params = {"_args_": [*data_args]}
         else:
             data_params = dict(data_params)
             data_params.setdefault("_args_", [*data_args])
         return PytorchDataConfig(
-            name=name,
+            name=config["name"],
             data_dir=data_dir,
-            sampler=sampler,
+            sampler=config["sampler"],
             data_params=data_params,
         )
 
     def setup_method(self):
-        X = torch.randn(300, 4)
-        y = torch.randint(0, 2, (300,))
+        X, y = _tensor_binary_data()
         self.config = self._make_config(data_args=(X, y))
 
     @classmethod
@@ -193,16 +217,10 @@ class TestPytorchDataConfig:
         assert self.config.data_load_time > 0
 
     def test_private_max_samples_caps_loaded_dataset(self):
-        X = torch.randn(300, 4)
-        y = torch.randint(0, 2, (300,))
+        X, y = _tensor_binary_data()
         with patch.dict("os.environ", {"DECKARD_TEST_MAX_SAMPLES": "120"}):
             cfg = self._make_config(
-                sampler={
-                    "name": "split",
-                    "train_size": 80,
-                    "test_size": 40,
-                    "random_state": 42,
-                },
+                sampler=_split_sampler(80, 40, random_state=42),
                 data_args=(X, y),
             )
 
@@ -258,58 +276,34 @@ class TestPytorchDataConfig:
         assert h1 == h2
 
     def test_load_data_collects_sensitive_from_third_tuple_item(self):
-        X = torch.randn(120, 4)
-        y = torch.randint(0, 2, (120,))
+        X, y = _tensor_binary_data(120)
         ds = TensorWithSensitiveDataset(X, y)
         cfg = self._make_config(
             name="dummy.dataset",
-            sampler={
-                "name": "split",
-                "train_size": 60,
-                "test_size": 40,
-                "stratify": True,
-            },
+            sampler=_split_sampler(60, 40, stratify=True),
             data_params={},
             data_args=(X, y),
         )
 
         with patch("deckard.frameworks.pytorch.data.load_class", return_value=ds):
             cfg.load_dataset()
-        assert hasattr(cfg, "_sensitive")
-        assert len(cfg._sensitive) == len(y)
-
         cfg.fit()
-        assert hasattr(cfg, "_sensitive_train")
-        assert hasattr(cfg, "_sensitive_test")
-        assert len(cfg._sensitive_train) == 60
-        assert len(cfg._sensitive_test) == 40
+        _assert_sensitive_split(cfg, total_len=len(y), train_len=60, test_len=40)
 
     def test_load_data_collects_sensitive_from_dataset_attribute(self):
-        X = torch.randn(110, 4)
-        y = torch.randint(0, 2, (110,))
+        X, y = _tensor_binary_data(110)
         ds = TensorWithDatasetSensitiveAttr(X, y)
         cfg = self._make_config(
             name="dummy.dataset",
-            sampler={
-                "name": "split",
-                "train_size": 70,
-                "test_size": 20,
-                "stratify": True,
-            },
+            sampler=_split_sampler(70, 20, stratify=True),
             data_params={},
             data_args=(X, y),
         )
 
         with patch("deckard.frameworks.pytorch.data.load_class", return_value=ds):
             cfg.load_dataset()
-        assert hasattr(cfg, "_sensitive")
-        assert len(cfg._sensitive) == len(y)
-
         cfg.fit()
-        assert hasattr(cfg, "_sensitive_train")
-        assert hasattr(cfg, "_sensitive_test")
-        assert len(cfg._sensitive_train) == 70
-        assert len(cfg._sensitive_test) == 20
+        _assert_sensitive_split(cfg, total_len=len(y), train_len=70, test_len=20)
 
     def test_pytorch_data_hash_stable_after_call_and_runtime_mutation(self):
         original_hash = hash(self.config)
@@ -342,12 +336,11 @@ class TestPytorchDataConfig:
         assert "data_load_time" in scores
 
     def test_float_train_test_sizes(self):
-        X = torch.randn(100, 4)
-        y = torch.randint(0, 2, (100,))
+        X, y = _tensor_binary_data(100)
         cfg = PytorchDataConfig(
             name="torch.utils.data.TensorDataset",
             data_dir=self.temp_dir,
-            sampler={"name": "split", "train_size": 0.7, "test_size": 0.2},
+            sampler=_split_sampler(0.7, 0.2),
             data_params={"_args_": [X, y]},
         )
         cfg.load_dataset()
@@ -356,10 +349,9 @@ class TestPytorchDataConfig:
         assert len(cfg.X_test) == 20
 
     def test_train_test_exceed_total_raises(self):
-        X = torch.randn(100, 4)
-        y = torch.randint(0, 2, (100,))
+        X, y = _tensor_binary_data(100)
         cfg = self._make_config(
-            sampler={"name": "split", "train_size": 70, "test_size": 70},
+            sampler=_split_sampler(70, 70),
             data_args=(X, y),
         )
         cfg.load_dataset()
@@ -367,15 +359,9 @@ class TestPytorchDataConfig:
             cfg.fit()
 
     def test_invalid_stratify_raises(self):
-        X = torch.randn(80, 4)
-        y = torch.randint(0, 2, (80,))
+        X, y = _tensor_binary_data(80)
         cfg = self._make_config(
-            sampler={
-                "name": "split",
-                "train_size": 50,
-                "test_size": 30,
-                "stratify": "column_name",
-            },
+            sampler=_split_sampler(50, 30, stratify="column_name"),
             data_args=(X, y),
         )
         cfg.load_dataset()
@@ -410,7 +396,7 @@ class TestPytorchDataConfig:
         cfg = PytorchDataConfig(
             name="torchvision.datasets.MNIST",
             data_dir=None,
-            sampler={"name": "split", "train_size": 4, "test_size": 2},
+            sampler=_split_sampler(4, 2),
             data_params=None,
         )
 
@@ -421,7 +407,7 @@ class TestPytorchDataConfig:
         cfg = PytorchDataConfig(
             name="torchvision.datasets.MNIST",
             data_dir=self.temp_dir,
-            sampler={"name": "split", "train_size": 2, "test_size": 2},
+            sampler=_split_sampler(2, 2),
             data_params={"batch_size": 8, "_args_": ["ignored"]},
         )
 
@@ -447,7 +433,7 @@ class TestPytorchDataConfig:
     def test_load_data_converts_nonfloating_tensor_inputs(self):
         cfg = self._make_config(
             name="dummy.dataset",
-            sampler={"name": "split", "train_size": 3, "test_size": 2},
+            sampler=_split_sampler(3, 2),
             data_params={},
         )
 
@@ -463,7 +449,7 @@ class TestPytorchDataConfig:
     def test_load_data_rejects_invalid_samples_and_mismatched_sensitive_lengths(self):
         cfg = self._make_config(
             name="dummy.dataset",
-            sampler={"name": "split", "train_size": 1, "test_size": 1},
+            sampler=_split_sampler(1, 1),
             data_params={},
         )
 
@@ -474,8 +460,7 @@ class TestPytorchDataConfig:
             with pytest.raises(ValueError):
                 cfg.load_dataset()
 
-        X = torch.randn(4, 2)
-        y = torch.randint(0, 2, (4,))
+        X, y = _tensor_binary_data(4, 2)
         bad_sensitive = MismatchedSensitiveDataset(X, y)
         with patch(
             "deckard.frameworks.pytorch.data.load_class",
@@ -486,8 +471,8 @@ class TestPytorchDataConfig:
 
     def test_sample_requires_loaded_data_and_supports_derived_split_sizes(self):
         cfg = self._make_config(
-            sampler={"name": "split", "train_size": 6, "test_size": 2},
-            data_args=(torch.randn(10, 3), torch.randint(0, 2, (10,))),
+            sampler=_split_sampler(6, 2),
+            data_args=_tensor_binary_data(10, 3),
         )
 
         with pytest.raises(ValueError):
@@ -553,7 +538,7 @@ class TestPytorchCustomDataConfig:
             "name": "torch.utils.data.TensorDataset",
             "dataset": "dummy",
             "data_dir": str(self.temp_dir),
-            "sampler": {"name": "split", "train_size": 20, "test_size": 10},
+            "sampler": _split_sampler(20, 10),
             "data_params": {},
             "val": False,
         }
@@ -566,12 +551,28 @@ class TestPytorchCustomDataConfig:
         y = torch.randint(0, 2, (n,))
         return torch.utils.data.TensorDataset(X, y)
 
+    def _cache_paths(self, data_name, score_name):
+        data_path = Path(self.temp_dir) / data_name
+        score_path = Path(self.temp_dir) / score_name
+        files = {
+            "data_file": str(data_path),
+            "score_file": str(score_path),
+        }
+        return data_path, score_path, files
+
+    def _prepare_scoring_cfg(self, **kwargs):
+        cfg = self._make_config(**kwargs)
+        cfg.data_load_time = 0.0
+        cfg.data_sample_time = 0.0
+        cfg.score_dict = {}
+        return cfg
+
     def test_load_data_creates_dataloaders(self):
 
         ds = self._make_simple_dataset()
 
         cfg = self._make_config(
-            sampler={"name": "split", "train_size": 20, "test_size": 10},
+            sampler=_split_sampler(20, 10),
             data_params={"batch_size": 4},
         )
 
@@ -592,7 +593,7 @@ class TestPytorchCustomDataConfig:
         ds_test = self._make_simple_dataset(20)
 
         cfg = self._make_config(
-            sampler={"name": "split", "train_size": 40, "test_size": 20},
+            sampler=_split_sampler(40, 20),
             data_params={"batch_size": 8},
         )
         # Manually inject _X to simulate _load_data output
@@ -602,11 +603,7 @@ class TestPytorchCustomDataConfig:
         cfg.data_sample_time = None
 
         cfg.fit()
-
-        from torch.utils.data import DataLoader
-
-        assert isinstance(cfg.X_train, DataLoader)
-        assert isinstance(cfg.X_test, DataLoader)
+        _assert_train_test_dataloaders(cfg)
         assert isinstance(cfg.y_train, torch.Tensor)
         assert isinstance(cfg.y_test, torch.Tensor)
 
@@ -614,7 +611,7 @@ class TestPytorchCustomDataConfig:
 
         ds = self._make_simple_dataset(40)
         cfg = self._make_config(
-            sampler={"name": "split", "train_size": 10, "test_size": 10},
+            sampler=_split_sampler(10, 10),
         )
         subset = cfg._truncate_dataset(ds, 10)
         assert len(subset) == 10
@@ -622,36 +619,24 @@ class TestPytorchCustomDataConfig:
         capped_subset = cfg._truncate_dataset(ds, 100)
         assert len(capped_subset) == 40
 
-    def test_as_dataset_with_string_raises_on_invalid(self):
+    @pytest.mark.parametrize(
+        "dataset_arg,expected_exc",
+        [
+            ("not.a.real.Dataset", Exception),
+            (12345, TypeError),
+        ],
+    )
+    def test_as_dataset_invalid_inputs_raise(self, dataset_arg, expected_exc):
 
         cfg = self._make_config(
-            dataset="not.a.real.Dataset",
-            sampler={"name": "split", "train_size": 10, "test_size": 10},
-        )
-        with pytest.raises(Exception):
-            cfg._as_dataset("not.a.real.Dataset", split="train", transform=None)
-
-    def test_as_dataset_with_invalid_type_raises(self):
-        from deckard.frameworks.pytorch.data import PytorchCustomDataConfig
-
-        cfg = PytorchCustomDataConfig(
-            name="torch.utils.data.TensorDataset",
             dataset="dummy",
-            data_dir=str(self.temp_dir),
-            sampler={"name": "split", "train_size": 10, "test_size": 10},
-            data_params={},
+            sampler=_split_sampler(10, 10),
         )
-        with pytest.raises(TypeError):
-            cfg._as_dataset(12345, split="train", transform=None)
+        with pytest.raises(expected_exc):
+            cfg._as_dataset(dataset_arg, split="train", transform=None)
 
     def test_as_dataset_accepts_pre_split_dataset_for_unknown_split_tag(self):
-        cfg = PytorchCustomDataConfig(
-            name="torch.utils.data.TensorDataset",
-            dataset="dummy",
-            data_dir=str(self.temp_dir),
-            sampler={"name": "split", "train_size": 10, "test_size": 10},
-            data_params={},
-        )
+        cfg = self._make_config(sampler=_split_sampler(10, 10))
         ds = self._make_simple_dataset(8)
 
         resolved = cfg._as_dataset(ds, split="holdout", transform=None)
@@ -659,13 +644,7 @@ class TestPytorchCustomDataConfig:
         assert resolved is ds
 
     def test_as_dataset_forwards_unknown_split_tag_to_loader(self):
-        cfg = PytorchCustomDataConfig(
-            name="torch.utils.data.TensorDataset",
-            dataset="dummy",
-            data_dir=str(self.temp_dir),
-            sampler={"name": "split", "train_size": 10, "test_size": 10},
-            data_params={},
-        )
+        cfg = self._make_config(sampler=_split_sampler(10, 10))
         ds = self._make_simple_dataset(6)
 
         with patch(
@@ -682,19 +661,7 @@ class TestPytorchCustomDataConfig:
         assert loader.call_args.kwargs["split"] == "holdout"
 
     def test_custom_config_post_init_and_hash_defaults(self):
-        from deckard.frameworks.pytorch.data import PytorchCustomDataConfig
-
-        cfg = PytorchCustomDataConfig(
-            name="torch.utils.data.TensorDataset",
-            dataset="dummy",
-            data_dir=str(self.temp_dir),
-            sampler={
-                "name": "split",
-                "train_size": 4,
-                "test_size": 2,
-            },
-            data_params=None,
-        )
+        cfg = self._make_config(sampler=_split_sampler(4, 2), data_params=None)
 
         assert cfg.data_params == {}
         assert cfg.shuffle
@@ -711,15 +678,11 @@ class TestPytorchCustomDataConfig:
         def test_transform(value):
             return value
 
-        cfg = PytorchCustomDataConfig(
-            name="torch.utils.data.TensorDataset",
-            dataset="dummy",
-            data_dir=str(self.temp_dir),
-            sampler={"name": "split", "train_size": 1, "test_size": 1},
+        cfg = self._make_config(
+            sampler=_split_sampler(1, 1),
             train_transform=train_transform,
             test_transform=test_transform,
             val=True,
-            data_params={},
         )
 
         with patch.object(
@@ -736,27 +699,30 @@ class TestPytorchCustomDataConfig:
         assert as_dataset.call_args_list[0].kwargs["split"] == "train"
         assert as_dataset.call_args_list[1].kwargs["split"] == "val"
 
-    def test_custom_load_data_supports_sampler_split_key_overrides(self):
+    @pytest.mark.parametrize(
+        "use_val_split,expected_second_split",
+        [
+            (False, "evaluation"),
+            (True, "holdout"),
+        ],
+    )
+    def test_custom_load_data_supports_sampler_split_key_overrides(
+        self,
+        use_val_split,
+        expected_second_split,
+    ):
 
         train_ds = self._make_simple_dataset(6)
         test_ds = self._make_simple_dataset(4)
 
-        cfg = PytorchCustomDataConfig(
-            name="torch.utils.data.TensorDataset",
-            dataset="dummy",
-            data_dir=str(self.temp_dir),
-            sampler={
-                "name": "split",
-                "train_size": 2,
-                "test_size": 2,
-            },
+        cfg = self._make_config(
+            sampler=_split_sampler(2, 2),
             sampler_params={
                 "train_split_key": "training",
                 "test_split_key": "evaluation",
                 "val_split_key": "holdout",
             },
-            data_params={},
-            val=False,
+            val=use_val_split,
         )
 
         with patch.object(
@@ -767,43 +733,12 @@ class TestPytorchCustomDataConfig:
             cfg.load_dataset()
 
         assert as_dataset.call_args_list[0].kwargs["split"] == "training"
-        assert as_dataset.call_args_list[1].kwargs["split"] == "evaluation"
-
-        cfg_val = PytorchCustomDataConfig(
-            name="torch.utils.data.TensorDataset",
-            dataset="dummy",
-            data_dir=str(self.temp_dir),
-            sampler={
-                "name": "split",
-                "train_size": 2,
-                "test_size": 2,
-            },
-            sampler_params={
-                "train_split_key": "training",
-                "test_split_key": "evaluation",
-                "val_split_key": "holdout",
-            },
-            data_params={},
-            val=True,
-        )
-
-        with patch.object(
-            cfg_val,
-            "_as_dataset",
-            side_effect=[train_ds, test_ds],
-        ) as as_dataset_val:
-            cfg_val.load_dataset()
-
-        assert as_dataset_val.call_args_list[0].kwargs["split"] == "training"
-        assert as_dataset_val.call_args_list[1].kwargs["split"] == "holdout"
+        assert as_dataset.call_args_list[1].kwargs["split"] == expected_second_split
 
     def test_custom_sample_handles_sensitive_batches_and_invalid_batch_shapes(self):
 
-        cfg = PytorchCustomDataConfig(
-            name="torch.utils.data.TensorDataset",
-            dataset="dummy",
-            data_dir=str(self.temp_dir),
-            sampler={"name": "split", "train_size": 6, "test_size": 4},
+        cfg = self._make_config(
+            sampler=_split_sampler(6, 4),
             data_params={"batch_size": 2},
         )
         cfg._X = (SensitiveBatchDataset(6), SensitiveBatchDataset(4))
@@ -814,11 +749,8 @@ class TestPytorchCustomDataConfig:
         assert len(cfg._sensitive_test) == 4
         assert len(cfg._sensitive_all) == 10
 
-        bad_cfg = PytorchCustomDataConfig(
-            name="torch.utils.data.TensorDataset",
-            dataset="dummy",
-            data_dir=str(self.temp_dir),
-            sampler={"name": "split", "train_size": 4, "test_size": 4},
+        bad_cfg = self._make_config(
+            sampler=_split_sampler(4, 4),
             data_params={"batch_size": 2},
         )
         bad_cfg._X = (InvalidBatchDataset(4), InvalidBatchDataset(4))
@@ -830,29 +762,17 @@ class TestPytorchCustomDataConfig:
     def test_custom_call_uses_cached_paths_and_persists_outputs(self):
         import json
 
-        from deckard.frameworks.pytorch.data import PytorchCustomDataConfig
-
-        data_path = Path(self.temp_dir) / "custom_data.pkl"
-        score_path = Path(self.temp_dir) / "custom_scores.json"
+        data_path, score_path, files = self._cache_paths(
+            "custom_data.pkl",
+            "custom_scores.json",
+        )
         data_path.write_text("cached")
         score_path.write_text(json.dumps({"cached": 1}))
 
-        cfg = PytorchCustomDataConfig(
-            name="torch.utils.data.TensorDataset",
-            dataset="dummy",
-            data_dir=str(self.temp_dir),
-            sampler={"name": "split", "train_size": 4, "test_size": 2},
-            data_params={},
-        )
+        cfg = self._make_config(sampler=_split_sampler(4, 2))
 
         cached = self._make_simple_dataset(6)
-        loaded = PytorchCustomDataConfig(
-            name="torch.utils.data.TensorDataset",
-            dataset="dummy",
-            data_dir=str(self.temp_dir),
-            sampler={"name": "split", "train_size": 4, "test_size": 2},
-            data_params={},
-        )
+        loaded = self._make_config(sampler=_split_sampler(4, 2))
         loaded._X = (cached, cached)
         loaded._y = (cached, cached)
         loaded.X_train = object()
@@ -862,10 +782,7 @@ class TestPytorchCustomDataConfig:
             with patch.object(loaded, "save_scores") as save_scores:
                 with patch.object(loaded, "save_object") as save_object:
                     scores = cfg(
-                        files={
-                            "data_file": str(data_path),
-                            "score_file": str(score_path),
-                        },
+                        files=files,
                         mode="pre-sample",
                     )
 
@@ -875,21 +792,12 @@ class TestPytorchCustomDataConfig:
         assert scores == {"cached": 1}
 
     def test_custom_call_continues_when_data_cache_pickle_fails(self, caplog):
-        from deckard.frameworks.pytorch.data import PytorchCustomDataConfig
-
-        data_path = Path(self.temp_dir) / "uncacheable_custom_data.pkl"
-        score_path = Path(self.temp_dir) / "uncacheable_custom_scores.json"
-
-        cfg = PytorchCustomDataConfig(
-            name="torch.utils.data.TensorDataset",
-            dataset="dummy",
-            data_dir=str(self.temp_dir),
-            sampler={"name": "split", "train_size": 4, "test_size": 2},
-            data_params={},
+        data_path, _score_path, files = self._cache_paths(
+            "uncacheable_custom_data.pkl",
+            "uncacheable_custom_scores.json",
         )
-        cfg.data_load_time = 0.0
-        cfg.data_sample_time = 0.0
-        cfg.score_dict = {}
+
+        cfg = self._prepare_scoring_cfg(sampler=_split_sampler(4, 2))
 
         with patch.object(cfg, "score", return_value={"ok": 1}):
             with patch.object(
@@ -897,12 +805,7 @@ class TestPytorchCustomDataConfig:
                 "save_object",
                 side_effect=pickle.PicklingError("cannot pickle custom data"),
             ) as save_object:
-                scores = cfg(
-                    files={
-                        "data_file": str(data_path),
-                        "score_file": str(score_path),
-                    },
-                )
+                scores = cfg(files=files)
 
         save_object.assert_called_once()
         assert scores["ok"] == 1
@@ -910,110 +813,61 @@ class TestPytorchCustomDataConfig:
         assert "Failed to cache data object" in caplog.text
 
     def test_file_backed_custom_dataset_skips_pickle_cache(self):
-        from deckard.frameworks.pytorch.data import PytorchCustomDataConfig
-
-        data_path = Path(self.temp_dir) / "file_backed_custom_data.pkl"
-        score_path = Path(self.temp_dir) / "file_backed_custom_scores.json"
-
-        cfg = PytorchCustomDataConfig(
-            name="torch.utils.data.TensorDataset",
-            dataset="custom_dataset.py:ExampleDataset",
-            data_dir=str(self.temp_dir),
-            sampler={"name": "split", "train_size": 4, "test_size": 2},
-            data_params={},
+        data_path, _score_path, files = self._cache_paths(
+            "file_backed_custom_data.pkl",
+            "file_backed_custom_scores.json",
         )
-        cfg.data_load_time = 0.0
-        cfg.data_sample_time = 0.0
-        cfg.score_dict = {}
+
+        cfg = self._prepare_scoring_cfg(
+            dataset="custom_dataset.py:ExampleDataset",
+            sampler=_split_sampler(4, 2),
+        )
 
         with patch.object(cfg, "score", return_value={"ok": 1}):
             with patch.object(cfg, "save_object") as save_object:
-                scores = cfg(
-                    files={
-                        "data_file": str(data_path),
-                        "score_file": str(score_path),
-                    },
-                )
+                scores = cfg(files=files)
 
         save_object.assert_not_called()
         assert scores["ok"] == 1
         assert not data_path.exists()
 
-
-class TestPytorchCustomDataLoaderConfig:
-    @classmethod
-    def setup_class(cls):
-        cls.temp_dir = Path(tempfile.mkdtemp())
-
-    @classmethod
-    def teardown_class(cls):
-        shutil.rmtree(cls.temp_dir, ignore_errors=True)
-
-    def test_pre_split_dataset_object_path(self):
+    @pytest.mark.parametrize(
+        "dataset_size,train_size,test_size,set_data_load_time",
+        [
+            (12, 6, 6, True),
+            (16, 8, 8, False),
+        ],
+    )
+    def test_pre_split_dataset_paths_create_dataloaders(
+        self,
+        dataset_size,
+        train_size,
+        test_size,
+        set_data_load_time,
+    ):
         ds = torch.utils.data.TensorDataset(
-            torch.randn(12, 4),
-            torch.randint(0, 2, (12,)),
+            torch.randn(dataset_size, 4),
+            torch.randint(0, 2, (dataset_size,)),
         )
-        cfg = PytorchCustomDataConfig(
-            name="torch.utils.data.TensorDataset",
-            dataset="dummy",
-            data_dir=str(self.temp_dir),
-            sampler={"name": "split", "train_size": 6, "test_size": 6},
+        cfg = self._make_config(
+            sampler=_split_sampler(train_size, test_size),
             data_params={"batch_size": 4},
         )
-
         cfg._X = (ds, ds)
         cfg._y = (ds, ds)
-        cfg.data_load_time = 0.0
-        cfg.data_sample_time = None
+        if set_data_load_time:
+            cfg.data_load_time = 0.0
+            cfg.data_sample_time = None
+
         cfg.fit()
-
-        from torch.utils.data import DataLoader
-
-        assert isinstance(cfg.X_train, DataLoader)
-        assert isinstance(cfg.X_test, DataLoader)
-
-
-class TestPytorchCustomTensorDataConfig:
-    @classmethod
-    def setup_class(cls):
-        cls.temp_dir = Path(tempfile.mkdtemp())
-
-    @classmethod
-    def teardown_class(cls):
-        shutil.rmtree(cls.temp_dir, ignore_errors=True)
-
-    def test_custom_dataloader_path(self):
-        ds = torch.utils.data.TensorDataset(
-            torch.randn(16, 4),
-            torch.randint(0, 2, (16,)),
-        )
-        cfg = PytorchCustomDataConfig(
-            name="torch.utils.data.TensorDataset",
-            dataset="dummy",
-            data_dir=str(self.temp_dir),
-            sampler={"name": "split", "train_size": 8, "test_size": 8},
-            data_params={"batch_size": 4},
-        )
-
-        cfg._X = (ds, ds)
-        cfg._y = (ds, ds)
-        cfg.fit()
-
-        from torch.utils.data import DataLoader
-
-        assert isinstance(cfg.X_train, DataLoader)
-        assert isinstance(cfg.X_test, DataLoader)
+        _assert_train_test_dataloaders(cfg)
 
     def test_custom_tensor_dataset_path(self):
-        X = torch.randn(10, 4)
-        y = torch.randint(0, 2, (10,))
+        X, y = _tensor_binary_data(10)
         ds = torch.utils.data.TensorDataset(X, y)
-        cfg = PytorchCustomDataConfig(
-            name="torch.utils.data.TensorDataset",
+        cfg = self._make_config(
             dataset=ds,
-            data_dir=str(self.temp_dir),
-            sampler={"name": "split", "train_size": 5, "test_size": 5},
+            sampler=_split_sampler(5, 5),
             data_params={"batch_size": 2},
         )
 

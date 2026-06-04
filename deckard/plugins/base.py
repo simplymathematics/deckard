@@ -3,9 +3,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Callable
 
-from . import HookPlugin
 from ..artifacts import ScoreDict
 from ..utils import (
     coerce_to_list,
@@ -13,6 +12,7 @@ from ..utils import (
     load_class,
     normalize_plugin_specs,
 )
+from . import HookPlugin
 
 
 def _clone_hook_plugin(plugin: HookPlugin) -> HookPlugin:
@@ -93,6 +93,43 @@ def compose_hook_plugins(*parts: Any) -> list[HookPlugin]:
     return plugins
 
 
+def resolve_plugin_mixin_type(
+    mixin_type: Any,
+    *,
+    resolver: Callable[[str], Any] = load_class,
+) -> type:
+    """Resolve plugin mixin declarations into concrete runtime types."""
+    if isinstance(mixin_type, str):
+        return resolver(mixin_type)
+    return mixin_type
+
+
+def matches_typed_plugin(
+    *,
+    requested_type: str | None,
+    configured_type: str | None,
+    requested_subtype: str | None,
+    configured_subtype: str | None,
+    excluded_subtypes: tuple[str, ...] = (),
+) -> bool:
+    """Return whether requested runtime type/subtype matches plugin scope."""
+    if (requested_type or "").lower() != (configured_type or "").lower():
+        return False
+    subtype = (requested_subtype or "").lower()
+    if configured_subtype is not None and subtype != configured_subtype.lower():
+        return False
+    if subtype in {item.lower() for item in excluded_subtypes}:
+        return False
+    return True
+
+
+def bind_runtime_handler(runtime: Any, mixin: type):
+    """Bind runtime to a mixin type, reusing runtime when already in MRO."""
+    if isinstance(mixin, type) and mixin in type(runtime).mro():
+        return runtime
+    return mixin(runtime)
+
+
 @dataclass(eq=False, kw_only=True)
 class RuntimeBase:
     """Reusable plugin instantiation and hook dispatch behavior."""
@@ -150,5 +187,8 @@ class RuntimeBase:
 __all__ = [
     "HookBundle",
     "compose_hook_plugins",
+    "resolve_plugin_mixin_type",
+    "matches_typed_plugin",
+    "bind_runtime_handler",
     "RuntimeBase",
 ]

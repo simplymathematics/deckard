@@ -63,7 +63,7 @@ If your goal is to extend deckard:
 ```python
 from deckard import DataConfig, ModelConfig, AttackConfig, ExperimentConfig
 
-data = DataConfig(name="adult", test_size=0.2)
+data = DataConfig(name="adult")
 model = ModelConfig(name="sklearn.linear_model.LogisticRegression")
 attack = AttackConfig()
 experiment = ExperimentConfig(data=data, model=model, attack=attack)

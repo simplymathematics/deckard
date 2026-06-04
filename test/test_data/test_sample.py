@@ -5,6 +5,7 @@ from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
+import pytest
 from helpers import load_canonical_data_profile
 
 from deckard.data import (
@@ -14,7 +15,6 @@ from deckard.data import (
     ShuffleSampler,
     SplitSampler,
 )
-import pytest
 
 
 def _make_clf_config(**kwargs):
@@ -89,6 +89,15 @@ def _make_reg_config(**kwargs):
     cfg = DataConfig(**defaults)
     cfg.load_dataset()
     return cfg
+
+
+def _assert_dataconfig_val_fields(cfg):
+    assert cfg.X_val is not None
+    assert cfg.y_val is not None
+    assert isinstance(cfg.X_val, pd.DataFrame)
+    assert isinstance(cfg.y_val, pd.Series)
+    assert cfg.val_n is not None
+    assert cfg.val_n > 0
 
 
 # ---------------------------------------------------------------------------
@@ -217,33 +226,6 @@ class TestSplitSampler:
                 assert (
                     abs(props.get(cls, 0.0) - overall[cls]) < 0.1
                 ), f"Class {cls} proportion off in {name}"
-
-    def test_integration_with_dataconfig(self):
-        cfg = DataConfig(
-            name="make_classification",
-            data_params={
-                "n_samples": 200,
-                "n_features": 5,
-                "n_informative": 3,
-                "n_redundant": 0,
-                "random_state": 7,
-                "n_clusters_per_class": 1,
-            },
-            classifier=True,
-            sampler=SplitSampler(
-                test_size=0.2,
-                val_size=0.1,
-                random_state=42,
-                stratify=True,
-            ),
-        )
-        cfg()
-        assert cfg.X_val is not None
-        assert cfg.y_val is not None
-        assert isinstance(cfg.X_val, pd.DataFrame)
-        assert isinstance(cfg.y_val, pd.Series)
-        assert cfg.val_n is not None
-        assert cfg.val_n > 0
 
     def test_score_dict_contains_val_fields(self):
         cfg = DataConfig(
@@ -409,32 +391,6 @@ class TestKFoldSampler:
         train, test, val = sampler(cfg)
         assert len(train) + len(test) + len(val) == len(cfg._X)
 
-    def test_integration_with_dataconfig(self):
-        cfg = DataConfig(
-            name="make_classification",
-            data_params={
-                "n_samples": 200,
-                "n_features": 5,
-                "n_informative": 3,
-                "n_redundant": 0,
-                "random_state": 7,
-                "n_clusters_per_class": 1,
-            },
-            classifier=True,
-            sampler=KFoldSampler(
-                n_splits=5,
-                split=1,
-                test_size=0.2,
-                random_state=42,
-                stratify=True,
-            ),
-        )
-        cfg()
-        assert cfg.X_val is not None
-        assert cfg.y_val is not None
-        assert cfg.val_n is not None
-        assert cfg.val_n > 0
-
     def test_fold_none_defaults_to_zero(self):
         cfg = _make_clf_config()
         cfg_split0 = _make_clf_config()
@@ -590,33 +546,6 @@ class TestShuffleSampler:
         with pytest.raises(ValueError):
             sampler(self.cfg)
 
-    def test_integration_with_dataconfig(self):
-        cfg = DataConfig(
-            name="make_classification",
-            data_params={
-                "n_samples": 200,
-                "n_features": 5,
-                "n_informative": 3,
-                "n_redundant": 0,
-                "random_state": 7,
-                "n_clusters_per_class": 1,
-            },
-            classifier=True,
-            sampler=ShuffleSampler(
-                n_splits=5,
-                split=2,
-                test_size=0.2,
-                val_size=0.15,
-                random_state=42,
-                stratify=True,
-            ),
-        )
-        cfg()
-        assert cfg.X_val is not None
-        assert cfg.y_val is not None
-        assert cfg.val_n is not None
-        assert cfg.val_n > 0
-
     def test_no_stratify(self):
         cfg = _make_reg_config(val_size=0.15)
         sampler = ShuffleSampler(
@@ -629,6 +558,19 @@ class TestShuffleSampler:
         )
         train, test, val = sampler(cfg)
         assert len(train) + len(test) + len(val) == len(cfg._X)
+
+
+def test_sampler_integration_with_dataconfig_populates_validation_fields():
+    cfg = _make_clf_config(
+        sampler=SplitSampler(
+            test_size=0.2,
+            val_size=0.1,
+            random_state=42,
+            stratify=True,
+        ),
+    )
+    cfg()
+    _assert_dataconfig_val_fields(cfg)
 
 
 # ---------------------------------------------------------------------------

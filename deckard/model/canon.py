@@ -11,7 +11,11 @@ from typing import Any, Final, Mapping, TypedDict
 from ..artifacts import ScoreDict
 from ..orchestration import (
     MODE_ALIASES as _MODE_ALIASES,
+)
+from ..orchestration import (
     STAGE_ALIASES as _STAGE_ALIASES,
+)
+from ..orchestration import (
     normalize_runtime_split_mode as _normalize_runtime_split_mode,
 )
 
@@ -73,15 +77,19 @@ CANONICAL_MODEL_TIMES: Final[tuple[str, ...]] = (
     "training_score_time",
 )
 
-CANONICAL_MODEL_RUNTIME_FIELDS: Final[tuple[str, ...]] = (
-    "_model",
-    "score_dict",
+CANONICAL_MODEL_PREDICTION_OUTPUT_FIELDS: Final[tuple[str, ...]] = (
     "training_predictions",
     "predictions",
     "val_predictions",
     "training_probabilities",
     "probabilities",
     "val_probabilities",
+)
+
+CANONICAL_MODEL_RUNTIME_FIELDS: Final[tuple[str, ...]] = (
+    "_model",
+    "score_dict",
+    *CANONICAL_MODEL_PREDICTION_OUTPUT_FIELDS,
     "training_time",
     "prediction_time",
     "val_prediction_time",
@@ -184,6 +192,21 @@ def normalize_model_score_stage(stage: str | None) -> str:
             f"'{stage}'. Must be one of {list(CANONICAL_MODEL_SCORE_STAGES)}",
         )
     return resolved
+
+
+def normalize_classifier_flag(
+    value: bool | str,
+    *,
+    context: str = "classifier",
+) -> bool:
+    """Normalize classifier/regressor aliases to a strict boolean flag."""
+    if value in ["classifier", True]:
+        return True
+    if value in ["regressor", False]:
+        return False
+    raise ValueError(
+        f"{context} must be boolean or one of ['classifier', 'regressor'], got {value}",
+    )
 
 
 def normalize_model_runtime_split_mode(

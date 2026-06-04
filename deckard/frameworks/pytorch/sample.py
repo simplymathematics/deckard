@@ -7,14 +7,18 @@ from typing import Any
 
 # Third-party
 import numpy as np
-from sklearn.model_selection import KFold, StratifiedKFold, train_test_split
-from sklearn.model_selection import ShuffleSplit, StratifiedShuffleSplit
+from sklearn.model_selection import (
+    KFold,
+    ShuffleSplit,
+    StratifiedKFold,
+    StratifiedShuffleSplit,
+    train_test_split,
+)
 from torch import Tensor
 from torch.utils.data import TensorDataset
 
 # Local / project
-from ...data.sample import BaseSampler
-from ...utils import resolve_component_spec
+from ...data.sample import BaseSampler, KFoldSampler, ShuffleSampler, SplitSampler
 
 try:
     from omegaconf import DictConfig, OmegaConf
@@ -212,15 +216,12 @@ class PytorchBaseSampler(BaseSampler):
                 return alias_kwargs
             return {}
 
-        spec = getattr(config, "sampler", None)
+        spec = cls._sampler_spec_or_none(config)
         if spec is None:
             return None
-        if isinstance(spec, dict) and not spec:
-            return None
 
-        return resolve_component_spec(
-            spec,
-            field_name="sampler",
+        return cls._resolve_component(
+            spec=spec,
             aliases=sampler_aliases,
             alias_kwargs_getter=_alias_kwargs,
         )
@@ -282,18 +283,12 @@ class PytorchBaseSampler(BaseSampler):
 
 
 @dataclass
-class PytorchSplitSampler(PytorchBaseSampler):
+class PytorchSplitSampler(PytorchBaseSampler, SplitSampler):
     """PytorchSplitSampler runtime class.
 
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
-
-    train_size: int | float | None = None
-    test_size: int | float | None = 0.2
-    val_size: int | float | None = None
-    random_state: int | None = 42
-    stratify: bool | str | None = True
 
     def __call__(self, config: Any) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Generate deterministic train/test/validation splits.
@@ -356,21 +351,14 @@ class PytorchSplitSampler(PytorchBaseSampler):
 
 
 @dataclass
-class PytorchFoldSampler(PytorchBaseSampler):
+class PytorchFoldSampler(PytorchBaseSampler, KFoldSampler):
     """PytorchFoldSampler runtime class.
 
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
 
-    n_splits: int = 5
     split: int = 0
-    shuffle: bool = True
-    train_size: int | float | None = None
-    test_size: int | float | None = 0.2
-    val_size: int | float | None = None
-    random_state: int | None = 42
-    stratify: bool | str | None = True
 
     @staticmethod
     def _to_count(size, total: int):
@@ -477,19 +465,12 @@ class PytorchFoldSampler(PytorchBaseSampler):
 
 
 @dataclass
-class PytorchShuffleSampler(PytorchBaseSampler):
+class PytorchShuffleSampler(PytorchBaseSampler, ShuffleSampler):
     """PytorchShuffleSampler runtime class.
 
     Attributes:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
-
-    n_splits: int = 5
-    split: int | None = 0
-    test_size: int | float | None = 0.2
-    val_size: int | float | None = None
-    random_state: int | None = 42
-    stratify: bool | str | None = True
 
     def __call__(self, config: Any) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Generate shuffled train/test/validation splits.

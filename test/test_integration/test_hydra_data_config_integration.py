@@ -1,33 +1,10 @@
-from pathlib import Path
-
-from helpers import reset_hydra_state
-from hydra import compose, initialize_config_dir
 from omegaconf import OmegaConf
 
-SKLEARN_CONFIG_DIR = (
-    Path(__file__).resolve().parents[2] / "examples" / "sklearn" / "config"
-)
-PYTORCH_CONFIG_DIR = (
-    Path(__file__).resolve().parents[2] / "examples" / "pytorch" / "config"
-)
-
-
-def _compose_sklearn(config_name: str, overrides: list[str] | None = None):
-    overrides = overrides or []
-    reset_hydra_state()
-    with initialize_config_dir(version_base="1.3", config_dir=str(SKLEARN_CONFIG_DIR)):
-        return compose(config_name=config_name, overrides=overrides)
-
-
-def _compose_pytorch(config_name: str, overrides: list[str] | None = None):
-    overrides = overrides or []
-    reset_hydra_state()
-    with initialize_config_dir(version_base="1.3", config_dir=str(PYTORCH_CONFIG_DIR)):
-        return compose(config_name=config_name, overrides=overrides)
+from .shared_compose import compose_pytorch, compose_sklearn
 
 
 def test_sklearn_data_profile_anjana_composes():
-    cfg = _compose_sklearn("data/anjana")
+    cfg = compose_sklearn("data/anjana")
     data_cfg = OmegaConf.to_container(cfg.data, resolve=True)
 
     assert data_cfg["name"] == "make_classification"
@@ -36,7 +13,7 @@ def test_sklearn_data_profile_anjana_composes():
 
 
 def test_sklearn_data_profile_fairlearn_composes():
-    cfg = _compose_sklearn("data/fair-adult")
+    cfg = compose_sklearn("data/fair-adult")
     data_cfg = OmegaConf.to_container(cfg.data, resolve=True)
 
     assert data_cfg["name"].endswith("raw_data/adult_income/adult_income_dataset.csv")
@@ -45,7 +22,7 @@ def test_sklearn_data_profile_fairlearn_composes():
 
 
 def test_sklearn_data_profile_lifelines_composes():
-    cfg = _compose_sklearn("data/lung")
+    cfg = compose_sklearn("data/lung")
     data_cfg = OmegaConf.to_container(cfg.data, resolve=True)
 
     assert data_cfg["name"] == "lung"
@@ -54,7 +31,7 @@ def test_sklearn_data_profile_lifelines_composes():
 
 
 def test_pytorch_data_profile_torch_mnist_composes():
-    cfg = _compose_pytorch("data/torch_mnist")
+    cfg = compose_pytorch("data/torch_mnist")
     data_cfg = OmegaConf.to_container(cfg.data, resolve=True)
 
     assert data_cfg["name"] == "torchvision.datasets.MNIST"

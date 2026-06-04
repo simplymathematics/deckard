@@ -4,43 +4,10 @@ These tests validate trainer group composition into model.trainer and parity
 between canonical and backend-prefixed trainer aliases.
 """
 
-from pathlib import Path
-
 import pytest
-from hydra import compose, initialize_config_dir
-from hydra.core.config_store import ConfigStore
-from hydra.core.global_hydra import GlobalHydra
 from omegaconf import OmegaConf
 
-SKLEARN_CONFIG_DIR = (
-    Path(__file__).resolve().parents[2] / "examples" / "sklearn" / "config"
-)
-PYTORCH_CONFIG_DIR = (
-    Path(__file__).resolve().parents[2] / "examples" / "pytorch" / "config"
-)
-
-
-def _reset_hydra_state():
-    if GlobalHydra.instance().is_initialized():
-        GlobalHydra.instance().clear()
-    config_store = ConfigStore.instance()
-    for key in list(config_store.repo.keys()):
-        if key not in {"hydra", "_dummy_empty_config_.yaml"}:
-            config_store.repo.pop(key, None)
-
-
-def _compose_sklearn(config_name: str, overrides: list[str] | None = None):
-    overrides = overrides or []
-    _reset_hydra_state()
-    with initialize_config_dir(version_base="1.3", config_dir=str(SKLEARN_CONFIG_DIR)):
-        return compose(config_name=config_name, overrides=overrides)
-
-
-def _compose_pytorch(config_name: str, overrides: list[str] | None = None):
-    overrides = overrides or []
-    _reset_hydra_state()
-    with initialize_config_dir(version_base="1.3", config_dir=str(PYTORCH_CONFIG_DIR)):
-        return compose(config_name=config_name, overrides=overrides)
+from .shared_compose import compose_pytorch, compose_sklearn
 
 
 @pytest.mark.parametrize(
@@ -90,7 +57,7 @@ def _compose_pytorch(config_name: str, overrides: list[str] | None = None):
     ],
 )
 def test_sklearn_trainer_group_composes_to_model_trainer(overrides, expected_target):
-    cfg = _compose_sklearn("default", overrides=overrides)
+    cfg = compose_sklearn("default", overrides=overrides)
     model_cfg = OmegaConf.to_container(cfg.model, resolve=True)
     assert model_cfg["trainer"]["_target_"] == expected_target
 
@@ -142,7 +109,7 @@ def test_sklearn_trainer_group_composes_to_model_trainer(overrides, expected_tar
     ],
 )
 def test_pytorch_trainer_group_composes_to_model_trainer(overrides, expected_target):
-    cfg = _compose_pytorch("torch_default", overrides=overrides)
+    cfg = compose_pytorch("torch_default", overrides=overrides)
     model_cfg = OmegaConf.to_container(cfg.model, resolve=True)
     assert model_cfg["trainer"]["_target_"] == expected_target
 
@@ -161,11 +128,11 @@ def test_pytorch_trainer_group_composes_to_model_trainer(overrides, expected_tar
     ],
 )
 def test_sklearn_backend_prefixed_alias_parity(canonical, backend_prefixed):
-    canonical_cfg = _compose_sklearn(
+    canonical_cfg = compose_sklearn(
         "default",
         overrides=[f"trainer@model.trainer={canonical}"],
     )
-    alias_cfg = _compose_sklearn(
+    alias_cfg = compose_sklearn(
         "default",
         overrides=[f"trainer@model.trainer={backend_prefixed}"],
     )
@@ -191,11 +158,11 @@ def test_sklearn_backend_prefixed_alias_parity(canonical, backend_prefixed):
     ],
 )
 def test_pytorch_backend_prefixed_alias_parity(canonical, backend_prefixed):
-    canonical_cfg = _compose_pytorch(
+    canonical_cfg = compose_pytorch(
         "torch_default",
         overrides=[f"trainer@model.trainer={canonical}"],
     )
-    alias_cfg = _compose_pytorch(
+    alias_cfg = compose_pytorch(
         "torch_default",
         overrides=[f"trainer@model.trainer={backend_prefixed}"],
     )

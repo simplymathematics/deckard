@@ -8,6 +8,10 @@ from deckard.data import DataConfig
 from deckard.experiment import ExperimentConfig
 from deckard.file import FileConfig
 from deckard.model import DefenseConfig, ModelConfig
+from test.test_integration.shared_base import (
+    make_base_classification_data,
+    make_logistic_model,
+)
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -17,37 +21,21 @@ def _load_yaml(path: str):
 
 
 def _base_classification_data():
-    cfg = DataConfig(
-        name="make_classification",
-        data_params={
-            "n_samples": 40,
-            "n_features": 8,
-            "n_informative": 4,
-            "n_redundant": 0,
-            "n_clusters_per_class": 1,
-            "n_classes": 2,
-            "random_state": 17,
-        },
-        classifier=True,
-        sampler={
-            "name": "deckard.data.sample.SplitSampler",
-            "train_size": 30,
-            "test_size": 10,
-            "random_state": 42,
-            "stratify": True,
-        },
+    return make_base_classification_data(
+        n_samples=40,
+        n_features=8,
+        n_informative=4,
+        n_classes=2,
+        random_state=17,
+        sampler_name="deckard.data.sample.SplitSampler",
+        train_size=30,
+        test_size=10,
+        stratify=True,
     )
-    cfg()
-    return cfg
 
 
 def _base_model(defense=None):
-    return ModelConfig(
-        name="sklearn.linear_model.LogisticRegression",
-        classifier=True,
-        model_params={"max_iter": 25},
-        defense=defense,
-    )
+    return make_logistic_model(defense=defense, max_iter=25)
 
 
 def _apply_defense(defense):

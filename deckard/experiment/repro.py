@@ -14,11 +14,25 @@ from . import dvc as _dvc_module
 from .canon import CANONICAL_EXPERIMENT_PIPELINE_STAGES
 from .dvc import (
     _resolve_stage_token,
-    build_dvc_cmd as _build_dvc_cmd,
-    build_dvc_stage_plan as _build_dvc_stage_plan,
     coerce_dvc_experiment_plugin,
+)
+from .dvc import (
+    build_dvc_cmd as _build_dvc_cmd,
+)
+from .dvc import (
+    build_dvc_stage_plan as _build_dvc_stage_plan,
+)
+from .dvc import (
     extract_dvc_file_aliases as _extract_dvc_file_aliases,
+)
+from .dvc import (
     generate_dvc_pipeline as _generate_dvc_pipeline,
+)
+from .hooks import (
+    build_plugin_hook_wrappers,
+    normalize_hook_token,
+    prepare_hook_run_context,
+    should_run_persist_tail,
 )
 
 PluginPrimitive = str | int | float | bool | None
@@ -109,36 +123,16 @@ def _build_repro_plugin_hook_wrappers(
     *,
     method_name: str,
 ) -> tuple[list[HookPlugin], list[HookPlugin]]:
-    first_hooks: list[HookPlugin] = []
-    last_hooks: list[HookPlugin] = []
-    plugin_payload = plugin_cfg.to_dict()
-
-    for stage in CANONICAL_EXPERIMENT_PIPELINE_STAGES:
-        stage_token = str(stage).strip().lower().replace("-", "_")
-        for event in ("before", "after"):
-            hook_name = f"{event}_{stage_token}"
-            first_hooks.append(
-                HookPlugin(
-                    hook_name=hook_name,
-                    method_name=method_name,
-                    method_kwargs={
-                        "repro_plugin": plugin_payload,
-                        "plugin_position": "first",
-                    },
-                ),
-            )
-            last_hooks.append(
-                HookPlugin(
-                    hook_name=hook_name,
-                    method_name=method_name,
-                    method_kwargs={
-                        "repro_plugin": plugin_payload,
-                        "plugin_position": "last",
-                    },
-                ),
-            )
-
-    return first_hooks, last_hooks
+    return build_plugin_hook_wrappers(
+        stages=CANONICAL_EXPERIMENT_PIPELINE_STAGES,
+        stage_token_resolver=lambda stage: normalize_hook_token(stage).replace(
+            "-",
+            "_",
+        ),
+        method_name=method_name,
+        plugin_payload_key="repro_plugin",
+        plugin_payload=plugin_cfg.to_dict(),
+    )
 
 
 def build_repro_experiment_plugin_hooks(
@@ -167,18 +161,14 @@ def run_repro_experiment_plugin_hook(
     _ = kwargs
 
     plugin_cfg = coerce_dvc_repro_plugin(repro_plugin)
-    stage_token = _resolve_stage_token(stage)
-    event_token = str(event).strip().lower()
-    position_token = str(plugin_position).strip().lower()
-
-    result: dict[str, Any] = {
-        "enabled": bool(plugin_cfg.enabled),
-        "position": position_token,
-        "component": str(component),
-        "stage": stage_token,
-        "event": event_token,
-        "executed": False,
-    }
+    stage_token, event_token, position_token, result = prepare_hook_run_context(
+        enabled=plugin_cfg.enabled,
+        component=component,
+        stage=stage,
+        event=event,
+        plugin_position=plugin_position,
+        resolve_stage_token=_resolve_stage_token,
+    )
 
     if not plugin_cfg.enabled:
         return result
@@ -196,11 +186,12 @@ def run_repro_experiment_plugin_hook(
         result["pull"] = _dvc_module._run_dvc_pull(experiment, dvc_policy)
         result["executed"] = True
 
-    if (
-        position_token == "last"
-        and event_token == "after"
-        and stage_token == "persist"
-    ):
+    should_persist = should_run_persist_tail(
+        position_token=position_token,
+        event_token=event_token,
+        stage_token=stage_token,
+    )
+    if should_persist:
         result["params_file"] = _dvc_module._write_dvc_params_file(
             experiment,
             plugin=dvc_policy,

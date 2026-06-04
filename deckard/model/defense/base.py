@@ -6,7 +6,7 @@ import time
 import warnings
 from dataclasses import InitVar, dataclass, field
 from functools import lru_cache
-from typing import Any, Union, cast, ClassVar, Final
+from typing import Any, ClassVar, Final, Union, cast
 
 from omegaconf import DictConfig, ListConfig, OmegaConf
 from sklearn.base import BaseEstimator
@@ -14,20 +14,21 @@ from sklearn.exceptions import NotFittedError
 from sklearn.utils.validation import check_is_fitted
 
 from ...artifacts import ScoreDict
-from ...types import ArtEsimtator, EstimatorLike, StringifiedClass
 from ...data import DataConfig
+from ...types import ArtEsimtator, EstimatorLike, StringifiedClass
 from ...utils import (
     BaseConfig,
     coerce_component_sequence,
     coerce_config,
     instantiate_plugin_spec,
     is_null_config_value,
+    merge_unique_types,
     normalize_plugin_specs,
     resolve_class,
 )
-from ..canon import defense_stage_priority, resolve_model_defense_stage
-from ..base import ModelConfig
 from ...warnings_policy import apply_warning_policy
+from ..base import ModelConfig
+from ..canon import defense_stage_priority, resolve_model_defense_stage
 
 apply_warning_policy()
 logger = logging.getLogger(__name__)
@@ -981,6 +982,57 @@ class DefensePipelineConfigBehaviorMixin(DefenseHookRuntimeMixin):
         warnings.warn(warning_msg, RuntimeWarning, stacklevel=2)
         return non_retraining_defenses + retraining_defenses
 
+    @staticmethod
+    def _should_apply_defense_step(defense_step: DefenseStep, stage: str) -> bool:
+        stage_token = str(stage).strip().lower()
+        if stage_token in {"pre_fit", "pre_art_defense"}:
+            return bool(getattr(defense_step, "apply_fit", True))
+        return bool(getattr(defense_step, "apply_predict", True))
+
+    def _apply_defense_step(
+        self,
+        *,
+        defense_step: DefenseStep,
+        defended_estimator: BaseEstimator,
+        data: DataConfig | None,
+        stage: str,
+        applied_defenses: list[DefenseStep],
+    ) -> tuple[BaseEstimator, float]:
+        defense_obj = self._unwrap_defense(defense_step)
+        self._inherit_model_context(defense_obj, defended_estimator)
+        if hasattr(defense_obj, "data") and getattr(defense_obj, "data", None) is None:
+            setattr(defense_obj, "data", data)
+        apply_to = getattr(defense_obj, "apply_to", None)
+        if not callable(apply_to):
+            raise TypeError(
+                "Configured defenses must implement apply_to(estimator, data)",
+            )
+        self._run_plugin_hook(
+            "before_apply_defense_step",
+            estimator=defended_estimator,
+            data=data,
+            stage=stage,
+            defense=defense_step,
+            applied_defenses=applied_defenses,
+        )
+        started = time.perf_counter()
+        updated_estimator = apply_to(estimator=defended_estimator, data=data)
+        elapsed = getattr(defense_obj, "defense_application_time", None)
+        if elapsed is None:
+            elapsed = time.perf_counter() - started
+        elapsed = float(elapsed)
+        step_outputs = self._run_plugin_hook(
+            "after_apply_defense_step",
+            estimator=updated_estimator,
+            data=data,
+            stage=stage,
+            defense=defense_step,
+            applied_defenses=applied_defenses,
+            step_defense_time=elapsed,
+        )
+        self._merge_plugin_scores(step_outputs)
+        return cast(BaseEstimator, updated_estimator), elapsed
+
     def apply(
         self,
         estimator: BaseEstimator,
@@ -1028,53 +1080,17 @@ class DefensePipelineConfigBehaviorMixin(DefenseHookRuntimeMixin):
         total_defense_time = 0.0
         applied_defenses = []
         for defense_step in defense_chain:
-            defense_obj = self._unwrap_defense(defense_step)
-            stage_token = str(stage).strip().lower()
-            if stage_token in {"pre_fit", "pre_art_defense"}:
-                should_apply = bool(getattr(defense_step, "apply_fit", True))
-            else:
-                should_apply = bool(getattr(defense_step, "apply_predict", True))
-            if not should_apply:
+            if not self._should_apply_defense_step(defense_step, stage):
                 continue
-            self._inherit_model_context(defense_obj, defended_estimator)
-            if (
-                hasattr(defense_obj, "data")
-                and getattr(defense_obj, "data", None) is None
-            ):
-                setattr(defense_obj, "data", data)
-            apply_to = getattr(defense_obj, "apply_to", None)
-            if not callable(apply_to):
-                raise TypeError(
-                    "Configured defenses must implement apply_to(estimator, data)",
-                )
-            self._run_plugin_hook(
-                "before_apply_defense_step",
-                estimator=defended_estimator,
+            defended_estimator, elapsed = self._apply_defense_step(
+                defense_step=defense_step,
+                defended_estimator=defended_estimator,
                 data=data,
                 stage=stage,
-                defense=defense_step,
                 applied_defenses=applied_defenses,
             )
-            started = time.perf_counter()
-            defended_estimator = apply_to(
-                estimator=defended_estimator,
-                data=data,
-            )
-            elapsed = getattr(defense_obj, "defense_application_time", None)
-            if elapsed is None:
-                elapsed = time.perf_counter() - started
-            total_defense_time += float(elapsed)
+            total_defense_time += elapsed
             applied_defenses.append(defense_step)
-            step_outputs = self._run_plugin_hook(
-                "after_apply_defense_step",
-                estimator=defended_estimator,
-                data=data,
-                stage=stage,
-                defense=defense_step,
-                applied_defenses=applied_defenses,
-                step_defense_time=float(elapsed),
-            )
-            self._merge_plugin_scores(step_outputs)
 
         self.defense_application_time = total_defense_time
         hook_outputs = self._run_plugin_hook(
@@ -1137,6 +1153,12 @@ def _is_torch_model_instance(model_obj) -> bool:
     ):  # pragma: no cover - optional dependency import may fail at runtime
         return False
     return isinstance(model_obj, torch.nn.Module)
+
+
+def _dispatch_runtime_callable(runtime_callable, **kwargs):
+    """Forward defense runtime kwargs to a callable, stripping synthetic self."""
+    kwargs.pop("self", None)
+    return runtime_callable(**kwargs)
 
 
 @dataclass(eq=True)
@@ -1228,17 +1250,7 @@ class DefenseMixin:
         Returns:
                 Defense artifact and defended estimator.
         """
-        return self(
-            data=data,
-            defense_type=defense_type,
-            defense_subtype=defense_subtype,
-            defense_class=defense_class,
-            art_class=art_class,
-            init_params=init_params,
-            base_estimator=base_estimator,
-            existing_preprocessors=existing_preprocessors,
-            existing_postprocessors=existing_postprocessors,
-        )
+        return _dispatch_runtime_callable(self, **locals())
 
 
 class PassthroughDefenseMixin(DefenseMixin):
@@ -1406,19 +1418,7 @@ class ARTDefenseBehaviorMixin(DefenseHookRuntimeMixin):
             defense_subtype=defense_subtype,
             default_mixins=tuple(mixins),
         )
-        for output in plugin_outputs:
-            if isinstance(output, type):
-                mixins.append(output)
-            elif isinstance(output, (tuple, list)):
-                for item in output:
-                    if isinstance(item, type):
-                        mixins.append(item)
-
-        deduped: list[type] = []
-        for mixin in mixins:
-            if mixin not in deduped:
-                deduped.append(mixin)
-        return tuple(deduped)
+        return merge_unique_types(mixins, plugin_outputs)
 
     def _resolve_defense_handler(
         self,
@@ -1817,18 +1817,16 @@ class ARTDefenseBehaviorMixin(DefenseHookRuntimeMixin):
             )
             return self.model
 
-        defense_type, defense_subtype, defense_class = self.parse_defense_name()
-        art_class, init_params = self.get_art_class(data)
         (
-            base_estimator,
+            defense_type,
+            defense_subtype,
+            defense_class,
             art_class,
             init_params,
+            base_estimator,
             existing_preprocessors,
             existing_postprocessors,
-        ) = self._extract_art_wrapper_context(
-            art_class=art_class,
-            init_params=init_params,
-        )
+        ) = self._resolve_defense_dispatch_inputs(data)
         if not _is_torch_model_instance(base_estimator):
             try:
                 check_is_fitted(cast(Any, base_estimator))
@@ -1894,6 +1892,42 @@ class ARTDefenseBehaviorMixin(DefenseHookRuntimeMixin):
         if model_cfg is not None:
             cast(Any, model_cfg).set_estimator(defended_estimator)
         return cast(BaseEstimator, defended_estimator)
+
+    def _resolve_defense_dispatch_inputs(
+        self,
+        data: DataConfig | None,
+    ) -> tuple[
+        str | None,
+        str | None,
+        type | None,
+        ArtEsimtator,
+        dict,
+        EstimatorLike,
+        list,
+        list,
+    ]:
+        defense_type, defense_subtype, defense_class = self.parse_defense_name()
+        art_class, init_params = self.get_art_class(data)
+        (
+            base_estimator,
+            art_class,
+            init_params,
+            existing_preprocessors,
+            existing_postprocessors,
+        ) = self._extract_art_wrapper_context(
+            art_class=art_class,
+            init_params=init_params,
+        )
+        return (
+            defense_type,
+            defense_subtype,
+            defense_class,
+            art_class,
+            init_params,
+            base_estimator,
+            existing_preprocessors,
+            existing_postprocessors,
+        )
 
     def get_art_class(
         self,

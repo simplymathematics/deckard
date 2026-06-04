@@ -17,17 +17,18 @@ except Exception:
 
 from ...artifacts import ScoreDict
 from ...data import DataConfig
+from ...data._mixins import RuntimePayload
 from ...data.canon import (
     normalize_data_score_mode,
     resolve_data_split_payload,
     resolve_sensitive_split_payload,
 )
-from ...data._mixins import RuntimePayload
-from ...plugins import HookPlugin
-from ...plugins.base import HookBundle
 from ...frameworks.pytorch.score import (
     validate_sensitive_features,
 )
+from ...plugins import HookPlugin
+from ...plugins.base import HookBundle
+from ...plugins.score_helpers import merge_prefixed_tail_scores
 from ...score._runtime import resolve_yt_yp, series_like_to_float_dict
 from ...score.base import (
     ScorerConfig,
@@ -149,16 +150,11 @@ class FairlearnDataScoreHooksMixin:
             )
         resolved_mode = normalize_data_score_mode(getattr(self, "score_mode", "test"))
         tail_scores = self._run_fairlearn_score(mode=resolved_mode)
-        existing = dict(scores or {})
-        if len(existing) == 0:
-            return ScoreDict.from_payload(tail_scores)
-        merged_tail = {}
-        for key, value in tail_scores.items():
-            if key in existing:
-                merged_tail[f"fairlearn_{key}"] = value
-            else:
-                merged_tail[key] = value
-        return ScoreDict.from_payload(merged_tail)
+        return merge_prefixed_tail_scores(
+            tail_scores,
+            existing_scores=cast(dict[str, Any] | None, scores),
+            prefix="fairlearn",
+        )
 
     def score(
         self,

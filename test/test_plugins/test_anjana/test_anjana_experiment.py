@@ -12,6 +12,16 @@ import pandas as pd
 import pytest
 from helpers import load_canonical_data_profile
 
+from test.test_plugins.test_anjana.shared import (
+    assert_wrapper_reordered_last,
+    make_art_postprocessor_defense,
+    make_hopskipjump_attack,
+    make_logistic_model,
+    run_experiment,
+    stub_copy_resolver,
+    stub_drop_half_rows_resolver,
+)
+
 ROOT = Path(__file__).resolve().parents[3]
 EXAMPLES_SKLEARN_DIR = ROOT / "examples" / "sklearn"
 DECKARD_RC_PATH = EXAMPLES_SKLEARN_DIR / ".deckard_rc"
@@ -263,50 +273,20 @@ def test_anjana_data_with_art_model_defense_chain(monkeypatch):
     Defense chain: [ART postprocessor only - no Anjana in model defense anymore].
     Verification: type check (model is ART wrapper) + data transform check.
     """
-    from deckard.experiment import ExperimentConfig
-    from deckard.file import FileConfig
-    from deckard.model import DefenseConfig, ModelConfig
-
-    def _stub_k_anon(data, **kwargs):
-        _ = kwargs
-        return data.copy()
-
-    monkeypatch.setattr(
-        "deckard.plugins.anjana.data.resolve_class",
-        lambda _: _stub_k_anon,
-    )
+    stub_copy_resolver(monkeypatch)
 
     data_cfg = _make_anjana_data(
         n=20,
         defense={"name": "anjana.anonymity.k_anonymity", "k": 2},
     )
 
-    defense_cfg = DefenseConfig(
-        defenses=[
-            {
-                "name": "art.defences.postprocessor.ClassLabels",
-                "defense_params": {"apply_fit": False, "apply_predict": True},
-                "classifier": True,
-                "model_name": "sklearn.linear_model.LogisticRegression",
-            },
-        ],
-    )
-    model_cfg = ModelConfig(
-        name="sklearn.linear_model.LogisticRegression",
-        classifier=True,
-        model_params={"max_iter": 25},
-        defense=defense_cfg,
-    )
-
-    exp = ExperimentConfig(
+    exp, scores = run_experiment(
         data=data_cfg,
-        model=model_cfg,
-        attack=None,
-        files=FileConfig(),
-        classifier=True,
+        model=make_logistic_model(
+            max_iter=25,
+            defense=make_art_postprocessor_defense(include_model_name=True),
+        ),
     )
-
-    scores = exp()
 
     # Type check: model's estimator should be an ART wrapper
     from art.estimators.classification.scikitlearn import (
@@ -336,19 +316,10 @@ def test_anjana_fairness_data_and_art_model_chain(monkeypatch):
     from art.estimators.classification.scikitlearn import (
         ScikitlearnLogisticRegression,
     )
-    from deckard.experiment import ExperimentConfig
-    from deckard.file import FileConfig
-    from deckard.model import DefenseConfig, ModelConfig
+
     from deckard.plugins.anjana.data import AnjanaDataConfig
 
-    def _drop_half_rows(data, **kwargs):
-        _ = kwargs
-        return data.iloc[: len(data) // 2].copy()
-
-    monkeypatch.setattr(
-        "deckard.plugins.anjana.data.resolve_class",
-        lambda _: _drop_half_rows,
-    )
+    stub_drop_half_rows_resolver(monkeypatch)
 
     data_cfg = AnjanaDataConfig(
         name="make_classification",
@@ -378,33 +349,13 @@ def test_anjana_fairness_data_and_art_model_chain(monkeypatch):
         pipeline={},
     )
 
-    model_cfg = ModelConfig(
-        name="sklearn.linear_model.LogisticRegression",
-        classifier=True,
-        model_params={"max_iter": 25},
-        defense=DefenseConfig(
-            defenses=[
-                {
-                    "name": "art.defences.postprocessor.ClassLabels",
-                    "defense_params": {
-                        "apply_fit": False,
-                        "apply_predict": True,
-                    },
-                    "classifier": True,
-                    "model_name": "sklearn.linear_model.LogisticRegression",
-                },
-            ],
+    exp, scores = run_experiment(
+        data=data_cfg,
+        model=make_logistic_model(
+            max_iter=25,
+            defense=make_art_postprocessor_defense(include_model_name=True),
         ),
     )
-
-    exp = ExperimentConfig(
-        data=data_cfg,
-        model=model_cfg,
-        attack=None,
-        files=FileConfig(),
-        classifier=True,
-    )
-    scores = exp()
 
     # Type checks
     assert isinstance(exp.data, AnjanaDataConfig)
@@ -420,41 +371,10 @@ def test_anjana_fairness_data_and_art_model_chain(monkeypatch):
 
 def test_art_defense_reordered_last_with_warning(caplog):
     """If ART is placed before non-ART defenses, pipeline reorders and logs a warning."""
-    import logging
-
-    from deckard.model.defense.base import DefenseConfig
-
-    call_order = []
-
-    class _StubDataDefense:
-        name = "anjana.mock.MockDataDefense"
-        defense_application_time = 0.0
-
-        def apply_to(self, estimator, data):
-            _ = data
-            call_order.append("data")
-            return estimator
-
-    class _StubArtDefense:
-        name = "art.mock.MockArtDefense"
-        defense_application_time = 0.0
-
-        def apply_to(self, estimator, data):
-            _ = data
-            call_order.append("art")
-            return estimator
-
-    pipeline = DefenseConfig(
-        defenses=[_StubArtDefense(), _StubDataDefense()],
-    )
-
-    with caplog.at_level(logging.WARNING, logger="deckard.model.defense.base"):
-        pipeline.apply(estimator=object(), data=object())
-
-    assert call_order == ["data", "art"]
-    assert any(
-        "stage order adjusted to canonical model defense staging" in rec.message
-        for rec in caplog.records
+    assert_wrapper_reordered_last(
+        caplog,
+        warning_substring="stage order adjusted to canonical model defense staging",
+        data_defense_name="anjana.mock.MockDataDefense",
     )
 
 
@@ -521,51 +441,17 @@ def test_anjana_data_with_fairlearn_model_chain(monkeypatch):
 
 def test_anjana_data_with_attack_scoring(monkeypatch):
     """Anonymized data should still allow the attack pipeline to run and score."""
-    from deckard.attack import AttackConfig
-    from deckard.experiment import ExperimentConfig
-    from deckard.file import FileConfig
-    from deckard.model import ModelConfig
-
-    def _stub_k_anon(data, **kwargs):
-        _ = kwargs
-        return data.copy()
-
-    monkeypatch.setattr(
-        "deckard.plugins.anjana.data.resolve_class",
-        lambda _: _stub_k_anon,
-    )
+    stub_copy_resolver(monkeypatch)
 
     data_cfg = _make_anjana_data(
         n=20,
         defense={"name": "anjana.anonymity.k_anonymity", "k": 2},
     )
-    model_cfg = ModelConfig(
-        name="sklearn.linear_model.LogisticRegression",
-        classifier=True,
-        model_params={"max_iter": 25},
-    )
-    attack_cfg = AttackConfig(
-        name="art.attacks.evasion.HopSkipJump",
-        attack_params={
-            "max_iter": 1,
-            "init_eval": 1,
-            "max_eval": 2,
-            "init_size": 5,
-            "norm": 2,
-            "targeted": False,
-        },
-        attack_size=3,
-    )
-
-    exp = ExperimentConfig(
+    _exp, scores = run_experiment(
         data=data_cfg,
-        model=model_cfg,
-        attack=attack_cfg,
-        files=FileConfig(),
-        classifier=True,
+        model=make_logistic_model(max_iter=25),
+        attack=make_hopskipjump_attack(attack_size=3),
     )
-
-    scores = exp()
     assert isinstance(scores, dict)
     assert "accuracy" in scores
     assert "evasion_accuracy" in scores

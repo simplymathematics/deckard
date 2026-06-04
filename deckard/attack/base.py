@@ -1,21 +1,21 @@
 # Standard library imports
 import copy
 import importlib
-import pickle
 import logging
-
-from pathlib import Path
-import pandas as pd
+import pickle
 
 # Typing imports
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any, Callable, ClassVar, Literal, Mapping, Optional, Union
+
+import numpy as np
+import pandas as pd
 
 # Sklearn and numpy imports
 from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin
-from sklearn.utils.validation import check_is_fitted
 from sklearn.exceptions import NotFittedError
-import numpy as np
+from sklearn.utils.validation import check_is_fitted
 
 # ART imports
 try:
@@ -29,15 +29,6 @@ from omegaconf import DictConfig, OmegaConf
 
 from ..artifacts import ScoreDict
 from ..data import DataConfig
-from ..model import ModelConfig
-from ..path_utils import safe_unlink
-from ..types import ArrayLike, EstimatorLike, MatrixLike
-from ..model.defense.base import _get_art_symbols
-from ..utils import (
-    BaseConfig,
-    resolve_class,
-    resolve_torch_device,
-)
 from ..frameworks.pytorch.torch_utils import (
     build_torch_art_model,
     collect_subset_from_dataloader,
@@ -45,6 +36,18 @@ from ..frameworks.pytorch.torch_utils import (
     is_tensor,
     is_torch_model,
     tensor_to_numpy,
+)
+from ..model import ModelConfig
+from ..model.defense.base import _get_art_symbols
+from ..orchestration import ScoreOrchestratorMixin, resolve_data_split_payload
+from ..path_utils import safe_unlink
+from ..score.attack import AttackScorerConfig
+from ..types import ArrayLike, EstimatorLike, MatrixLike
+from ..utils import (
+    BaseConfig,
+    merge_unique_types,
+    resolve_class,
+    resolve_torch_device,
 )
 from .canon import (
     CANONICAL_ATTACK_SCORE_STAGE_ALIASES,
@@ -55,8 +58,6 @@ from .canon import (
     normalize_attack_score_stage,
     normalize_attack_stage,
 )
-from ..orchestration import ScoreOrchestratorMixin, resolve_data_split_payload
-from ..score.attack import AttackScorerConfig
 
 logger = logging.getLogger(__name__)
 
@@ -77,6 +78,15 @@ def _sensitive_slice(sensitive, n):
         return None
     arr = np.asarray(sensitive)
     return arr[:n]
+
+
+def _tabular_values_or_original(value):
+    """Return pandas backing values when available, else original value."""
+    if isinstance(value, pd.DataFrame):
+        return value.values
+    if isinstance(value, pd.Series):
+        return value.values
+    return value
 
 
 class SensitiveFeaturesWrapper(BaseEstimator):
@@ -863,19 +873,7 @@ class AttackConfig(ScoreOrchestratorMixin, BaseConfig):
             attack_sub_family=attack_sub_family,
             default_mixins=tuple(mixins),
         )
-        for output in plugin_outputs:
-            if isinstance(output, type):
-                mixins.append(output)
-            elif isinstance(output, (tuple, list)):
-                for item in output:
-                    if isinstance(item, type):
-                        mixins.append(item)
-
-        deduped: list[type] = []
-        for mixin in mixins:
-            if mixin not in deduped:
-                deduped.append(mixin)
-        return tuple(deduped)
+        return merge_unique_types(mixins, plugin_outputs)
 
     def _resolve_attack_handler(
         self,
@@ -1818,11 +1816,7 @@ class AttackConfig(ScoreOrchestratorMixin, BaseConfig):
             return tensor_to_numpy(features)
         if is_tensor(value):
             return tensor_to_numpy(value)
-        if isinstance(value, pd.DataFrame):
-            return value.values
-        if isinstance(value, pd.Series):
-            return value.values
-        return value
+        return _tabular_values_or_original(value)
 
     def _prepare_labels_for_attack(self, value):
         """Prepare label inputs for attack APIs.
@@ -1831,11 +1825,7 @@ class AttackConfig(ScoreOrchestratorMixin, BaseConfig):
         """
         if is_tensor(value):
             return tensor_to_numpy(value, dtype=ART_NUMPY_DTYPE)
-        if isinstance(value, pd.DataFrame):
-            return value.values
-        if isinstance(value, pd.Series):
-            return value.values
-        return value
+        return _tabular_values_or_original(value)
 
     def _prepare_features_for_art(self, value):
         """Prepare feature inputs specifically for ART model/attack boundaries."""
@@ -1962,7 +1952,7 @@ class AttackConfig(ScoreOrchestratorMixin, BaseConfig):
         else:
             x_ = data.X_train
             y_ = data.y_train
-        from torch.utils.data import Dataset, DataLoader, Subset
+        from torch.utils.data import DataLoader, Dataset, Subset
 
         # Accept Subset/Dataset and convert to tensor
         if isinstance(x_, (pd.Series, np.ndarray, pd.DataFrame)) or is_tensor(x_):

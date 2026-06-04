@@ -2,8 +2,18 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader, Dataset
 
-
+from deckard.frameworks.pytorch.declarations import (
+    SyntheticImageDataset,
+    SyntheticTabularFairnessDataset,
+)
 from deckard.plugins.datasets.declarations import FlexibleHuggingFaceDataset
+
+__all__ = [
+    "SyntheticImageDataset",
+    "SyntheticTabularFairnessDataset",
+    "CelebASmileDataset",
+    "build_celeba_smile_loaders",
+]
 
 
 def _normalize_hf_split(split: str) -> str:

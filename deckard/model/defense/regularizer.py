@@ -5,7 +5,11 @@ from dataclasses import dataclass
 from ...data import DataConfig
 from ...types import ArtEsimtator, EstimatorLike, StringifiedClass
 from ...utils import BaseConfig, safe_store
-from .base import ARTDefenseBehaviorMixin, DefenseInitParamValue
+from .base import (
+    ARTDefenseBehaviorMixin,
+    DefenseInitParamValue,
+    _dispatch_runtime_callable,
+)
 
 
 @dataclass(eq=False, kw_only=True)
@@ -48,17 +52,7 @@ class RegularizerDefenseConfig(ARTDefenseBehaviorMixin, BaseConfig):
         Returns:
             Tuple of configured defense object and defended estimator.
         """
-        return self(
-            data=data,
-            defense_type=defense_type,
-            defense_subtype=defense_subtype,
-            defense_class=defense_class,
-            art_class=art_class,
-            init_params=init_params,
-            base_estimator=base_estimator,
-            existing_preprocessors=existing_preprocessors,
-            existing_postprocessors=existing_postprocessors,
-        )
+        return _dispatch_runtime_callable(self, **locals())
 
     def __call__(
         self,

@@ -1,23 +1,15 @@
-from types import SimpleNamespace
-
 import pytest
 
 from deckard.model.defense.transformer import TransformerDefenseConfig
-
-
-class _TransformerDefenseKwarg:
-    def __init__(self, classifier=None, **kwargs):
-        self.classifier = classifier
-        self.kwargs = kwargs
-
-    def get_classifier(self):
-        return {"wrapped": self.classifier, "kwargs": self.kwargs}
-
-
-class _TransformerDefensePositional:
-    def __init__(self, classifier, **kwargs):
-        self.classifier = classifier
-        self.kwargs = kwargs
+from test.test_model.defense_support import (
+    KwargClassifierDefense,
+    PositionalClassifierDefense,
+    assert_rejects_non_torch_estimator,
+    make_defense_call_kwargs,
+    make_defense_config,
+    run_wrapped_defense,
+    setup_wrapped_art_builder,
+)
 
 
 class _TransformerDefenseNotImplKwarg:
@@ -42,64 +34,39 @@ class _TransformerDefenseNoGetClassifier:
         self.classifier = classifier
 
 
-def _make_config():
-    cfg = TransformerDefenseConfig()
-    cfg.defense_params = {"beta": 0.1}
-    cfg._model = None
-    return cfg
-
-
 def test_transformer_defense_unknown_subtype_raises():
-    cfg = _make_config()
+    cfg = make_defense_config(TransformerDefenseConfig, defense_params={"beta": 0.1})
     with pytest.raises(ValueError, match="Unknown transformer subtype"):
         cfg(
-            data=None,
-            defense_type="transformer",
-            defense_subtype="bad",
-            defense_class=_TransformerDefenseKwarg,
-            art_class=object,
-            init_params={},
-            base_estimator=object(),
-            existing_preprocessors=[],
-            existing_postprocessors=[],
+            **make_defense_call_kwargs(
+                defense_type="transformer",
+                defense_subtype="bad",
+                defense_class=KwargClassifierDefense,
+                base_estimator=object(),
+            ),
         )
 
 
 def test_transformer_defense_rejects_non_torch_estimators():
-    cfg = _make_config()
-    with pytest.raises(ValueError, match="only support neural-network models"):
-        cfg(
-            data=None,
-            defense_type="transformer",
-            defense_subtype="evasion",
-            defense_class=_TransformerDefenseKwarg,
-            art_class=object,
-            init_params={},
-            base_estimator=object(),
-            existing_preprocessors=[],
-            existing_postprocessors=[],
-        )
+    cfg = make_defense_config(TransformerDefenseConfig, defense_params={"beta": 0.1})
+    assert_rejects_non_torch_estimator(
+        cfg,
+        defense_type="transformer",
+        defense_subtype="evasion",
+        defense_class=KwargClassifierDefense,
+    )
 
 
 def test_transformer_defense_kwarg_ctor_and_get_classifier(monkeypatch):
-    cfg = _make_config()
-    wrapped = SimpleNamespace(name="wrapped")
-    cfg._build_art_wrapper = lambda **kwargs: wrapped
-    monkeypatch.setattr(
-        "deckard.model.defense.transformer._is_torch_model_instance",
-        lambda _m: True,
-    )
-
-    defense, defended_estimator = cfg(
-        data=None,
+    cfg = make_defense_config(TransformerDefenseConfig, defense_params={"beta": 0.1})
+    wrapped, defense, defended_estimator = run_wrapped_defense(
+        cfg,
+        monkeypatch,
+        torch_model_check_target="deckard.model.defense.transformer._is_torch_model_instance",
         defense_type="transformer",
         defense_subtype="poisoning",
-        defense_class=_TransformerDefenseKwarg,
-        art_class=object,
+        defense_class=KwargClassifierDefense,
         init_params={"epochs": 1},
-        base_estimator=SimpleNamespace(),
-        existing_preprocessors=[],
-        existing_postprocessors=[],
     )
 
     assert defense.classifier is wrapped
@@ -107,24 +74,14 @@ def test_transformer_defense_kwarg_ctor_and_get_classifier(monkeypatch):
 
 
 def test_transformer_defense_positional_ctor_fallback(monkeypatch):
-    cfg = _make_config()
-    wrapped = SimpleNamespace(name="wrapped")
-    cfg._build_art_wrapper = lambda **kwargs: wrapped
-    monkeypatch.setattr(
-        "deckard.model.defense.transformer._is_torch_model_instance",
-        lambda _m: True,
-    )
-
-    defense, defended_estimator = cfg(
-        data=None,
+    cfg = make_defense_config(TransformerDefenseConfig, defense_params={"beta": 0.1})
+    wrapped, defense, defended_estimator = run_wrapped_defense(
+        cfg,
+        monkeypatch,
+        torch_model_check_target="deckard.model.defense.transformer._is_torch_model_instance",
         defense_type="transformer",
         defense_subtype="evasion",
-        defense_class=_TransformerDefensePositional,
-        art_class=object,
-        init_params={},
-        base_estimator=SimpleNamespace(),
-        existing_preprocessors=[],
-        existing_postprocessors=[],
+        defense_class=PositionalClassifierDefense,
     )
 
     assert defense.classifier is wrapped
@@ -132,94 +89,77 @@ def test_transformer_defense_positional_ctor_fallback(monkeypatch):
 
 
 def test_transformer_defense_not_implemented_mapped_to_value_error_kwarg(monkeypatch):
-    cfg = _make_config()
-    cfg._build_art_wrapper = lambda **kwargs: SimpleNamespace(name="wrapped")
-    monkeypatch.setattr(
-        "deckard.model.defense.transformer._is_torch_model_instance",
-        lambda _m: True,
+    cfg = make_defense_config(TransformerDefenseConfig, defense_params={"beta": 0.1})
+    setup_wrapped_art_builder(
+        cfg,
+        monkeypatch,
+        target="deckard.model.defense.transformer._is_torch_model_instance",
     )
 
     with pytest.raises(ValueError, match="initialization failed"):
         cfg(
-            data=None,
-            defense_type="transformer",
-            defense_subtype="evasion",
-            defense_class=_TransformerDefenseNotImplKwarg,
-            art_class=object,
-            init_params={},
-            base_estimator=SimpleNamespace(),
-            existing_preprocessors=[],
-            existing_postprocessors=[],
+            **make_defense_call_kwargs(
+                defense_type="transformer",
+                defense_subtype="evasion",
+                defense_class=_TransformerDefenseNotImplKwarg,
+            ),
         )
 
 
 def test_transformer_defense_not_implemented_mapped_to_value_error_positional(
     monkeypatch,
 ):
-    cfg = _make_config()
-    cfg._build_art_wrapper = lambda **kwargs: SimpleNamespace(name="wrapped")
-    monkeypatch.setattr(
-        "deckard.model.defense.transformer._is_torch_model_instance",
-        lambda _m: True,
+    cfg = make_defense_config(TransformerDefenseConfig, defense_params={"beta": 0.1})
+    setup_wrapped_art_builder(
+        cfg,
+        monkeypatch,
+        target="deckard.model.defense.transformer._is_torch_model_instance",
     )
 
     with pytest.raises(ValueError, match="initialization failed"):
         cfg(
-            data=None,
-            defense_type="transformer",
-            defense_subtype="evasion",
-            defense_class=_TransformerDefenseNotImplPositional,
-            art_class=object,
-            init_params={},
-            base_estimator=SimpleNamespace(),
-            existing_preprocessors=[],
-            existing_postprocessors=[],
+            **make_defense_call_kwargs(
+                defense_type="transformer",
+                defense_subtype="evasion",
+                defense_class=_TransformerDefenseNotImplPositional,
+            ),
         )
 
 
 def test_transformer_defense_typeerror_then_notimplemented_maps_to_value_error(
     monkeypatch,
 ):
-    cfg = _make_config()
-    cfg._build_art_wrapper = lambda **kwargs: SimpleNamespace(name="wrapped")
-    monkeypatch.setattr(
-        "deckard.model.defense.transformer._is_torch_model_instance",
-        lambda _m: True,
+    cfg = make_defense_config(TransformerDefenseConfig, defense_params={"beta": 0.1})
+    setup_wrapped_art_builder(
+        cfg,
+        monkeypatch,
+        target="deckard.model.defense.transformer._is_torch_model_instance",
     )
 
     with pytest.raises(ValueError, match="initialization failed"):
         cfg(
-            data=None,
-            defense_type="transformer",
-            defense_subtype="evasion",
-            defense_class=_TransformerDefenseTypeThenNotImpl,
-            art_class=object,
-            init_params={},
-            base_estimator=SimpleNamespace(),
-            existing_preprocessors=[],
-            existing_postprocessors=[],
+            **make_defense_call_kwargs(
+                defense_type="transformer",
+                defense_subtype="evasion",
+                defense_class=_TransformerDefenseTypeThenNotImpl,
+            ),
         )
 
 
 def test_transformer_defense_without_get_classifier_returns_wrapper(monkeypatch):
-    cfg = _make_config()
-    wrapped = SimpleNamespace(name="wrapped")
-    cfg._build_art_wrapper = lambda **kwargs: wrapped
-    monkeypatch.setattr(
-        "deckard.model.defense.transformer._is_torch_model_instance",
-        lambda _m: True,
+    cfg = make_defense_config(TransformerDefenseConfig, defense_params={"beta": 0.1})
+    wrapped = setup_wrapped_art_builder(
+        cfg,
+        monkeypatch,
+        target="deckard.model.defense.transformer._is_torch_model_instance",
     )
 
     defense, defended_estimator = cfg(
-        data=None,
-        defense_type="transformer",
-        defense_subtype="evasion",
-        defense_class=_TransformerDefenseNoGetClassifier,
-        art_class=object,
-        init_params={},
-        base_estimator=SimpleNamespace(),
-        existing_preprocessors=[],
-        existing_postprocessors=[],
+        **make_defense_call_kwargs(
+            defense_type="transformer",
+            defense_subtype="evasion",
+            defense_class=_TransformerDefenseNoGetClassifier,
+        ),
     )
 
     assert defense.classifier is wrapped

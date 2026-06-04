@@ -3,6 +3,10 @@ from types import SimpleNamespace
 import pytest
 
 from deckard.model.defense.detector import DetectorDefenseConfig
+from test.test_model.defense_support import (
+    make_defense_config,
+    patch_torch_model_check,
+)
 
 
 class _DefenseCtorKwarg:
@@ -25,15 +29,8 @@ class _PoisonDefense:
         return {"model": model, "init_params": init_params, "kwargs": self.kwargs}
 
 
-def _make_config():
-    cfg = DetectorDefenseConfig()
-    cfg.defense_params = {"alpha": 0.5}
-    cfg._model = None
-    return cfg
-
-
 def test_detector_defense_evasion_rejects_non_torch_estimators():
-    cfg = _make_config()
+    cfg = make_defense_config(DetectorDefenseConfig, defense_params={"alpha": 0.5})
 
     with pytest.raises(ValueError, match="only support neural-network models"):
         cfg(
@@ -50,13 +47,13 @@ def test_detector_defense_evasion_rejects_non_torch_estimators():
 
 
 def test_detector_defense_evasion_builds_detector_with_kwarg_ctor(monkeypatch):
-    cfg = _make_config()
+    cfg = make_defense_config(DetectorDefenseConfig, defense_params={"alpha": 0.5})
     wrapped = SimpleNamespace(name="wrapped")
 
     cfg._build_art_wrapper = lambda **kwargs: wrapped
-    monkeypatch.setattr(
+    patch_torch_model_check(
+        monkeypatch,
         "deckard.model.defense.detector._is_torch_model_instance",
-        lambda _m: True,
     )
 
     defense, returned_wrapper = cfg(
@@ -77,13 +74,13 @@ def test_detector_defense_evasion_builds_detector_with_kwarg_ctor(monkeypatch):
 
 
 def test_detector_defense_evasion_supports_positional_ctor_fallback(monkeypatch):
-    cfg = _make_config()
+    cfg = make_defense_config(DetectorDefenseConfig, defense_params={"alpha": 0.5})
     wrapped = SimpleNamespace(name="wrapped")
 
     cfg._build_art_wrapper = lambda **kwargs: wrapped
-    monkeypatch.setattr(
+    patch_torch_model_check(
+        monkeypatch,
         "deckard.model.defense.detector._is_torch_model_instance",
-        lambda _m: True,
     )
 
     defense, returned_wrapper = cfg(
@@ -103,7 +100,7 @@ def test_detector_defense_evasion_supports_positional_ctor_fallback(monkeypatch)
 
 
 def test_detector_defense_poison_path_uses_model_and_init_params(monkeypatch):
-    cfg = _make_config()
+    cfg = make_defense_config(DetectorDefenseConfig, defense_params={"alpha": 0.5})
     cfg._model = "trained-model"
     cfg.get_model = lambda: "trained-model"
 
@@ -125,7 +122,7 @@ def test_detector_defense_poison_path_uses_model_and_init_params(monkeypatch):
 
 
 def test_detector_defense_unknown_subtype_not_implemented():
-    cfg = _make_config()
+    cfg = make_defense_config(DetectorDefenseConfig, defense_params={"alpha": 0.5})
 
     with pytest.raises(NotImplementedError, match="not implemented"):
         cfg(
@@ -142,13 +139,13 @@ def test_detector_defense_unknown_subtype_not_implemented():
 
 
 def test_detector_defense_detect_evasion_public_method(monkeypatch):
-    cfg = _make_config()
+    cfg = make_defense_config(DetectorDefenseConfig, defense_params={"alpha": 0.5})
     wrapped = SimpleNamespace(name="wrapped")
 
     cfg._build_art_wrapper = lambda **kwargs: wrapped
-    monkeypatch.setattr(
+    patch_torch_model_check(
+        monkeypatch,
         "deckard.model.defense.detector._is_torch_model_instance",
-        lambda _m: True,
     )
 
     defense, returned_wrapper = cfg.detect_evasion(
@@ -165,7 +162,7 @@ def test_detector_defense_detect_evasion_public_method(monkeypatch):
 
 
 def test_detector_defense_detect_poison_public_method():
-    cfg = _make_config()
+    cfg = make_defense_config(DetectorDefenseConfig, defense_params={"alpha": 0.5})
     cfg._model = "trained-model"
     cfg.get_model = lambda: "trained-model"
 

@@ -17,6 +17,23 @@ initialize_criterion = pytorch_module.initialize_criterion
 initialize_optimizer = pytorch_module.initialize_optimizer
 
 
+def _make_torch_split_data(train_size, test_size, *, features=4, classification=True):
+    y_train = (
+        torch.randint(0, 2, (train_size,))
+        if classification
+        else torch.randn(train_size)
+    )
+    y_test = (
+        torch.randint(0, 2, (test_size,)) if classification else torch.randn(test_size)
+    )
+    return SimpleNamespace(
+        X_train=torch.randn(train_size, features),
+        y_train=y_train,
+        X_test=torch.randn(test_size, features),
+        y_test=y_test,
+    )
+
+
 def test_pytorch_model_config_save_and_load_roundtrip():
     cfg = PytorchModelConfig(
         name="torch.nn.Linear",
@@ -322,12 +339,7 @@ class _EpochAttackStub:
 
 
 def test_pytorch_model_checkpointing_scores_and_caches_models():
-    data = SimpleNamespace(
-        X_train=torch.randn(12, 4),
-        y_train=torch.randint(0, 2, (12,)),
-        X_test=torch.randn(6, 4),
-        y_test=torch.randint(0, 2, (6,)),
-    )
+    data = _make_torch_split_data(12, 6)
     cfg = PytorchModelConfig(
         name="torch.nn.Linear",
         model_params={"in_features": 4, "out_features": 2},
@@ -362,12 +374,7 @@ def test_pytorch_model_checkpointing_scores_and_caches_models():
 
 
 def test_pytorch_model_checkpointing_preserves_post_fit_defense_stage():
-    data = SimpleNamespace(
-        X_train=torch.randn(8, 4),
-        y_train=torch.randint(0, 2, (8,)),
-        X_test=torch.randn(4, 4),
-        y_test=torch.randint(0, 2, (4,)),
-    )
+    data = _make_torch_split_data(8, 4)
     defense = _IdentityDefense()
     pipeline = DefenseConfig(
         defenses=[defense],
@@ -416,12 +423,7 @@ def test_score_checkpoint_snapshot_predict_proba_fallback_classification():
         _regression_scores=lambda y_true, y_pred: {"mse": 1.0},
     )
 
-    data = SimpleNamespace(
-        X_train=torch.randn(4, 4),
-        y_train=torch.randint(0, 2, (4,)),
-        X_test=torch.randn(2, 4),
-        y_test=torch.randint(0, 2, (2,)),
-    )
+    data = _make_torch_split_data(4, 2)
 
     scores = cfg._score_checkpoint_snapshot(snapshot, data)
 
@@ -450,12 +452,7 @@ def test_score_checkpoint_snapshot_predict_proba_fallback_regression():
         _regression_scores=lambda y_true, y_pred: {"mse": 0.25},
     )
 
-    data = SimpleNamespace(
-        X_train=torch.randn(4, 4),
-        y_train=torch.randn(4),
-        X_test=torch.randn(2, 4),
-        y_test=torch.randn(2),
-    )
+    data = _make_torch_split_data(4, 2, classification=False)
 
     scores = cfg._score_checkpoint_snapshot(snapshot, data)
 
@@ -564,12 +561,7 @@ def test_pytorch_model_serialization_preserves_optimizer_config():
 
 def test_pytorch_model_checkpoint_records_track_epochs():
     """Test that checkpoint records correctly track epoch numbers."""
-    data = SimpleNamespace(
-        X_train=torch.randn(16, 4),
-        y_train=torch.randint(0, 2, (16,)),
-        X_test=torch.randn(8, 4),
-        y_test=torch.randint(0, 2, (8,)),
-    )
+    data = _make_torch_split_data(16, 8)
     cfg = PytorchModelConfig(
         name="torch.nn.Linear",
         model_params={"in_features": 4, "out_features": 2},
@@ -603,12 +595,7 @@ def test_pytorch_model_checkpoint_records_track_epochs():
 
 
 def test_pytorch_checkpoint_filename_format_appends_epoch_before_extension():
-    data = SimpleNamespace(
-        X_train=torch.randn(10, 4),
-        y_train=torch.randint(0, 2, (10,)),
-        X_test=torch.randn(4, 4),
-        y_test=torch.randint(0, 2, (4,)),
-    )
+    data = _make_torch_split_data(10, 4)
     cfg = PytorchModelConfig(
         name="torch.nn.Linear",
         model_params={"in_features": 4, "out_features": 2},
@@ -652,12 +639,7 @@ def test_pytorch_checkpoint_filename_format_appends_epoch_before_extension():
 
 
 def test_pytorch_epoch_attack_scoring_runs_each_epoch_and_keeps_convention():
-    data = SimpleNamespace(
-        X_train=torch.randn(12, 4),
-        y_train=torch.randint(0, 2, (12,)),
-        X_test=torch.randn(6, 4),
-        y_test=torch.randint(0, 2, (6,)),
-    )
+    data = _make_torch_split_data(12, 6)
     cfg = PytorchModelConfig(
         name="torch.nn.Linear",
         model_params={"in_features": 4, "out_features": 2},
@@ -753,12 +735,7 @@ def test_pytorch_model_loss_decreases_during_training():
 
 def test_pytorch_model_different_batch_sizes():
     """Test training with different batch sizes."""
-    data = SimpleNamespace(
-        X_train=torch.randn(16, 4),
-        y_train=torch.randint(0, 2, (16,)),
-        X_test=torch.randn(8, 4),
-        y_test=torch.randint(0, 2, (8,)),
-    )
+    data = _make_torch_split_data(16, 8)
 
     batch_sizes = [2, 4, 8]
     losses = []

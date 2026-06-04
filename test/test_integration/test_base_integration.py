@@ -9,18 +9,21 @@ from hydra.core.config_store import ConfigStore
 from hydra.core.global_hydra import GlobalHydra
 from omegaconf import OmegaConf
 
-os.environ.setdefault("DECKARD_SKIP_RUNTIME_CONFIG_REGISTRATION", "1")
-
-from deckard.attack import AttackConfig  # noqa: E402
-from deckard.data import DataConfig  # noqa: E402
-from deckard.experiment import ExperimentConfig  # noqa: E402
-from deckard.file import FileConfig  # noqa: E402
-from deckard.model import DefenseConfig, ModelConfig  # noqa: E402
-from deckard.score.attack import AttackScorerConfig  # noqa: E402
-from deckard.score import (  # noqa: E402
+from deckard.attack import AttackConfig
+from deckard.data import DataConfig
+from deckard.experiment import ExperimentConfig
+from deckard.file import FileConfig
+from deckard.model import DefenseConfig, ModelConfig
+from deckard.score import (
     DefaultDataClassificationScorerDictConfig,
     DefaultDataRegressionScorerDictConfig,
 )
+from deckard.score.attack import AttackScorerConfig
+from test.test_integration.shared_base import (
+    make_base_classification_data,
+)
+
+os.environ.setdefault("DECKARD_SKIP_RUNTIME_CONFIG_REGISTRATION", "1")
 
 
 def _load_or_skip(cfg):
@@ -43,28 +46,17 @@ def _reset_hydra_state() -> None:
 
 
 def _base_classification_data():
-    cfg = DataConfig(
-        name="make_classification",
-        data_params={
-            "n_samples": 40,
-            "n_features": 10,
-            "n_informative": 4,
-            "n_redundant": 0,
-            "n_clusters_per_class": 1,
-            "n_classes": 2,
-            "random_state": 17,
-        },
-        sampler={
-            "name": "split",
-            "train_size": 30,
-            "test_size": 10,
-            "random_state": 42,
-            "stratify": True,
-        },
-        classifier=True,
+    return make_base_classification_data(
+        n_samples=40,
+        n_features=10,
+        n_informative=4,
+        n_classes=2,
+        random_state=17,
+        sampler_name="split",
+        train_size=30,
+        test_size=10,
+        stratify=True,
     )
-    cfg()
-    return cfg
 
 
 @pytest.mark.parametrize(

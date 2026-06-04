@@ -11,11 +11,12 @@ from ...data.canon import normalize_data_score_mode
 from ...orchestration import resolve_data_split_payload
 from ...plugins import HookPlugin
 from ...plugins.base import HookBundle
+from ...plugins.score_helpers import merge_prefixed_tail_scores
 from ...score.base import (
     ScorerConfig,
     ScorerDictConfig,
-    _DataScorerMarker,
     TaskAwareScorerMixin,
+    _DataScorerMarker,
     safe_store,
 )
 from ...utils import is_default_config_value, load_class
@@ -148,16 +149,11 @@ class AnjanaDataScoreHooksMixin:
                 tail_scores = only_val
         if not isinstance(tail_scores, dict):
             tail_scores = {"anjana_score": tail_scores}
-        existing = dict(scores or {})
-        if len(existing) == 0:
-            return ScoreDict.from_payload(tail_scores)
-        merged_tail = {}
-        for key, value in tail_scores.items():
-            if key in existing:
-                merged_tail[f"anjana_{key}"] = value
-            else:
-                merged_tail[key] = value
-        return ScoreDict.from_payload(merged_tail)
+        return merge_prefixed_tail_scores(
+            tail_scores,
+            existing_scores=cast(dict[str, Any] | None, scores),
+            prefix="anjana",
+        )
 
 
 def _resolve_frame_and_context(
