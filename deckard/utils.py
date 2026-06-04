@@ -1329,6 +1329,44 @@ class BaseConfig(ArtifactLoaderMixin):
             return NotImplemented
         return hash(self) == hash(other)
 
+    def load(
+        self,
+        filepath: Optional[str] = None,
+    ) -> Any:
+        """Load cached artifacts and invalidate stale config-object caches.
+
+        When a persisted artifact deserializes to another ``BaseConfig``
+        instance, its initialization fingerprint must match the current base
+        object. If it does not, the cached object is considered stale for the
+        current runtime configuration, the cache file is deleted, and the
+        current instance is returned unchanged.
+
+        Args:
+            filepath: Optional source path; defaults to ``self.path``.
+
+        Returns:
+            Loaded payload, or ``self`` when a config-object cache is stale.
+        """
+        loaded = super().load(filepath)
+        if not isinstance(loaded, BaseConfig) or loaded is self:
+            return loaded
+
+        if loaded.fingerprint == self.fingerprint:
+            return loaded
+
+        cache_path = Path(filepath or self.path)
+        logger.warning(
+            "Invalidating stale cache at %s: expected fingerprint %s but loaded %s",
+            cache_path,
+            self.fingerprint,
+            loaded.fingerprint,
+        )
+        try:
+            cache_path.unlink()
+        except OSError:
+            logger.warning("Failed to delete stale cache file %s", cache_path)
+        return self
+
     def resolve_name(self, default: Optional[str] = None) -> Optional[str]:
         """Return the canonical runtime name token for this config instance.
 

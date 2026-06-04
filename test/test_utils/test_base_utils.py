@@ -77,6 +77,14 @@ class ChildComponentConfig(BaseConfig):
         return {}
 
 
+@dataclass(eq=False, kw_only=True)
+class FingerprintedConfig(BaseConfig):
+    name: str | None = None
+
+    def __call__(self):
+        return {}
+
+
 class TestUtilsAdditional:
     def test_coerce_config_dictconfig_to_dict(self):
         cfg = OmegaConf.create({"alpha": 1, "beta": {"gamma": 2}})
@@ -773,6 +781,40 @@ class TestBaseConfigSerialisation:
         }
         obj = BaseConfig.from_dict(data)
         assert obj is not None
+
+    def test_load_returns_cached_base_object_when_fingerprint_matches(self, tmp_path):
+        cached = FingerprintedConfig(name="adult")
+        cache_path = tmp_path / "matching.pkl"
+        cache_path.write_bytes(b"cache")
+        current = FingerprintedConfig(name="adult")
+        with patch(
+            "deckard.utils.ArtifactLoaderMixin.load",
+            return_value=cached,
+        ):
+            loaded = current.load(str(cache_path))
+
+        assert isinstance(loaded, FingerprintedConfig)
+        assert loaded is not current
+        assert loaded.fingerprint == current.fingerprint
+        assert cache_path.exists()
+
+    def test_load_invalidates_cached_base_object_when_fingerprint_mismatches(
+        self,
+        tmp_path,
+    ):
+        cached = FingerprintedConfig(name="adult")
+        cache_path = tmp_path / "stale.pkl"
+        cache_path.write_bytes(b"cache")
+        current = FingerprintedConfig(name="classification")
+        with patch(
+            "deckard.utils.ArtifactLoaderMixin.load",
+            return_value=cached,
+        ):
+            loaded = current.load(str(cache_path))
+
+        assert loaded is current
+        assert current.name == "classification"
+        assert not cache_path.exists()
 
 
 # ── resolve_class / load_class ───────────────────────────────────────────────
