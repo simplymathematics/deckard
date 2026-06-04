@@ -12,6 +12,7 @@ import json
 import pkgutil
 from typing import Any, Final, Mapping, TypedDict
 
+from ..artifacts import ScoreDict
 from ..attack.canon import ATTACK_RUNTIME_STAGE_ALIASES, AttackFiles
 from ..data.canon import CANONICAL_DATA_STAGES, DataFiles
 from ..detector.canon import DETECTOR_RUNTIME_STAGE_ALIASES, DetectorFiles
@@ -28,8 +29,8 @@ from ..model.canon import (
 )
 from ..plot.canon import CANON_PLOT_BACKENDS
 from ..plugins import HookPlugin
+from ..plugins import HookBundle
 from ..plugins import __all__ as PLUGIN_NAMESPACE_EXPORTS
-from ..plugins.base import HookBundle
 
 CANONICAL_EXPERIMENT_SCORE_MODES: Final[tuple[str, ...]] = (
     "pre-sample",
@@ -131,7 +132,7 @@ def _build_stage_component_mapping() -> dict[str, tuple[str, ...]]:
         stage_sets["score"].add("attack")
 
     detector_stages = set(DETECTOR_RUNTIME_STAGE_ALIASES.values())
-    if {"pre-fit", "post-fit", "pre-detect", "post-detect"} & detector_stages:
+    if {"pre-fit", "post-fit", "pre-filter", "post-filter"} & detector_stages:
         stage_sets["defense"].add("detector")
         stage_sets["attack"].add("detector")
         stage_sets["score"].add("detector")
@@ -571,8 +572,9 @@ def normalize_experiment_pipeline_stage(stage: str | None) -> str:
 
 def ensure_experiment_runtime_contract(target: Any) -> Any:
     """Populate canonical runtime attributes on an ExperimentConfig-like object."""
-    if not hasattr(target, "score_dict") or getattr(target, "score_dict") is None:
-        target.score_dict = {}
+    target.score_dict = ScoreDict.from_payload(
+        getattr(target, "score_dict", None) or {},
+    )
 
     if not hasattr(target, "times") or getattr(target, "times") is None:
         target.times = {}

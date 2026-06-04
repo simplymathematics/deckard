@@ -1844,6 +1844,256 @@ def build_dvc_cmd(
     )
 
 
+def _dedupe_values(values: list[Any]) -> list[Any]:
+    seen: set[str] = set()
+    unique: list[Any] = []
+    for value in values:
+        if value in [None, ""]:
+            continue
+        marker = json.dumps(value, sort_keys=True, default=str)
+        if marker in seen:
+            continue
+        seen.add(marker)
+        unique.append(value)
+    return unique
+
+
+def _claim_stage_artifacts(
+    stage_entry: dict[str, Any],
+    artifact_owners: dict[str, dict[str, Any]],
+    stage_name_to_outs: dict[str, list[str]],
+) -> None:
+    for key in ("outs", "metrics", "plots"):
+        claimed: list[str] = []
+        for path in stage_entry.get(key, []):
+            owner = artifact_owners.get(path)
+            if owner is not None and owner is not stage_entry:
+                for owner_key in ("outs", "metrics", "plots"):
+                    owner_values = owner.get(owner_key, [])
+                    if path in owner_values:
+                        owner[owner_key] = [
+                            value for value in owner_values if value != path
+                        ]
+                owner_name = str(owner.get("name", "")).strip()
+                if owner_name:
+                    stage_name_to_outs[owner_name] = list(owner.get("outs", []))
+            if path not in claimed:
+                claimed.append(path)
+                artifact_owners[path] = stage_entry
+        stage_entry[key] = claimed
+
+
+def _finalize_stage_entry(
+    stage_entry: dict[str, Any],
+    stage_name: str,
+    stage_plan: list[dict[str, Any]],
+    stage_name_to_outs: dict[str, list[str]],
+    artifact_owners: dict[str, dict[str, Any]],
+) -> None:
+    for key in ("deps", "outs", "params", "metrics", "plots"):
+        stage_entry[key] = _dedupe_values(stage_entry[key])
+
+    _claim_stage_artifacts(stage_entry, artifact_owners, stage_name_to_outs)
+    tracked = set(stage_entry.get("outs", []))
+    tracked.update(stage_entry.get("metrics", []))
+    tracked.update(stage_entry.get("plots", []))
+    stage_entry["deps"] = [
+        value for value in stage_entry["deps"] if value not in tracked
+    ]
+
+    stage_name_to_outs[stage_name] = list(stage_entry["outs"])
+    stage_plan.append(stage_entry)
+
+
+def _append_alias_outputs(
+    outs: list[str],
+    aliases: Mapping[str, str],
+    keys: Iterable[str],
+) -> None:
+    for key in keys:
+        value = aliases.get(key)
+        if value:
+            outs.append(value)
+
+
+def _apply_stage_params(
+    stage_entry: dict[str, Any],
+    params_file_alias: str | None,
+    stage: str,
+    component: str,
+) -> None:
+    if not params_file_alias:
+        return
+    stage_entry["deps"].append(params_file_alias)
+    stage_entry["param_key_paths"] = list(
+        build_experiment_stage_param_key_paths(
+            stage=stage,
+            component=component,
+        ),
+    )
+    if stage_entry["param_key_paths"]:
+        stage_entry["params"] = [{params_file_alias: stage_entry["param_key_paths"]}]
+
+
+def _apply_data_stage_aliases(
+    stage_entry: dict[str, Any],
+    aliases: dict[str, str],
+    runtime_stage: str,
+    base_stage: str,
+) -> None:
+    if runtime_stage not in {"load", "sample", "train"} or "data_file" not in aliases:
+        return
+    stage_entry["deps"].append(aliases["data_file"])
+    if base_stage in {"load", "sample", "pipeline"}:
+        stage_entry["outs"].append(aliases["data_file"])
+
+
+def _apply_detector_train_stage(
+    stage_entry: dict[str, Any],
+    aliases: dict[str, str],
+    base_stage: str,
+    stage_alias: str | None,
+) -> None:
+    if base_stage != "detector-train":
+        return
+    runtime_overrides = ["detector.mode=train"]
+    if stage_alias:
+        runtime_overrides.append(f"detector.alias={stage_alias}")
+    stage_entry["runtime_overrides"] = runtime_overrides
+    _append_alias_outputs(
+        stage_entry["outs"],
+        aliases,
+        _STAGE_OUTPUT_KEYS["detector-train"],
+    )
+
+
+def _apply_defense_stage(
+    stage_entry: dict[str, Any],
+    aliases: dict[str, str],
+    base_stage: str,
+    stage_alias: str | None,
+) -> None:
+    runtime_overrides: list[str] = []
+    if base_stage == "detector-defense":
+        runtime_overrides.append("detector.mode=filter")
+    if base_stage == "apply-fit-defense":
+        runtime_overrides.append("defense.apply=fit")
+    if base_stage == "apply-predict-defense":
+        runtime_overrides.append("defense.apply=predict")
+    if stage_alias:
+        runtime_overrides.append(f"stage_alias={stage_alias}")
+    stage_entry["runtime_overrides"] = runtime_overrides
+    _append_alias_outputs(stage_entry["outs"], aliases, _STAGE_OUTPUT_KEYS["defense"])
+
+
+def _apply_attack_stage(
+    stage_entry: dict[str, Any],
+    aliases: dict[str, str],
+    stage_alias: str | None,
+) -> None:
+    if stage_alias:
+        stage_entry["runtime_overrides"] = [
+            *stage_entry["runtime_overrides"],
+            f"attack.alias={stage_alias}",
+        ]
+    _append_alias_outputs(
+        stage_entry["outs"],
+        aliases,
+        _STAGE_OUTPUT_KEYS["generation"],
+    )
+
+
+def _apply_score_stage(stage_entry: dict[str, Any], aliases: dict[str, str]) -> None:
+    score_file = aliases.get("score_file")
+    if not score_file:
+        raise ValueError("Stage 'score' requires files.score_file to be configured.")
+    stage_entry["outs"].append(score_file)
+    stage_entry["metrics"].append(score_file)
+
+
+def _populate_stage_outputs(
+    *,
+    stage_entry: dict[str, Any],
+    aliases: dict[str, str],
+    params_file_alias: str | None,
+    stage: str,
+    base_stage: str,
+    stage_alias: str | None,
+    component: str,
+    runtime_stage: str,
+) -> None:
+    _apply_stage_params(stage_entry, params_file_alias, stage, component)
+    _apply_data_stage_aliases(stage_entry, aliases, runtime_stage, base_stage)
+    _apply_detector_train_stage(stage_entry, aliases, base_stage, stage_alias)
+
+    if runtime_stage == "train":
+        _append_alias_outputs(
+            stage_entry["outs"],
+            aliases,
+            _STAGE_OUTPUT_KEYS["train"],
+        )
+    if runtime_stage == "defense" and base_stage != "detector-train":
+        _apply_defense_stage(stage_entry, aliases, base_stage, stage_alias)
+    if runtime_stage == "attack":
+        _apply_attack_stage(stage_entry, aliases, stage_alias)
+    if runtime_stage == "score":
+        _apply_score_stage(stage_entry, aliases)
+
+
+def _configure_persist_stage(
+    *,
+    stage_entry: dict[str, Any],
+    aliases: dict[str, str],
+    mode: str,
+    multirun_count: int | None,
+    experiment: Any,
+    stage: str,
+    params_manifest: Mapping[str, Any],
+) -> None:
+    base_stage, _ = _split_stage_alias(stage)
+    if base_stage in {
+        "data-persist",
+        "model-persist",
+        "attack-persist",
+        "detector-persist",
+    }:
+        if aliases.get("params_file") and stage_entry["param_key_paths"]:
+            stage_entry["params"] = [
+                {aliases["params_file"]: stage_entry["param_key_paths"]},
+            ]
+        stage_entry["cmd"] = build_dvc_cmd(
+            experiment,
+            stage_entry,
+            mode=mode,
+            multirun_count=multirun_count,
+        )
+        return
+
+    required_aliases = ("params_file", "score_file", "log_file", "error_file")
+    missing_aliases = [name for name in required_aliases if not aliases.get(name)]
+    if missing_aliases:
+        missing = ", ".join(missing_aliases)
+        raise ValueError(
+            "Stage 'persist' requires file aliases: "
+            f"{missing}. Configure these under experiment.files.",
+        )
+
+    run_identity = _resolve_run_identity(
+        experiment,
+        mode=mode,
+        stage=stage,
+        params_manifest=params_manifest,
+    )
+    score_file = aliases["score_file"]
+    stage_entry["identity"] = run_identity
+    if aliases.get("params_file") and stage_entry["param_key_paths"]:
+        stage_entry["params"] = [
+            {aliases["params_file"]: stage_entry["param_key_paths"]},
+        ]
+    stage_entry["runtime_overrides"].append(f"++files.score_file={score_file}")
+    stage_entry["metrics"].extend([score_file])
+
+
 def build_dvc_stage_plan(
     experiment: Any,
     stage_selection: Any = None,
@@ -1881,39 +2131,6 @@ def build_dvc_stage_plan(
     stage_name_to_outs: dict[str, list[str]] = {}
     artifact_owners: dict[str, dict[str, Any]] = {}
 
-    def _claim_stage_artifacts(stage_entry: dict[str, Any]) -> None:
-        for key in ("outs", "metrics", "plots"):
-            claimed: list[str] = []
-            for path in stage_entry.get(key, []):
-                owner = artifact_owners.get(path)
-                if owner is not None and owner is not stage_entry:
-                    for owner_key in ("outs", "metrics", "plots"):
-                        owner_values = owner.get(owner_key, [])
-                        if path in owner_values:
-                            owner[owner_key] = [
-                                value for value in owner_values if value != path
-                            ]
-                    owner_name = str(owner.get("name", "")).strip()
-                    if owner_name:
-                        stage_name_to_outs[owner_name] = list(owner.get("outs", []))
-                if path not in claimed:
-                    claimed.append(path)
-                    artifact_owners[path] = stage_entry
-            stage_entry[key] = claimed
-
-    def _dedupe_values(values: list[Any]) -> list[Any]:
-        seen: set[str] = set()
-        unique: list[Any] = []
-        for value in values:
-            if value in [None, ""]:
-                continue
-            marker = json.dumps(value, sort_keys=True, default=str)
-            if marker in seen:
-                continue
-            seen.add(marker)
-            unique.append(value)
-        return unique
-
     for idx, stage in enumerate(selected_stages):
         runtime_stage = _resolve_runtime_stage(stage)
         base_stage, stage_alias = _split_stage_alias(stage)
@@ -1945,143 +2162,42 @@ def build_dvc_stage_plan(
         }
 
         outs = stage_entry["outs"]
-        metrics = stage_entry["metrics"]
-
-        if params_file_alias:
-            deps.append(params_file_alias)
-            stage_entry["param_key_paths"] = list(
-                build_experiment_stage_param_key_paths(
-                    stage=stage,
-                    component=component,
-                ),
-            )
-            if stage_entry["param_key_paths"]:
-                stage_entry["params"] = [
-                    {params_file_alias: stage_entry["param_key_paths"]},
-                ]
-
-        if runtime_stage in {"load", "sample", "train"} and "data_file" in aliases:
-            deps.append(aliases["data_file"])
-            if base_stage in {"load", "sample", "pipeline"}:
-                outs.append(aliases["data_file"])
-
-        if runtime_stage == "train":
-            for key in _STAGE_OUTPUT_KEYS["train"]:
-                value = aliases.get(key)
-                if value:
-                    outs.append(value)
-
-        if base_stage == "detector-train":
-            runtime_overrides = ["detector.mode=train"]
-            if stage_alias:
-                runtime_overrides.append(f"detector.alias={stage_alias}")
-            stage_entry["runtime_overrides"] = runtime_overrides
-            for key in _STAGE_OUTPUT_KEYS["detector-train"]:
-                value = aliases.get(key)
-                if value:
-                    outs.append(value)
-
-        if runtime_stage == "defense" and base_stage != "detector-train":
-            runtime_overrides: list[str] = []
-            if base_stage == "detector-defense":
-                runtime_overrides.append("detector.mode=filter")
-            if base_stage == "apply-fit-defense":
-                runtime_overrides.append("defense.apply=fit")
-            if base_stage == "apply-predict-defense":
-                runtime_overrides.append("defense.apply=predict")
-            if stage_alias:
-                runtime_overrides.append(f"stage_alias={stage_alias}")
-            stage_entry["runtime_overrides"] = runtime_overrides
-            for key in _STAGE_OUTPUT_KEYS["defense"]:
-                value = aliases.get(key)
-                if value:
-                    outs.append(value)
-
-        if runtime_stage == "attack":
-            if stage_alias:
-                stage_entry["runtime_overrides"] = [
-                    *stage_entry["runtime_overrides"],
-                    f"attack.alias={stage_alias}",
-                ]
-            for key in _STAGE_OUTPUT_KEYS["generation"]:
-                value = aliases.get(key)
-                if value:
-                    outs.append(value)
-
-        if runtime_stage == "score":
-            score_file = aliases.get("score_file")
-            if not score_file:
-                raise ValueError(
-                    "Stage 'score' requires files.score_file to be configured.",
-                )
-            outs.append(score_file)
-            metrics.append(score_file)
+        _ = outs
+        _populate_stage_outputs(
+            stage_entry=stage_entry,
+            aliases=aliases,
+            params_file_alias=params_file_alias,
+            stage=stage,
+            base_stage=base_stage,
+            stage_alias=stage_alias,
+            component=component,
+            runtime_stage=runtime_stage,
+        )
 
         if runtime_stage == "persist":
+            _configure_persist_stage(
+                stage_entry=stage_entry,
+                aliases=aliases,
+                mode=mode,
+                multirun_count=multirun_count,
+                experiment=experiment,
+                stage=stage,
+                params_manifest=params_manifest,
+            )
             if base_stage in {
                 "data-persist",
                 "model-persist",
                 "attack-persist",
                 "detector-persist",
             }:
-                if aliases.get("params_file") and stage_entry["param_key_paths"]:
-                    stage_entry["params"] = [
-                        {aliases["params_file"]: stage_entry["param_key_paths"]},
-                    ]
-                stage_entry["cmd"] = build_dvc_cmd(
-                    experiment,
+                _finalize_stage_entry(
                     stage_entry,
-                    mode=mode,
-                    multirun_count=multirun_count,
+                    stage_name,
+                    stage_plan,
+                    stage_name_to_outs,
+                    artifact_owners,
                 )
-                for key in ("deps", "outs", "params", "metrics", "plots"):
-                    stage_entry[key] = _dedupe_values(stage_entry[key])
-                _claim_stage_artifacts(stage_entry)
-                tracked = set(stage_entry.get("outs", []))
-                tracked.update(stage_entry.get("metrics", []))
-                tracked.update(stage_entry.get("plots", []))
-                stage_entry["deps"] = [
-                    value for value in stage_entry["deps"] if value not in tracked
-                ]
-                stage_name_to_outs[stage_name] = list(stage_entry["outs"])
-                stage_plan.append(stage_entry)
                 continue
-
-            required_aliases = ("params_file", "score_file", "log_file", "error_file")
-            missing_aliases = [
-                name for name in required_aliases if not aliases.get(name)
-            ]
-            if missing_aliases:
-                missing = ", ".join(missing_aliases)
-                raise ValueError(
-                    "Stage 'persist' requires file aliases: "
-                    f"{missing}. Configure these under experiment.files.",
-                )
-
-            run_identity = _resolve_run_identity(
-                experiment,
-                mode=mode,
-                stage=stage,
-                params_manifest=params_manifest,
-            )
-            score_file = aliases["score_file"]
-            stage_entry["identity"] = run_identity
-            if aliases.get("params_file") and stage_entry["param_key_paths"]:
-                stage_entry["params"] = [
-                    {aliases["params_file"]: stage_entry["param_key_paths"]},
-                ]
-            stage_entry["runtime_overrides"].append(
-                f"++files.score_file={score_file}",
-            )
-
-            metrics.extend(
-                [
-                    score_file,
-                ],
-            )
-            # Persist stage contracts are file-grounded. The runtime may use
-            # identity-based log directories internally, but DVC should track
-            # concrete persisted files declared via aliases (metrics/plots).
 
         stage_entry["cmd"] = build_dvc_cmd(
             experiment,
@@ -2090,19 +2206,13 @@ def build_dvc_stage_plan(
             multirun_count=multirun_count,
         )
 
-        for key in ("deps", "outs", "params", "metrics", "plots"):
-            stage_entry[key] = _dedupe_values(stage_entry[key])
-
-        _claim_stage_artifacts(stage_entry)
-        tracked = set(stage_entry.get("outs", []))
-        tracked.update(stage_entry.get("metrics", []))
-        tracked.update(stage_entry.get("plots", []))
-        stage_entry["deps"] = [
-            value for value in stage_entry["deps"] if value not in tracked
-        ]
-
-        stage_name_to_outs[stage_name] = list(stage_entry["outs"])
-        stage_plan.append(stage_entry)
+        _finalize_stage_entry(
+            stage_entry,
+            stage_name,
+            stage_plan,
+            stage_name_to_outs,
+            artifact_owners,
+        )
 
     return stage_plan
 

@@ -21,6 +21,7 @@ from types import SimpleNamespace
 from hydra.utils import instantiate
 
 from .. import _OPTIONAL_RUNTIME_CLASS_PATHS, _resolve_optional_runtime_class
+from ..artifacts import ScoreDict
 from ..declarations import is_package_available
 from ..data import DataConfig
 from ..model import ModelConfig
@@ -49,7 +50,10 @@ from ..score.base import coerce_scorer_config, _DataScorerMarker, _AttackProfile
 from ..data.sample import BaseSampler, KFoldSampler, ShuffleSampler
 from ..plugins.base import HookBundle, compose_hook_plugins
 from ..orchestration import ScoreOrchestratorMixin
+from ..orchestration import ensure_validation_split_available
 from .canon import (
+    CANONICAL_EXPERIMENT_STAGE_COMPONENTS,
+    CANONICAL_EXPERIMENT_STAGE_OUTPUT_KEYS,
     CANONICAL_EXPERIMENT_PIPELINE_STAGES,
     CANONICAL_EXPERIMENT_TIMES,
     CANONICAL_EXPERIMENT_CACHE_STAGES,
@@ -383,6 +387,8 @@ class ExperimentConfig(ScoreOrchestratorMixin, BaseConfig):
 
     RUNTIME_STATE_VERSION = CANONICAL_EXPERIMENT_RUNTIME_SCHEMA_VERSION
     PIPELINE_STAGE_ORDER = CANONICAL_EXPERIMENT_PIPELINE_STAGES
+    STAGE_COMPONENTS = CANONICAL_EXPERIMENT_STAGE_COMPONENTS
+    STAGE_OUTPUT_KEYS = CANONICAL_EXPERIMENT_STAGE_OUTPUT_KEYS
     HASH_EXCLUDE_FIELDS = BaseConfig.HASH_EXCLUDE_FIELDS | {"dvc_plugin"}
 
     def _normalize_score_mode(self, mode: str) -> str:
@@ -485,45 +491,14 @@ class ExperimentConfig(ScoreOrchestratorMixin, BaseConfig):
         active_mode = self._resolve_component_score_mode()
         if active_mode != "val":
             return
-
-        has_val = (
-            getattr(self.data, "X_val", None) is not None
-            and getattr(self.data, "y_val", None) is not None
+        ensure_validation_split_available(
+            self.data,
+            allow_call_fallback=False,
+            allow_test_fallback=False,
+            error_message=(
+                "score_mode='val' requires validation data (X_val/y_val), but no validation split is available."
+            ),
         )
-        if has_val:
-            return
-
-        can_resample = (
-            callable(getattr(self.data, "fit", None))
-            and getattr(self.data, "_X", None) is not None
-            and getattr(self.data, "_y", None) is not None
-        )
-        if can_resample:
-            self.data.data_sample_time = None
-            for attr in (
-                "train_indices",
-                "test_indices",
-                "val_indices",
-                "X_train",
-                "y_train",
-                "X_test",
-                "y_test",
-                "X_val",
-                "y_val",
-                "train_n",
-                "test_n",
-                "val_n",
-            ):
-                setattr(self.data, attr, None)
-            self.data.fit()
-
-        if (
-            getattr(self.data, "X_val", None) is None
-            or getattr(self.data, "y_val", None) is None
-        ):
-            raise ValueError(
-                "score_mode='val' requires validation data (X_val/y_val), but no validation split is available.",
-            )
 
     def _resolve_component_score_mode(
         self,
@@ -1124,7 +1099,8 @@ class ExperimentConfig(ScoreOrchestratorMixin, BaseConfig):
             return outputs
 
         alias = str(attack_cfg.alias).strip()
-        for key in ("attack_file", "attack_predictions_file"):
+        generation_keys = tuple(self.STAGE_OUTPUT_KEYS.get("generation", ()))
+        for key in generation_keys:
             path = outputs.get(key)
             if path is None or str(path).strip() == "":
                 continue
@@ -1571,28 +1547,41 @@ class ExperimentConfig(ScoreOrchestratorMixin, BaseConfig):
         component: str,
         **kwargs: Any,
     ) -> list[Any]:
-        event = str(when).strip().lower()
-        if event not in {"before", "after"}:
-            raise ValueError(f"Hook event must be 'before' or 'after', got {when}")
-        hook_name = f"{event}_{str(stage).strip().lower().replace('-', '_')}"
-        outputs: list[Any] = []
-        for plugin in getattr(self, "_composed_hook_plugins", []):
-            hook = getattr(plugin, hook_name, None)
-            if callable(hook):
-                hook_output = hook(
-                    self,
-                    component=component,
-                    stage=stage,
-                    event=event,
-                    **kwargs,
-                )
-                outputs.append(hook_output)
-                if (
-                    event == "after"
-                    and isinstance(hook_output, dict)
-                    and str(stage).strip().lower().replace("-", "_")
-                    in {"data_score", "model_score", "attack_score", "detector_score"}
-                ):
+        stage_token = str(stage).strip().lower().replace("_", "-")
+        component_token = str(component).strip().lower().replace("_", "-")
+
+        stage_components = tuple(self.STAGE_COMPONENTS.get(stage_token, ()))
+        previous_component: str | None = None
+        next_component: str | None = None
+        if component_token in stage_components:
+            idx = stage_components.index(component_token)
+            if idx > 0:
+                previous_component = stage_components[idx - 1]
+            if idx + 1 < len(stage_components):
+                next_component = stage_components[idx + 1]
+
+        outputs = self._run_generic_stage_hooks(
+            when,
+            stage,
+            component=component,
+            previous_component=previous_component,
+            next_component=next_component,
+            **kwargs,
+        )
+
+        event = self._normalize_hook_event(when)
+        should_merge_scores = (
+            str(stage)
+            .strip()
+            .lower()
+            .replace("-", "_")
+            .endswith(
+                "score",
+            )
+        )
+        if event == "after" and should_merge_scores:
+            for hook_output in outputs:
+                if isinstance(hook_output, dict):
                     self._merge_stage_hook_scores(component, hook_output)
         return outputs
 
@@ -1986,7 +1975,9 @@ class ExperimentConfig(ScoreOrchestratorMixin, BaseConfig):
         for attr in self._sample_cache_fields():
             if attr in value:
                 setattr(self.data, attr, value.get(attr))
-        self.data.score_dict = dict(value.get("score_dict", {}) or {})
+        self.data.score_dict = ScoreDict.from_payload(
+            value.get("score_dict", {}) or {},
+        )
 
     def set_random_seed(self) -> None:
         """Set deterministic random seed for the configured runtime library.
@@ -2065,298 +2056,219 @@ class ExperimentConfig(ScoreOrchestratorMixin, BaseConfig):
             return sampler.n_splits, "split"
         return 1, "fold"
 
-    def _run_single_pipeline(
+    def _run_model_pipeline_block(
         self,
+        scores: dict,
         model_file_outputs: dict,
-        attack_file_outputs: dict,
-        *,
-        run_idx: int | None = None,
+        run_idx: int | None,
     ) -> dict:
-        """Run model training, optional attack, and optional custom scoring for the
-        current state of ``self.data`` (already loaded and sampled).
+        if not self.model:
+            logger.info("No model config provided, skipping model training.")
+            return scores
 
-        Returns the accumulated score dict for this pipeline pass.
-        """
-        scores = {}
-        scores.update(**self.data.score_dict)
-        self._propagate_score_mode()
-
-        if self.model:
-            if self.defense is not None:
-                self._run_experiment_stage_hooks(
-                    "before",
-                    "apply_fit_defense",
-                    component="defense",
-                    run_idx=run_idx,
-                )
+        if self.defense is not None:
             self._run_experiment_stage_hooks(
                 "before",
+                "apply_fit_defense",
+                component="defense",
+                run_idx=run_idx,
+            )
+        self._run_experiment_stage_hooks(
+            "before",
+            "train",
+            component="model",
+            run_idx=run_idx,
+        )
+        cached_model = self._cache_stage_get(
+            stage="train",
+            component="model",
+            identity={"run_idx": run_idx},
+        )
+        if isinstance(cached_model, dict):
+            self.model.score_dict = ScoreDict.from_payload(
+                cached_model.get("score_dict", {}) or {},
+            )
+            self.model.training_predictions = cached_model.get(
+                "training_predictions",
+            )
+            self.model.predictions = cached_model.get("predictions")
+            self.model.training_probabilities = cached_model.get(
+                "training_probabilities",
+            )
+            self.model.probabilities = cached_model.get("probabilities")
+            scores.update(**self.model.score_dict)
+            self._run_experiment_stage_hooks(
+                "after",
                 "train",
                 component="model",
                 run_idx=run_idx,
+                cache_hit=True,
             )
-            cached_model = self._cache_stage_get(
+        else:
+            if hasattr(self.model, "set_epoch_attack") and callable(
+                getattr(self.model, "set_epoch_attack"),
+            ):
+                self.model.set_epoch_attack(self.attack)
+            self._clear_model_prediction_outputs()
+            self.model(data=self.data, **model_file_outputs)
+            assert hasattr(
+                self.model,
+                "training_predictions",
+            ), "model must have training_predictions attribute after training"
+            assert hasattr(
+                self.model,
+                "predictions",
+            ), "model must have predictions attribute after training"
+            assert hasattr(
+                self.model,
+                "score_dict",
+            ), "model must have score_dict attribute after training"
+            scores.update(**self.model.score_dict)
+            if hasattr(self.model, "set_epoch_attack") and callable(
+                getattr(self.model, "set_epoch_attack"),
+            ):
+                self.model.set_epoch_attack(None)
+            self._cache_stage_set(
                 stage="train",
                 component="model",
                 identity={"run_idx": run_idx},
+                value={
+                    "score_dict": dict(
+                        getattr(self.model, "score_dict", {}) or {},
+                    ),
+                    "training_predictions": getattr(
+                        self.model,
+                        "training_predictions",
+                        None,
+                    ),
+                    "predictions": getattr(self.model, "predictions", None),
+                    "training_probabilities": getattr(
+                        self.model,
+                        "training_probabilities",
+                        None,
+                    ),
+                    "probabilities": getattr(self.model, "probabilities", None),
+                },
             )
-            if isinstance(cached_model, dict):
-                self.model.score_dict = dict(cached_model.get("score_dict", {}))
-                self.model.training_predictions = cached_model.get(
-                    "training_predictions",
+            self._run_experiment_stage_hooks(
+                "after",
+                "train",
+                component="model",
+                run_idx=run_idx,
+                cache_hit=False,
+            )
+
+        if self.defense is not None:
+            self._run_experiment_stage_hooks(
+                "after",
+                "apply_fit_defense",
+                component="defense",
+                run_idx=run_idx,
+            )
+            self._run_experiment_stage_hooks(
+                "before",
+                "apply_predict_defense",
+                component="defense",
+                run_idx=run_idx,
+            )
+            self._run_experiment_stage_hooks(
+                "after",
+                "apply_predict_defense",
+                component="defense",
+                run_idx=run_idx,
+            )
+        self._run_experiment_stage_hooks(
+            "before",
+            "model_score",
+            component="model",
+            run_idx=run_idx,
+        )
+        self._run_experiment_stage_hooks(
+            "after",
+            "model_score",
+            component="model",
+            run_idx=run_idx,
+        )
+        scores.update(**dict(getattr(self.model, "score_dict", {}) or {}))
+        self._run_experiment_stage_hooks(
+            "before",
+            "model_persist",
+            component="model",
+            run_idx=run_idx,
+        )
+        self._run_experiment_stage_hooks(
+            "after",
+            "model_persist",
+            component="model",
+            run_idx=run_idx,
+        )
+        return scores
+
+    def _resolve_attack_chain(self) -> list[Any]:
+        attack_chain = getattr(self, "_attack_chain", None)
+        if attack_chain is None:
+            return [self.attack] if self.attack is not None else []
+        return attack_chain
+
+    def _run_attack_chain_block(
+        self,
+        scores: dict,
+        attack_file_outputs: dict,
+        attack_chain: list[Any],
+        run_idx: int | None,
+    ) -> dict:
+        if len(attack_chain) == 0:
+            logger.info("No attack config provided, skipping attack.")
+            return scores
+
+        multi_attack = len(attack_chain) > 1
+        try:
+            for attack_cfg in attack_chain:
+                attack_component = (
+                    f"attack:{attack_cfg.alias}" if multi_attack else "attack"
                 )
-                self.model.predictions = cached_model.get("predictions")
-                self.model.training_probabilities = cached_model.get(
-                    "training_probabilities",
-                )
-                self.model.probabilities = cached_model.get("probabilities")
-                scores.update(**self.model.score_dict)
                 self._run_experiment_stage_hooks(
-                    "after",
-                    "train",
-                    component="model",
-                    run_idx=run_idx,
-                    cache_hit=True,
-                )
-            else:
-                if hasattr(self.model, "set_epoch_attack") and callable(
-                    getattr(self.model, "set_epoch_attack"),
-                ):
-                    self.model.set_epoch_attack(self.attack)
-                self._clear_model_prediction_outputs()
-                self.model(data=self.data, **model_file_outputs)
-                assert hasattr(
-                    self.model,
-                    "training_predictions",
-                ), "model must have training_predictions attribute after training"
-                assert hasattr(
-                    self.model,
-                    "predictions",
-                ), "model must have predictions attribute after training"
-                assert hasattr(
-                    self.model,
-                    "score_dict",
-                ), "model must have score_dict attribute after training"
-                scores.update(**self.model.score_dict)
-                if hasattr(self.model, "set_epoch_attack") and callable(
-                    getattr(self.model, "set_epoch_attack"),
-                ):
-                    self.model.set_epoch_attack(None)
-                self._cache_stage_set(
-                    stage="train",
-                    component="model",
-                    identity={"run_idx": run_idx},
-                    value={
-                        "score_dict": dict(
-                            getattr(self.model, "score_dict", {}) or {},
-                        ),
-                        "training_predictions": getattr(
-                            self.model,
-                            "training_predictions",
-                            None,
-                        ),
-                        "predictions": getattr(self.model, "predictions", None),
-                        "training_probabilities": getattr(
-                            self.model,
-                            "training_probabilities",
-                            None,
-                        ),
-                        "probabilities": getattr(self.model, "probabilities", None),
-                    },
-                )
-                self._run_experiment_stage_hooks(
-                    "after",
-                    "train",
-                    component="model",
-                    run_idx=run_idx,
-                    cache_hit=False,
-                )
-            if self.defense is not None:
-                self._run_experiment_stage_hooks(
-                    "after",
-                    "apply_fit_defense",
-                    component="defense",
+                    "before",
+                    "generation",
+                    component=attack_component,
                     run_idx=run_idx,
                 )
                 self._run_experiment_stage_hooks(
                     "before",
-                    "apply_predict_defense",
-                    component="defense",
+                    "attack",
+                    component=attack_component,
                     run_idx=run_idx,
                 )
-                self._run_experiment_stage_hooks(
-                    "after",
-                    "apply_predict_defense",
-                    component="defense",
-                    run_idx=run_idx,
+                cached_attack = self._cache_stage_get(
+                    stage="attack",
+                    component=attack_component,
+                    identity={"run_idx": run_idx},
                 )
-            self._run_experiment_stage_hooks(
-                "before",
-                "model_score",
-                component="model",
-                run_idx=run_idx,
-            )
-            self._run_experiment_stage_hooks(
-                "after",
-                "model_score",
-                component="model",
-                run_idx=run_idx,
-            )
-            scores.update(**dict(getattr(self.model, "score_dict", {}) or {}))
-            self._run_experiment_stage_hooks(
-                "before",
-                "model_persist",
-                component="model",
-                run_idx=run_idx,
-            )
-            self._run_experiment_stage_hooks(
-                "after",
-                "model_persist",
-                component="model",
-                run_idx=run_idx,
-            )
-        else:
-            logger.info("No model config provided, skipping model training.")
-
-        attack_chain = getattr(self, "_attack_chain", None)
-        if attack_chain is None:
-            attack_chain = [self.attack] if self.attack is not None else []
-
-        if len(attack_chain) > 0:
-            multi_attack = len(attack_chain) > 1
-            try:
-                for attack_cfg in attack_chain:
-                    attack_component = (
-                        f"attack:{attack_cfg.alias}" if multi_attack else "attack"
+                if isinstance(cached_attack, dict):
+                    attack_cfg.score_dict = ScoreDict.from_payload(
+                        cached_attack.get("score_dict", {}) or {},
                     )
-                    self._run_experiment_stage_hooks(
-                        "before",
-                        "generation",
-                        component=attack_component,
-                        run_idx=run_idx,
-                    )
-                    self._run_experiment_stage_hooks(
-                        "before",
-                        "attack",
-                        component=attack_component,
-                        run_idx=run_idx,
-                    )
-                    cached_attack = self._cache_stage_get(
-                        stage="attack",
-                        component=attack_component,
-                        identity={"run_idx": run_idx},
-                    )
-                    if isinstance(cached_attack, dict):
-                        attack_cfg.score_dict = dict(
-                            cached_attack.get("score_dict", {}),
-                        )
-                        attack_cfg.attack_predictions = cached_attack.get(
-                            "attack_predictions",
-                        )
-                        scores = merge_scores_with_collision_suffix(
-                            scores,
-                            attack_cfg.score_dict,
-                            alias=attack_cfg.alias if multi_attack else None,
-                        )
-                        self._run_experiment_stage_hooks(
-                            "after",
-                            "attack",
-                            component=attack_component,
-                            run_idx=run_idx,
-                            cache_hit=True,
-                        )
-                        self._run_experiment_stage_hooks(
-                            "after",
-                            "generation",
-                            component=attack_component,
-                            run_idx=run_idx,
-                            cache_hit=True,
-                        )
-                        self._run_experiment_stage_hooks(
-                            "before",
-                            "attack_score",
-                            component=attack_component,
-                            run_idx=run_idx,
-                        )
-                        self._run_experiment_stage_hooks(
-                            "after",
-                            "attack_score",
-                            component=attack_component,
-                            run_idx=run_idx,
-                        )
-                        scores = merge_scores_with_collision_suffix(
-                            scores,
-                            dict(getattr(attack_cfg, "score_dict", {}) or {}),
-                            alias=attack_cfg.alias if multi_attack else None,
-                        )
-                        self._run_experiment_stage_hooks(
-                            "before",
-                            "attack_persist",
-                            component=attack_component,
-                            run_idx=run_idx,
-                        )
-                        self._run_experiment_stage_hooks(
-                            "after",
-                            "attack_persist",
-                            component=attack_component,
-                            run_idx=run_idx,
-                        )
-                        continue
-                    run_outputs = self._build_attack_file_outputs_for_run(
-                        attack_file_outputs,
-                        attack_cfg,
-                        multi_attack=multi_attack,
-                    )
-                    attack_cfg(
-                        data=self.data,
-                        model=self.model,
-                        **run_outputs,
-                    )
-                    assert hasattr(
-                        attack_cfg,
-                        "attack",
-                    ), "attack must have attack attribute after training"
-                    assert hasattr(
-                        attack_cfg,
+                    attack_cfg.attack_predictions = cached_attack.get(
                         "attack_predictions",
-                    ), "attack must have a predictions attribute after training"
-                    assert hasattr(
-                        attack_cfg,
-                        "score_dict",
-                    ), "attack must have score_dict attribute after training"
+                    )
                     scores = merge_scores_with_collision_suffix(
                         scores,
                         attack_cfg.score_dict,
                         alias=attack_cfg.alias if multi_attack else None,
                     )
-                    self._cache_stage_set(
-                        stage="attack",
-                        component=attack_component,
-                        identity={"run_idx": run_idx},
-                        value={
-                            "score_dict": dict(
-                                getattr(attack_cfg, "score_dict", {}) or {},
-                            ),
-                            "attack_predictions": getattr(
-                                attack_cfg,
-                                "attack_predictions",
-                                None,
-                            ),
-                        },
-                    )
                     self._run_experiment_stage_hooks(
                         "after",
                         "attack",
                         component=attack_component,
                         run_idx=run_idx,
-                        cache_hit=False,
+                        cache_hit=True,
                     )
                     self._run_experiment_stage_hooks(
                         "after",
                         "generation",
                         component=attack_component,
                         run_idx=run_idx,
-                        cache_hit=False,
+                        cache_hit=True,
                     )
                     self._run_experiment_stage_hooks(
                         "before",
@@ -2387,13 +2299,130 @@ class ExperimentConfig(ScoreOrchestratorMixin, BaseConfig):
                         component=attack_component,
                         run_idx=run_idx,
                     )
+                    continue
 
-                self.attack = attack_chain[0]
-            except ValueError as e:
-                logger.debug(e)
-                raise
-        else:
-            logger.info("No attack config provided, skipping attack.")
+                run_outputs = self._build_attack_file_outputs_for_run(
+                    attack_file_outputs,
+                    attack_cfg,
+                    multi_attack=multi_attack,
+                )
+                attack_cfg(
+                    data=self.data,
+                    model=self.model,
+                    **run_outputs,
+                )
+                assert hasattr(
+                    attack_cfg,
+                    "attack",
+                ), "attack must have attack attribute after training"
+                assert hasattr(
+                    attack_cfg,
+                    "attack_predictions",
+                ), "attack must have a predictions attribute after training"
+                assert hasattr(
+                    attack_cfg,
+                    "score_dict",
+                ), "attack must have score_dict attribute after training"
+                scores = merge_scores_with_collision_suffix(
+                    scores,
+                    attack_cfg.score_dict,
+                    alias=attack_cfg.alias if multi_attack else None,
+                )
+                self._cache_stage_set(
+                    stage="attack",
+                    component=attack_component,
+                    identity={"run_idx": run_idx},
+                    value={
+                        "score_dict": dict(
+                            getattr(attack_cfg, "score_dict", {}) or {},
+                        ),
+                        "attack_predictions": getattr(
+                            attack_cfg,
+                            "attack_predictions",
+                            None,
+                        ),
+                    },
+                )
+                self._run_experiment_stage_hooks(
+                    "after",
+                    "attack",
+                    component=attack_component,
+                    run_idx=run_idx,
+                    cache_hit=False,
+                )
+                self._run_experiment_stage_hooks(
+                    "after",
+                    "generation",
+                    component=attack_component,
+                    run_idx=run_idx,
+                    cache_hit=False,
+                )
+                self._run_experiment_stage_hooks(
+                    "before",
+                    "attack_score",
+                    component=attack_component,
+                    run_idx=run_idx,
+                )
+                self._run_experiment_stage_hooks(
+                    "after",
+                    "attack_score",
+                    component=attack_component,
+                    run_idx=run_idx,
+                )
+                scores = merge_scores_with_collision_suffix(
+                    scores,
+                    dict(getattr(attack_cfg, "score_dict", {}) or {}),
+                    alias=attack_cfg.alias if multi_attack else None,
+                )
+                self._run_experiment_stage_hooks(
+                    "before",
+                    "attack_persist",
+                    component=attack_component,
+                    run_idx=run_idx,
+                )
+                self._run_experiment_stage_hooks(
+                    "after",
+                    "attack_persist",
+                    component=attack_component,
+                    run_idx=run_idx,
+                )
+
+            self.attack = attack_chain[0]
+        except ValueError as e:
+            logger.debug(e)
+            raise
+
+        return scores
+
+    def _run_single_pipeline(
+        self,
+        model_file_outputs: dict,
+        attack_file_outputs: dict,
+        *,
+        run_idx: int | None = None,
+    ) -> dict:
+        """Run model training, optional attack, and optional custom scoring for the
+        current state of ``self.data`` (already loaded and sampled).
+
+        Returns the accumulated score dict for this pipeline pass.
+        """
+        scores = {}
+        scores.update(**self.data.score_dict)
+        self._propagate_score_mode()
+
+        scores = self._run_model_pipeline_block(
+            scores=scores,
+            model_file_outputs=model_file_outputs,
+            run_idx=run_idx,
+        )
+
+        attack_chain = self._resolve_attack_chain()
+        scores = self._run_attack_chain_block(
+            scores=scores,
+            attack_file_outputs=attack_file_outputs,
+            attack_chain=attack_chain,
+            run_idx=run_idx,
+        )
 
         if self.detector:
             if len(attack_chain) == 0:
@@ -2424,7 +2453,9 @@ class ExperimentConfig(ScoreOrchestratorMixin, BaseConfig):
                 identity={"run_idx": run_idx},
             )
             if isinstance(cached_detector, dict):
-                self.detector.score_dict = dict(cached_detector.get("score_dict", {}))
+                self.detector.score_dict = ScoreDict.from_payload(
+                    cached_detector.get("score_dict", {}) or {},
+                )
                 scores.update(**self.detector.score_dict)
                 self._run_experiment_stage_hooks(
                     "after",
@@ -2669,6 +2700,128 @@ class ExperimentConfig(ScoreOrchestratorMixin, BaseConfig):
             )
         return instance
 
+    def _run_repeated_pipeline(
+        self,
+        *,
+        n_repeats: int,
+        run_suffix: str,
+        model_file_outputs: dict[str, Any],
+        attack_file_outputs: dict[str, Any],
+    ) -> dict:
+        logger.info(f"Running {n_repeats} repeated {run_suffix} evaluations.")
+        per_run_scores: list = []
+        for run_idx in range(n_repeats):
+            logger.info(f"  {run_suffix.title()} {run_idx + 1}/{n_repeats}")
+            # Reset sampling state so _sample() runs fresh for this run
+            self.data.split = run_idx
+            self.data.data_sample_time = None
+            for attr in self._sample_cache_fields():
+                setattr(self.data, attr, None)
+            self.data.score_dict = ScoreDict()
+            self._run_experiment_stage_hooks(
+                "before",
+                "sample",
+                component="data",
+                run_idx=run_idx,
+            )
+            cached_sample = self._cache_stage_get(
+                stage="sample",
+                component="data",
+                identity={"run_idx": run_idx, "suffix": run_suffix},
+            )
+            if isinstance(cached_sample, dict):
+                self._apply_sample_cache_value(cached_sample)
+                self._run_experiment_stage_hooks(
+                    "after",
+                    "sample",
+                    component="data",
+                    run_idx=run_idx,
+                    cache_hit=True,
+                )
+            else:
+                # Run full data runtime per fold so DataConfig hooks and
+                # transformations (e.g., StringDistanceTransformer) execute.
+                self._run_experiment_stage_hooks(
+                    "before",
+                    "data_score",
+                    component="data",
+                    run_idx=run_idx,
+                )
+                self.data(
+                    files={
+                        "data_file": None,
+                        "score_file": None,
+                    },
+                )
+                self._run_experiment_stage_hooks(
+                    "after",
+                    "data_score",
+                    component="data",
+                    run_idx=run_idx,
+                )
+                self.data.score_dict.update(
+                    data_load_time=self.data.data_load_time,
+                    data_sample_time=self.data.data_sample_time,
+                    train_n=self.data.train_n,
+                    test_n=self.data.test_n,
+                )
+                self._cache_stage_set(
+                    stage="sample",
+                    component="data",
+                    identity={"run_idx": run_idx, "suffix": run_suffix},
+                    value=self._capture_sample_cache_value(),
+                )
+                self._run_experiment_stage_hooks(
+                    "after",
+                    "sample",
+                    component="data",
+                    run_idx=run_idx,
+                    cache_hit=False,
+                )
+            fold_scores = self._run_single_pipeline(
+                model_file_outputs,
+                attack_file_outputs,
+                run_idx=run_idx,
+            )
+            per_run_scores.append(fold_scores)
+
+        return self._aggregate_repeated_scores(per_run_scores, run_suffix)
+
+    def _run_single_pass_pipeline(
+        self,
+        *,
+        model_file_outputs: dict[str, Any],
+        attack_file_outputs: dict[str, Any],
+    ) -> dict:
+        assert hasattr(
+            self.data,
+            "X_train",
+        ), "data must return an object with X_train attribute"
+        assert hasattr(
+            self.data,
+            "y_train",
+        ), "data must return an object with y_train attribute"
+        assert hasattr(
+            self.data,
+            "X_test",
+        ), "data must return an object with X_test attribute"
+        assert hasattr(
+            self.data,
+            "y_test",
+        ), "data must return an object with y_test attribute"
+        assert hasattr(
+            self.data,
+            "score_dict",
+        ), "data must have score_dict attribute after loading"
+        scores = self._run_single_pipeline(
+            model_file_outputs,
+            attack_file_outputs,
+            run_idx=None,
+        )
+        if self.model is None:
+            self.model = None
+        return scores
+
     def run(
         self,
     ) -> dict:
@@ -2771,122 +2924,19 @@ class ExperimentConfig(ScoreOrchestratorMixin, BaseConfig):
         n_repeats, run_suffix = self._detect_n_repeats()
 
         if n_repeats > 1:
-            # ------------------------------------------------------------------
-            # Repeated split evaluation: run one pipeline pass per split/fold
-            # ------------------------------------------------------------------
-            logger.info(
-                f"Running {n_repeats} repeated {run_suffix} evaluations.",
+            scores = self._run_repeated_pipeline(
+                n_repeats=n_repeats,
+                run_suffix=run_suffix,
+                model_file_outputs=model_file_outputs,
+                attack_file_outputs=attack_file_outputs,
             )
-            per_run_scores: list = []
-            for run_idx in range(n_repeats):
-                logger.info(f"  {run_suffix.title()} {run_idx + 1}/{n_repeats}")
-                # Reset sampling state so _sample() runs fresh for this run
-                self.data.split = run_idx
-                self.data.data_sample_time = None
-                for attr in self._sample_cache_fields():
-                    setattr(self.data, attr, None)
-                self.data.score_dict = {}
-                self._run_experiment_stage_hooks(
-                    "before",
-                    "sample",
-                    component="data",
-                    run_idx=run_idx,
-                )
-                cached_sample = self._cache_stage_get(
-                    stage="sample",
-                    component="data",
-                    identity={"run_idx": run_idx, "suffix": run_suffix},
-                )
-                if isinstance(cached_sample, dict):
-                    self._apply_sample_cache_value(cached_sample)
-                    self._run_experiment_stage_hooks(
-                        "after",
-                        "sample",
-                        component="data",
-                        run_idx=run_idx,
-                        cache_hit=True,
-                    )
-                else:
-                    # Run full data runtime per fold so DataConfig hooks and
-                    # transformations (e.g., StringDistanceTransformer) execute.
-                    self._run_experiment_stage_hooks(
-                        "before",
-                        "data_score",
-                        component="data",
-                        run_idx=run_idx,
-                    )
-                    self.data(
-                        files={
-                            "data_file": None,
-                            "score_file": None,
-                        },
-                    )
-                    self._run_experiment_stage_hooks(
-                        "after",
-                        "data_score",
-                        component="data",
-                        run_idx=run_idx,
-                    )
-                    self.data.score_dict.update(
-                        data_load_time=self.data.data_load_time,
-                        data_sample_time=self.data.data_sample_time,
-                        train_n=self.data.train_n,
-                        test_n=self.data.test_n,
-                    )
-                    self._cache_stage_set(
-                        stage="sample",
-                        component="data",
-                        identity={"run_idx": run_idx, "suffix": run_suffix},
-                        value=self._capture_sample_cache_value(),
-                    )
-                    self._run_experiment_stage_hooks(
-                        "after",
-                        "sample",
-                        component="data",
-                        run_idx=run_idx,
-                        cache_hit=False,
-                    )
-                fold_scores = self._run_single_pipeline(
-                    model_file_outputs,
-                    attack_file_outputs,
-                    run_idx=run_idx,
-                )
-                per_run_scores.append(fold_scores)
-
-            scores = self._aggregate_repeated_scores(per_run_scores, run_suffix)
         else:
-            # ------------------------------------------------------------------
-            # Single-pass (non-fold) pipeline
-            # ------------------------------------------------------------------
-            assert hasattr(
-                self.data,
-                "X_train",
-            ), "data must return an object with X_train attribute"
-            assert hasattr(
-                self.data,
-                "y_train",
-            ), "data must return an object with y_train attribute"
-            assert hasattr(
-                self.data,
-                "X_test",
-            ), "data must return an object with X_test attribute"
-            assert hasattr(
-                self.data,
-                "y_test",
-            ), "data must return an object with y_test attribute"
-            assert hasattr(
-                self.data,
-                "score_dict",
-            ), "data must have score_dict attribute after loading"
-            scores = self._run_single_pipeline(
-                model_file_outputs,
-                attack_file_outputs,
-                run_idx=None,
+            scores = self._run_single_pass_pipeline(
+                model_file_outputs=model_file_outputs,
+                attack_file_outputs=attack_file_outputs,
             )
-            if self.model is None:
-                self.model = None
 
-        self.score_dict = dict(scores)
+        self.score_dict = ScoreDict.from_payload(scores)
         self.merge_runtime_files(file_dict)
         scores = dict(self.score_dict)
 

@@ -19,9 +19,6 @@ from ..score.base import (
 from ..utils import (
     BaseConfig,
     coerce_config,
-    instantiate_plugin_spec,
-    load_class,
-    normalize_plugin_specs,
     resolve_class,
 )
 from .canon import (
@@ -29,7 +26,7 @@ from .canon import (
     CANONICAL_DETECTOR_SCORE_STAGES,
     ensure_detector_runtime_contract,
     normalize_detector_runtime_split_mode,
-    normalize_detector_score_mode,
+    normalize_detector_score_stage,
     normalize_detector_stage,
 )
 
@@ -216,6 +213,46 @@ class DetectorConfig(ScoreOrchestratorMixin, BaseConfig):
     def _normalize_score_mode(self, mode: str) -> str:
         return normalize_detector_runtime_split_mode(mode, default="test")
 
+    def _normalize_score_stage(
+        self,
+        stage: str | None,
+        *,
+        allow_all_auto: bool = True,
+    ) -> str:
+        normalized = normalize_detector_score_stage(stage)
+        if normalized in {"all", "auto"} and not allow_all_auto:
+            raise ValueError(
+                "Unknown detector score stage "
+                f"'{stage}'. Must be one of {list(CANONICAL_DETECTOR_SCORE_STAGES)}",
+            )
+        return normalized
+
+    def _build_stage_score_payload(
+        self,
+        data: "DataConfig",
+        *,
+        stage: str,
+        mode: str,
+        y_true: Any = None,
+        y_pred: Any = None,
+        model: ModelConfig | None = None,
+        attack: "AttackConfig | None" = None,
+        **_kwargs: Any,
+    ) -> dict[str, float]:
+        """Build detector-domain stage score payload for shared stage orchestration."""
+        if y_true is None or y_pred is None:
+            return {}
+        score_stage = "detector-score"
+        return self.score(
+            y_true=y_true,
+            y_pred=y_pred,
+            mode=mode,
+            stage=score_stage,
+            data=data,
+            model=model,
+            attack=attack,
+        )
+
     def __post_init__(self):
         self._initialize_target_reference()
         self._initialize_runtime_defaults()
@@ -247,59 +284,6 @@ class DetectorConfig(ScoreOrchestratorMixin, BaseConfig):
     def _initialize_detector_scorer(self) -> None:
         """Coerce detector scorer into a supported scorer config."""
         self.scorer = self._coerce_scorer(self.scorer)
-
-    def _instantiate_plugin(self, plugin_spec: Any):
-        """Instantiate one detector plugin specification.
-
-        Args:
-            plugin_spec: Plugin declaration payload or runtime plugin object.
-
-        Returns:
-            Instantiated plugin object.
-        """
-        return instantiate_plugin_spec(plugin_spec, loader=load_class)
-
-    def _get_plugins(self) -> list:
-        """Resolve and cache detector plugins for this config instance.
-
-        Returns:
-            Ordered list of instantiated detector plugins.
-        """
-        if self._plugin_objects is None:
-            plugin_specs = normalize_plugin_specs(self.plugins)
-            self._plugin_objects = [
-                self._instantiate_plugin(spec) for spec in plugin_specs
-            ]
-        return self._plugin_objects
-
-    def _run_plugin_hook(self, hook_name: str, **kwargs) -> list[Any]:
-        """Execute one detector plugin hook across all instantiated plugins.
-
-        Args:
-            hook_name: Hook method name to invoke when present on a plugin.
-            **kwargs: Hook-specific keyword arguments.
-
-        Returns:
-            Ordered list of hook return values.
-        """
-        outputs = []
-        for plugin in self._get_plugins():
-            hook = getattr(plugin, hook_name, None)
-            if callable(hook):
-                outputs.append(hook(self, **kwargs))
-        return outputs
-
-    def _merge_plugin_scores(self, hook_outputs: list[Any]) -> None:
-        """Merge plugin hook score outputs into the runtime score dictionary.
-
-        Args:
-            hook_outputs: Iterable of plugin hook return payloads.
-        """
-        if self.score_dict is None:
-            self.score_dict = {}
-        for output in hook_outputs:
-            if isinstance(output, dict):
-                self.score_dict.update(output)
 
     def _run_detector_stage_hooks(self, when: str, stage: str, **kwargs: Any) -> None:
         event = str(when).strip().lower()
@@ -378,7 +362,7 @@ class DetectorConfig(ScoreOrchestratorMixin, BaseConfig):
         """
         if self.scorer is None:
             return {}
-        mode_token = normalize_detector_score_mode(mode)
+        mode_token = self._normalize_score_mode(mode or "test")
         scores = self.scorer(
             *args,
             mode=mode_token,
@@ -390,6 +374,18 @@ class DetectorConfig(ScoreOrchestratorMixin, BaseConfig):
             return {}
         if mode_token in scores and isinstance(scores.get(mode_token), dict):
             scores = dict(scores[mode_token])
+        else:
+            stage_key = kwargs.get("stage", None)
+            if (
+                isinstance(stage_key, str)
+                and stage_key in scores
+                and isinstance(scores.get(stage_key), dict)
+            ):
+                stage_scores = dict(scores[stage_key])
+                companion_scores = {
+                    key: value for key, value in scores.items() if key != stage_key
+                }
+                scores = {**stage_scores, **companion_scores}
         prefixed_scores: dict[str, float] = {}
         for key, value in scores.items():
             score_key = key if str(key).startswith("detector_") else f"detector_{key}"
@@ -729,7 +725,7 @@ class DetectorConfig(ScoreOrchestratorMixin, BaseConfig):
 
         self._run_detector_stage_hooks(
             "before",
-            "pre-detect",
+            "pre-filter",
             detector=detector,
             x=x,
             y=y,
@@ -769,7 +765,7 @@ class DetectorConfig(ScoreOrchestratorMixin, BaseConfig):
         self.detector_detection_time = time.process_time() - start
         self._run_detector_stage_hooks(
             "after",
-            "post-detect",
+            "post-filter",
             detector=detector,
             x=x,
             y=y,
@@ -891,6 +887,16 @@ class DetectorConfig(ScoreOrchestratorMixin, BaseConfig):
             model=model,
             attack=attack,
         )
+        stage_scores = self._run_stage_scoring_pass(
+            data=data,
+            stage="post-filter",
+            component=self.detector_type,
+            mode=getattr(self, "score_mode", "test"),
+            y_true=y_true,
+            y_pred=y_pred,
+            model=model,
+            attack=attack,
+        )
 
         poison_filter_success = 0.0
         evasion_filter_success = 0.0
@@ -905,16 +911,16 @@ class DetectorConfig(ScoreOrchestratorMixin, BaseConfig):
                     n=n,
                 )
             )
-
+        score_dict = {**self.score_dict, **stage_scores}
         self.score_dict = {
-            **self.score_dict,
+            **score_dict,
             **prefixed_scores,
             "detector_n": int(len(y_true)),
             "detector_clean_n": int(n),
             "detector_adversarial_n": int(n),
             "detector_training_time": float(self.detector_training_time or 0.0),
             "detector_detection_time": float(self.detector_detection_time),
-            "detector_stage": normalize_detector_stage("post-detect"),
+            "detector_stage": normalize_detector_stage("post-filter"),
             "detector_execution_order": "post-attack",
             "poison_filter_success": float(poison_filter_success),
             "evasion_filter_success": float(evasion_filter_success),

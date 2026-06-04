@@ -10,6 +10,16 @@ from dataclasses import dataclass
 from typing import Any, Mapping
 
 from ..plugins import HookPlugin
+from . import dvc as _dvc_module
+from .canon import CANONICAL_EXPERIMENT_PIPELINE_STAGES
+from .dvc import (
+    _resolve_stage_token,
+    build_dvc_cmd as _build_dvc_cmd,
+    build_dvc_stage_plan as _build_dvc_stage_plan,
+    coerce_dvc_experiment_plugin,
+    extract_dvc_file_aliases as _extract_dvc_file_aliases,
+    generate_dvc_pipeline as _generate_dvc_pipeline,
+)
 
 PluginPrimitive = str | int | float | bool | None
 
@@ -99,8 +109,6 @@ def _build_repro_plugin_hook_wrappers(
     *,
     method_name: str,
 ) -> tuple[list[HookPlugin], list[HookPlugin]]:
-    from .canon import CANONICAL_EXPERIMENT_PIPELINE_STAGES
-
     first_hooks: list[HookPlugin] = []
     last_hooks: list[HookPlugin] = []
     plugin_payload = plugin_cfg.to_dict()
@@ -157,13 +165,6 @@ def run_repro_experiment_plugin_hook(
 ) -> dict[str, Any]:
     """Run one DVC persistence hook callback."""
     _ = kwargs
-    from .dvc import (
-        _run_dvc_pull,
-        _run_dvc_push,
-        _resolve_stage_token,
-        _write_dvc_params_file,
-        coerce_dvc_experiment_plugin,
-    )
 
     plugin_cfg = coerce_dvc_repro_plugin(repro_plugin)
     stage_token = _resolve_stage_token(stage)
@@ -187,12 +188,12 @@ def run_repro_experiment_plugin_hook(
     dvc_policy = coerce_dvc_experiment_plugin(plugin_cfg.to_dict())
 
     if position_token == "first" and event_token == "before" and stage_token == "load":
-        result["params_file"] = _write_dvc_params_file(
+        result["params_file"] = _dvc_module._write_dvc_params_file(
             experiment,
             plugin=dvc_policy,
             stage=stage_token,
         )
-        result["pull"] = _run_dvc_pull(experiment, dvc_policy)
+        result["pull"] = _dvc_module._run_dvc_pull(experiment, dvc_policy)
         result["executed"] = True
 
     if (
@@ -200,12 +201,12 @@ def run_repro_experiment_plugin_hook(
         and event_token == "after"
         and stage_token == "persist"
     ):
-        result["params_file"] = _write_dvc_params_file(
+        result["params_file"] = _dvc_module._write_dvc_params_file(
             experiment,
             plugin=dvc_policy,
             stage=stage_token,
         )
-        result["push"] = _run_dvc_push(experiment, dvc_policy)
+        result["push"] = _dvc_module._run_dvc_push(experiment, dvc_policy)
         result["executed"] = True
 
     return result
@@ -213,26 +214,22 @@ def run_repro_experiment_plugin_hook(
 
 # Backward-compatible persistence API now hosted here.
 def extract_dvc_file_aliases(*args: Any, **kwargs: Any) -> dict[str, str]:
-    from .dvc import extract_dvc_file_aliases as _extract_dvc_file_aliases
-
+    """Proxy to DVC file-alias extraction helper."""
     return _extract_dvc_file_aliases(*args, **kwargs)
 
 
 def build_dvc_cmd(*args: Any, **kwargs: Any) -> str:
-    from .dvc import build_dvc_cmd as _build_dvc_cmd
-
+    """Proxy to DVC command construction helper."""
     return _build_dvc_cmd(*args, **kwargs)
 
 
 def build_dvc_stage_plan(*args: Any, **kwargs: Any) -> list[dict[str, Any]]:
-    from .dvc import build_dvc_stage_plan as _build_dvc_stage_plan
-
+    """Proxy to DVC stage-plan construction helper."""
     return _build_dvc_stage_plan(*args, **kwargs)
 
 
 def generate_dvc_pipeline(*args: Any, **kwargs: Any) -> dict[str, Any]:
-    from .dvc import generate_dvc_pipeline as _generate_dvc_pipeline
-
+    """Proxy to DVC pipeline generation helper."""
     return _generate_dvc_pipeline(*args, **kwargs)
 
 
