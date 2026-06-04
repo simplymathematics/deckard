@@ -2,6 +2,15 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader, Dataset
 
+from deckard.plugins.datasets.declarations import FlexibleHuggingFaceDataset
+
+
+def _normalize_hf_split(split: str) -> str:
+    token = str(split).strip().lower()
+    if token in {"val", "valid", "validation"}:
+        return "validation"
+    return token
+
 
 class CelebASmileDataset(Dataset):
     def __init__(
@@ -21,18 +30,18 @@ class CelebASmileDataset(Dataset):
             sensitive_attribute,
         ]
         self.transform = transform
+        self.split = _normalize_hf_split(split)
 
-        try:
-            from datasets import load_dataset  # type: ignore[reportMissingImports]
-        except ImportError as exc:
-            raise ImportError(
-                "CelebASmileDataset requires the 'datasets' package. Install deckard[pytorch,fairlearn] extras.",
-            ) from exc
+        loader_params = dict(kwargs)
+        if subset is not None:
+            subset_token = str(subset).strip()
+            if subset_token != "":
+                loader_params.setdefault("dataset_config_name", subset_token)
 
-        self.dataset = load_dataset(
-            dataset_name,
-            subset,
-            split=split,
+        self.dataset = FlexibleHuggingFaceDataset.load_huggingface_dataset(
+            name=dataset_name,
+            dataset_split=self.split,
+            data_params=loader_params,
         )
         self._sensitive = []
 
@@ -76,96 +85,6 @@ class CelebASmileDataset(Dataset):
         return image, smile_label, sensitive
 
 
-class SyntheticImageDataset(Dataset):
-    def __init__(
-        self,
-        num_samples: int = 256,
-        image_size: int = 28,
-        num_channels: int = 1,
-        num_classes: int = 2,
-        random_state: int = 42,
-        transform=None,
-        split: str = "train",
-        **kwargs,
-    ):
-        self.transform = transform
-        self.num_samples = int(num_samples)
-        self.image_size = int(image_size)
-        self.num_channels = int(num_channels)
-        self.num_classes = int(num_classes)
-
-        split_offsets = {"train": 0, "valid": 1, "test": 2}
-        seed = int(random_state) + split_offsets.get(split, 3)
-        rng = np.random.default_rng(seed)
-
-        images = rng.random(
-            (
-                self.num_samples,
-                self.num_channels,
-                self.image_size,
-                self.image_size,
-            ),
-            dtype=np.float32,
-        )
-        labels = rng.integers(
-            0,
-            self.num_classes,
-            size=self.num_samples,
-            dtype=np.int64,
-        )
-        sensitive = rng.integers(0, 2, size=self.num_samples, dtype=np.int64)
-
-        self._X = torch.from_numpy(images)
-        self._y = torch.from_numpy(labels)
-        self._sensitive = sensitive.tolist()
-
-    def __len__(self):
-        return self.num_samples
-
-    def __getitem__(self, idx):
-        image = self._X[idx]
-        if self.transform:
-            image = self.transform(image)
-        return image, int(self._y[idx].item()), int(self._sensitive[idx])
-
-
-class SyntheticTabularFairnessDataset(Dataset):
-    def __init__(
-        self,
-        num_samples: int = 256,
-        n_features: int = 16,
-        num_classes: int = 2,
-        random_state: int = 42,
-        **kwargs,
-    ):
-        self.num_samples = int(num_samples)
-        self.n_features = int(n_features)
-        self.num_classes = int(num_classes)
-
-        rng = np.random.default_rng(int(random_state))
-        X = rng.standard_normal(
-            (self.num_samples, self.n_features),
-            dtype=np.float32,
-        )
-        y = rng.integers(
-            0,
-            self.num_classes,
-            size=self.num_samples,
-            dtype=np.int64,
-        )
-        sensitive = rng.integers(0, 2, size=self.num_samples, dtype=np.int64)
-
-        self._X = torch.from_numpy(X)
-        self._y = torch.from_numpy(y)
-        self._sensitive = sensitive.tolist()
-
-    def __len__(self):
-        return self.num_samples
-
-    def __getitem__(self, idx):
-        return self._X[idx], int(self._y[idx].item()), int(self._sensitive[idx])
-
-
 def build_celeba_smile_loaders(cfg):
     try:
         from smile_detector.transforms import (  # type: ignore[reportMissingImports]
@@ -182,7 +101,7 @@ def build_celeba_smile_loaders(cfg):
     num_workers = int(cfg.dataset.num_workers)
 
     train_dataset = CelebASmileDataset(
-        name=cfg.dataset.name,
+        dataset_name=cfg.dataset.name,
         subset=cfg.dataset.subset,
         smile_attribute=cfg.dataset.smile_attribute,
         sensitive_attribute=cfg.dataset.sensitive_attribute,
@@ -192,7 +111,7 @@ def build_celeba_smile_loaders(cfg):
     )
 
     val_dataset = CelebASmileDataset(
-        name=cfg.dataset.name,
+        dataset_name=cfg.dataset.name,
         subset=cfg.dataset.subset,
         smile_attribute=cfg.dataset.smile_attribute,
         sensitive_attribute=cfg.dataset.sensitive_attribute,
@@ -202,7 +121,7 @@ def build_celeba_smile_loaders(cfg):
     )
 
     test_dataset = CelebASmileDataset(
-        name=cfg.dataset.name,
+        dataset_name=cfg.dataset.name,
         subset=cfg.dataset.subset,
         smile_attribute=cfg.dataset.smile_attribute,
         sensitive_attribute=cfg.dataset.sensitive_attribute,

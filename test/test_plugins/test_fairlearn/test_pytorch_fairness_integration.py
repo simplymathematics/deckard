@@ -57,7 +57,7 @@ def _torch_fairness_data():
     sensitive_test = torch.randint(0, 2, (16,))
 
     cfg = PytorchDataConfig(
-        name="torch_fairness_dataset.py:SyntheticImageDataset",
+        name="deckard.frameworks.pytorch.declarations.SyntheticImageDataset",
         sampler={
             "train_size": 32,
             "test_size": 16,

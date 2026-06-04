@@ -139,6 +139,45 @@ class PytorchBaseSampler(BaseSampler):
         return {}
 
     @classmethod
+    def resolve_split_keys(cls, config: Any) -> tuple[str, str, str]:
+        """Resolve dataset split-key names used by split-aware dataset loaders.
+
+        Split keys are sampler-owned options so users can configure them under
+        the existing sampler declaration surface.
+        """
+        sampler_params = dict(getattr(config, "sampler_params", {}) or {})
+        train_key = str(
+            cls._cfg_value(
+                config,
+                sampler_params,
+                "train_split_key",
+                "train",
+            ),
+        ).strip()
+        test_key = str(
+            cls._cfg_value(
+                config,
+                sampler_params,
+                "test_split_key",
+                "test",
+            ),
+        ).strip()
+        val_key = str(
+            cls._cfg_value(
+                config,
+                sampler_params,
+                "val_split_key",
+                "val",
+            ),
+        ).strip()
+
+        if train_key == "" or test_key == "" or val_key == "":
+            raise ValueError(
+                "train_split_key, test_split_key, and val_split_key must be non-empty strings.",
+            )
+        return train_key, test_key, val_key
+
+    @classmethod
     def resolve(cls, config: Any) -> Any:
         """Resolve sampler declaration into callable sampler object.
 

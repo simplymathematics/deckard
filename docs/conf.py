@@ -9,6 +9,10 @@ from pathlib import Path
 # deckard package lives one level above docs/
 sys.path.insert(0, os.path.abspath(".."))
 
+# Keep notebook-rendered output deterministic and free of progress-bar artifacts.
+os.environ.setdefault("TQDM_DISABLE", "1")
+os.environ.setdefault("HF_HUB_DISABLE_PROGRESS_BARS", "1")
+
 # ---------------------------------------------------------------------------
 # Project information
 # ---------------------------------------------------------------------------

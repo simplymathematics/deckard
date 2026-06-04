@@ -989,15 +989,18 @@ class PytorchCustomDataConfig(PytorchDataConfig):
             test_transform = torch.Tensor
         self.train_transform = train_transform
         self.test_transform = test_transform
-        valid_split = "test" if self.val else "valid"
+        train_split_key, test_split_key, val_split_key = (
+            PytorchBaseSampler.resolve_split_keys(self)
+        )
+        eval_split_key = val_split_key if self.val else test_split_key
         train_ds = self._as_dataset(
             self.dataset,
-            split="train",
+            split=train_split_key,
             transform=train_transform,
         )
         test_ds = self._as_dataset(
             self.dataset,
-            split=valid_split,
+            split=eval_split_key,
             transform=test_transform,
         )
         # For custom split datasets, only explicit integer caps should truncate.

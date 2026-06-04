@@ -1,4 +1,0 @@
-- data=demi_math_analysis
-- model=hf_generic_transformer
-- attack=hsj
-- experiment_name=transformers_hsj_demi_math

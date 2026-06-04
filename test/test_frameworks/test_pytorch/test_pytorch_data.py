@@ -726,7 +726,69 @@ class TestPytorchCustomDataConfig:
         assert cfg.test_n == 1
         assert cfg.train_transform is train_transform
         assert cfg.test_transform is test_transform
-        assert as_dataset.call_args_list[1].kwargs["split"] == "test"
+        assert as_dataset.call_args_list[0].kwargs["split"] == "train"
+        assert as_dataset.call_args_list[1].kwargs["split"] == "val"
+
+    def test_custom_load_data_supports_sampler_split_key_overrides(self):
+
+        train_ds = self._make_simple_dataset(6)
+        test_ds = self._make_simple_dataset(4)
+
+        cfg = PytorchCustomDataConfig(
+            name="torch.utils.data.TensorDataset",
+            dataset="dummy",
+            data_dir=str(self.temp_dir),
+            sampler={
+                "name": "split",
+                "train_size": 2,
+                "test_size": 2,
+            },
+            sampler_params={
+                "train_split_key": "training",
+                "test_split_key": "evaluation",
+                "val_split_key": "holdout",
+            },
+            data_params={},
+            val=False,
+        )
+
+        with patch.object(
+            cfg,
+            "_as_dataset",
+            side_effect=[train_ds, test_ds],
+        ) as as_dataset:
+            cfg.load_dataset()
+
+        assert as_dataset.call_args_list[0].kwargs["split"] == "training"
+        assert as_dataset.call_args_list[1].kwargs["split"] == "evaluation"
+
+        cfg_val = PytorchCustomDataConfig(
+            name="torch.utils.data.TensorDataset",
+            dataset="dummy",
+            data_dir=str(self.temp_dir),
+            sampler={
+                "name": "split",
+                "train_size": 2,
+                "test_size": 2,
+            },
+            sampler_params={
+                "train_split_key": "training",
+                "test_split_key": "evaluation",
+                "val_split_key": "holdout",
+            },
+            data_params={},
+            val=True,
+        )
+
+        with patch.object(
+            cfg_val,
+            "_as_dataset",
+            side_effect=[train_ds, test_ds],
+        ) as as_dataset_val:
+            cfg_val.load_dataset()
+
+        assert as_dataset_val.call_args_list[0].kwargs["split"] == "training"
+        assert as_dataset_val.call_args_list[1].kwargs["split"] == "holdout"
 
     def test_custom_sample_handles_sensitive_batches_and_invalid_batch_shapes(self):
 

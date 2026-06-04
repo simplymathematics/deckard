@@ -3,7 +3,7 @@ name: torch_fairness_dataset.py:CelebASmileDataset
 classifier: true
 alias: fairlearn_celeba
 data_params:
-  name: flwrlabs/celeba
+  dataset_name: flwrlabs/celeba
   subset: img_align+identity+attr
   smile_attribute: Smiling
   sensitive_attribute: Male

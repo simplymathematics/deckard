@@ -1,4 +1,4 @@
-"""Explicit Hugging Face dataset declarations for transformers workflows."""
+"""Explicit Hugging Face dataset declarations for dataset workflows."""
 
 from __future__ import annotations
 
@@ -30,7 +30,6 @@ class FlexibleHuggingFaceDataset(DataConfig):
     target: str
     keep: list[str]
     dataset_split: str
-    dataset_config_name: str | None = None
     limit: int | None = None
     data_params: dict[str, Any] = field(
         default_factory=dict,
@@ -48,29 +47,85 @@ class FlexibleHuggingFaceDataset(DataConfig):
 
         super().__post_init__()
         self._target_ = (
-            "deckard.plugins.transformers.declarations.FlexibleHuggingFaceDataset"
+            "deckard.plugins.datasets.declarations.FlexibleHuggingFaceDataset"
         )
 
-    def _load_huggingface_dataset(self) -> None:
+    def _resolve_dataset_loader_args(
+        self,
+    ) -> tuple[str, str | None, str, dict[str, Any]]:
+        return self.resolve_huggingface_loader_args(
+            name=self.name,
+            dataset_split=self.dataset_split,
+            data_params=self.data_params,
+        )
+
+    @staticmethod
+    def resolve_huggingface_loader_args(
+        name: str,
+        dataset_split: str,
+        data_params: dict[str, Any] | None = None,
+    ) -> tuple[str, str | None, str, dict[str, Any]]:
+        loader_kwargs = dict(data_params or {})
+        dataset_name = str(
+            loader_kwargs.pop(
+                "dataset_name",
+                loader_kwargs.pop("name", name),
+            ),
+        ).strip()
+        if dataset_name == "":
+            raise ValueError("dataset_name must be provided via name or data_params")
+
+        dataset_config_name = loader_kwargs.pop(
+            "dataset_config_name",
+            loader_kwargs.pop("subset", None),
+        )
+        if dataset_config_name is not None:
+            dataset_config_name = str(dataset_config_name).strip() or None
+
+        split = str(loader_kwargs.pop("split", dataset_split)).strip()
+        if split == "":
+            raise ValueError("dataset_split must be provided")
+
+        return dataset_name, dataset_config_name, split, loader_kwargs
+
+    @classmethod
+    def load_huggingface_dataset(
+        cls,
+        name: str,
+        dataset_split: str,
+        data_params: dict[str, Any] | None = None,
+    ) -> Any:
         if load_dataset is None:
             raise ImportError(
                 "FlexibleHuggingFaceDataset requires 'datasets'. Install deckard[datasets].",
             )
 
-        loader_kwargs = dict(self.data_params or {})
-        if self.dataset_config_name is None:
-            dataset = load_dataset(
-                self.name,
-                split=self.dataset_split,
+        dataset_name, dataset_config_name, split, loader_kwargs = (
+            cls.resolve_huggingface_loader_args(
+                name=name,
+                dataset_split=dataset_split,
+                data_params=data_params,
+            )
+        )
+        if dataset_config_name is None:
+            return load_dataset(
+                dataset_name,
+                split=split,
                 **loader_kwargs,
             )
-        else:
-            dataset = load_dataset(
-                self.name,
-                self.dataset_config_name,
-                split=self.dataset_split,
-                **loader_kwargs,
-            )
+        return load_dataset(
+            dataset_name,
+            dataset_config_name,
+            split=split,
+            **loader_kwargs,
+        )
+
+    def _load_huggingface_dataset(self) -> None:
+        dataset = self.load_huggingface_dataset(
+            name=self.name,
+            dataset_split=self.dataset_split,
+            data_params=self.data_params,
+        )
 
         if hasattr(dataset, "to_pandas"):
             frame = dataset.to_pandas()
@@ -101,10 +156,12 @@ class FlexibleHuggingFaceDataset(DataConfig):
         """Load the configured Hugging Face dataset into ``_X`` and ``_y``.
 
         The method requires the optional ``datasets`` dependency, forwards
-        ``name``, ``dataset_config_name``, ``dataset_split``, and ``data_params``
-        to :func:`datasets.load_dataset`, truncates the frame with ``limit``
-        before validating columns, and then materializes ``_X`` from ``keep``
-        and ``_y`` from ``target``. Missing required columns raise ``KeyError``.
+        ``name``/``data_params.dataset_name``, ``data_params.dataset_config_name``
+        (or ``data_params.subset``), ``dataset_split``/``data_params.split``, and
+        ``data_params`` loader kwargs to :func:`datasets.load_dataset`, truncates
+        the frame with ``limit`` before validating columns, and then materializes
+        ``_X`` from ``keep`` and ``_y`` from ``target``. Missing required columns
+        raise ``KeyError``.
 
         Returns:
             The current dataset config after loading runtime state.

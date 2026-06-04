@@ -225,9 +225,9 @@ OPTIONAL_FAMILY_REGISTRY: dict[str, OptionalFamily] = {
         module="deckard.plugins.textattack",
         required_imports=("textattack",),
     ),
-    "transformers": OptionalFamily(
+    "datasets": OptionalFamily(
         kind="plugin",
-        module="deckard.plugins.transformers",
+        module="deckard.plugins.datasets",
         required_imports=("datasets",),
     ),
     "transformers_framework": OptionalFamily(

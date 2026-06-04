@@ -300,8 +300,8 @@ def test_joblib_launcher_syncs_scores_and_attrs_sklearn(tmp_path):
         "hydra.launcher.temp_folder=null",
         "hydra.launcher.max_nbytes=null",
         "hydra.launcher.mmap_mode=r",
-        "hydra.sweeper.n_trials=1",
-        "hydra.sweeper.n_jobs=1",
+        "hydra.sweeper.n_trials=2",
+        "hydra.sweeper.n_jobs=2",
         f"hydra.sweeper.study_name={study_name}",
         f"hydra.sweeper.storage={storage}",
         f"experiment_name={experiment_name}",
@@ -309,6 +309,7 @@ def test_joblib_launcher_syncs_scores_and_attrs_sklearn(tmp_path):
         "~model_alias",
         "~attack_alias",
         "~defense_alias",
+        "--multirun",
     ]
 
     result = subprocess.run(
@@ -345,7 +346,9 @@ def test_joblib_launcher_syncs_scores_and_attrs_sklearn(tmp_path):
 
     study = optuna.load_study(study_name=study_name, storage=storage)
     trials = study.get_trials(deepcopy=False)
-    assert len(trials) >= 1
+    assert len(trials) == 2
+    assert all(trial.state == optuna.trial.TrialState.COMPLETE for trial in trials)
+
     attrs = trials[0].user_attrs
     assert "experiment_name" in attrs
     assert len(attrs) > 1
