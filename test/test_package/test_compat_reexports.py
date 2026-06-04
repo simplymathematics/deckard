@@ -13,6 +13,16 @@ def test_fairness_pytorch_compat_reexport_matches_framework_symbol():
     assert compat_mod.__all__ == ["TinyFairness"]
 
 
+def test_tiny_fairness_sensitive_labels_are_plain_python_strings():
+    framework_mod = importlib.import_module("deckard.frameworks.pytorch.fairness_data")
+
+    dataset = framework_mod.TinyFairness(num_samples=8, random_state=7)
+
+    assert isinstance(dataset._sensitive, list)
+    assert dataset._sensitive
+    assert all(isinstance(label, str) for label in dataset._sensitive)
+
+
 def test_plot_declarations_expose_expected_plugins_and_defaults():
     declarations = importlib.import_module("deckard.plot.declarations")
 

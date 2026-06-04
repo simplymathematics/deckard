@@ -58,7 +58,8 @@ class TinyFairness(Dataset):
         # Binary labels 0/1
         self._y = np.random.randint(0, 2, size=num_samples)
         # Sensitive attribute: two groups 'A' and 'B'
-        self._sensitive = np.random.choice(["A", "B"], size=num_samples)
+        sensitive_values = np.random.choice(["A", "B"], size=num_samples)
+        self._sensitive = [str(value) for value in sensitive_values.tolist()]
         self.split = split
         self.transform = transform
 
