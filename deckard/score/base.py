@@ -28,7 +28,26 @@ from ..utils import (
     resolve_class,
     safe_store,
 )
-from .canon import normalize_scorer_mode
+from .canon import (
+    DEFAULT_SCORING_MODE_BY_TYPE,
+    DEFAULT_SCORING_STAGE_BY_TYPE,
+    SCORING_STAGE_TOKEN_ALIASES,
+    SUPPORTED_ATTACK_SCORE_MODES,
+    SUPPORTED_DATA_SCORE_MODES,
+    SUPPORTED_DETECTOR_SCORE_MODES,
+    SUPPORTED_EXPERIMENT_DEFENSE_SCORING_STAGES,
+    SUPPORTED_EXPERIMENT_SCORE_MODES,
+    SUPPORTED_MODEL_SCORE_MODES,
+    SUPPORTED_PIPELINE_SCORE_MODES,
+    SUPPORTED_SCORING_STAGES,
+    ScoringAttackStage,
+    ScoringDataStage,
+    ScoringDefenseStage,
+    ScoringDetectorStage,
+    ScoringModelStage,
+    ScoringPipelineStage,
+    normalize_scorer_mode,
+)
 from ._runtime import series_like_to_float_dict as _series_like_to_float_dict
 
 logger = logging.getLogger(__name__)
@@ -73,203 +92,6 @@ ScoreKwargValue = (
 )
 
 
-class ScoringDefenseStage(str, Enum):
-    """Enum representing the defense stage for scoring context.
-
-    Attributes
-    ----------
-    PRE_DEFENSE : str
-        Score operates on original data before defense application.
-    POST_DEFENSE : str
-        Score operates on data after defense application (fitted/transformed).
-    VAL_DEFENSE : str
-        Score operates on validation data for defense evaluation.
-
-    Attributes:
-        Runtime attributes are inherited or configured via class fields documented in this module.
-    """
-
-    PRE_DEFENSE = "pre-defense"
-    POST_DEFENSE = "post-defense"
-    VAL_DEFENSE = "val"
-
-
-class ScoringPipelineStage(str, Enum):
-    """Enum representing the pipeline stage for scoring context.
-
-    Attributes
-    ----------
-    POST_PIPELINE : str
-        Score operates after the full processing pipeline has been applied.
-    VAL_PIPELINE : str
-        Score operates on validation data for pipeline evaluation.
-
-    Attributes:
-        Runtime attributes are inherited or configured via class fields documented in this module.
-    """
-
-    POST_PIPELINE = "post-pipeline"
-    VAL_PIPELINE = "val"
-
-
-class ScoringAttackStage(str, Enum):
-    """Enum representing the attack stage for scoring context.
-
-    Attributes
-    ----------
-    PRE_ATTACK : str
-        Score operates on benign (non-adversarial) input data.
-    POST_ATTACK : str
-        Score operates on adversarially modified input data.
-    VAL_ATTACK : str
-        Score operates on validation data for attack evaluation.
-    """
-
-    PRE_ATTACK = "benign"
-    POST_ATTACK = "adversarial"
-    VAL_ATTACK = "val"
-
-
-class ScoringDataStage(str, Enum):
-    """Enum representing the data transformation stage for scoring context.
-
-    Attributes
-    ----------
-    PRE_SAMPLE : str
-        Score operates on original data before sampling or transformation.
-    POST_SAMPLE : str
-        Score operates on data after sampling or transformation.
-    VAL_ATTACK : str
-        Score operates on validation data.
-    """
-
-    PRE_SAMPLE = "pre-sample"
-    POST_SAMPLE = "post-sample"
-    VAL_ATTACK = "val"
-
-
-class ScoringModelStage(str, Enum):
-    """Enum representing the model stage for scoring context.
-
-    Attributes
-    ----------
-    MODEL_TRAIN : str
-        Score operates on training data during model development.
-    MODEL_TEST : str
-        Score operates on test data for final model evaluation.
-    MODEL_VAL : str
-        Score operates on validation data for model tuning and selection.
-    """
-
-    MODEL_TRAIN = "train"
-    MODEL_TEST = "test"
-    MODEL_VAL = "val"
-
-
-class ScoringDetectorStage(str, Enum):
-    """Enum representing the detector stage for scoring context.
-
-    Attributes
-    ----------
-    PRE_FILTER : str
-        Score operates on data before detector-based filtering is applied.
-    POST_FILTER : str
-        Score operates on data after detector-based filtering is applied.
-    POST_FILTER : str
-        Score operates on validation data.
-    """
-
-    PRE_FILTER = "pre-filter"
-    POST_FILTER = "post-filter"
-    VAL_FILTER = "val"
-
-
-class ScoringDVCStage(str, Enum):
-    """Enum representing DVC hook score stages for system monitoring scorers."""
-
-    DATA_SCORE = "data-score"
-    MODEL_SCORE = "model-score"
-    ATTACK_SCORE = "attack-score"
-    DETECTOR_SCORE = "detector-score"
-
-
-CANON_SCORING_STAGE_ENUMS: tuple[type[Enum], ...] = (
-    ScoringDefenseStage,
-    ScoringPipelineStage,
-    ScoringAttackStage,
-    ScoringDataStage,
-    ScoringModelStage,
-    ScoringDetectorStage,
-    ScoringDVCStage,
-)
-
-SUPPORTED_SCORING_STAGES: frozenset[str] = frozenset(
-    str(member.value).strip().lower()
-    for enum_cls in CANON_SCORING_STAGE_ENUMS
-    for member in enum_cls
-)
-
-SUPPORTED_DATA_SCORE_MODES: frozenset[str] = frozenset(
-    {
-        ScoringDataStage.PRE_SAMPLE.value,
-        ScoringModelStage.MODEL_TRAIN.value,
-        ScoringModelStage.MODEL_TEST.value,
-        ScoringModelStage.MODEL_VAL.value,
-    },
-)
-
-SUPPORTED_MODEL_SCORE_MODES: frozenset[str] = frozenset(
-    {
-        ScoringModelStage.MODEL_TRAIN.value,
-        ScoringModelStage.MODEL_TEST.value,
-        ScoringModelStage.MODEL_VAL.value,
-    },
-)
-
-SUPPORTED_EXPERIMENT_DEFENSE_SCORING_STAGES: frozenset[str] = frozenset(
-    {
-        ScoringDefenseStage.PRE_DEFENSE.value,
-        ScoringDefenseStage.POST_DEFENSE.value,
-        ScoringDataStage.POST_SAMPLE.value,
-    },
-)
-SUPPORTED_ATTACK_SCORE_MODES: frozenset[str] = frozenset(
-    {
-        ScoringAttackStage.PRE_ATTACK.value,
-        ScoringAttackStage.POST_ATTACK.value,
-        ScoringAttackStage.VAL_ATTACK.value,
-    },
-)
-
-SUPPORTED_EXPERIMENT_SCORE_MODES: frozenset[str] = frozenset(
-    {
-        ScoringDefenseStage.PRE_DEFENSE.value,
-        ScoringDefenseStage.POST_DEFENSE.value,
-        ScoringDefenseStage.VAL_DEFENSE.value,
-        ScoringPipelineStage.POST_PIPELINE.value,
-        ScoringPipelineStage.VAL_PIPELINE.value,
-        ScoringAttackStage.PRE_ATTACK.value,
-        ScoringAttackStage.POST_ATTACK.value,
-        ScoringAttackStage.VAL_ATTACK.value,
-    },
-)
-
-SUPPORTED_DETECTOR_SCORE_MODES: frozenset[str] = frozenset(
-    {
-        ScoringDetectorStage.PRE_FILTER.value,
-        ScoringDetectorStage.POST_FILTER.value,
-        ScoringDetectorStage.VAL_FILTER.value,
-    },
-)
-
-SUPPORTED_PIPELINE_SCORE_MODES: frozenset[str] = frozenset(
-    {
-        ScoringPipelineStage.POST_PIPELINE.value,
-        ScoringPipelineStage.VAL_PIPELINE.value,
-    },
-)
-
-
 class _DataScorerMarker:
     """Mixin that marks a ScorerDictConfig as operating on data rather than model predictions.
 
@@ -288,60 +110,6 @@ class _AttackProfileScorer:
     """
 
     _profile_attr: str = "evasion"
-
-
-@dataclass(eq=True)
-class ScorerMixin:
-    """Base callable scorer handler used by runtime scorer context resolution.
-
-    The ``runtime`` attribute is the active ``ScorerDictConfig`` instance owned
-    by ``ScorerDictConfig.__call__``. Attribute access is forwarded to that
-    runtime object so mixins can delegate scorer configuration and mutable state.
-
-    Attributes:
-        Runtime attributes are inherited or configured via class fields documented in this module.
-    """
-
-    runtime: Any = None
-
-    def __getattr__(self, name: str) -> Any:
-        return getattr(self.runtime, name)
-
-    def __setattr__(self, name: str, value: Any) -> None:
-        if name == "runtime":
-            object.__setattr__(self, name, value)
-            return
-        runtime = object.__getattribute__(self, "runtime")
-        if runtime is None:
-            object.__setattr__(self, name, value)
-            return
-        setattr(runtime, name, value)
-
-    def __call__(
-        self,
-        *,
-        data: DataConfig | None = None,
-        model: EstimatorLike | None = None,
-        attack: AttackLike | None = None,
-        mode: str = "test",
-    ) -> ScoreDict:
-        """Execute one scorer handler.
-
-        Args:
-            data: Data runtime containing train/test/val splits.
-            model: User model object or model config supplied to scorer chain.
-            attack: Instantiated attack object (optional).
-            mode: Scoring mode token.
-
-        Returns:
-            Score payload dictionary from scorer execution.
-
-        Raises:
-            NotImplementedError: Always raised by base mixin; subclasses must implement.
-        """
-        raise NotImplementedError(
-            "Scorer mixins must implement __call__",
-        )
 
 
 @dataclass(eq=False, kw_only=True)
@@ -1113,6 +881,11 @@ class ScorerDictConfig(BaseConfig):
                 )
 
     @staticmethod
+    def _normalize_stage_token(token: str) -> str:
+        normalized = str(token).strip().lower()
+        return SCORING_STAGE_TOKEN_ALIASES.get(normalized, normalized)
+
+    @staticmethod
     def _normalize_stage_field(
         stage_value: Union[str, list[str], tuple[str, ...], None],
     ) -> List[str]:
@@ -1161,16 +934,27 @@ class ScorerDictConfig(BaseConfig):
         if stage_value is None:
             return set()
         if isinstance(stage_value, Enum):
-            return {str(stage_value.value).strip().lower()}
+            return {
+                ScorerDictConfig._normalize_stage_token(
+                    str(stage_value.value).strip().lower(),
+                ),
+            }
         if isinstance(stage_value, str):
-            tokens = [token.strip().lower() for token in stage_value.split(",")]
+            tokens = [
+                ScorerDictConfig._normalize_stage_token(token.strip().lower())
+                for token in stage_value.split(",")
+            ]
             return {token for token in tokens if token != ""}
         if isinstance(stage_value, (list, tuple, set, ListConfig)):
             merged: set[str] = set()
             for item in stage_value:
                 merged.update(ScorerDictConfig._stage_tokens(item))
             return merged
-        return {str(stage_value).strip().lower()}
+        return {
+            ScorerDictConfig._normalize_stage_token(
+                str(stage_value).strip().lower(),
+            ),
+        }
 
     @classmethod
     def _runtime_stage_tokens(
@@ -1258,24 +1042,53 @@ class ScorerDictConfig(BaseConfig):
             return False
         return not configured.isdisjoint(runtime_stage_tokens)
 
+    def _default_runtime_mode(self) -> str:
+        scoring_type = str(getattr(self, "scoring_type", "")).strip().lower()
+        return DEFAULT_SCORING_MODE_BY_TYPE.get(scoring_type, "test")
+
+    def _default_runtime_stage(self) -> str:
+        scoring_type = str(getattr(self, "scoring_type", "")).strip().lower()
+        return DEFAULT_SCORING_STAGE_BY_TYPE.get(scoring_type, "test")
+
     @staticmethod
+    def _first_stage_value(requested_stage: Union[str, list[str], None]) -> str | None:
+        if requested_stage is None:
+            return None
+        if isinstance(requested_stage, str):
+            token = requested_stage.split(",", 1)[0].strip().lower()
+            return token if token != "" else None
+        if isinstance(requested_stage, (list, tuple, ListConfig)):
+            for item in requested_stage:
+                token = str(item).strip().lower()
+                if token != "":
+                    return token
+            return None
+        token = str(requested_stage).strip().lower()
+        return token if token != "" else None
+
     def _resolve_stage_key(
+        self,
         mode: str | None,
         requested_stage: Union[str, list[str], None] = None,
     ) -> str:
         if mode is not None:
-            return ScorerDictConfig._resolve_runtime_mode(
+            return self._resolve_runtime_mode(
                 mode,
                 requested_stage=requested_stage,
             )
-        return "test"
+        stage_value = self._first_stage_value(requested_stage)
+        if stage_value is not None:
+            return stage_value
+        return self._default_runtime_stage()
 
-    @staticmethod
     def _resolve_runtime_mode(
+        self,
         mode: str | None,
         requested_stage: Union[str, list[str], None] = None,
     ) -> str:
         _ = requested_stage
+        if mode is None:
+            return normalize_scorer_mode(self._default_runtime_mode())
         return normalize_scorer_mode(mode)
 
     def __iter__(self):
@@ -1519,6 +1332,291 @@ class ScorerDictConfig(BaseConfig):
             "Probability scorer requires probability outputs, but model does not support predict_proba and y_pred is not a valid probability array.",
         )
 
+    @staticmethod
+    def _resolve_ind_dep_from_kwargs(
+        ind: MatrixLike | ArrayLike | None,
+        dep: MatrixLike | ArrayLike | None,
+        kwargs: dict[str, Any],
+    ) -> tuple[MatrixLike | ArrayLike | None, MatrixLike | ArrayLike | None]:
+        if ind is None and "X" in kwargs:
+            ind = kwargs.pop("X")
+        if ind is None and "y_pred" in kwargs:
+            ind = kwargs.pop("y_pred")
+        if dep is None and "y" in kwargs:
+            dep = kwargs.pop("y")
+        if dep is None and "y_true" in kwargs:
+            dep = kwargs.pop("y_true")
+        return ind, dep
+
+    def _resolve_mode_payload(
+        self,
+        effective_mode: str,
+        data: "DataConfig | None",
+        model: EstimatorLike | None,
+        attack: AttackLike | None,
+    ) -> tuple[MatrixLike | ArrayLike | None, MatrixLike | ArrayLike | None]:
+        resolver_map = {
+            "test": self._mode_payload_test,
+            "train": self._mode_payload_train,
+            "attack": self._mode_payload_attack,
+            "val": self._mode_payload_val,
+            "all": self._mode_payload_all,
+            "attack-val": self._mode_payload_attack_val,
+            "pre-sample": self._mode_payload_pre_sample,
+        }
+        resolver = resolver_map.get(effective_mode)
+        if resolver is None:
+            return None, None
+        return resolver(data=data, model=model, attack=attack)
+
+    @staticmethod
+    def _mode_payload_test(
+        *,
+        data: "DataConfig | None",
+        model: EstimatorLike | None,
+        attack: AttackLike | None,
+    ) -> tuple[MatrixLike | ArrayLike | None, MatrixLike | ArrayLike | None]:
+        del attack
+        assert data is not None
+        dep = data.y_test
+        ind = getattr(model, "test_predictions", None)
+        if ind is None:
+            ind = getattr(model, "predictions", None)
+        return ind, dep
+
+    @staticmethod
+    def _mode_payload_train(
+        *,
+        data: "DataConfig | None",
+        model: EstimatorLike | None,
+        attack: AttackLike | None,
+    ) -> tuple[MatrixLike | ArrayLike | None, MatrixLike | ArrayLike | None]:
+        del attack
+        assert data is not None and model is not None
+        return model.training_predictions, data.y_train
+
+    @staticmethod
+    def _mode_payload_attack(
+        *,
+        data: "DataConfig | None",
+        model: EstimatorLike | None,
+        attack: AttackLike | None,
+    ) -> tuple[MatrixLike | ArrayLike | None, MatrixLike | ArrayLike | None]:
+        del model
+        assert data is not None and attack is not None
+        dep = getattr(attack, "attacked_labels", None)
+        if dep is None:
+            y_test = getattr(data, "y_test", None)
+            if y_test is None:
+                raise ValueError(
+                    "attack mode requires attack.attacked_labels or data.y_test",
+                )
+            dep = y_test[: attack.attack_size]
+        return attack.attack_predictions, dep
+
+    @staticmethod
+    def _mode_payload_val(
+        *,
+        data: "DataConfig | None",
+        model: EstimatorLike | None,
+        attack: AttackLike | None,
+    ) -> tuple[MatrixLike | ArrayLike | None, MatrixLike | ArrayLike | None]:
+        del attack
+        assert data is not None and model is not None
+        return model.val_predictions, data.y_val
+
+    @staticmethod
+    def _mode_payload_all(
+        *,
+        data: "DataConfig | None",
+        model: EstimatorLike | None,
+        attack: AttackLike | None,
+    ) -> tuple[MatrixLike | ArrayLike | None, MatrixLike | ArrayLike | None]:
+        del attack
+        assert data is not None and model is not None
+        dep = getattr(data, "_y", None)
+        if dep is None:
+            y_parts = [
+                getattr(data, "y_train", None),
+                getattr(data, "y_test", None),
+                getattr(data, "y_val", None),
+            ]
+            y_parts = [part for part in y_parts if part is not None]
+            if len(y_parts) > 0:
+                dep = np.concatenate([np.asarray(part) for part in y_parts])
+
+        ind = getattr(model, "predictions", None)
+        if ind is None:
+            pred_parts = [
+                getattr(model, "training_predictions", None),
+                getattr(model, "test_predictions", None),
+                getattr(model, "val_predictions", None),
+            ]
+            pred_parts = [part for part in pred_parts if part is not None]
+            if len(pred_parts) > 0:
+                ind = np.concatenate([np.asarray(part) for part in pred_parts])
+        return ind, dep
+
+    @staticmethod
+    def _mode_payload_attack_val(
+        *,
+        data: "DataConfig | None",
+        model: EstimatorLike | None,
+        attack: AttackLike | None,
+    ) -> tuple[MatrixLike | ArrayLike | None, MatrixLike | ArrayLike | None]:
+        del model
+        assert data is not None and attack is not None
+        dep = getattr(attack, "attacked_labels", None)
+        if dep is None:
+            dep = data.y_val
+        return attack.attack_predictions, dep
+
+    @staticmethod
+    def _mode_payload_pre_sample(
+        *,
+        data: "DataConfig | None",
+        model: EstimatorLike | None,
+        attack: AttackLike | None,
+    ) -> tuple[MatrixLike | ArrayLike | None, MatrixLike | ArrayLike | None]:
+        del model, attack
+        assert data is not None
+        dep = getattr(data, "y", getattr(data, "_y", None))
+        ind = getattr(data, "X", getattr(data, "_X", None))
+        if dep is None or ind is None:
+            raise ValueError(
+                "pre-sample mode requires data.X/data.y (or data._X/data._y) to be loaded",
+            )
+        return ind, dep
+
+    @staticmethod
+    def _normalize_existing_stage_results(
+        results: dict[str, Any],
+        stage_key: str,
+    ) -> dict[str, Any]:
+        existing_stage = results.get(stage_key)
+        if isinstance(existing_stage, dict):
+            return dict(existing_stage)
+        if len(results) > 0 and all(not isinstance(v, dict) for v in results.values()):
+            return dict(results)
+        return {}
+
+    @staticmethod
+    def _resolve_attack_placeholders(
+        kwargs: dict[str, Any],
+        attack: AttackLike | None,
+    ) -> None:
+        if attack is None:
+            return
+        for key, value in kwargs.items():
+            if value == "{attack}":
+                kwargs[key] = getattr(
+                    attack,
+                    "attack",
+                    getattr(attack, "_attack", None),
+                )
+
+    def _evaluate_stage_scorers(
+        self,
+        *,
+        stage_results: dict[str, Any],
+        runtime_stage_tokens: set[str],
+        scorer_is_data_profile: bool,
+        effective_mode: str,
+        y_proba: MatrixLike | ArrayLike | None,
+        dep: MatrixLike | ArrayLike | None,
+        ind: MatrixLike | ArrayLike | None,
+        data: "DataConfig | None",
+        model: EstimatorLike | None,
+        runtime_kwargs: dict[str, Any],
+    ) -> None:
+        for key, scorer in self.scorers.items():
+            if not self._stage_matches(
+                getattr(scorer, "stage", ""),
+                runtime_stage_tokens,
+            ):
+                continue
+            if stage_results.get(key) is not None:
+                continue
+
+            metric_input = self._resolve_metric_input(
+                key=key,
+                scorer=scorer,
+                scorer_is_data_profile=scorer_is_data_profile,
+                effective_mode=effective_mode,
+                y_proba=y_proba,
+                dep=dep,
+                ind=ind,
+                data=data,
+                model=model,
+            )
+            value = scorer(
+                dep=dep,
+                ind=metric_input,
+                **runtime_kwargs,
+            )
+            logger.debug(
+                "Scorer '%s' raw output: %s (type: %s)",
+                key,
+                value,
+                type(value),
+            )
+            if isinstance(value, (dict, pd.Series, pd.DataFrame)):
+                flat_scores = _series_like_to_float_dict(value)
+                for metric_name, metric_value in flat_scores.items():
+                    stage_results[f"{key}_{metric_name}"] = metric_value
+            else:
+                stage_results[key] = _series_like_to_float_dict(value)["value"]
+
+    def _resolve_metric_input(
+        self,
+        *,
+        key: str,
+        scorer: "ScorerConfig",
+        scorer_is_data_profile: bool,
+        effective_mode: str,
+        y_proba: MatrixLike | ArrayLike | None,
+        dep: MatrixLike | ArrayLike | None,
+        ind: MatrixLike | ArrayLike | None,
+        data: "DataConfig | None",
+        model: EstimatorLike | None,
+    ) -> MatrixLike | ArrayLike | None:
+        metric_input: MatrixLike | ArrayLike | None = ind
+        if scorer_is_data_profile and scorer.needs_proba is True:
+            raise ValueError(
+                f"Scorer '{key}' is configured as data-profile but requests probability outputs.",
+            )
+        if scorer.needs_proba is not True:
+            return metric_input
+        if effective_mode == "pre-sample":
+            raise ValueError(
+                f"Scorer '{key}' requires raw model outputs but pre-sample mode is reserved for full-dataset diagnostics.",
+            )
+        if y_proba is not None:
+            metric_input = y_proba
+        else:
+            X_mode = self.resolve_mode_features(
+                mode=effective_mode,
+                data=data,
+            )
+            if X_mode is None or model is None:
+                raise ValueError(
+                    f"Scorer '{key}' requires raw model outputs from predict_proba; provide y_proba or pass model+data context",
+                )
+            metric_input = self.predict_proba_from_model(
+                model=model,
+                X=X_mode,
+                y_true=dep,
+                y_pred=ind,
+            )
+
+        metric_arr = np.asarray(to_numpy_if_torch(metric_input))
+        if metric_arr.ndim not in (1, 2):
+            raise ValueError(
+                f"Scorer '{key}' expected 1D/2D raw output array, got shape {metric_arr.shape}. "
+                "Check your model/scorer configuration.",
+            )
+        return metric_input
+
     def __call__(
         self,
         mode: str | None = None,
@@ -1584,16 +1682,7 @@ class ScorerDictConfig(BaseConfig):
             mode=mode,
             requested_stage=runtime_stage,
         )
-        existing_stage = results.get(stage_key)
-        if isinstance(existing_stage, dict):
-            stage_results: dict[str, Any] = dict(existing_stage)
-        elif len(results) > 0 and all(
-            not isinstance(v, dict) for v in results.values()
-        ):
-            # Backward compatibility for legacy flat score-file payloads.
-            stage_results = dict(results)
-        else:
-            stage_results = {}
+        stage_results = self._normalize_existing_stage_results(results, stage_key)
 
         runtime_stage_tokens = self._runtime_stage_tokens(
             mode=effective_mode,
@@ -1605,14 +1694,7 @@ class ScorerDictConfig(BaseConfig):
                 f"configured={self.stage}, runtime={sorted(runtime_stage_tokens)}",
             )
 
-        if ind is None and "X" in kwargs:
-            ind = kwargs.pop("X")
-        if ind is None and "y_pred" in kwargs:
-            ind = kwargs.pop("y_pred")
-        if dep is None and "y" in kwargs:
-            dep = kwargs.pop("y")
-        if dep is None and "y_true" in kwargs:
-            dep = kwargs.pop("y_true")
+        ind, dep = self._resolve_ind_dep_from_kwargs(ind, dep, kwargs)
 
         if ind is not None:
             if dep is None:
@@ -1620,78 +1702,16 @@ class ScorerDictConfig(BaseConfig):
                     "If y_pred is provided, y_true must also be provided.",
                 )
         else:
-            if effective_mode == "test":
-                assert data is not None
-                dep = data.y_test
-                ind = getattr(model, "test_predictions", None)
-                if ind is None:
-                    ind = getattr(model, "predictions", None)
-            elif effective_mode == "train":
-                assert data is not None and model is not None
-                dep = data.y_train
-                ind = model.training_predictions
-            elif effective_mode == "attack":
-                assert data is not None and attack is not None
-                dep = getattr(attack, "attacked_labels", None)
-                if dep is None:
-                    y_test = getattr(data, "y_test", None)
-                    if y_test is None:
-                        raise ValueError(
-                            "attack mode requires attack.attacked_labels or data.y_test",
-                        )
-                    dep = y_test[: attack.attack_size]
-                ind = attack.attack_predictions
-            elif effective_mode == "val":
-                assert data is not None and model is not None
-                dep = data.y_val
-                ind = model.val_predictions
-            elif effective_mode == "all":
-                assert data is not None and model is not None
-                dep = getattr(data, "_y", None)
-                if dep is None:
-                    y_parts = [
-                        getattr(data, "y_train", None),
-                        getattr(data, "y_test", None),
-                        getattr(data, "y_val", None),
-                    ]
-                    y_parts = [part for part in y_parts if part is not None]
-                    if len(y_parts) > 0:
-                        dep = np.concatenate([np.asarray(part) for part in y_parts])
-                ind = getattr(model, "predictions", None)
-                if ind is None:
-                    pred_parts = [
-                        getattr(model, "training_predictions", None),
-                        getattr(model, "test_predictions", None),
-                        getattr(model, "val_predictions", None),
-                    ]
-                    pred_parts = [part for part in pred_parts if part is not None]
-                    if len(pred_parts) > 0:
-                        ind = np.concatenate([np.asarray(part) for part in pred_parts])
-            elif effective_mode == "attack-val":
-                assert data is not None and attack is not None
-                dep = getattr(attack, "attacked_labels", None)
-                if dep is None:
-                    dep = data.y_val
-                ind = attack.attack_predictions
-            elif effective_mode == "pre-sample":
-                assert data is not None
-                dep = getattr(data, "y", getattr(data, "_y", None))
-                ind = getattr(data, "X", getattr(data, "_X", None))
-                if dep is None or ind is None:
-                    raise ValueError(
-                        "pre-sample mode requires data.X/data.y (or data._X/data._y) to be loaded",
-                    )
-            elif dep is None:
+            ind, dep = self._resolve_mode_payload(
+                effective_mode=effective_mode,
+                data=data,
+                model=model,
+                attack=attack,
+            )
+            if dep is None:
                 raise AssertionError("y_true must be provided if mode is None")
 
-        if attack is not None:
-            for key, value in kwargs.items():
-                if value == "{attack}":
-                    kwargs[key] = getattr(
-                        attack,
-                        "attack",
-                        getattr(attack, "_attack", None),
-                    )
+        self._resolve_attack_placeholders(kwargs, attack)
 
         y_proba = kwargs.pop("y_proba", None)
 
@@ -1708,66 +1728,18 @@ class ScorerDictConfig(BaseConfig):
                 "ScorerDictConfig must have at least one scorer defined; got empty scorers dict.",
             )
 
-        for key, scorer in self.scorers.items():
-            if not self._stage_matches(
-                getattr(scorer, "stage", ""),
-                runtime_stage_tokens,
-            ):
-                continue
-            scored_key = key
-            if stage_results.get(scored_key) is None:
-                metric_input = ind
-                if scorer_is_data_profile and scorer.needs_proba is True:
-                    raise ValueError(
-                        f"Scorer '{key}' is configured as data-profile but requests probability outputs.",
-                    )
-                if scorer.needs_proba is True:
-                    if effective_mode == "pre-sample":
-                        raise ValueError(
-                            f"Scorer '{key}' requires raw model outputs but pre-sample mode is reserved for full-dataset diagnostics.",
-                        )
-                    if y_proba is not None:
-                        metric_input = y_proba
-                    else:
-                        X_mode = self.resolve_mode_features(
-                            mode=effective_mode,
-                            data=data,
-                        )
-                        if X_mode is not None and model is not None:
-                            metric_input = self.predict_proba_from_model(
-                                model=model,
-                                X=X_mode,
-                                y_true=dep,
-                                y_pred=ind,
-                            )
-                        else:
-                            raise ValueError(
-                                f"Scorer '{key}' requires raw model outputs from predict_proba; provide y_proba or pass model+data context",
-                            )
-                    # Final check: ensure metric_input is valid
-                    metric_arr = np.asarray(to_numpy_if_torch(metric_input))
-                    if metric_arr.ndim not in (1, 2):
-                        raise ValueError(
-                            f"Scorer '{key}' expected 1D/2D raw output array, got shape {metric_arr.shape}. "
-                            f"Check your model/scorer configuration.",
-                        )
-                # Debug print: show raw output from each scorer
-                value = scorer(
-                    dep=dep,
-                    ind=metric_input,
-                    **runtime_kwargs,
-                )
-                logger.debug(
-                    f"Scorer '{scored_key}' raw output: {value} (type: {type(value)})",
-                )
-                if isinstance(value, (dict, pd.Series, pd.DataFrame)):
-                    flat_scores = _series_like_to_float_dict(value)
-                    for k, v in flat_scores.items():
-                        stage_results[f"{scored_key}_{k}"] = v
-                else:
-                    stage_results[scored_key] = _series_like_to_float_dict(value)[
-                        "value"
-                    ]
+        self._evaluate_stage_scorers(
+            stage_results=stage_results,
+            runtime_stage_tokens=runtime_stage_tokens,
+            scorer_is_data_profile=scorer_is_data_profile,
+            effective_mode=effective_mode,
+            y_proba=y_proba,
+            dep=dep,
+            ind=ind,
+            data=data,
+            model=model,
+            runtime_kwargs=runtime_kwargs,
+        )
 
         if not stage_results:
             raise KeyError(
@@ -1848,7 +1820,11 @@ def build_scorer_dict(cfg: ScorerDictConfig):
     return cfg if isinstance(cfg, ScorerDictConfig) else ScorerDictConfig(**cfg)
 
 
-def _default_classification_scorers() -> dict[str, ScorerConfig]:
+def default_weighted_classification_core_scorers(
+    *,
+    f1_key: str = "f1",
+) -> dict[str, ScorerConfig]:
+    """Return reusable weighted classification metrics without proba-only scorers."""
     return {
         "accuracy": ScorerConfig(
             score_name="accuracy",
@@ -1864,11 +1840,37 @@ def _default_classification_scorers() -> dict[str, ScorerConfig]:
             score_function="sklearn.metrics.recall_score",
             score_params={"average": "weighted", "zero_division": 0},
         ),
-        "f1": ScorerConfig(
-            score_name="f1",
+        f1_key: ScorerConfig(
+            score_name=f1_key,
             score_function="sklearn.metrics.f1_score",
             score_params={"average": "weighted", "zero_division": 0},
         ),
+    }
+
+
+def default_regression_scorers() -> dict[str, ScorerConfig]:
+    """Return reusable default regression metrics."""
+    return {
+        "mse": ScorerConfig(
+            score_name="mse",
+            score_function="sklearn.metrics.mean_squared_error",
+            greater_is_better=False,
+        ),
+        "mae": ScorerConfig(
+            score_name="mae",
+            score_function="sklearn.metrics.mean_absolute_error",
+            greater_is_better=False,
+        ),
+        "r2": ScorerConfig(
+            score_name="r2",
+            score_function="sklearn.metrics.r2_score",
+        ),
+    }
+
+
+def _default_classification_scorers() -> dict[str, ScorerConfig]:
+    return {
+        **default_weighted_classification_core_scorers(),
         "roc_auc": ScorerConfig(
             score_name="roc_auc",
             score_function="sklearn.metrics.roc_auc_score",
@@ -1888,46 +1890,11 @@ def _default_classification_scorers() -> dict[str, ScorerConfig]:
 
 
 def _default_regression_scorers() -> dict[str, ScorerConfig]:
-    return {
-        "mse": ScorerConfig(
-            score_name="mse",
-            score_function="sklearn.metrics.mean_squared_error",
-            greater_is_better=False,
-        ),
-        "mae": ScorerConfig(
-            score_name="mae",
-            score_function="sklearn.metrics.mean_absolute_error",
-            greater_is_better=False,
-        ),
-        "r2": ScorerConfig(
-            score_name="r2",
-            score_function="sklearn.metrics.r2_score",
-        ),
-    }
+    return default_regression_scorers()
 
 
 def _default_pytorch_classification_scorers() -> dict[str, ScorerConfig]:
-    return {
-        "accuracy": ScorerConfig(
-            score_name="accuracy",
-            score_function="sklearn.metrics.accuracy_score",
-        ),
-        "precision": ScorerConfig(
-            score_name="precision",
-            score_function="sklearn.metrics.precision_score",
-            score_params={"average": "weighted", "zero_division": 0},
-        ),
-        "recall": ScorerConfig(
-            score_name="recall",
-            score_function="sklearn.metrics.recall_score",
-            score_params={"average": "weighted", "zero_division": 0},
-        ),
-        "f1": ScorerConfig(
-            score_name="f1",
-            score_function="sklearn.metrics.f1_score",
-            score_params={"average": "weighted", "zero_division": 0},
-        ),
-    }
+    return default_weighted_classification_core_scorers()
 
 
 @dataclass(eq=False, kw_only=True)

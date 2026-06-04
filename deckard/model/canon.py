@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from typing import Any, Final, Mapping, TypedDict
 
+from ..artifacts import ScoreDict
 from ..orchestration import (
     MODE_ALIASES as _MODE_ALIASES,
     STAGE_ALIASES as _STAGE_ALIASES,
@@ -37,11 +38,25 @@ CANONICAL_MODEL_SCORE_STAGES: Final[tuple[str, ...]] = (
     "pre-sample",
     "post-sample",
     "post-pipeline",
+    "pre-defense",
+    "post-defense",
     "all",
     "auto",
 )
 
-CANONICAL_MODEL_SCORE_STAGE_ALIASES: Final[dict[str, str]] = dict(_STAGE_ALIASES)
+CANONICAL_MODEL_SCORE_STAGE_ALIASES: Final[dict[str, str]] = {
+    **dict(_STAGE_ALIASES),
+    "pre-defense": "pre-defense",
+    "pre_defense": "pre-defense",
+    "predefense": "pre-defense",
+    "before-defense": "pre-defense",
+    "before_defense": "pre-defense",
+    "post-defense": "post-defense",
+    "post_defense": "post-defense",
+    "postdefense": "post-defense",
+    "after-defense": "post-defense",
+    "after_defense": "post-defense",
+}
 
 CANONICAL_MODEL_SCORE_MODE_ALIASES: Final[dict[str, str]] = dict(_MODE_ALIASES)
 
@@ -96,6 +111,8 @@ CANONICAL_MODEL_DEFENSE_STAGES: Final[tuple[str, ...]] = (
     "pre_fit",
     "post_fit_pre_predict",
 )
+
+CANONICAL_MODEL_DEFAULT_STAGE: Final[str] = "post-predict"
 
 
 class ModelFiles(TypedDict, total=False):
@@ -189,8 +206,9 @@ def normalize_model_runtime_split_mode(
 
 def ensure_model_runtime_contract(target: Any) -> Any:
     """Populate canonical runtime attributes on a ModelConfig-like object."""
-    if not hasattr(target, "score_dict") or getattr(target, "score_dict") is None:
-        target.score_dict = {}
+    target.score_dict = ScoreDict.from_payload(
+        getattr(target, "score_dict", None) or {},
+    )
 
     for field in CANONICAL_MODEL_RUNTIME_FIELDS:
         if field == "score_dict":

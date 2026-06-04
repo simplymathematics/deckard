@@ -2,7 +2,7 @@
 
 import time
 from dataclasses import dataclass, field
-from typing import Any, Literal, Union
+from typing import TYPE_CHECKING, Any, Literal, Union
 
 from sklearn.metrics import accuracy_score
 
@@ -15,8 +15,13 @@ from .base import (
     _AttackProfileScorer,
     TaskAwareScorerMixin,
     coerce_scorer_config,
+    default_regression_scorers,
+    default_weighted_classification_core_scorers,
     safe_store,
 )
+
+if TYPE_CHECKING:
+    from ..data import DataConfig
 
 __all__ = [
     "evasion_success_score",
@@ -73,46 +78,15 @@ class DefaultEvasionAttackScorerDictConfig(
     def _build_default_scorers(self, classifier: bool) -> dict[str, ScorerConfig]:
         if classifier:
             return {
-                "accuracy": ScorerConfig(
-                    score_name="accuracy",
-                    score_function="sklearn.metrics.accuracy_score",
-                ),
-                "precision": ScorerConfig(
-                    score_name="precision",
-                    score_function="sklearn.metrics.precision_score",
-                    score_params={"average": "weighted", "zero_division": 0},
-                ),
-                "recall": ScorerConfig(
-                    score_name="recall",
-                    score_function="sklearn.metrics.recall_score",
-                    score_params={"average": "weighted", "zero_division": 0},
-                ),
-                "f1-score": ScorerConfig(
-                    score_name="f1-score",
-                    score_function="sklearn.metrics.f1_score",
-                    score_params={"average": "weighted", "zero_division": 0},
+                **default_weighted_classification_core_scorers(
+                    f1_key="f1-score",
                 ),
                 "success": ScorerConfig(
                     score_name="success",
                     score_function="deckard.score.attack.evasion_success_score",
                 ),
             }
-        return {
-            "mse": ScorerConfig(
-                score_name="mse",
-                score_function="sklearn.metrics.mean_squared_error",
-                greater_is_better=False,
-            ),
-            "mae": ScorerConfig(
-                score_name="mae",
-                score_function="sklearn.metrics.mean_absolute_error",
-                greater_is_better=False,
-            ),
-            "r2": ScorerConfig(
-                score_name="r2",
-                score_function="sklearn.metrics.r2_score",
-            ),
-        }
+        return default_regression_scorers()
 
     def __post_init__(self):
         self._initialize_task_aware_scorers(default=True)
@@ -164,27 +138,7 @@ class DefaultMembershipInferenceAttackScorerDictConfig(
 
     def _build_default_scorers(self, classifier: bool) -> dict[str, ScorerConfig]:
         _ = classifier
-        return {
-            "accuracy": ScorerConfig(
-                score_name="accuracy",
-                score_function="sklearn.metrics.accuracy_score",
-            ),
-            "precision": ScorerConfig(
-                score_name="precision",
-                score_function="sklearn.metrics.precision_score",
-                score_params={"average": "weighted", "zero_division": 0},
-            ),
-            "recall": ScorerConfig(
-                score_name="recall",
-                score_function="sklearn.metrics.recall_score",
-                score_params={"average": "weighted", "zero_division": 0},
-            ),
-            "f1": ScorerConfig(
-                score_name="f1",
-                score_function="sklearn.metrics.f1_score",
-                score_params={"average": "weighted", "zero_division": 0},
-            ),
-        }
+        return default_weighted_classification_core_scorers(f1_key="f1")
 
     def __post_init__(self):
         self._initialize_task_aware_scorers(default=True)
@@ -218,43 +172,8 @@ class DefaultAttributeInferenceAttackScorerDictConfig(
 
     def _build_default_scorers(self, classifier: bool) -> dict[str, ScorerConfig]:
         if classifier:
-            return {
-                "accuracy": ScorerConfig(
-                    score_name="accuracy",
-                    score_function="sklearn.metrics.accuracy_score",
-                ),
-                "precision": ScorerConfig(
-                    score_name="precision",
-                    score_function="sklearn.metrics.precision_score",
-                    score_params={"average": "weighted", "zero_division": 0},
-                ),
-                "recall": ScorerConfig(
-                    score_name="recall",
-                    score_function="sklearn.metrics.recall_score",
-                    score_params={"average": "weighted", "zero_division": 0},
-                ),
-                "f1": ScorerConfig(
-                    score_name="f1",
-                    score_function="sklearn.metrics.f1_score",
-                    score_params={"average": "weighted", "zero_division": 0},
-                ),
-            }
-        return {
-            "mse": ScorerConfig(
-                score_name="mse",
-                score_function="sklearn.metrics.mean_squared_error",
-                greater_is_better=False,
-            ),
-            "mae": ScorerConfig(
-                score_name="mae",
-                score_function="sklearn.metrics.mean_absolute_error",
-                greater_is_better=False,
-            ),
-            "r2": ScorerConfig(
-                score_name="r2",
-                score_function="sklearn.metrics.r2_score",
-            ),
-        }
+            return default_weighted_classification_core_scorers(f1_key="f1")
+        return default_regression_scorers()
 
     def __post_init__(self):
         self._initialize_task_aware_scorers(default=True)
@@ -353,6 +272,8 @@ class AttackScorerConfig(BaseConfig):
         **kwargs,
     ) -> ScoreDict:
         raw_scores = profile(
+            mode=mode,
+            stage=stage,
             y_true=y_true,
             y_pred=y_pred,
             **kwargs,
@@ -397,6 +318,7 @@ class AttackScorerConfig(BaseConfig):
         targeted_attribute: Union[str, None] = None,
         attack_generation_time=None,
         sensitive_features=None,
+        data: "DataConfig | None" = None,
     ):
         if attack_kind == "evasion":
             if is_classification is None:
@@ -410,6 +332,7 @@ class AttackScorerConfig(BaseConfig):
                 mode=mode,
                 stage=stage,
                 sensitive_features=sensitive_features,
+                data=data,
             )
         if attack_kind == "membership":
             return self.score_membership(
@@ -419,6 +342,7 @@ class AttackScorerConfig(BaseConfig):
                 mode=mode,
                 stage=stage,
                 sensitive_features=sensitive_features,
+                data=data,
             )
         if attack_kind == "attribute":
             if targeted_attribute is None:
@@ -439,6 +363,7 @@ class AttackScorerConfig(BaseConfig):
                 stage=stage,
                 attack_generation_time=attack_generation_time,
                 sensitive_features=sensitive_features,
+                data=data,
             )
         raise ValueError(f"Unsupported attack scoring kind: {attack_kind}")
 
@@ -452,6 +377,7 @@ class AttackScorerConfig(BaseConfig):
         mode: str | None = None,
         stage: str | None = None,
         sensitive_features: ArrayLike | None = None,
+        data: "DataConfig | None" = None,
     ) -> ScoreDict:
         """Score evasion attack outputs and append attack timing/size metadata.
 
@@ -483,6 +409,7 @@ class AttackScorerConfig(BaseConfig):
             n_samples=len(adv_pred_labels),
             mode=mode,
             stage=stage,
+            data=data,
             **score_kwargs,
         )
         attack_score_time = time.perf_counter() - start_time
@@ -498,6 +425,7 @@ class AttackScorerConfig(BaseConfig):
         mode: str | None = None,
         stage: str | None = None,
         sensitive_features: ArrayLike | None = None,
+        data: "DataConfig | None" = None,
     ) -> ScoreDict:
         """Score membership inference outputs and append attack metadata.
 
@@ -524,6 +452,7 @@ class AttackScorerConfig(BaseConfig):
             n_samples=len(labels),
             mode=mode,
             stage=stage,
+            data=data,
             **score_kwargs,
         )
         attack_score_time = time.perf_counter() - start_time
@@ -542,6 +471,7 @@ class AttackScorerConfig(BaseConfig):
         stage: str | None = None,
         attack_generation_time: float | None = None,
         sensitive_features: ArrayLike | None = None,
+        data: "DataConfig | None" = None,
     ) -> ScoreDict:
         """Score attribute inference outputs and append attack metadata.
 
@@ -573,6 +503,7 @@ class AttackScorerConfig(BaseConfig):
                 n_samples=len(target),
                 mode=mode,
                 stage=stage,
+                data=data,
                 **score_kwargs,
             )
         else:
@@ -584,6 +515,7 @@ class AttackScorerConfig(BaseConfig):
                 n_samples=len(target),
                 mode=mode,
                 stage=stage,
+                data=data,
                 **score_kwargs,
             )
         attack_score_time = time.perf_counter() - start_time

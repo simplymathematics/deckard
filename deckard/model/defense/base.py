@@ -533,88 +533,145 @@ class DefensePipelineConfigBehaviorMixin(DefenseHookRuntimeMixin):
             )
 
         if isinstance(defense_obj, dict):
-            defense_dict = cast(dict[str, Any], dict(defense_obj))
-            defense_dict.pop("classifier", None)
-            apply_fit = defense_dict.pop("apply_fit", None)
-            apply_predict = defense_dict.pop("apply_predict", None)
-            raw_params = defense_dict.get("defense_params", None)
-            if isinstance(raw_params, dict):
-                raw_params = dict(raw_params)
-                if apply_fit is None and "apply_fit" in raw_params:
-                    apply_fit = raw_params.get("apply_fit")
-                if apply_predict is None and "apply_predict" in raw_params:
-                    apply_predict = raw_params.get("apply_predict")
-                raw_params.pop("apply_fit", None)
-                raw_params.pop("apply_predict", None)
-                defense_dict["defense_params"] = raw_params
-            nested_defense = defense_dict.pop("defense", None)
-            if nested_defense is not None:
-                step_defense = self._coerce_single_defense(nested_defense)
-                if apply_fit is not None:
-                    setattr(step_defense, "apply_fit", bool(apply_fit))
-                if apply_predict is not None:
-                    setattr(step_defense, "apply_predict", bool(apply_predict))
-                return step_defense
-            target = defense_dict.pop("_target_", None)
-            if target is not None:
-                if self._is_pipeline_target(target):
-                    nested_defenses = defense_dict.pop("defenses", None)
-                    if nested_defenses is not None:
-                        return self._coerce_single_defense(nested_defenses)
-                else:
-                    defense_instance = resolve_class(target)(**defense_dict)
-                    step = DefenseStep.from_defense(
-                        defense_instance,
-                        apply_fit=apply_fit,
-                        apply_predict=apply_predict,
-                    )
-                    if not isinstance(step.name, str) or step.name.strip() == "":
-                        step.name = str(defense_dict.get("name", None) or target)
-                    return step
+            return self._coerce_single_defense_dict(cast(dict[str, Any], defense_obj))
 
-            step_name = defense_dict.pop("name", None)
-            if is_null_config_value(step_name, allow_empty=True):
-                return None
-            if isinstance(step_name, str):
-                step_params = defense_dict.pop("defense_params", None)
-                if not isinstance(step_params, dict):
-                    step_params = {}
-                for key in (
-                    "alias",
-                    "classifier",
-                    "model_params",
-                    "plugins",
-                    "id",
-                    "path",
-                    "payload_kind",
-                    "metadata",
-                    "model_name",
-                    "score_dict",
-                    "_target_",
-                ):
-                    defense_dict.pop(key, None)
-                if defense_dict:
-                    step_params = {**step_params, **defense_dict}
-                return DefenseStep(
-                    name=step_name,
-                    defense_params=step_params,
-                    apply_fit=True if apply_fit is None else bool(apply_fit),
-                    apply_predict=(
-                        True if apply_predict is None else bool(apply_predict)
-                    ),
-                )
+        raise TypeError(
+            f"Unsupported defense specification in pipeline: {type(defense_obj)}",
+        )
 
+    def _extract_apply_flags(
+        self,
+        defense_dict: dict[str, Any],
+    ) -> tuple[Any, Any]:
+        defense_dict.pop("classifier", None)
+        apply_fit = defense_dict.pop("apply_fit", None)
+        apply_predict = defense_dict.pop("apply_predict", None)
+        raw_params = defense_dict.get("defense_params", None)
+        if isinstance(raw_params, dict):
+            raw_params = dict(raw_params)
+            if apply_fit is None and "apply_fit" in raw_params:
+                apply_fit = raw_params.get("apply_fit")
+            if apply_predict is None and "apply_predict" in raw_params:
+                apply_predict = raw_params.get("apply_predict")
+            raw_params.pop("apply_fit", None)
+            raw_params.pop("apply_predict", None)
+            defense_dict["defense_params"] = raw_params
+        return apply_fit, apply_predict
+
+    def _coerce_nested_defense_step(
+        self,
+        nested_defense: Any,
+        *,
+        apply_fit: Any,
+        apply_predict: Any,
+    ) -> DefenseStep | None:
+        step_defense = self._coerce_single_defense(nested_defense)
+        if step_defense is None:
+            return None
+        if apply_fit is not None:
+            setattr(step_defense, "apply_fit", bool(apply_fit))
+        if apply_predict is not None:
+            setattr(step_defense, "apply_predict", bool(apply_predict))
+        return step_defense
+
+    def _coerce_target_defense_step(
+        self,
+        defense_dict: dict[str, Any],
+        *,
+        apply_fit: Any,
+        apply_predict: Any,
+    ) -> tuple[bool, DefenseStep | None]:
+        target = defense_dict.pop("_target_", None)
+        if target is None:
+            return False, None
+        if self._is_pipeline_target(target):
+            nested_defenses = defense_dict.pop("defenses", None)
+            if nested_defenses is None:
+                return False, None
+            return True, self._coerce_single_defense(nested_defenses)
+
+        defense_instance = resolve_class(target)(**defense_dict)
+        step = DefenseStep.from_defense(
+            defense_instance,
+            apply_fit=apply_fit,
+            apply_predict=apply_predict,
+        )
+        if not isinstance(step.name, str) or step.name.strip() == "":
+            step.name = str(defense_dict.get("name", None) or target)
+        return True, step
+
+    def _build_named_defense_step(
+        self,
+        defense_dict: dict[str, Any],
+        *,
+        apply_fit: Any,
+        apply_predict: Any,
+    ) -> DefenseStep | None:
+        step_name = defense_dict.pop("name", None)
+        if is_null_config_value(step_name, allow_empty=True):
+            return None
+        if not isinstance(step_name, str):
             if "defense_name" in defense_dict:
                 raise ValueError(
                     "defense_name is no longer supported in defense specs. Use 'name' for defense class path.",
                 )
-
             raise TypeError(
                 "Defense specs must use an explicit _target_ or wrap a concrete defense object.",
             )
 
-        raise TypeError(
-            f"Unsupported defense specification in pipeline: {type(defense_obj)}",
+        step_params = defense_dict.pop("defense_params", None)
+        if not isinstance(step_params, dict):
+            step_params = {}
+        for key in (
+            "alias",
+            "classifier",
+            "model_params",
+            "plugins",
+            "id",
+            "path",
+            "payload_kind",
+            "metadata",
+            "model_name",
+            "score_dict",
+            "_target_",
+        ):
+            defense_dict.pop(key, None)
+        if defense_dict:
+            step_params = {**step_params, **defense_dict}
+        return DefenseStep(
+            name=step_name,
+            defense_params=step_params,
+            apply_fit=True if apply_fit is None else bool(apply_fit),
+            apply_predict=True if apply_predict is None else bool(apply_predict),
+        )
+
+    def _coerce_single_defense_dict(
+        self,
+        defense_obj: dict[str, Any],
+    ) -> DefenseStep | None:
+        defense_dict = cast(dict[str, Any], dict(defense_obj))
+        apply_fit, apply_predict = self._extract_apply_flags(defense_dict)
+
+        nested_defense = defense_dict.pop("defense", None)
+        if nested_defense is not None:
+            return self._coerce_nested_defense_step(
+                nested_defense,
+                apply_fit=apply_fit,
+                apply_predict=apply_predict,
+            )
+
+        handled_target, step_from_target = self._coerce_target_defense_step(
+            defense_dict,
+            apply_fit=apply_fit,
+            apply_predict=apply_predict,
+        )
+        if handled_target:
+            return step_from_target
+
+        return self._build_named_defense_step(
+            defense_dict,
+            apply_fit=apply_fit,
+            apply_predict=apply_predict,
         )
 
     def _inherit_model_context(self, defense_obj, estimator) -> None:
@@ -802,6 +859,119 @@ class DefensePipelineConfigBehaviorMixin(DefenseHookRuntimeMixin):
             or "madry" in lowered
         )
 
+    @staticmethod
+    def _defense_label(defense_obj: Any) -> str:
+        if isinstance(defense_obj, DefenseStep):
+            return (defense_obj.name or "").strip() or type(defense_obj).__name__
+        return type(defense_obj).__name__
+
+    def _order_defense_chain_by_stage(
+        self,
+        defense_chain: list[DefenseStep],
+        *,
+        default_stage: str,
+    ) -> list[DefenseStep]:
+        staged_chain = [
+            (
+                resolve_model_defense_stage(step.name, default_stage=default_stage),
+                step,
+            )
+            for step in defense_chain
+        ]
+        sorted_chain = sorted(
+            staged_chain,
+            key=lambda item: defense_stage_priority(item[0]),
+        )
+        ordered_chain = [obj for _, obj in sorted_chain]
+        if ordered_chain != defense_chain:
+            logger.warning(
+                "Defense chain stage order adjusted to canonical model defense staging. Original=%s Reordered=%s",
+                [self._defense_label(defense) for defense in defense_chain],
+                [
+                    f"{self._defense_label(defense)}@{stage}"
+                    for stage, defense in sorted_chain
+                ],
+            )
+        return ordered_chain
+
+    def _reorder_wrapper_defenses(
+        self,
+        defense_chain: list[DefenseStep],
+    ) -> list[DefenseStep]:
+        wrapper_defenses = [
+            defense
+            for defense in defense_chain
+            if self._is_model_wrapper_defense(defense)
+        ]
+        data_defenses = [
+            defense
+            for defense in defense_chain
+            if not self._is_model_wrapper_defense(defense)
+        ]
+        if not wrapper_defenses or not data_defenses:
+            return defense_chain
+
+        first_wrapper_idx = next(
+            idx
+            for idx, defense in enumerate(defense_chain)
+            if self._is_model_wrapper_defense(defense)
+        )
+        last_data_idx = max(
+            idx
+            for idx, defense in enumerate(defense_chain)
+            if not self._is_model_wrapper_defense(defense)
+        )
+        if first_wrapper_idx >= last_data_idx:
+            return defense_chain
+
+        logger.warning(
+            "Defense chain contains model-wrapper defenses (ART/fairlearn) before data-transform defenses. Wrapper defenses only transform the estimator, so they are automatically reordered to run last. Data defenses: %s; wrapper defenses: %s.",
+            [self._defense_label(defense) for defense in data_defenses],
+            [self._defense_label(defense) for defense in wrapper_defenses],
+        )
+        return data_defenses + wrapper_defenses
+
+    def _reorder_retraining_defenses(
+        self,
+        defense_chain: list[DefenseStep],
+    ) -> list[DefenseStep]:
+        retraining_defenses = [
+            defense
+            for defense in defense_chain
+            if self._is_retraining_defense(defense)
+        ]
+        if not retraining_defenses:
+            return defense_chain
+
+        non_retraining_defenses = [
+            defense
+            for defense in defense_chain
+            if not self._is_retraining_defense(defense)
+        ]
+        first_retraining_idx = next(
+            idx
+            for idx, defense in enumerate(defense_chain)
+            if self._is_retraining_defense(defense)
+        )
+        last_non_retraining_idx = max(
+            (
+                idx
+                for idx, defense in enumerate(defense_chain)
+                if not self._is_retraining_defense(defense)
+            ),
+            default=-1,
+        )
+        if first_retraining_idx >= last_non_retraining_idx:
+            return defense_chain
+
+        warning_msg = (
+            "Adversarial retraining defenses must run last in the defense chain. "
+            "deckard will automatically move retraining defenses to the end."
+        )
+        logger.warning(warning_msg)
+        warnings.warn(warning_msg, RuntimeWarning, stacklevel=2)
+        return non_retraining_defenses + retraining_defenses
+
     def apply(
         self,
         estimator: BaseEstimator,
@@ -830,99 +1000,12 @@ class DefensePipelineConfigBehaviorMixin(DefenseHookRuntimeMixin):
         if len(defense_chain) == 0:
             return estimator
 
-        staged_chain = []
-        for step in defense_chain:
-            defense_name = step.name if isinstance(step, DefenseStep) else None
-            resolved_stage = resolve_model_defense_stage(
-                defense_name,
-                default_stage=stage,
-            )
-            staged_chain.append((resolved_stage, step))
-
-        sorted_chain = sorted(
-            staged_chain,
-            key=lambda item: defense_stage_priority(item[0]),
+        defense_chain = self._order_defense_chain_by_stage(
+            defense_chain,
+            default_stage=stage,
         )
-        if [obj for _, obj in sorted_chain] != defense_chain:
-            logger.warning(
-                "Defense chain stage order adjusted to canonical model defense staging. "
-                "Original=%s Reordered=%s",
-                [
-                    (d.name if isinstance(d, DefenseStep) else None)
-                    or type(d).__name__
-                    for d in defense_chain
-                ],
-                [
-                    f"{(d.name if isinstance(d, DefenseStep) else None) or type(d).__name__}@{s}"
-                    for s, d in sorted_chain
-                ],
-            )
-            defense_chain = [obj for _, obj in sorted_chain]
-
-        wrapper_defenses = [
-            d for d in defense_chain if self._is_model_wrapper_defense(d)
-        ]
-        data_defenses = [
-            d for d in defense_chain if not self._is_model_wrapper_defense(d)
-        ]
-        if wrapper_defenses and data_defenses:
-            first_wrapper_idx = next(
-                i
-                for i, d in enumerate(defense_chain)
-                if self._is_model_wrapper_defense(d)
-            )
-            last_data_idx = max(
-                i
-                for i, d in enumerate(defense_chain)
-                if not self._is_model_wrapper_defense(d)
-            )
-            if first_wrapper_idx < last_data_idx:
-                logger.warning(
-                    "Defense chain contains model-wrapper defenses (ART/fairlearn) before "
-                    "data-transform defenses. Wrapper defenses only transform the estimator, "
-                    "so they are automatically reordered to run last. "
-                    "Data defenses: %s; wrapper defenses: %s.",
-                    [
-                        (d.name if isinstance(d, DefenseStep) else None)
-                        or type(d).__name__
-                        for d in data_defenses
-                    ],
-                    [
-                        (d.name if isinstance(d, DefenseStep) else None)
-                        or type(d).__name__
-                        for d in wrapper_defenses
-                    ],
-                )
-                defense_chain = data_defenses + wrapper_defenses
-
-        retraining_defenses = [
-            d for d in defense_chain if self._is_retraining_defense(d)
-        ]
-        if retraining_defenses:
-            non_retraining_defenses = [
-                d for d in defense_chain if not self._is_retraining_defense(d)
-            ]
-            first_retraining_idx = next(
-                i
-                for i, d in enumerate(defense_chain)
-                if self._is_retraining_defense(d)
-            )
-            last_non_retraining_idx = max(
-                (
-                    i
-                    for i, d in enumerate(defense_chain)
-                    if not self._is_retraining_defense(d)
-                ),
-                default=-1,
-            )
-            if first_retraining_idx < last_non_retraining_idx:
-                warning_msg = (
-                    "Adversarial retraining defenses must run last in the defense chain. "
-                    "deckard will automatically move retraining defenses to the end."
-                )
-                logger.warning(warning_msg)
-                warnings.warn(warning_msg, RuntimeWarning, stacklevel=2)
-                defense_chain = non_retraining_defenses + retraining_defenses
+        defense_chain = self._reorder_wrapper_defenses(defense_chain)
+        defense_chain = self._reorder_retraining_defenses(defense_chain)
 
         self._run_plugin_hook(
             "before_apply_defense",
@@ -1825,92 +1908,94 @@ class ARTDefenseBehaviorMixin(DefenseHookRuntimeMixin):
             or (isinstance(self.name, str) and self.name.startswith("torch."))
             or _is_art_torch_wrapper(getattr(self, "_model", None))
         ):
-            if data is None:
-                raise ValueError(
-                    "data must be provided before creating an ART defense estimator",
-                )
-            try:
-                import torch
-            except (
-                Exception
-            ) as exc:  # pragma: no cover - optional dependency import may fail at runtime
-                raise ImportError(
-                    "Torch model defenses require optional dependency deckard[torch]",
-                ) from exc
+            return self._get_art_class_torch(data)
+        return self._get_art_class_non_torch(data)
 
-            X_train = getattr(data, "X_train")
-            from torch.utils.data import DataLoader, Dataset, Subset
+    def _get_art_class_torch(
+        self,
+        data: DataConfig | None,
+    ) -> tuple[ArtEsimtator, dict[str, DefenseInitParamValue]]:
+        if data is None:
+            raise ValueError(
+                "data must be provided before creating an ART defense estimator",
+            )
+        try:
+            import torch
+        except (
+            Exception
+        ) as exc:  # pragma: no cover - optional dependency import may fail at runtime
+            raise ImportError(
+                "Torch model defenses require optional dependency deckard[torch]",
+            ) from exc
 
-            if isinstance(X_train, (Dataset, Subset)):
-                loader = DataLoader(X_train, batch_size=1, shuffle=False)
-                batch = next(iter(loader))
-                if isinstance(batch, (tuple, list)):
-                    input_shape = batch[0].shape[1:]
-                else:
-                    input_shape = batch.shape[1:]
+        X_train = getattr(data, "X_train")
+        from torch.utils.data import DataLoader, Dataset, Subset
+
+        if isinstance(X_train, (Dataset, Subset)):
+            loader = DataLoader(X_train, batch_size=1, shuffle=False)
+            batch = next(iter(loader))
+            if isinstance(batch, (tuple, list)):
+                input_shape = batch[0].shape[1:]
             else:
-                input_shape = tuple(X_train.shape[1:])
-            y_train = getattr(data, "y_train")
-            if isinstance(y_train, torch.Tensor):
-                nb_classes = int(torch.unique(y_train).numel())
+                input_shape = batch.shape[1:]
+        else:
+            input_shape = tuple(X_train.shape[1:])
+        y_train = getattr(data, "y_train")
+        if isinstance(y_train, torch.Tensor):
+            nb_classes = int(torch.unique(y_train).numel())
+        else:
+            nb_classes = len(set(y_train))
+
+        raw_model = self._model
+        if _is_art_torch_wrapper(raw_model):
+            wrapper_state = _get_wrapper_state(raw_model)
+            state_base = (
+                None if wrapper_state is None else wrapper_state.get("base_estimator")
+            )
+            if _is_torch_model_instance(state_base):
+                raw_model = state_base
             else:
-                nb_classes = len(set(y_train))
+                wrapped_model = getattr(raw_model, "model", None)
+                if _is_torch_model_instance(wrapped_model):
+                    raw_model = wrapped_model
 
-            raw_model = self._model
-            if _is_art_torch_wrapper(raw_model):
-                wrapper_state = _get_wrapper_state(raw_model)
-                state_base = (
-                    None
-                    if wrapper_state is None
-                    else wrapper_state.get("base_estimator")
-                )
-                if _is_torch_model_instance(state_base):
-                    raw_model = state_base
-                else:
-                    wrapped_model = getattr(raw_model, "model", None)
-                    if _is_torch_model_instance(wrapped_model):
-                        raw_model = wrapped_model
+        if not _is_torch_model_instance(raw_model):
+            raise TypeError(
+                "Torch defenses require a torch.nn.Module base estimator. "
+                f"Got {type(raw_model)} while constructing ART wrapper context.",
+            )
 
-            if not _is_torch_model_instance(raw_model):
-                raise TypeError(
-                    "Torch defenses require a torch.nn.Module base estimator. "
-                    f"Got {type(raw_model)} while constructing ART wrapper context.",
-                )
+        art_symbols = _get_art_symbols()
+        torch_model = cast(Any, raw_model)
+        device_type = "gpu" if torch.cuda.is_available() else "cpu"
+        if self.classifier:
+            art_class = art_symbols["torch_classifier"]
+            init_params = {
+                "loss": torch.nn.CrossEntropyLoss(),
+                "optimizer": torch.optim.SGD(torch_model.parameters(), lr=0.01),
+                "input_shape": input_shape,
+                "nb_classes": nb_classes,
+                "clip_values": getattr(self, "clip_values", None) or (0.0, 1.0),
+                "device_type": device_type,
+            }
+        else:
+            art_class = art_symbols["torch_regressor"]
+            init_params = {
+                "loss": torch.nn.MSELoss(),
+                "optimizer": torch.optim.SGD(torch_model.parameters(), lr=0.01),
+                "input_shape": input_shape,
+                "nb_classes": None,
+                "clip_values": getattr(self, "clip_values", None) or (0.0, 1.0),
+                "device_type": device_type,
+            }
+        if "preprocessing" not in init_params:
+            init_params["preprocessing"] = None
+        return art_class, init_params
 
-            art_symbols = _get_art_symbols()
-
-            if self.classifier:
-                art_class = art_symbols["torch_classifier"]
-                torch_model = cast(Any, raw_model)
-                init_params = {
-                    "loss": torch.nn.CrossEntropyLoss(),
-                    "optimizer": torch.optim.SGD(
-                        torch_model.parameters(),
-                        lr=0.01,
-                    ),
-                    "input_shape": input_shape,
-                    "nb_classes": nb_classes,
-                    "clip_values": getattr(self, "clip_values", None) or (0.0, 1.0),
-                    "device_type": ("gpu" if torch.cuda.is_available() else "cpu"),
-                }
-            else:
-                art_class = art_symbols["torch_regressor"]
-                torch_model = cast(Any, raw_model)
-                init_params = {
-                    "loss": torch.nn.MSELoss(),
-                    "optimizer": torch.optim.SGD(
-                        torch_model.parameters(),
-                        lr=0.01,
-                    ),
-                    "input_shape": input_shape,
-                    "nb_classes": None,
-                    "clip_values": getattr(self, "clip_values", None) or (0.0, 1.0),
-                    "device_type": ("gpu" if torch.cuda.is_available() else "cpu"),
-                }
-            if "preprocessing" not in init_params:
-                init_params["preprocessing"] = None
-            return art_class, init_params
-
+    def _get_art_class_non_torch(
+        self,
+        data: DataConfig | None,
+    ) -> tuple[ArtEsimtator, dict[str, DefenseInitParamValue]]:
         from ...utils import is_null_config_value
 
         base_model = getattr(self, "_model", None)
@@ -1948,6 +2033,7 @@ class ARTDefenseBehaviorMixin(DefenseHookRuntimeMixin):
             raise ImportError(
                 "ART estimators are required for defense wrapping. Install optional dependencies that include ART.",
             ) from exc
+
         wrapper_dict = (
             art_symbols["classifier_dict"]
             if self.classifier
@@ -1966,6 +2052,7 @@ class ARTDefenseBehaviorMixin(DefenseHookRuntimeMixin):
                 raise ValueError(
                     "name must be set before creating an ART defense estimator",
                 )
+
         art_class = wrapper_dict[model_key]
         if art_class in art_symbols["sklearn_dict"].values():
             init_params = {}
