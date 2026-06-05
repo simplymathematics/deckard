@@ -144,7 +144,7 @@ experiment:
           fit_y: true
           fit_X: false
     files: {}
-  experiment_name: 9431d343af50f837a6e2f3db8cfa7ec4
+  experiment_name: 3b1fbf93c31cd59c2005e93d0f5d66e7
   model:
     id: ''
     path: ''
@@ -717,11 +717,11 @@ experiment:
   files:
     replace: {}
     handler:
-      _target: deckard.file.CanonFileHandler
-    params_file: artifacts/params.yaml
-    score_file: artifacts/scores.json
-    log_file: artifacts/run.log
-    error_file: artifacts/error.log
+      _target_: deckard.file.CanonFileHandler
+    params_file: /private/var/folders/cd/frntyg595hj5gz_qzm3696hm0000gp/T/pytest-of-c.meyers/pytest-287/test_dvc_repro_and_force_repro0/dvc-e2e/artifacts/params.yaml
+    score_file: /private/var/folders/cd/frntyg595hj5gz_qzm3696hm0000gp/T/pytest-of-c.meyers/pytest-287/test_dvc_repro_and_force_repro0/dvc-e2e/artifacts/scores.json
+    log_file: /private/var/folders/cd/frntyg595hj5gz_qzm3696hm0000gp/T/pytest-of-c.meyers/pytest-287/test_dvc_repro_and_force_repro0/dvc-e2e/artifacts/run.log
+    error_file: /private/var/folders/cd/frntyg595hj5gz_qzm3696hm0000gp/T/pytest-of-c.meyers/pytest-287/test_dvc_repro_and_force_repro0/dvc-e2e/artifacts/error.log
     data_file: null
     model_file: null
     attack_file: null
@@ -758,7 +758,7 @@ _dvc:
   stage_selection: all
   run_mode: single
   params_manifest:
-    experiment_name: 9431d343af50f837a6e2f3db8cfa7ec4
+    experiment_name: 3b1fbf93c31cd59c2005e93d0f5d66e7
     library: sklearn
     classifier: true
     evaluation_mode: standard

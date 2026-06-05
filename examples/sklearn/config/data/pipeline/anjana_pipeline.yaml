@@ -1,3 +1,11 @@
 _target_: deckard.data.DataConfig
 alias: anjana
-pipeline: {}
+pipeline:
+  anjana_defense:
+    name: anjana.anonymity.k_anonymity
+    k: 2
+    quasi_identifiers:
+    - age
+    sensitive_attribute: target
+    sensitive_columns:
+    - sex

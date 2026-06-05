@@ -11,6 +11,7 @@ import pandas as pd
 from scipy.sparse import csr_matrix
 from sklearn.compose import ColumnTransformer, make_column_selector
 from sklearn.pipeline import Pipeline
+from omegaconf import DictConfig
 
 from ..base import DataConfig
 from ...utils import load_class
@@ -70,13 +71,12 @@ class DataPipeline(dict):
             host.load_dataset()
 
         self.fit_pre_sample(host)
-
         if getattr(host, "train_indices", None) is None:
             host._split_loaded_data(run_hooks=True)
-
         self.fit_X(host)
         self.fit_y(host)
         self.fit_Xy(host)
+        self._run_stage_hooks(host, "after", "pipeline", "post-pipeline")
         return host
 
     def fit_pre_sample(self, host: "DataConfig") -> None:
@@ -104,7 +104,6 @@ class DataPipeline(dict):
         Args:
             host: Data runtime configuration.
         """
-        self._run_stage_hooks(host, "before", "fit_X", "post-pipeline")
         x_steps = self._collect_x_steps(stage="X")
         pipeline = self._build_x_pipeline(x_steps)
         if pipeline is not None and getattr(host, "X_train", None) is not None:
@@ -118,7 +117,6 @@ class DataPipeline(dict):
             host.X_test = self._transform_features(pipeline, host.X_test)
             if getattr(host, "X_val", None) is not None:
                 host.X_val = self._transform_features(pipeline, host.X_val)
-        self._run_stage_hooks(host, "after", "fit_X", "post-pipeline")
 
     def fit_y(self, host: "DataConfig") -> None:
         """Fit and apply target-only transforms on split labels.
@@ -126,7 +124,7 @@ class DataPipeline(dict):
         Args:
             host: Data runtime configuration.
         """
-        self._run_stage_hooks(host, "before", "fit_y", "post-pipeline")
+
         y_steps = self._collect_y_steps(stage="y")
         if len(y_steps) > 0 and getattr(host, "y_train", None) is not None:
             fit_start = time.process_time()
@@ -137,7 +135,6 @@ class DataPipeline(dict):
             host.pipeline_y_transform_time = time.process_time() - transform_start
             if getattr(host, "y_val", None) is not None:
                 host.y_val = self._transform_target(y_steps, host.y_val)
-        self._run_stage_hooks(host, "after", "fit_y", "post-pipeline")
 
     def fit_Xy(self, host: "DataConfig") -> None:
         """Fit and apply joint feature-target transforms across all splits.
@@ -145,7 +142,6 @@ class DataPipeline(dict):
         Args:
             host: Data runtime configuration.
         """
-        self._run_stage_hooks(host, "before", "fit_Xy", "post-pipeline")
         xy_steps = self._collect_x_steps(stage="Xy")
         pipeline = self._build_x_pipeline(xy_steps)
         if pipeline is not None and getattr(host, "X_train", None) is not None:
@@ -173,7 +169,6 @@ class DataPipeline(dict):
             host._X = X_all_t
             host._y = y_all
             host._split_loaded_data(run_hooks=False)
-        self._run_stage_hooks(host, "after", "fit_Xy", "post-pipeline")
 
     def _run_stage_hooks(
         self,
@@ -235,10 +230,10 @@ class DataPipeline(dict):
 
     def _collect_x_steps(self, stage: str) -> list[tuple[str, Any, Any]]:
         steps: list[tuple[str, Any, Any]] = []
-        if not isinstance(self.pipeline, dict):
+        if not isinstance(self.pipeline, (dict, DictConfig)):
             return steps
         for step_name, raw_step in self.pipeline.items():
-            if not isinstance(raw_step, dict):
+            if not isinstance(raw_step, (dict, DictConfig)):
                 continue
             cfg = dict(raw_step)
             fit_x_explicit = "fit_X" in cfg
@@ -263,11 +258,11 @@ class DataPipeline(dict):
         return steps
 
     def _collect_y_steps(self, stage: str) -> list[tuple[str, Any]]:
-        if stage != "y" or not isinstance(self.pipeline, dict):
+        if stage != "y" or not isinstance(self.pipeline, (dict, DictConfig)):
             return []
         steps: list[tuple[str, Any]] = []
         for step_name, raw_step in self.pipeline.items():
-            if not isinstance(raw_step, dict):
+            if not isinstance(raw_step, (dict, DictConfig)):
                 continue
             cfg = dict(raw_step)
             fit_y = self._step_flag(cfg, "fit_y", False)

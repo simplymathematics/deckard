@@ -131,19 +131,15 @@ class TestDataConfigBehavior:
         assert pipeline.steps[1][0] == "scaler"
 
     def test_pipeline_fit_and_transform(self):
-        config = DataConfig(pipeline=self.pipeline_config_dict)
+        config = DataConfig(
+            pipeline=self.pipeline_config_dict,
+            sampler={"train_size": 10, "test_size": 2},
+        )
         config._y = self.y_train
         config.data_load_time = 3
-        pipeline, _ = config._init_pipeline()
-        config.X_train, config.X_test, _, _ = config.fit_transform(
-            self.X_train,
-            self.X_test,
-            self.y_train,
-            self.y_test,
-            pipeline,
-        )
-        assert config.X_train.shape == (10, 2)
-        assert config.X_test.shape == (2, 2)
+        config.pipeline(config)
+        assert config.X_train.shape == (10, 107)
+        assert config.X_test.shape == (2, 107)
         assert not self.X_train.equals(config.X_train)
         assert not self.X_test.equals(config.X_test)
 

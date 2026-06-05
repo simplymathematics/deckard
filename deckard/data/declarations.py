@@ -361,9 +361,6 @@ def load_adult_income_data(cfg: Any, **loader_params: Any) -> Any:
         "https://raw.githubusercontent.com/simplymathematics/Adult-Census-Income/refs/heads/master/adult.csv",
         header=0,
     )
-    print("*" * 80)
-    print(adult.columns)
-    print("*" * 80)
     y_raw = adult["income"]
     if pd.api.types.is_numeric_dtype(y_raw):
         y = y_raw.astype(int)

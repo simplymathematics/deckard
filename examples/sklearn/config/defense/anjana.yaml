@@ -1,5 +1,6 @@
 name: anjana.anonymity.k_anonymity
 defense_params:
+  quasi_ident : age
+  sens_att: sex
+  supp_level : 2
   k: 2
-_target_: deckard.DefenseConfig
-alias: anjana

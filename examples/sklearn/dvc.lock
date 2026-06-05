@@ -74,9 +74,9 @@ stages:
     deps:
     - path: ../../deckard
       hash: md5
-      md5: b33f9ebb8ed0d0e115b64710e8ef100b.dir
-      size: 3942976
-      nfiles: 363
+      md5: 5504cf8fd2cebd6ffb6a7ab7445b772b.dir
+      size: 4102436
+      nfiles: 382
     - path: ./config/default.yaml
       hash: md5
       md5: b38d95025d639d92ad9f4bf62ac89361

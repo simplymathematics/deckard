@@ -329,6 +329,34 @@ class DataConfig(ScoreOrchestratorMixin, BaseConfig):
         repr=False,
         metadata={"help": "Elapsed time in seconds for the dataset load stage."},
     )
+    pipeline_fit_time: Union[float, None] = field(
+        default=None,
+        init=False,
+        repr=False,
+        metadata={
+            "help": "Elapsed time in seconds for the dataset pipeline fit stage.",
+        },
+    )
+    pipeline_transform_time: Union[float, None] = field(
+        default=None,
+        init=False,
+        repr=False,
+        metadata={"help": "Elapsed time in seconds for the pipeline transform stage."},
+    )
+    pipeline_y_fit_time: Union[float, None] = field(
+        default=None,
+        init=False,
+        repr=False,
+        metadata={
+            "help": "Elapsed time in seconds for the dataset pipeline fit stage.",
+        },
+    )
+    pipeline_y_transform_time: Union[float, None] = field(
+        default=None,
+        init=False,
+        repr=False,
+        metadata={"help": "Elapsed time in seconds for the pipeline transform stage."},
+    )
     data_sample_time: Union[float, None] = field(
         default=None,
         init=False,
@@ -479,6 +507,17 @@ class DataConfig(ScoreOrchestratorMixin, BaseConfig):
 
     def _stage_hook_token(self, stage: str) -> str:
         return stage_hook_token(stage)
+
+    def _pipeline_has_run(self) -> bool:
+        return any(
+            getattr(self, attr, None) is not None
+            for attr in (
+                "pipeline_fit_time",
+                "pipeline_transform_time",
+                "pipeline_y_fit_time",
+                "pipeline_y_transform_time",
+            )
+        )
 
     def _validate_init(self):
         """
@@ -705,36 +744,6 @@ class DataConfig(ScoreOrchestratorMixin, BaseConfig):
         else:
             pipeline = pipeline_runtime
         return pipeline, pipeline_runtime
-
-    def fit_transform(
-        self,
-        X_train,
-        X_test,
-        y_train,
-        y_test,
-        pipeline,
-    ):
-        """Fit the provided runtime pipeline and transform train/test features."""
-        from .pipeline.base import DataPipeline
-
-        if pipeline is None:
-            return X_train, X_test, y_train, y_test
-        if isinstance(pipeline, DataPipeline):
-            pipeline = pipeline._build_x_pipeline(
-                pipeline._collect_x_steps(stage="X"),
-            )
-        assert pipeline is not None
-        fit_start = time.process_time()
-        if y_train is not None:
-            pipeline.fit(X_train, y_train)
-        else:
-            pipeline.fit(X_train)
-        self.pipeline_fit_time = time.process_time() - fit_start
-        transform_start = time.process_time()
-        X_train_t = pipeline.transform(X_train)
-        X_test_t = pipeline.transform(X_test)
-        self.pipeline_transform_time = time.process_time() - transform_start
-        return X_train_t, X_test_t, y_train, y_test
 
     def _initialize_runtime_components(self) -> None:
         """Instantiate runtime-bound plugin and sampler objects eagerly."""
@@ -1438,7 +1447,6 @@ class DataConfig(ScoreOrchestratorMixin, BaseConfig):
 
     def _load_from_csv(self, dataset_name: str | None = None):
         dataset_name = dataset_name or ""
-        print(dataset_name)
         data = pd.DataFrame(cast(Any, self.load_data(dataset_name)))
         if self.target is None:
             raise ValueError(
@@ -1649,7 +1657,8 @@ class DataConfig(ScoreOrchestratorMixin, BaseConfig):
             self.load_dataset()
             logger.info(f"Data loaded in {self.data_load_time:.2f} seconds")
             self.sample()
-
+            if self.pipeline is not None and not self._pipeline_has_run():
+                self.pipeline(self)
             score_hook_start = time.process_time()
             self._run_plugin_hook("after_pipeline", score_kwargs=kwargs)
             score_hook_elapsed = time.process_time() - score_hook_start

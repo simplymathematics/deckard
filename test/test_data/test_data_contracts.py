@@ -94,7 +94,6 @@ def test_cross_family_data_runtime_contract(builder, tmp_path: Path):
 
     for method_name in (
         "load_dataset",
-        "fit_transform",
         "sample",
         "score",
         "__call__",
