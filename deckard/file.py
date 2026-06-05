@@ -16,12 +16,14 @@ from typing import Any, TypedDict
 from uuid import uuid4
 
 from hydra.core.hydra_config import HydraConfig
+from hydra.utils import instantiate
 from omegaconf import DictConfig, OmegaConf
 
 from .attack.canon import AttackFiles
 from .data.canon import BaseFiles, DataFiles
 from .detector.canon import DetectorFiles
 from .model.canon import DefenseFiles, ModelFiles
+from .utils import load_class
 from .path_utils import to_posix_path
 
 
@@ -189,6 +191,9 @@ class CanonFileHandler(AbstractFileHandler):
             resolved = resolved.replace(str(token), str(replacement))
         return resolved
 
+    def to_dict(self):
+        return {"_target_": "deckard.file.CanonFileHandler"}
+
 
 # -----------------------------------------------------------------------------
 # resolver
@@ -307,11 +312,18 @@ class FileConfig(PlaceholderResolverMixin):
         self,
         *,
         replace: dict[str, str] | None = None,
-        handler: AbstractFileHandler | None = None,
+        handler: AbstractFileHandler | str | None = None,
         **files: Any,
     ):
         self.replace = replace or {}
-        self.handler = handler or CanonFileHandler()
+        if isinstance(handler, str):
+            self.handler = load_class(str)
+        elif isinstance(handler, dict):
+            self.handler = load_class(**handler)
+        elif isinstance(handler, DictConfig):
+            self.handler = instantiate(handler)
+        else:
+            self.handler = handler or CanonFileHandler()
         self._files: dict[str, Any] = {}
         self._raw_files: dict[str, Any] = {}
 

@@ -1,8 +1,8 @@
 # Notebook Index
 
 Welcome!
-This page links to all executable notebooks in Deckard, organized as a
-progressive, end-to-end story for non-developers and researchers.
+This page links to the published notebooks and companion guides in deckard,
+organized as a progressive, end-to-end story for users and researchers.
 
 **How to use these notebooks:**
 
@@ -98,7 +98,7 @@ lifelines
 
 - {doc}`yellowbrick </notebooks/yellowbrick>` show reporting,
   diagnostics, and visualization integrations on deckard {class}`~deckard.experiment.ExperimentConfig` objects.
-  - {doc}`seaborn </notebooks/seaborn>`allows users to configure post-hoc plotting for {class}`~deckard.data.DataConfig` objects including pandas-compatible data sources and [optuna](https://optuna.org) databases.
+- {doc}`seaborn </notebooks/seaborn>` allows users to configure post-hoc plotting for {class}`~deckard.data.DataConfig` objects including pandas-compatible data sources and [optuna](https://optuna.org) databases.
 
 ```{toctree}
 :maxdepth: 1
@@ -126,10 +126,8 @@ artifacts
 - {doc}`hydra </notebooks/hydra>` - [Hydra](https://hydra.cc) config composition and overrides.
 - {doc}`dvc </notebooks/dvc>` - DVC stage planning, canonical stage contracts, and stage decomposition.
 - {doc}`optuna </notebooks/optuna>` - [Optuna](https://optuna.org) hyperparameter optimization workflows.
-<!-- - {doc}`dvc </notebooks/dvclive>` - DVCLive runtime logging, monitoring, and hook-scoped score emission. -->
-<!-- - {doc}`optimize </notebooks/optimize>` - demonstrates how to use. -->
-<!-- - {doc}`dvc </notebooks/dvclive>` - DVCLive runtime logging, monitoring, and hook-scoped score emission. -->
-<!-- - {doc}`deckard </notebooks/deckard>` - [optimize] runtime demonstrations for run and multirun execution. -->
+- {doc}`optimize </notebooks/optimize>` - examples/sklearn walkthrough of single-run and multirun optimization, including {class}`~deckard.layers.optimize.OptimizerConfig` and {class}`~deckard.layers.optimize.DefaultOptimizerCallback`.
+<!-- - {doc}`deckard </notebooks/deckard>` - narrative CLI tour of the public `deckard layers` commands in the examples/sklearn context. -->
 
 ```{toctree}
 :maxdepth: 1
@@ -138,31 +136,11 @@ artifacts
 hydra
 optuna
 dvc
+
+optimize
 ```
 
 
-## Per-Notebook Run Expectations
-
-Use these expectations when running notebooks locally, in CI, or through the
-DVC-backed docs build.
-
-| Notebook | Main purpose | Expected persisted outputs |
-| --- | --- | --- |
-| {doc}`sklearn </notebooks/sklearn>` | Canonical tabular runtime flow | score artifacts, experiment outputs, and split-aware scoring examples |
-| {doc}`pytorch </notebooks/pytorch>` | Torch-native training and checkpoint flow | checkpoint files, score artifacts, and model-state examples |
-| {doc}`huggingface </notebooks/huggingface>` | Transformer-native text pipeline and attack flow | transformer checkpoints, attack score summaries, and Hugging Face dataset-driven outputs |
-| {doc}`hydra </notebooks/hydra>` | Compose-first config and override behavior | single-run params or score artifacts and resolved override examples |
-| {doc}`dvc </notebooks/dvc>` | DVC stage planning and contract decomposition | canonical stage mappings, stage plan summaries, and contract-oriented inspection outputs |
-| {doc}`scoring </notebooks/scoring>` | ScoreDict lifecycle and persistence | human-readable score payloads and flat or dotlist projections |
-| {doc}`artifacts </notebooks/artifacts>` | Artifact hydration and pretrained reload paths | cached model, attack, and score artifacts for sklearn and torch paths |
-| {doc}`art_attacks </notebooks/art_attacks>` | Attack-family execution and timing outputs | attack artifacts, score tables, and attack-family timing summaries |
-| {doc}`art_defenses </notebooks/art_defenses>` | Defense execution and evaluation | defended artifact outputs and comparison metrics |
-| {doc}`detector </notebooks/detector>` | Detector fit or detect orchestration | detector outputs, filtered artifacts, and detector score payloads |
-| {doc}`fairlearn </notebooks/fairlearn>` | Fairness-aware data/model/score flow | group metric score artifacts and fairness-specific runtime outputs |
-| {doc}`anjana </notebooks/anjana>` | Privacy-aware preprocessing and privacy scoring | anonymized artifacts, defended outputs, and privacy score files |
-| {doc}`lifelines </notebooks/lifelines>` | Survival-analysis runtime flow | survival metrics, tables, and backend-specific persisted outputs |
-| {doc}`seaborn </notebooks/seaborn>` | Results-table driven plotting | figure outputs and plot-spec-backed artifacts |
-| {doc}`yellowbrick </notebooks/yellowbrick>` | Experiment-backed diagnostics | diagnostic figures and model-analysis outputs |
 
 
 ```{note}
@@ -179,4 +157,4 @@ notebooks to avoid stale cached outputs.
 - Re-run from top after dependency or environment changes.
 - Keep generated outputs versioned only when they are intentional documentation
   artifacts.
-- Use `dvc repro --force notebook_<name>` ([dvc docs](https://dvc.org)) to delete cached artifacts and force a new new.
+- Use `dvc repro --force notebook_<name>` ([dvc docs](https://dvc.org)) to delete cached artifacts and force a new build.

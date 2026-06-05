@@ -52,7 +52,6 @@ exclude_patterns = [
     "notebooks/dvc.yaml",
     "notebooks/error.log",
     "notebooks/deckard.log",
-    "notebooks/optimize.ipynb",
     "notebooks/dvclive.ipynb",
     "notebooks/deckard.ipynb",
 ]
@@ -69,9 +68,7 @@ suppress_warnings = ["myst.header"]
 nb_execution_mode = "cache"
 nb_execution_timeout = 1800
 nb_execution_raise_on_error = False
-nb_execution_excludepatterns = [
-    "deckard.ipynb",
-]
+nb_execution_excludepatterns = []
 
 nb_kernel_name = "python3"
 nb_render_plugin = "default"

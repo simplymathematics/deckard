@@ -199,8 +199,8 @@ def _select_best_trial_number(
         elif direction == "minimize":
             rank = frontier[col].rank(ascending=True, method="average")
         else:
-            # For diff-style objectives, treat closeness to zero as better.
-            rank = frontier[col].abs().rank(ascending=True, method="average")
+            # For diff-style objectives, rank is not influenced.
+            rank = 0
         rank_sum = rank_sum + rank
     frontier = frontier.assign(_rank_sum=rank_sum)
     winner = frontier.sort_values(by=["_rank_sum", "number"], ascending=[True, True])

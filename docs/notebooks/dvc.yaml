@@ -169,27 +169,31 @@ stages:
     - ../../deckard/utils.py
     # No outs/metrics: hydra.ipynb does not persist outputs
 
-  # notebook_optimize:
-  #   cmd: jupyter nbconvert --to notebook --execute --inplace optimize.ipynb
+  notebook_optimize:
+    cmd: DECKARD_SKIP_RUNTIME_CONFIG_REGISTRATION=1 jupyter nbconvert --to notebook --execute --inplace optimize.ipynb
+    deps:
+    - optimize.ipynb
+    - ../../deckard/layers/
+    - ../../deckard/experiment/
+    - ../../deckard/file.py
+    - ../../deckard/utils.py
+    - ../../examples/sklearn/config/
+    outs:
+    - ./build/optimize_notebook/
+
+  # notebook_deckard:
+  #   cmd: jupyter nbconvert --to notebook --execute --inplace deckard.ipynb
   #   deps:
-  #   - optimize.ipynb
+  #   - deckard.ipynb
+  #   - ./build/optimize_notebook/
+  #   - ../../deckard/__main__.py
   #   - ../../deckard/layers/
   #   - ../../deckard/experiment/
   #   - ../../deckard/file.py
   #   - ../../deckard/utils.py
   #   - ../../examples/sklearn/config/
   #   outs:
-  #   - ./build/optimize_notebook/
-
-  # notebook_deckard:
-  #   cmd: jupyter nbconvert --to notebook --execute --inplace deckard.ipynb
-  #   deps:
-  #   - deckard.ipynb
-  #   - ../../deckard/__main__.py
-  #   - ../../deckard/experiment/
-  #   - ../../deckard/file.py
-  #   - ../../deckard/utils.py
-  #   # No outs/metrics: deckard.ipynb is a walkthrough notebook
+  #   - ./build/deckard_layers/
 
   notebook_scoring:
     cmd: jupyter nbconvert --to notebook --execute --inplace scoring.ipynb
@@ -201,22 +205,22 @@ stages:
     - ../../deckard/utils.py
     # No outs/metrics: scoring.ipynb demonstrates in-memory score contract behavior
 
-  # notebook_dvc:
-  #   cmd: jupyter nbconvert --to notebook --execute --inplace dvc.ipynb
-  #   deps:
-  #   - dvc.ipynb
-  #   - ../../deckard/experiment/
-  #   - ../../deckard/layers/
-  #   - ../../deckard/file.py
-  #   - ../../deckard/utils.py
-  #   - ../../examples/sklearn/config/default.yaml
-  #   - ../../examples/sklearn/config/files/default.yaml
-  #   - ../../examples/sklearn/config/attack/hsj.yaml
-  #   - ../../examples/sklearn/config/defense/class-labels.yaml
-  #   - ../../examples/sklearn/config/plot/
-  #   # No outs/metrics: dvc.ipynb is stage-plan inspection only.
-  #   # DVCLive runtime features plus artifact/metrics/plot persistence checks
-  #   # are covered by notebook_dvclive.
+  notebook_dvc:
+    cmd: jupyter nbconvert --to notebook --execute --inplace dvc.ipynb
+    deps:
+    - dvc.ipynb
+    - ../../deckard/experiment/
+    - ../../deckard/layers/
+    - ../../deckard/file.py
+    - ../../deckard/utils.py
+    - ../../examples/sklearn/config/default.yaml
+    - ../../examples/sklearn/config/files/default.yaml
+    - ../../examples/sklearn/config/attack/hsj.yaml
+    - ../../examples/sklearn/config/defense/class-labels.yaml
+    - ../../examples/sklearn/config/plot/
+    # No outs/metrics: dvc.ipynb is stage-plan inspection only.
+    # DVCLive runtime features plus artifact/metrics/plot persistence checks
+    # are covered by notebook_dvclive.
 
   # notebook_dvclive:
   #   cmd: jupyter nbconvert --to notebook --execute --inplace dvclive.ipynb
