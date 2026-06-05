@@ -17,7 +17,7 @@ def make_anjana_data(
     """Build a minimal AnjanaDataConfig with optional stubbed runtime defense."""
     from deckard.plugins.anjana.data import AnjanaDataConfig
 
-    base = load_canonical_data_profile("anjana", framework="sklearn")
+    base = load_canonical_data_profile("classification", framework="sklearn")
     base["data_params"].update(
         {
             "n_samples": n,

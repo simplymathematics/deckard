@@ -390,9 +390,6 @@ class ArtifactLoaderMixin:
         Runtime attributes are inherited or configured via class fields documented in this module.
     """
 
-    id: str = ""
-    path: str = ""
-    payload_kind: str = "data"
     metadata: dict[str, Any] = field(
         default_factory=dict,
         metadata={
@@ -1020,17 +1017,11 @@ class ArtifactLoaderMixin:
             filepath = str(payload)
             payload = self
 
-        path = Path(filepath or self.path)
+        path = Path(filepath)
         if not str(path):
             raise ValueError("Filepath must be provided to save artifacts.")
 
         suffix = path.suffix.lower()
-        if payload is None:
-            payload = {
-                "id": self.id,
-                "payload_kind": self.payload_kind,
-                "metadata": self.metadata,
-            }
 
         if (
             suffix == ".json"
@@ -1044,9 +1035,12 @@ class ArtifactLoaderMixin:
             with path.open("w", encoding="utf-8") as handle:
                 json.dump(payload, handle, indent=4)
             return
-
+        if isinstance(payload, dict):
+            payload_kind = "scores"
+        elif isinstance(payload, object):
+            payload_kind = "model"
         if suffix in {".pkl", ".pickle"}:
-            if self.payload_kind in {"model", "estimator"}:
+            if payload_kind in {"model", "estimator"}:
                 self.save_model(payload, str(path))
                 return
             self.save_object(payload, str(path))
@@ -1054,7 +1048,7 @@ class ArtifactLoaderMixin:
         if suffix == ".pt":
             self.save_model(payload, str(path))
             return
-        if self.payload_kind in {"score", "scores"}:
+        if payload_kind in {"score", "scores"}:
             self.save_scores(payload, str(path))
             return
         if suffix in {".csv", ".parquet", ".html", ".json", ".xlsx"}:
@@ -1070,7 +1064,7 @@ class ArtifactLoaderMixin:
         """Load artifacts from disk and dispatch to the appropriate loader.
 
         Args:
-            filepath: Optional source path; defaults to ``self.path``.
+            filepath: Optional source filepath.
 
         Returns:
             Loaded payload or the config instance when loading metadata envelope.
@@ -1078,7 +1072,7 @@ class ArtifactLoaderMixin:
         Raises:
             ValueError: If path extension is unsupported for configured payload kind.
         """
-        path = Path(filepath or self.path)
+        path = Path(filepath)
         if not path.exists():
             return self
 
@@ -1091,32 +1085,21 @@ class ArtifactLoaderMixin:
                 payload = None
 
             if isinstance(payload, dict) and {
-                "id",
-                "payload_kind",
                 "metadata",
             }.intersection(payload):
-                self.id = str(payload.get("id", self.id))
-                self.payload_kind = str(payload.get("payload_kind", self.payload_kind))
                 metadata = payload.get("metadata", None)
                 if isinstance(metadata, dict):
                     self.metadata = metadata
                 return self
-
-            if self.payload_kind in {"score", "scores"}:
-                return self.load_scores(str(path))
             return self.load_data(str(path))
 
         if suffix in {".csv", ".xlsx"}:
-            if self.payload_kind in {"score", "scores"}:
-                return self.load_scores(str(path))
             return self.load_data(str(path))
 
         if suffix in {".parquet", ".html"}:
             return self.load_data(str(path))
 
         if suffix in {".pkl", ".pickle"}:
-            if self.payload_kind in {"model", "estimator"}:
-                return self.load_model(str(path))
             return self.load_object(str(path))
 
         if suffix == ".pt":

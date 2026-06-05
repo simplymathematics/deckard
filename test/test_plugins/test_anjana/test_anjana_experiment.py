@@ -49,7 +49,7 @@ def _make_anjana_data(
     """
     from deckard.plugins.anjana.data import AnjanaDataConfig
 
-    base = load_canonical_data_profile("anjana", framework="sklearn")
+    base = load_canonical_data_profile("classification", framework="sklearn")
     base["data_params"].update(
         {
             "n_samples": n,
@@ -69,7 +69,8 @@ def _make_anjana_data(
                 "random_state": 42,
             },
             "identifiers": None,
-            "quasi_identifiers": ["feature_0", "feature_1"],
+            "sensitive_columns": ["feature_1"],
+            "quasi_identifiers": ["feature_0"],
             "sensitive_attribute": "target",
             "anjana_defense": defense,
             "hierarchy_interval_sizes": {

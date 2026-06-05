@@ -123,25 +123,6 @@ def test_save_and_load_scores_json_round_trip(tmp_path):
     assert loaded["path"] == "foo/bar"
 
 
-def test_artifact_loader_save_load_metadata_envelope_json(tmp_path):
-    artifact_path = tmp_path / "artifact.json"
-    loader = ArtifactLoaderMixin(
-        id="abc123",
-        payload_kind="data",
-        metadata={"owner": "deckard"},
-    )
-
-    loader.save(filepath=str(artifact_path))
-
-    reloaded = ArtifactLoaderMixin(path=str(artifact_path))
-    result = reloaded.load()
-
-    assert result is reloaded
-    assert reloaded.id == "abc123"
-    assert reloaded.payload_kind == "data"
-    assert reloaded.metadata == {"owner": "deckard"}
-
-
 def test_save_and_load_data_csv_round_trip(tmp_path):
     loader = ArtifactLoaderMixin(payload_kind="data")
     data_path = tmp_path / "data.csv"

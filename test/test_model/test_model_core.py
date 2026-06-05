@@ -1159,7 +1159,6 @@ class TestModelEvaluateAndScoreBranches:
         )
         model.defense = object()
         model.stage_scoring_enabled = True
-        model.stage_score_filters = {"include": ["accuracy"]}
         model.scorer = lambda y_true, y_pred, mode="test", **kwargs: {
             "accuracy": 0.75,
             "debug_metric": 1.0,
@@ -1182,40 +1181,6 @@ class TestModelEvaluateAndScoreBranches:
         assert "post-defense" in model.score_dict["stages"]
         assert "accuracy" in model.score_dict["stages"]["pre-defense"]["test"]
         assert "accuracy" in model.score_dict["stages"]["post-defense"]["test"]
-        assert "debug_metric" not in model.score_dict["stages"]["pre-defense"]["test"]
-        assert "debug_metric" not in model.score_dict["stages"]["post-defense"]["test"]
-
-    def test_apply_defense_stage_scoring_respects_exclude_filters(self):
-        model = self._model()
-        data = _make_data()
-        model._model = SimpleNamespace(
-            predict=lambda X: np.zeros(len(X), dtype=int),
-            predict_proba=lambda X: np.column_stack(
-                [np.ones(len(X)) * 0.5, np.ones(len(X)) * 0.5],
-            ),
-        )
-        model.defense = object()
-        model.stage_scoring_enabled = True
-        model.stage_score_filters = {"exclude": ["accuracy"]}
-        model.scorer = lambda y_true, y_pred, mode="test", **kwargs: {
-            "accuracy": 0.8,
-            "f1": 0.7,
-        }
-
-        defense_pipeline = SimpleNamespace(
-            resolve_stage=lambda **_kwargs: "post_fit_pre_predict",
-            apply=lambda estimator, data, stage: estimator,
-            apply_defense=lambda estimator, data, stage: estimator,
-            defense_application_time=0.2,
-            score_dict={},
-        )
-        model._require_defense_pipeline = lambda: defense_pipeline
-
-        model.apply_defense(data=data, stage="post_fit_pre_predict")
-
-        stage_scores = model.score_dict["stages"]["pre-defense"]["test"]
-        assert "accuracy" not in stage_scores
-        assert "f1" in stage_scores
 
     def test_evaluate_probability_persistence_valueerror_sets_none(self):
         model = self._model()

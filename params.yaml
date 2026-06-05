@@ -1,21 +1,13 @@
 _target_: deckard.experiment.dvc.DVCExperimentConfig
 experiment:
-  id: ''
-  path: ''
-  payload_kind: data
   metadata: {}
   default_stage: post-pipeline
   stage_scoring_enabled: false
-  stage_score_filters: {}
   data:
     _target_: deckard.data.base.DataConfig
-    id: ''
-    path: ''
-    payload_kind: data
     metadata: {}
     default_stage: post-pipeline
     stage_scoring_enabled: false
-    stage_score_filters: {}
     name: https://raw.githubusercontent.com/simplymathematics/Adult-Census-Income/refs/heads/master/adult.csv
     data_params: {}
     split: null
@@ -34,9 +26,6 @@ experiment:
     alias: https://raw.githubusercontent.com/simplymathematics/Adult-Census-Income/refs/heads/master/adult.csv
     scorer:
       _target_: deckard.score.data.DefaultDataClassificationScorerDictConfig
-      id: ''
-      path: ''
-      payload_kind: data
       metadata: {}
       scorers:
         num_classes:
@@ -144,15 +133,11 @@ experiment:
           fit_y: true
           fit_X: false
     files: {}
-  experiment_name: 3b1fbf93c31cd59c2005e93d0f5d66e7
+  experiment_name: 00d8a9a1843302b024007df6688fd788
   model:
-    id: ''
-    path: ''
-    payload_kind: data
     metadata: {}
     default_stage: post-pipeline
     stage_scoring_enabled: false
-    stage_score_filters: {}
     name: sklearn.ensemble.RandomForestClassifier
     classifier: true
     model_params:
@@ -179,9 +164,6 @@ experiment:
     alias: rf
     defense:
       _target_: deckard.model.defense.base.DefenseConfig
-      id: ''
-      path: ''
-      payload_kind: data
       metadata: {}
       defenses:
       - name: art.defences.postprocessor.ClassLabels
@@ -189,9 +171,6 @@ experiment:
         apply_fit: false
         apply_predict: true
         _runtime_defense:
-          id: ''
-          path: ''
-          payload_kind: data
           metadata: {}
           score_dict: '{}'
           name: art.defences.postprocessor.ClassLabels
@@ -215,9 +194,6 @@ experiment:
       alias: class-labels
     scorer:
       _target_: deckard.score.base.ScorerDictConfig
-      id: ''
-      path: ''
-      payload_kind: data
       metadata: {}
       scorers:
         accuracy:
@@ -320,9 +296,6 @@ experiment:
     _target_: deckard.model.base.ModelConfig
   defense:
     _target_: deckard.model.defense.base.DefenseConfig
-    id: ''
-    path: ''
-    payload_kind: data
     metadata: {}
     defenses:
     - name: art.defences.postprocessor.ClassLabels
@@ -330,9 +303,6 @@ experiment:
       apply_fit: false
       apply_predict: true
       _runtime_defense:
-        id: ''
-        path: ''
-        payload_kind: data
         metadata: {}
         score_dict: '{}'
         name: art.defences.postprocessor.ClassLabels
@@ -356,13 +326,9 @@ experiment:
     alias: class-labels
   attack:
     _target_: deckard.attack.base.AttackConfig
-    id: ''
-    path: ''
-    payload_kind: data
     metadata: {}
     default_stage: post-pipeline
     stage_scoring_enabled: false
-    stage_score_filters: {}
     name: art.attacks.evasion.HopSkipJump
     attack_params:
       max_iter: 10
@@ -376,15 +342,9 @@ experiment:
     targeted_attribute: ''
     scorer:
       _target_: deckard.score.attack.AttackScorerConfig
-      id: ''
-      path: ''
-      payload_kind: data
       metadata: {}
       evasion:
         _target_: deckard.score.attack.DefaultEvasionAttackScorerDictConfig
-        id: ''
-        path: ''
-        payload_kind: data
         metadata: {}
         scorers:
           accuracy:
@@ -467,9 +427,6 @@ experiment:
         classifier: true
       evasion_regression:
         _target_: deckard.score.attack.DefaultEvasionRegressionAttackScorerDictConfig
-        id: ''
-        path: ''
-        payload_kind: data
         metadata: {}
         scorers:
           mse:
@@ -518,9 +475,6 @@ experiment:
         classifier: false
       membership_inference:
         _target_: deckard.score.attack.DefaultMembershipInferenceAttackScorerDictConfig
-        id: ''
-        path: ''
-        payload_kind: data
         metadata: {}
         scorers:
           accuracy:
@@ -589,9 +543,6 @@ experiment:
         classifier: true
       attribute_inference:
         _target_: deckard.score.attack.DefaultAttributeInferenceAttackScorerDictConfig
-        id: ''
-        path: ''
-        payload_kind: data
         metadata: {}
         scorers:
           accuracy:
@@ -660,9 +611,6 @@ experiment:
         classifier: true
       attribute_inference_regression:
         _target_: deckard.score.attack.DefaultAttributeInferenceRegressionAttackScorerDictConfig
-        id: ''
-        path: ''
-        payload_kind: data
         metadata: {}
         scorers:
           mse:
@@ -718,10 +666,10 @@ experiment:
     replace: {}
     handler:
       _target_: deckard.file.CanonFileHandler
-    params_file: /private/var/folders/cd/frntyg595hj5gz_qzm3696hm0000gp/T/pytest-of-c.meyers/pytest-287/test_dvc_repro_and_force_repro0/dvc-e2e/artifacts/params.yaml
-    score_file: /private/var/folders/cd/frntyg595hj5gz_qzm3696hm0000gp/T/pytest-of-c.meyers/pytest-287/test_dvc_repro_and_force_repro0/dvc-e2e/artifacts/scores.json
-    log_file: /private/var/folders/cd/frntyg595hj5gz_qzm3696hm0000gp/T/pytest-of-c.meyers/pytest-287/test_dvc_repro_and_force_repro0/dvc-e2e/artifacts/run.log
-    error_file: /private/var/folders/cd/frntyg595hj5gz_qzm3696hm0000gp/T/pytest-of-c.meyers/pytest-287/test_dvc_repro_and_force_repro0/dvc-e2e/artifacts/error.log
+    params_file: /private/var/folders/cd/frntyg595hj5gz_qzm3696hm0000gp/T/pytest-of-c.meyers/pytest-307/test_dvc_repro_and_force_repro0/dvc-e2e/artifacts/params.yaml
+    score_file: /private/var/folders/cd/frntyg595hj5gz_qzm3696hm0000gp/T/pytest-of-c.meyers/pytest-307/test_dvc_repro_and_force_repro0/dvc-e2e/artifacts/scores.json
+    log_file: /private/var/folders/cd/frntyg595hj5gz_qzm3696hm0000gp/T/pytest-of-c.meyers/pytest-307/test_dvc_repro_and_force_repro0/dvc-e2e/artifacts/run.log
+    error_file: /private/var/folders/cd/frntyg595hj5gz_qzm3696hm0000gp/T/pytest-of-c.meyers/pytest-307/test_dvc_repro_and_force_repro0/dvc-e2e/artifacts/error.log
     data_file: null
     model_file: null
     attack_file: null
@@ -758,7 +706,7 @@ _dvc:
   stage_selection: all
   run_mode: single
   params_manifest:
-    experiment_name: 3b1fbf93c31cd59c2005e93d0f5d66e7
+    experiment_name: 00d8a9a1843302b024007df6688fd788
     library: sklearn
     classifier: true
     evaluation_mode: standard
@@ -767,7 +715,7 @@ _dvc:
     data:
       type: deckard.data.base.DataConfig
       alias: https://raw.githubusercontent.com/simplymathematics/Adult-Census-Income/refs/heads/master/adult.csv
-      fingerprint: 8598a9c9ae5c1fad4b220292402fceaf
+      fingerprint: af2f334e52edfe8a6f1e074278d862da
       subcomponents:
         sampler:
           type: omegaconf.dictconfig.DictConfig
@@ -780,7 +728,7 @@ _dvc:
     model:
       type: deckard.model.base.ModelConfig
       alias: rf
-      fingerprint: 101a4c91387ccf2f82a75114679fd92a
+      fingerprint: 034ef491801d3f8d2a74422b682f4f43
       subcomponents:
         trainer:
           type: deckard.model.trainers.SklearnTrainer
@@ -789,15 +737,15 @@ _dvc:
         defense:
           type: deckard.model.defense.base.DefenseConfig
           alias: class-labels
-          fingerprint: 6da539ef79584aee83b4e11ff3b8cbee
+          fingerprint: 119be6655ba420ca9251803564762f47
     defense:
       type: deckard.model.defense.base.DefenseConfig
       alias: class-labels
-      fingerprint: 6da539ef79584aee83b4e11ff3b8cbee
+      fingerprint: 119be6655ba420ca9251803564762f47
     attack:
       type: deckard.attack.base.AttackConfig
       alias: hsj
-      fingerprint: d0869d4c3b8afd87d5dbf16b9793e36d
+      fingerprint: c92066aa20a0a3473c2bd62e21229f5a
     detector: null
     score: null
     files:
@@ -807,7 +755,7 @@ _dvc:
     attack_chain:
     - type: deckard.attack.base.AttackConfig
       alias: hsj
-      fingerprint: d0869d4c3b8afd87d5dbf16b9793e36d
+      fingerprint: c92066aa20a0a3473c2bd62e21229f5a
     schema_version: deckard.experiment.runtime.v1
   dvclive:
     enabled: false

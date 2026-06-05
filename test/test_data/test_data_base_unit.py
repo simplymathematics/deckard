@@ -20,16 +20,11 @@ def _basic_data_config(**overrides):
     name = params.pop("name", None)
     if name is not None and "name" not in params:
         params["name"] = name
-    params["data_params"].update(
-        {
-            "n_samples": 20,
-            "n_features": 4,
-            "n_informative": 2,
-            "n_redundant": 0,
-            "random_state": 0,
-            "n_clusters_per_class": 1,
-        },
-    )
+    params["sampler"] = {
+        "train_size": 10,
+        "test_size": 10,
+        "val_size": 4,
+    }
     params.update(overrides)
     return DataConfig(**params)
 

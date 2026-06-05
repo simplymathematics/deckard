@@ -422,12 +422,6 @@ class ScoreOrchestratorMixin(RuntimeBase):
 
     default_stage: str = DEFAULT_SCORE_STAGE
     stage_scoring_enabled: bool = False
-    stage_score_filters: dict[str, Any] = field(
-        default_factory=dict,
-        metadata={
-            "help": "Optional include/exclude keyword filters for stage-scoped scoring.",
-        },
-    )
     score_stage_aliases: ClassVar[dict[str, str]] = dict(STAGE_ALIASES)
     score_stage_order: ClassVar[tuple[str, ...]] = tuple(
         stage for stage in CANONICAL_SCORE_STAGES if stage not in {"all", "auto"}
@@ -443,12 +437,6 @@ class ScoreOrchestratorMixin(RuntimeBase):
 
     def _normalize_score_mode(self, mode: str) -> str:
         return normalize_score_mode(mode)
-
-    def _normalize_stage_score_filters(self) -> None:
-        """Normalize keyword filter config for stage-scoped score recording."""
-        self.stage_score_filters = dict(
-            normalize_keyword_filters(getattr(self, "stage_score_filters", None)),
-        )
 
     def _stage_score_context_keywords(
         self,
@@ -480,14 +468,9 @@ class ScoreOrchestratorMixin(RuntimeBase):
         """Persist filtered stage scores under score_dict['stages'][stage][mode]."""
         normalized_stage = self._normalize_score_stage(stage, allow_all_auto=False)
         normalized_mode = self._normalize_score_mode(mode)
-        self._normalize_stage_score_filters()
 
-        include_keywords = tuple(self.stage_score_filters.get("include", ()))
-        exclude_keywords = tuple(self.stage_score_filters.get("exclude", ()))
         filtered_scores = filter_scores_by_keywords(
             scores,
-            include_keywords=include_keywords,
-            exclude_keywords=exclude_keywords,
             context_keywords=self._stage_score_context_keywords(
                 stage=normalized_stage,
                 mode=normalized_mode,

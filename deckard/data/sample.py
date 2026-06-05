@@ -304,7 +304,10 @@ class SplitSampler(BaseSampler):
         indices = np.arange(len(cfg._X))
         train_size = self.train_size
         test_size = self.test_size
-        val_size = self.val_size
+        if isinstance(self.val_size, (int, float)) and self.val_size > 0:
+            val_size = self.val_size
+        else:
+            val_size = None
         random_state = self.random_state
         stratify_col = self._get_stratify_col(cfg, self.stratify)
 

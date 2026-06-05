@@ -978,18 +978,3 @@ def test_cli_plot_composition_smoke():
     assert "plot" in cfg
     assert cfg.plot.plot_type == "roc_auc"
     assert cfg.plot.backend == "yellowbrick"
-
-
-def test_artifact_loader_integration():
-    """Integration test for ArtifactLoaderMixin."""
-    from deckard.artifacts import ArtifactLoaderMixin
-
-    loader = ArtifactLoaderMixin(
-        id="integration-loader",
-        path="artifacts/integration-artifact.json",
-        payload_kind="data",
-    )
-
-    artifact = loader.load()
-    assert artifact.id == "integration-loader"
-    assert artifact.payload_kind == "data"
