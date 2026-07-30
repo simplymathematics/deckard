@@ -24,10 +24,10 @@ from ..score.base import (
 )
 from ..types import (
     ArrayLike,
-    ArtEsimtator,
     EstimatorLike,
     MatrixLike,
     StringifiedClass,
+    ARTEstimatorLike,
 )
 from ..utils import (
     BaseConfig,
@@ -699,7 +699,7 @@ class ModelConfig(ScoreOrchestratorMixin, BaseConfig):
     def get_art_class(
         self,
         data: "DataConfig",
-    ) -> tuple[ArtEsimtator, dict[str, float | int | tuple[int, ...] | None]]:
+    ) -> tuple[ARTEstimatorLike, dict[str, float | int | tuple[int, ...] | None]]:
         """Resolve ART estimator wrapper class and initialization params for model runtime.
 
         Args:

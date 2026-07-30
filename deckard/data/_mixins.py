@@ -12,12 +12,13 @@ from __future__ import annotations
 
 import inspect
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Dict, Optional, Protocol, Union
 
 import numpy as np
 import pandas as pd
 
+from ..types import EstimatorLike, ARTEstimatorLike
 from ..orchestration import (
     normalize_runtime_split_mode,
     resolve_sensitive_split_payload,
@@ -33,7 +34,7 @@ class RuntimePayload(Protocol):
 
 
 @dataclass(eq=False, kw_only=True)
-class SensitiveColumnsMixin:
+class SensitiveDataMixin:
     """Framework-independent sensitive-column behavior.
 
     Provides field declarations and helper methods for resolving and
@@ -432,40 +433,6 @@ class SensitiveColumnsMixin:
             )
         return scoring_mode
 
-    def _resolve_sensitive_features_for_batch(
-        self,
-        batch,
-        split: Optional[str] = None,
-        scoring_mode: Optional[str] = None,
-    ):
-        if getattr(self, "data", None) is None:
-            return None
-
-        n_rows = len(batch)
-        batch_index = getattr(batch, "index", None)
-        resolved_split = scoring_mode or split or self._infer_split_from_batch(batch)
-        if resolved_split is None:
-            return None
-
-        sensitive = self._resolve_runtime_sensitive_source(resolved_split)
-        sensitive_payload = self._validate_sensitive_series(sensitive, "runtime")
-        if sensitive_payload is None or len(sensitive_payload) != n_rows:
-            return None
-        if batch_index is not None:
-            try:
-                aligned = sensitive_payload.reindex(batch_index)
-                if isinstance(aligned, pd.DataFrame):
-                    valid = len(aligned) == n_rows and aligned.notna().all().all()
-                else:
-                    valid = len(aligned) == n_rows and aligned.notna().all()
-                if valid:
-                    return aligned.reset_index(drop=True)
-            except Exception:
-                return None
-        if hasattr(sensitive_payload, "reset_index"):
-            return sensitive_payload.reset_index(drop=True)
-        return sensitive_payload
-
     def _method_accepts_sensitive_features(self, method) -> bool:
         try:
             params = inspect.signature(method).parameters
@@ -531,6 +498,11 @@ class SensitiveColumnsMixin:
             sensitive = np.asarray([row[2] for row in rows])
         return normalized_X, sensitive
 
+
+@dataclass(kw_only=True, eq=True)
+class SensitiveModelMixin:
+    _model: EstimatorLike = field()
+
     def get_model(self) -> RuntimePayload:
         """Return fitted model object, unwrapping wrapper attributes when needed.
 
@@ -540,9 +512,9 @@ class SensitiveColumnsMixin:
         Raises:
             ValueError: If runtime model has not been fitted.
         """
-        if getattr(self, "_model", None) is None:
+        if not isinstance(self._model, EstimatorLike):
             raise ValueError("Model is not fitted yet.")
-        if hasattr(self._model, "model"):
+        if isinstance(self._model, ARTEstimatorLike):
             return self._model.model
         return self._model
 
@@ -610,5 +582,5 @@ class SensitiveColumnsMixin:
 
 __all__ = [
     "RuntimePayload",
-    "SensitiveColumnsMixin",
+    "SensitiveDataMixin",
 ]

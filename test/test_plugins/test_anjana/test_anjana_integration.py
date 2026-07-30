@@ -21,7 +21,6 @@ from test.test_plugins.test_anjana.shared import (
     make_hopskipjump_attack,
     make_logistic_model,
     run_experiment,
-    stub_copy_resolver,
     stub_drop_half_rows_resolver,
 )
 from test.test_plugins.test_anjana.shared import (
@@ -370,18 +369,17 @@ def test_deckard_optimize_hydra_multirun_syncs_optuna_trial_attrs_sklearn(tmp_pa
 
 
 def test_anjana_attack_chain_type_and_scores(monkeypatch):
-    stub_copy_resolver(monkeypatch)
 
     data_cfg = _make_anjana_data(
         n=40,
         defense={"name": "anjana.anonymity.k_anonymity", "k": 2},
     )
-    exp, scores = run_experiment(
+    exp = run_experiment(
         data=data_cfg,
         model=make_logistic_model(max_iter=30),
         attack=make_hopskipjump_attack(attack_size=3),
     )
-
+    scores = exp()
     assert isinstance(exp.data.X_train, pd.DataFrame)
     _assert_anjana_privacy_scores(scores)
     assert "accuracy" in scores
@@ -404,15 +402,14 @@ def test_anjana_fairness_and_art_chain_type_and_transform(monkeypatch):
         "name": "fairlearn.preprocessing.CorrelationRemover",
         "step_name": "fairness_correlation_remover",
     }
-
-    exp, scores = run_experiment(
+    exp = run_experiment(
         data=data_cfg,
         model=make_logistic_model(
             max_iter=30,
             defense=make_art_postprocessor_defense(include_model_name=False),
         ),
     )
-
+    scores = exp()
     assert isinstance(exp.model._model, ScikitlearnLogisticRegression)
     assert len(exp.data._X) == 30
     assert len(exp.data.X_train) + len(exp.data.X_test) == 30

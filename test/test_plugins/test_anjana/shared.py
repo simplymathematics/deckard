@@ -6,6 +6,9 @@ from typing import Any, cast
 
 from helpers import load_canonical_data_profile
 
+from deckard.experiment import ExperimentConfig
+from deckard.file import FileConfig
+
 
 def make_anjana_data(
     n: int = 12,
@@ -66,19 +69,6 @@ def make_anjana_data(
     return cfg
 
 
-def stub_copy_resolver(monkeypatch: Any) -> None:
-    """Patch the Anjana resolver to return an identity-like copy transform."""
-
-    def _stub_k_anon(data, **kwargs):
-        _ = kwargs
-        return data.copy()
-
-    monkeypatch.setattr(
-        "deckard.plugins.anjana.data.resolve_class",
-        lambda _: _stub_k_anon,
-    )
-
-
 def stub_drop_half_rows_resolver(monkeypatch: Any) -> None:
     """Patch the Anjana resolver to drop half the rows deterministically."""
 
@@ -136,10 +126,14 @@ def make_hopskipjump_attack(*, attack_size: int = 3):
     )
 
 
-def run_experiment(*, data: Any, model: Any, attack: Any = None, score: Any = None):
+def run_experiment(
+    *,
+    data: Any,
+    model: Any,
+    attack: Any = None,
+    score: Any = None,
+) -> ExperimentConfig:
     """Build and execute an ExperimentConfig for shared Anjana test chains."""
-    from deckard.experiment import ExperimentConfig
-    from deckard.file import FileConfig
 
     experiment = ExperimentConfig(
         data=data,
@@ -149,7 +143,7 @@ def run_experiment(*, data: Any, model: Any, attack: Any = None, score: Any = No
         score=score,
         classifier=True,
     )
-    return experiment, experiment()
+    return experiment
 
 
 def assert_anjana_privacy_scores(scores: dict[str, Any]) -> None:

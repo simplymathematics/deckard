@@ -18,7 +18,6 @@ from test.test_plugins.test_anjana.shared import (
     make_hopskipjump_attack,
     make_logistic_model,
     run_experiment,
-    stub_copy_resolver,
     stub_drop_half_rows_resolver,
 )
 
@@ -71,11 +70,10 @@ def _make_anjana_data(
             "identifiers": None,
             "sensitive_columns": ["feature_1"],
             "quasi_identifiers": ["feature_0"],
-            "sensitive_attribute": "target",
+            "sensitive_attribute": "feature_1",
             "anjana_defense": defense,
             "hierarchy_interval_sizes": {
                 "feature_0": [1, 2],
-                "feature_1": [1, 2],
             },
         },
     )
@@ -97,12 +95,6 @@ def _make_anjana_data(
             lambda _: resolve_class_fn or _fake_k_anon,
         )
 
-    return cfg
-
-
-def _run_anjana_data(cfg):
-    """Call the data config to load and split data."""
-    cfg()
     return cfg
 
 
@@ -267,28 +259,26 @@ def test_anjana_experiment_with_defense(monkeypatch):
 # ---------------------------------------------------------------------------
 
 
-def test_anjana_data_with_art_model_defense_chain(monkeypatch):
+def test_anjana_data_with_art_model_defense_chain():
     """ART defense wraps model AFTER anjana data anonymization.
 
     Data type: AnjanaDataConfig (tabular, sklearn).
     Defense chain: [ART postprocessor only - no Anjana in model defense anymore].
     Verification: type check (model is ART wrapper) + data transform check.
     """
-    stub_copy_resolver(monkeypatch)
 
     data_cfg = _make_anjana_data(
         n=20,
         defense={"name": "anjana.anonymity.k_anonymity", "k": 2},
     )
-
-    exp, scores = run_experiment(
+    exp = run_experiment(
         data=data_cfg,
         model=make_logistic_model(
             max_iter=25,
             defense=make_art_postprocessor_defense(include_model_name=True),
         ),
     )
-
+    scores = exp()
     # Type check: model's estimator should be an ART wrapper
     from art.estimators.classification.scikitlearn import (
         ScikitlearnLogisticRegression,
@@ -350,14 +340,14 @@ def test_anjana_fairness_data_and_art_model_chain(monkeypatch):
         pipeline={},
     )
 
-    exp, scores = run_experiment(
+    exp = run_experiment(
         data=data_cfg,
         model=make_logistic_model(
             max_iter=25,
             defense=make_art_postprocessor_defense(include_model_name=True),
         ),
     )
-
+    scores = exp()
     # Type checks
     assert isinstance(exp.data, AnjanaDataConfig)
     assert isinstance(exp.model._model, ScikitlearnLogisticRegression)
@@ -442,17 +432,17 @@ def test_anjana_data_with_fairlearn_model_chain(monkeypatch):
 
 def test_anjana_data_with_attack_scoring(monkeypatch):
     """Anonymized data should still allow the attack pipeline to run and score."""
-    stub_copy_resolver(monkeypatch)
 
     data_cfg = _make_anjana_data(
         n=20,
         defense={"name": "anjana.anonymity.k_anonymity", "k": 2},
     )
-    _exp, scores = run_experiment(
+    exp = run_experiment(
         data=data_cfg,
         model=make_logistic_model(max_iter=25),
         attack=make_hopskipjump_attack(attack_size=3),
     )
+    scores = exp()
     assert isinstance(scores, dict)
     assert "accuracy" in scores
     assert "evasion_accuracy" in scores

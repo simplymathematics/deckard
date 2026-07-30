@@ -5,7 +5,7 @@ import logging
 import time
 import warnings
 from dataclasses import InitVar, dataclass, field
-from functools import lru_cache
+
 from typing import Any, ClassVar, Final, Union, cast
 
 from omegaconf import DictConfig, ListConfig, OmegaConf
@@ -15,7 +15,12 @@ from sklearn.utils.validation import check_is_fitted
 
 from ...artifacts import ScoreDict
 from ...data import DataConfig
-from ...types import ArtEsimtator, EstimatorLike, StringifiedClass
+from ...types import (
+    EstimatorLike,
+    StringifiedClass,
+    _get_art_symbols,
+    ARTEstimatorLike,
+)
 from ...utils import (
     BaseConfig,
     coerce_component_sequence,
@@ -90,55 +95,6 @@ def _split_defense_name(
     raise ImportError(
         f"Could not parse defense type from defense name {defense_name}",
     )
-
-
-@lru_cache(maxsize=1)
-def _get_art_symbols() -> dict[str, Any]:
-    from art.estimators.classification import PyTorchClassifier
-    from art.estimators.classification.scikitlearn import (
-        ScikitlearnAdaBoostClassifier,
-        ScikitlearnBaggingClassifier,
-        ScikitlearnClassifier,
-        ScikitlearnDecisionTreeClassifier,
-        ScikitlearnExtraTreesClassifier,
-        ScikitlearnGradientBoostingClassifier,
-        ScikitlearnLogisticRegression,
-        ScikitlearnRandomForestClassifier,
-        ScikitlearnSVC,
-    )
-    from art.estimators.regression import PyTorchRegressor
-    from art.estimators.regression.scikitlearn import (
-        ScikitlearnDecisionTreeRegressor,
-        ScikitlearnRegressor,
-    )
-
-    classifier_dict = {
-        "SVC": ScikitlearnSVC,
-        "LogisticRegression": ScikitlearnLogisticRegression,
-        "RandomForestClassifier": ScikitlearnRandomForestClassifier,
-        "GradientBoostingClassifier": ScikitlearnGradientBoostingClassifier,
-        "ExtraTreesClassifier": ScikitlearnExtraTreesClassifier,
-        "AdaBoostClassifier": ScikitlearnAdaBoostClassifier,
-        "BaggingClassifier": ScikitlearnBaggingClassifier,
-        "DecisionTreeClassifier": ScikitlearnDecisionTreeClassifier,
-        "sklearn-classifier": ScikitlearnClassifier,
-    }
-
-    regressor_dict = {
-        "DecisionTreeRegressor": ScikitlearnDecisionTreeRegressor,
-        "sklearn-regressor": ScikitlearnRegressor,
-    }
-
-    sklearn_dict = {**classifier_dict, **regressor_dict}
-    return {
-        "classifier_dict": classifier_dict,
-        "regressor_dict": regressor_dict,
-        "sklearn_dict": sklearn_dict,
-        "sklearn_models": list(sklearn_dict.keys()),
-        "torch_wrapper_types": (PyTorchClassifier, PyTorchRegressor),
-        "torch_classifier": PyTorchClassifier,
-        "torch_regressor": PyTorchRegressor,
-    }
 
 
 def _is_art_torch_wrapper(model_obj: Any) -> bool:
@@ -247,7 +203,7 @@ class DefenseStep:
             )
         else:
             runtime_defense = resolve_class(step_name)(**step_params)
-        object.__setattr__(self, "_runtime_defense", runtime_defense)
+        object.__setattr__(self, "_defense", runtime_defense)
         return runtime_defense
 
     @staticmethod
@@ -1194,7 +1150,7 @@ class DefenseMixin:
         defense_type: StringifiedClass | None,
         defense_subtype: Union[str, None],
         defense_class: type | None,
-        art_class: ArtEsimtator,
+        art_class: ARTEstimatorLike,
         init_params: dict,
         base_estimator: EstimatorLike,
         existing_preprocessors: list,
@@ -1228,7 +1184,7 @@ class DefenseMixin:
         defense_type: StringifiedClass | None,
         defense_subtype: Union[str, None],
         defense_class: type | None,
-        art_class: ArtEsimtator,
+        art_class: ARTEstimatorLike,
         init_params: dict,
         base_estimator: EstimatorLike,
         existing_preprocessors: list,
@@ -1267,7 +1223,7 @@ class PassthroughDefenseMixin(DefenseMixin):
         defense_type: StringifiedClass | None,
         defense_subtype: Union[str, None],
         defense_class: type | None,
-        art_class: ArtEsimtator,
+        art_class: ARTEstimatorLike,
         init_params: dict,
         base_estimator: EstimatorLike,
         existing_preprocessors: list,
@@ -1552,7 +1508,7 @@ class ARTDefenseBehaviorMixin(DefenseHookRuntimeMixin):
         defense_type: StringifiedClass | None,
         defense_subtype: Union[str, None],
         defense_class: type | None,
-        art_class: ArtEsimtator,
+        art_class: ARTEstimatorLike,
         init_params: dict,
         base_estimator: EstimatorLike,
         existing_preprocessors: list,
@@ -1900,7 +1856,7 @@ class ARTDefenseBehaviorMixin(DefenseHookRuntimeMixin):
         str | None,
         str | None,
         type | None,
-        ArtEsimtator,
+        ARTEstimatorLike,
         dict,
         EstimatorLike,
         list,
@@ -1932,7 +1888,7 @@ class ARTDefenseBehaviorMixin(DefenseHookRuntimeMixin):
     def get_art_class(
         self,
         data: DataConfig | None,
-    ) -> tuple[ArtEsimtator, dict[str, DefenseInitParamValue]]:
+    ) -> tuple[ARTEstimatorLike, dict[str, DefenseInitParamValue]]:
         """Resolve the ART estimator wrapper class for the current model/data.
 
         Args:
@@ -1957,7 +1913,7 @@ class ARTDefenseBehaviorMixin(DefenseHookRuntimeMixin):
     def _get_art_class_torch(
         self,
         data: DataConfig | None,
-    ) -> tuple[ArtEsimtator, dict[str, DefenseInitParamValue]]:
+    ) -> tuple[ARTEstimatorLike, dict[str, DefenseInitParamValue]]:
         if data is None:
             raise ValueError(
                 "data must be provided before creating an ART defense estimator",
@@ -2038,7 +1994,7 @@ class ARTDefenseBehaviorMixin(DefenseHookRuntimeMixin):
     def _get_art_class_non_torch(
         self,
         data: DataConfig | None,
-    ) -> tuple[ArtEsimtator, dict[str, DefenseInitParamValue]]:
+    ) -> tuple[ARTEstimatorLike, dict[str, DefenseInitParamValue]]:
         from ...utils import is_null_config_value
 
         base_model = getattr(self, "_model", None)

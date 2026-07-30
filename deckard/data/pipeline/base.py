@@ -49,11 +49,7 @@ class DataPipeline(dict):
         "fit_y",
         "fit_Xy",
         "fit_pre-sample",
-        "fit_pre_sample",
-        "fit_presample",
-        "fit_post-sample",
-        "fit_post_sample",
-        "fit_postsample",
+        "fit_post-pipeline",
         "dtype",
         "plugin_hook",
     }
@@ -183,8 +179,6 @@ class DataPipeline(dict):
 
         if hasattr(host, "_run_plugin_hook"):
             host._run_plugin_hook(f"{event}_{stage_name}", stage=stage_name)
-            host._run_plugin_hook(f"{event}_pipeline", stage=stage_name)
-
         if hasattr(host, "_run_score_stage_hooks"):
             host._run_score_stage_hooks(event, score_stage, pipeline_stage=stage_name)
 

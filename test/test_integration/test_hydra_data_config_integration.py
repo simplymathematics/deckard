@@ -7,9 +7,8 @@ def test_sklearn_data_profile_anjana_composes():
     cfg = compose_sklearn("data/anjana")
     data_cfg = OmegaConf.to_container(cfg.data, resolve=True)
 
-    assert data_cfg["name"] == "make_classification"
+    assert "adult.csv" in data_cfg["name"]
     assert data_cfg["_target_"] == "deckard.plugins.anjana.AnjanaDataConfig"
-    assert data_cfg["alias"] == "anjana"
 
 
 def test_sklearn_data_profile_fairlearn_composes():

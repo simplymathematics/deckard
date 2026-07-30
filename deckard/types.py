@@ -7,9 +7,59 @@ markers used across Deckard core, framework adapters, and plugin families.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Protocol, TypeAlias
+from typing import Protocol, TypeAlias, Any
 
 import pandas as pd
+from functools import lru_cache
+
+
+@lru_cache(maxsize=1)
+def _get_art_symbols() -> dict[str, Any]:
+    from art.estimators.classification import PyTorchClassifier
+    from art.estimators.classification.scikitlearn import (
+        ScikitlearnAdaBoostClassifier,
+        ScikitlearnBaggingClassifier,
+        ScikitlearnClassifier,
+        ScikitlearnDecisionTreeClassifier,
+        ScikitlearnExtraTreesClassifier,
+        ScikitlearnGradientBoostingClassifier,
+        ScikitlearnLogisticRegression,
+        ScikitlearnRandomForestClassifier,
+        ScikitlearnSVC,
+    )
+    from art.estimators.regression import PyTorchRegressor
+    from art.estimators.regression.scikitlearn import (
+        ScikitlearnDecisionTreeRegressor,
+        ScikitlearnRegressor,
+    )
+
+    classifier_dict = {
+        "SVC": ScikitlearnSVC,
+        "LogisticRegression": ScikitlearnLogisticRegression,
+        "RandomForestClassifier": ScikitlearnRandomForestClassifier,
+        "GradientBoostingClassifier": ScikitlearnGradientBoostingClassifier,
+        "ExtraTreesClassifier": ScikitlearnExtraTreesClassifier,
+        "AdaBoostClassifier": ScikitlearnAdaBoostClassifier,
+        "BaggingClassifier": ScikitlearnBaggingClassifier,
+        "DecisionTreeClassifier": ScikitlearnDecisionTreeClassifier,
+        "sklearn-classifier": ScikitlearnClassifier,
+    }
+
+    regressor_dict = {
+        "DecisionTreeRegressor": ScikitlearnDecisionTreeRegressor,
+        "sklearn-regressor": ScikitlearnRegressor,
+    }
+
+    sklearn_dict = {**classifier_dict, **regressor_dict}
+    return {
+        "classifier_dict": classifier_dict,
+        "regressor_dict": regressor_dict,
+        "sklearn_dict": sklearn_dict,
+        "sklearn_models": list(sklearn_dict.keys()),
+        "torch_wrapper_types": (PyTorchClassifier, PyTorchRegressor),
+        "torch_classifier": PyTorchClassifier,
+        "torch_regressor": PyTorchRegressor,
+    }
 
 
 class RuntimeValue(Protocol):
@@ -40,12 +90,32 @@ class ArrayLike(Protocol):
         ...
 
 
-class EstimatorLike(Protocol):
-    """Structural protocol for framework estimator runtime objects."""
+class SklearnModelLike(Protocol):
+    def predict(self, X: Any) -> "ArrayLike": ...
 
-    def __len__(self) -> int:
-        """Return size metadata when available."""
-        ...
+    def __call__(self, *args: Any, **kwargs: Any) -> "EstimatorLike": ...
+
+    def fit(self, X: Any, y: Any) -> "EstimatorLike": ...
+
+
+class TorchModelLike(Protocol):
+    def forward(self, X: Any) -> Any: ...
+    def __call__(self, *args: Any, **kwargs: Any) -> "EstimatorLike": ...
+
+
+class ARTEstimatorLike(Protocol):
+    model: EstimatorLike
+    _apply_fit: bool
+    _apply_predict: bool
+
+    def predict(self, X: Any) -> "ArrayLike": ...
+
+    def __call__(self, *args: Any, **kwargs: Any) -> "EstimatorLike": ...
+
+    def fit(self, X: Any, y: Any) -> "EstimatorLike": ...
+
+
+EstimatorLike: TypeAlias = SklearnModelLike | TorchModelLike | ARTEstimatorLike
 
 
 class AttackLike(Protocol):
@@ -53,26 +123,6 @@ class AttackLike(Protocol):
 
     def __len__(self) -> int:
         """Return attack size metadata when available."""
-        ...
-
-
-class ArtEsimtator(Protocol):
-    """Factory-like protocol for ART estimator wrapper classes."""
-
-    def __call__(
-        self,
-        estimator: EstimatorLike,
-        **kwargs: RuntimeValue,
-    ) -> EstimatorLike:
-        """Construct an ART estimator wrapper from a base estimator.
-
-        Args:
-            estimator: Base estimator runtime object.
-            **kwargs: ART wrapper constructor parameters.
-
-        Returns:
-            Wrapped ART estimator runtime object.
-        """
         ...
 
 
@@ -90,7 +140,7 @@ __all__ = [
     "ArrayLike",
     "EstimatorLike",
     "AttackLike",
-    "ArtEsimtator",
+    "ARTEstimatorLike",
     "StringifiedClass",
     "DatasetLike",
     "TabularLike",
